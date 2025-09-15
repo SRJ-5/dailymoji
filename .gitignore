@@ -117,3 +117,26 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# .env file 업로드 제외
+#assets/config/.env
+
+# Flutter generated plugin files
+**/GeneratedPluginRegistrant.*
+**/generated_plugin_registrant.*
+**/generated_plugins.cmake
+
+# Firebase 관련 민감정보
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Flutter에서 자동 생성되는 플러그인 등록 파일 (수정/커밋 불필요)
+ios/Runner/GeneratedPluginRegistrant.swift
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugins.cmake
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+
+# key.properties
+android/key.properties
+*.keystore
