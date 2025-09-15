@@ -39,28 +39,24 @@ class LoginPage extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
+                    horizontal: 80,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Expanded(
-                        child: Container(
-                          height: 60,
-                          width: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey,
+                        child: CircleAvatar(
+                          radius: 30,
+                          child: Image.asset(
+                            'assets/icons/google_login_logo.png',
                           ),
                         ),
                       ),
                       Expanded(
-                        child: Container(
-                          height: 60,
-                          width: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey,
+                        child: CircleAvatar(
+                          radius: 30,
+                          child: Image.asset(
+                            'assets/icons/apple_login_logo.png',
                           ),
                         ),
                       ),
@@ -68,16 +64,37 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 20),
-                Text(
-                  '시작함으로써 이용약관과 개인정보 수집 및 이용에 동의하게 됩니다.',
-                  style: TextStyle(fontSize: 12),
+                RichText(
+                  text: TextSpan(
+                    text: '시작함으로써 ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black,
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: '이용약관',
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      TextSpan(text: '과 '),
+                      TextSpan(
+                        text: '개인정보 수집 및 이용',
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      TextSpan(text: '에 동의하게 됩니다.'),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+          SafeArea(child: SizedBox(height: 50)),
         ],
       ),
-      bottomNavigationBar: BottomBar(),
     );
   }
 }
