@@ -119,7 +119,7 @@ app.*.symbols
 !/dev/ci/**/Gemfile.lock
 
 # .env file 업로드 제외
-#assets/config/.env
+.env
 
 # Flutter generated plugin files
 **/GeneratedPluginRegistrant.*
