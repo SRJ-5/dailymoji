@@ -49,11 +49,11 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'DailyMoji',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 44,
+                  SizedBox(
+                    height: 50,
+                    child: Image.asset(
+                      'assets/icons/dailymoji_logo.png',
+                      fit: BoxFit.cover,
                     ),
                   ),
                   Text(
