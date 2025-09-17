@@ -1,5 +1,5 @@
+import 'package:dailymoji/presentation/pages/login/dummy_page.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatefulWidget {
@@ -7,26 +7,35 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-// TODO: test로 여기에 구현 test완료 후 클린아키텍쳐 구조로 변환해야함
 class _LoginPageState extends State<LoginPage> {
-  Future<void> googleLogin() async {
-    // final google = GoogleSignIn();
-    // final result = await google.signIn();
-    // final auth = await result?.authentication;
-    // print('auth: $auth');
-    // print('accessToken: ${auth?.accessToken}');
-    // print('idToken: ${auth?.idToken}');
-    // final response = await Supabase.instance.client.auth
-    //     .signInWithIdToken(
-    //         provider: OAuthProvider.google,
-    //         idToken: auth!.idToken!);
-    // print('user: ${response.user}');
+  // TODO: test로 여기에 구현 test완료 후 클린아키텍쳐 구조로 변환해야함
+  Future<bool> googleLogin() async {
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+        redirectTo: 'dailymoji://login-callback',
+      );
+      final user = Supabase.instance.client.auth.currentUser;
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
 
-    final response = await Supabase.instance.client.auth
-        .signInWithOAuth(OAuthProvider.google,
-            redirectTo: 'dailymoji://login-callback');
-    final user = Supabase.instance.client.auth.currentUser;
-    print('user: ${user?.email}');
+  // TODO: test로 여기에 구현 test완료 후 클린아키텍쳐 구조로 변환해야함
+  Future<bool> appleLogin() async {
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+          OAuthProvider.apple,
+          authScreenLaunchMode: LaunchMode.externalApplication,
+          redirectTo: 'dailymoji://login-callback');
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
   }
 
   @override
@@ -73,8 +82,16 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {
-                            googleLogin();
+                          onTap: () async {
+                            final result = await googleLogin();
+                            if (result) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        DummyPage(),
+                                  ));
+                            }
                           },
                           child: CircleAvatar(
                             radius: 30,
@@ -86,8 +103,16 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {
-                            print('애플 로그인 실행');
+                          onTap: () async {
+                            final result = await appleLogin();
+                            if (result) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        DummyPage(),
+                                  ));
+                            }
                           },
                           child: CircleAvatar(
                             radius: 30,
