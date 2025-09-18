@@ -1,4 +1,5 @@
 import 'package:dailymoji/presentation/pages/report/widgets/monthly_report.dart';
+import 'package:dailymoji/presentation/pages/report/widgets/two_weeks_report.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -26,16 +27,10 @@ class ReportPage extends StatelessWidget {
             ),
             Expanded(
                 child: TabBarView(children: [
+              // 여기가 월간 탭에 대한 위젯. 즉, 달력 위젯
               MonthlyReport(),
-              TableCalendar(
-                focusedDay: DateTime.now(),
-                firstDay: DateTime.utc(2020, 1, 1),
-                lastDay: DateTime.utc(2099, 12, 31),
-                calendarFormat: CalendarFormat.twoWeeks,
-                availableCalendarFormats: const {
-                  CalendarFormat.twoWeeks: '2주만',
-                },
-              )
+              // 여기가 주간 탭에 대한 위젯. 즉, 그래프 위젯
+              TwoWeeksReport()
             ]))
           ],
         ),
