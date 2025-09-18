@@ -64,6 +64,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/fonts/
+    - assets/images/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -80,15 +81,24 @@ flutter:
   fonts:
     - family: Pretendard
       fonts:
-        - asset: Pretendard-Black.otf
-        - asset: Pretendard-Bold.otf
-        - asset: Pretendard-ExtraBold.otf
-        - asset: Pretendard-ExtraLight.otf
-        - asset: Pretendard-Light.otf
-        - asset: Pretendard-Medium.otf
-        - asset: Pretendard-Regular.otf
-        - asset: Pretendard-Semibold.otf
-        - asset: Pretendard-Thin.otf
+        - asset: assets/fonts/Pretendard-Thin.otf
+          weight: 100
+        - asset: assets/fonts/Pretendard-ExtraLight.otf
+          weight: 200
+        - asset: assets/fonts/Pretendard-Light.otf
+          weight: 300
+        - asset: assets/fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Pretendard-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/Pretendard-Black.otf
+          weight: 900
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
