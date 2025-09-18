@@ -52,7 +52,7 @@ class _ChatPageState extends State<ChatPage> {
               child: ListView.builder(
                 itemCount: 10,
                 itemBuilder: (context, index) {
-                  //
+                  return index % 2 == 0 ? _botMessage("수니슈니님, 오늘 왜 화가 났어요?") : _userMessage("아 그냥 별거 아닌 일들이 계속 겹치니까 괜히 짜증나더라");
                 },
               ),
             ),
@@ -60,6 +60,94 @@ class _ChatPageState extends State<ChatPage> {
             _buildInputField(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _userMessage(String message) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 12.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            "12:46",
+            style: TextStyle(
+              fontSize: 14.sp,
+              letterSpacing: 0.sp,
+              color: Color(0xff4A5565),
+            ),
+          ),
+          SizedBox(width: 4.r),
+          Container(
+            padding: EdgeInsets.all(16.r),
+            constraints: BoxConstraints(maxWidth: 247.w),
+            decoration: BoxDecoration(
+              color: Color(0xffBAC4A1),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                bottomRight: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+            ),
+            child: Text(
+              message,
+              maxLines: 4,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Color(0xff4A5565),
+                letterSpacing: 0.sp,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _botMessage(String message) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 12.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            padding: EdgeInsets.all(16.r),
+            constraints: BoxConstraints(maxWidth: 247.w),
+            decoration: BoxDecoration(
+              color: Color(0xffF8DA9C),
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(12.r),
+                bottomRight: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+            ),
+            child: Text(
+              message,
+              maxLines: 4,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Color(0xff4A5565),
+                letterSpacing: 0.sp,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+          SizedBox(width: 4.r),
+          Text(
+            "12:46",
+            style: TextStyle(
+              fontSize: 14.sp,
+              letterSpacing: 0.sp,
+              color: Color(0xff4A5565),
+            ),
+          ),
+        ],
       ),
     );
   }
