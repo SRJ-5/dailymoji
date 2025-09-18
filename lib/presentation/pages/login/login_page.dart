@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-import 'package:flutter/material.dart';
-
-class LoginPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: Center(child: Text('테스트')),
-=======
 import 'package:dailymoji/presentation/pages/login/dummy_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -37,8 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   // TODO: test로 여기에 구현 test완료 후 클린아키텍쳐 구조로 변환해야함
   Future<bool> appleLogin() async {
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-          OAuthProvider.apple,
+      await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.apple,
           authScreenLaunchMode: LaunchMode.externalApplication,
           redirectTo: 'dailymoji://login-callback');
       return true;
@@ -98,8 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        DummyPage(),
+                                    builder: (context) => DummyPage(),
                                   ));
                             }
                           },
@@ -119,8 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        DummyPage(),
+                                    builder: (context) => DummyPage(),
                                   ));
                             }
                           },
@@ -167,7 +154,6 @@ class _LoginPageState extends State<LoginPage> {
           SafeArea(child: SizedBox(height: 50)),
         ],
       ),
->>>>>>> 798b10a038d049999d34abe5291e7b05389d0644
     );
   }
 }

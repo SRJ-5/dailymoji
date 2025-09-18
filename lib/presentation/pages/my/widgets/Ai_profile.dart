@@ -34,7 +34,7 @@ class AiProfil extends StatelessWidget {
           ),
           SizedBox(width: 10),
           Align(
-            alignment: AlignmentGeometry.centerRight,
+            alignment: Alignment.centerRight,
             child: Text(
               '편집',
               style: TextStyle(
