@@ -22,7 +22,7 @@ class BottomBar extends StatelessWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(40),
                     onTap: () {
-                      context.push('/next');
+                      context.push('/chat');
                     },
                     child: BottomBarIcon(title: 'Home'),
                   ),
