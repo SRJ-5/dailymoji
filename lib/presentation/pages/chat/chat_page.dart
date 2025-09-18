@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -7,15 +7,33 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
   String selectedEmojiAsset = "assets/images/smile.png";
   final controller = TextEditingController();
+
+  late final AnimationController _emojiCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _emojiCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700), // 전체 타이밍
+    );
+  }
 
   @override
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  void _toggleEmojiBar() {
+    setState(() => showEmojiBar = !showEmojiBar);
+    if (showEmojiBar) {
+      _emojiCtrl.forward(from: 0); // 열릴 때만 애니메이션 재생
+    }
   }
 
   @override
@@ -44,22 +62,48 @@ class _ChatPageState extends State<ChatPage> {
           ],
         ),
       ),
-      body: Padding(
-        padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: 10,
-                itemBuilder: (context, index) {
-                  return index % 2 == 0 ? _botMessage("수니슈니님, 오늘 왜 화가 났어요?") : _userMessage("아 그냥 별거 아닌 일들이 계속 겹치니까 괜히 짜증나더라");
-                },
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: 10,
+                    itemBuilder: (context, index) {
+                      return index % 2 == 0 ? _botMessage("수니슈니님, 오늘 왜 화가 났어요?") : _userMessage("아 그냥 별거 아닌 일들이 계속 겹치니까 괜히 짜증나더라");
+                    },
+                  ),
+                ),
+                _buildInputField(),
+              ],
+            ),
+          ),
+          if (showEmojiBar)
+            Positioned(
+              bottom: 99.h,
+              right: 12.w,
+              child: Material(
+                color: Colors.transparent,
+                child: _buildEmojiBarAnimated(),
               ),
             ),
-            if (showEmojiBar) _buildEmojiBar(),
-            _buildInputField(),
-          ],
-        ),
+          if (showEmojiBar)
+            Positioned(
+              bottom: 97.h,
+              right: 51.w,
+              child: Container(
+                width: 34.w,
+                height: 8.h,
+                color: Colors.transparent,
+                child: CustomPaint(
+                  painter: TrianglePainter(Colors.white),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -152,7 +196,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildEmojiBar() {
+  Widget _buildEmojiBarAnimated() {
     final emojiAssets = [
       "assets/images/angry.png",
       "assets/images/crying.png",
@@ -160,60 +204,130 @@ class _ChatPageState extends State<ChatPage> {
       "assets/images/sleeping.png",
       "assets/images/smile.png",
     ];
-    return Container(
-      color: Colors.grey[200],
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-      child: Wrap(
-        spacing: 8.w,
-        children: emojiAssets
-            .map(
-              (e) => GestureDetector(
-                onTap: () {
-                  //
-                  setState(() {
-                    selectedEmojiAsset = e;
-                  });
-                },
-                child: ColorFiltered(
-                  colorFilter: selectedEmojiAsset != e
-                      ? ColorFilter.matrix(<double>[
-                          0.2126,
-                          0.7152,
-                          0.0722,
-                          0,
-                          0,
-                          0.2126,
-                          0.7152,
-                          0.0722,
-                          0,
-                          0,
-                          0.2126,
-                          0.7152,
-                          0.0722,
-                          0,
-                          0,
-                          0,
-                          0,
-                          0,
-                          1,
-                          0,
-                        ])
-                      : ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                  child: Image.asset(
-                    e,
-                    width: 34.w,
-                    height: 34.h,
+
+    // 0.0~0.25 구간: 배경 페이드인
+    final bgOpacity = CurvedAnimation(
+      parent: _emojiCtrl,
+      curve: const Interval(0.0, 0.25, curve: Curves.easeOutCubic),
+    );
+
+    // 스태거 간격(각 이모지 시작 시점 간격)
+    const step = 0.1; // 100ms 간격 느낌
+    final baseStart = 0.25; // 배경이 떠오른 뒤부터 시작
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // 배경만 먼저 페이드인
+        FadeTransition(
+          opacity: bgOpacity,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 5),
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: Opacity(
+              opacity: 0, // 보이지 않게
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(emojiAssets.length, (index) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    child: SizedBox(width: 34.w, height: 34.h),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        Container(
+          margin: const EdgeInsets.only(bottom: 5),
+          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12.r),
+            // color: Colors.transparent
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(emojiAssets.length, (index) {
+              final start = (baseStart + step * index).clamp(0.0, 1.0);
+              final end = (start + 0.4).clamp(0.0, 1.0);
+
+              final curved = CurvedAnimation(
+                parent: _emojiCtrl,
+                curve: Interval(start, end, curve: Curves.easeOutCubic),
+              );
+
+              return FadeTransition(
+                opacity: curved, // 페이드
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(-0.2, 0), // 왼쪽에서 살짝
+                    end: Offset.zero,
+                  ).animate(curved),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() => selectedEmojiAsset = emojiAssets[index]);
+                      },
+                      child: ColorFiltered(
+                        colorFilter: selectedEmojiAsset != emojiAssets[index]
+                            ? const ColorFilter.matrix(<double>[
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
+                              ])
+                            : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                        child: Image.asset(
+                          emojiAssets[index],
+                          width: 34.w,
+                          height: 34.h,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            )
-            .toList(),
-      ),
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildInputField() {
-    return SafeArea(
+    return Container(
+      height: 64.h,
+      margin: EdgeInsets.only(bottom: 34.h),
+      padding: EdgeInsets.symmetric(vertical: 12.r),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
@@ -221,9 +335,7 @@ class _ChatPageState extends State<ChatPage> {
           hintStyle: const TextStyle(color: Color(0xFF777777)),
           fillColor: Colors.white,
           filled: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-
-          // 모든 상태에 동일하게 적용
+          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
             borderSide: const BorderSide(
@@ -235,9 +347,7 @@ class _ChatPageState extends State<ChatPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
-                onTap: () {
-                  setState(() => showEmojiBar = !showEmojiBar);
-                },
+                onTap: _toggleEmojiBar,
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                   child: Image.asset(
