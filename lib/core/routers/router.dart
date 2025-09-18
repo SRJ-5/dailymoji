@@ -1,3 +1,4 @@
+import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ final router = GoRouter(
   initialLocation: '/',
   navigatorKey: navigatorkey,
   routes: [
-    GoRoute(path: '/', builder: (context, state) => MyPage()),
+    GoRoute(path: '/', builder: (context, state) => ChatPage()),
     // GoRoute(
     //   path: '/next',
     //   // builder: (context, state) => ,
