@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AiProfil extends StatelessWidget {
-  const AiProfil({super.key});
+class AiProfile extends StatelessWidget {
+  const AiProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
