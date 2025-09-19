@@ -90,19 +90,6 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                 child: _buildEmojiBarAnimated(),
               ),
             ),
-          if (showEmojiBar)
-            Positioned(
-              bottom: 97.h,
-              right: 51.w,
-              child: Container(
-                width: 34.w,
-                height: 8.h,
-                color: Colors.transparent,
-                child: CustomPaint(
-                  painter: TrianglePainter(Colors.white),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -221,32 +208,45 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         // 배경만 먼저 페이드인
         FadeTransition(
           opacity: bgOpacity,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 5),
-            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  offset: const Offset(0, 2),
-                  blurRadius: 4,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: 5),
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      offset: const Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Opacity(
-              opacity: 0, // 보이지 않게
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(emojiAssets.length, (index) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: SizedBox(width: 34.w, height: 34.h),
-                  );
-                }),
+                child: Opacity(
+                  opacity: 0, // 보이지 않게
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(emojiAssets.length, (index) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: SizedBox(width: 34.w, height: 34.h),
+                      );
+                    }),
+                  ),
+                ),
               ),
-            ),
+              Positioned(
+                bottom: -3.6.h,
+                right: 40.w, // 원하는 위치에 맞게 조절
+                child: CustomPaint(
+                  size: Size(34.w, 8.h),
+                  painter: TrianglePainter(Colors.white),
+                ),
+              ),
+            ],
           ),
         ),
 
