@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:dailymoji/data/data_sources/chat_remote_data_source.dart';
-import 'package:dailymoji/data/dtos/chat_dto.dart';
+import 'package:dailymoji/data/data_sources/message_remote_data_source.dart';
+import 'package:dailymoji/data/dtos/message_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
+class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
   final SupabaseClient client;
 
-  ChatRemoteDataSourceImpl(this.client);
+  MessageRemoteDataSourceImpl(this.client);
 
   @override
-  Future<List<ChatDto>> fetchMessages({
+  Future<List<MessageDto>> fetchMessages({
     required String userId,
     int limit = 50,
     String? cursorIso, // created_at 커서(ISO8601 문자열)
@@ -23,7 +23,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     final startIso = startOfDay.toUtc().toIso8601String();
     final endIso = endOfDay.toUtc().toIso8601String();
 
-    var base = client.from("chat").select().eq("user_id", userId).gte("created_at", startIso).lt("created_at", endIso);
+    var base = client.from("messages").select().eq("user_id", userId).gte("created_at", startIso).lt("created_at", endIso);
 
     if (cursorIso != null) {
       base = base.gt("created_at", cursorIso);
@@ -33,25 +33,25 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     final result = await base.order("created_at", ascending: true).limit(limit);
 
     final rows = (result as List).cast<Map<String, dynamic>>();
-    return rows.map((m) => ChatDto.fromJson(m)).toList();
+    return rows.map((m) => MessageDto.fromJson(m)).toList();
   }
 
   @override
-  Future<void> insertMessage(ChatDto chat) async {
-    await client.from("chat").insert(chat.toJson());
+  Future<void> insertMessage(MessageDto messageDto) async {
+    await client.from("messages").insert(messageDto.toJson());
   }
 
   @override
   void subscribeToMessages({
     required String userId,
-    required void Function(ChatDto message) onNewMessage,
+    required void Function(MessageDto messageDto) onNewMessage,
   }) {
     client
-        .channel("chat_changes_$userId")
+        .channel("message_changes_$userId")
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: "public",
-          table: "chat",
+          table: "messages",
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: "user_id",
@@ -59,7 +59,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           ),
           callback: (payload) {
             final record = payload.newRecord;
-            onNewMessage(ChatDto.fromJson(record));
+            onNewMessage(MessageDto.fromJson(record));
           },
         )
         .subscribe();

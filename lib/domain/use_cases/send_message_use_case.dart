@@ -1,12 +1,12 @@
-import 'package:dailymoji/domain/entities/chat.dart';
-import 'package:dailymoji/domain/repositories/chat_repository.dart';
+import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/domain/repositories/message_repository.dart';
 
 class SendMessageUseCase {
-  final ChatRepository repository;
+  final MessageRepository repository;
 
   SendMessageUseCase(this.repository);
 
-  Future<void> execute(Chat message) {
+  Future<void> execute(Message message) {
     return repository.sendMessage(message);
   }
 }

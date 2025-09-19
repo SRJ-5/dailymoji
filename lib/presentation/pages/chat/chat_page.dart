@@ -1,6 +1,7 @@
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 class ChatPage extends StatefulWidget {
   @override
@@ -10,7 +11,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
   String selectedEmojiAsset = "assets/images/smile.png";
-  final controller = TextEditingController();
+  final _messageInputController = TextEditingController();
 
   late final AnimationController _emojiCtrl;
 
@@ -25,7 +26,8 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
-    controller.dispose();
+    _messageInputController.dispose();
+    _emojiCtrl.dispose();
     super.dispose();
   }
 
@@ -34,6 +36,10 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     if (showEmojiBar) {
       _emojiCtrl.forward(from: 0); // 열릴 때만 애니메이션 재생
     }
+  }
+
+  String _formattedNow() {
+    return DateFormat("HH:mm").format(DateTime.now());
   }
 
   @override
@@ -71,6 +77,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               children: [
                 Expanded(
                   child: ListView.builder(
+                    reverse: true, // 최신 메세지가 맨 밑에 보여지게
                     itemCount: 10,
                     itemBuilder: (context, index) {
                       return index % 2 == 0 ? _botMessage("수니슈니님, 오늘 왜 화가 났어요?") : _userMessage("아 그냥 별거 아닌 일들이 계속 겹치니까 괜히 짜증나더라");
@@ -103,7 +110,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            "12:46",
+            _formattedNow(),
             style: TextStyle(
               fontSize: 14.sp,
               letterSpacing: 0.sp,
@@ -171,7 +178,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           ),
           SizedBox(width: 4.r),
           Text(
-            "12:46",
+            _formattedNow(),
             style: TextStyle(
               fontSize: 14.sp,
               letterSpacing: 0.sp,
@@ -240,7 +247,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               ),
               Positioned(
                 bottom: -3.6.h,
-                right: 40.w, // 원하는 위치에 맞게 조절
+                right: 40.w,
                 child: CustomPaint(
                   size: Size(34.w, 8.h),
                   painter: TrianglePainter(Colors.white),
@@ -269,10 +276,10 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               );
 
               return FadeTransition(
-                opacity: curved, // 페이드
+                opacity: curved,
                 child: SlideTransition(
                   position: Tween<Offset>(
-                    begin: const Offset(-0.2, 0), // 왼쪽에서 살짝
+                    begin: const Offset(-0.2, 0),
                     end: Offset.zero,
                   ).animate(curved),
                   child: Padding(
@@ -325,54 +332,55 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
 
   Widget _buildInputField() {
     return Container(
-      height: 64.h,
-      margin: EdgeInsets.only(bottom: 34.h),
-      padding: EdgeInsets.symmetric(vertical: 12.r),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          hintText: "무엇이든 입력하세요",
-          hintStyle: const TextStyle(color: Color(0xFF777777)),
-          fillColor: Colors.white,
-          filled: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(
-              color: Color(0xFFD2D2D2),
-              width: 1,
+      margin: EdgeInsets.only(bottom: 46.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Color(0xFFD2D2D2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageInputController,
+              maxLines: 4,
+              minLines: 1,
+              decoration: InputDecoration(
+                hintText: "무엇이든 입력하세요",
+                hintStyle: const TextStyle(color: Color(0xFF777777)),
+                fillColor: Colors.white,
+                filled: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12.w),
+                border: InputBorder.none,
+              ),
             ),
           ),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: _toggleEmojiBar,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
-                  child: Image.asset(
-                    selectedEmojiAsset,
-                    width: 24.w,
-                    height: 24.h,
-                  ),
-                ),
+          GestureDetector(
+            onTap: _toggleEmojiBar,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
+              child: Image.asset(
+                selectedEmojiAsset,
+                width: 24.w,
+                height: 24.h,
               ),
-              GestureDetector(
-                onTap: () {
-                  // 전송 로직
-                },
-                child: Container(
-                  width: 40.67.w,
-                  height: 40.h,
-                  child: Image.asset(
-                    "assets/icons/send_icon.png",
-                    color: Color(0xff777777),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          GestureDetector(
+            onTap: () {
+              // 전송 로직
+            },
+            child: Container(
+              width: 40.67.w,
+              height: 40.h,
+              child: Image.asset(
+                "assets/icons/send_icon.png",
+                color: Color(0xff777777),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

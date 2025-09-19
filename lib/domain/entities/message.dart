@@ -1,16 +1,16 @@
 enum Sender { user, bot }
 
-enum ChatType { normal, solution }
+enum MessageType { normal, solution }
 
-class Chat {
+class Message {
   final String id;
   final String userId;
   final String content;
   final Sender sender;
-  final ChatType type;
+  final MessageType type;
   final DateTime createdAt;
 
-  Chat({
+  Message({
     required this.id,
     required this.userId,
     required this.content,

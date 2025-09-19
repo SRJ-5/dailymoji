@@ -1,8 +1,8 @@
 // DataSource Provider
-import 'package:dailymoji/data/data_sources/chat_remote_data_source.dart';
-import 'package:dailymoji/data/data_sources/chat_remote_data_source_impl.dart';
-import 'package:dailymoji/data/repositories/chat_repository_impl.dart';
-import 'package:dailymoji/domain/repositories/chat_repository.dart';
+import 'package:dailymoji/data/data_sources/message_remote_data_source.dart';
+import 'package:dailymoji/data/data_sources/message_remote_data_source_impl.dart';
+import 'package:dailymoji/data/repositories/message_repository_impl.dart';
+import 'package:dailymoji/domain/repositories/message_repository.dart';
 import 'package:dailymoji/domain/use_cases/load_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
@@ -13,37 +13,37 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
 });
 
-final chatRemoteDataSourceProvider = Provider<ChatRemoteDataSource>(
+final messageRemoteDataSourceProvider = Provider<MessageRemoteDataSource>(
   (ref) {
     final client = ref.read(supabaseClientProvider);
-    return ChatRemoteDataSourceImpl(client);
+    return MessageRemoteDataSourceImpl(client);
   },
 );
 
-final chatRepositoryProvider = Provider<ChatRepository>(
+final messageRepositoryProvider = Provider<MessageRepository>(
   (ref) {
-    final dataSource = ref.watch(chatRemoteDataSourceProvider);
-    return ChatRepositoryImpl(dataSource);
+    final dataSource = ref.watch(messageRemoteDataSourceProvider);
+    return MessageRepositoryImpl(dataSource);
   },
 );
 
 final loadMessagesUseCaseProvider = Provider<LoadMessagesUseCase>(
   (ref) {
-    final repo = ref.watch(chatRepositoryProvider);
+    final repo = ref.watch(messageRepositoryProvider);
     return LoadMessagesUseCase(repo);
   },
 );
 
 final sendMessageUseCaseProvider = Provider<SendMessageUseCase>(
   (ref) {
-    final repo = ref.watch(chatRepositoryProvider);
+    final repo = ref.watch(messageRepositoryProvider);
     return SendMessageUseCase(repo);
   },
 );
 
 final subscribeMessagesUseCaseProvider = Provider<SubscribeMessagesUseCase>(
   (ref) {
-    final repo = ref.watch(chatRepositoryProvider);
+    final repo = ref.watch(messageRepositoryProvider);
     return SubscribeMessagesUseCase(repo);
   },
 );

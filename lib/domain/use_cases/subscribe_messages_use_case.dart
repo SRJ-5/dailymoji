@@ -1,14 +1,14 @@
-import 'package:dailymoji/domain/entities/chat.dart';
-import 'package:dailymoji/domain/repositories/chat_repository.dart';
+import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/domain/repositories/message_repository.dart';
 
 class SubscribeMessagesUseCase {
-  final ChatRepository repository;
+  final MessageRepository repository;
 
   SubscribeMessagesUseCase(this.repository);
 
   void execute({
     required String userId,
-    required void Function(Chat message) onNewMessage,
+    required void Function(Message message) onNewMessage,
   }) {
     repository.subscribeToMessages(
       userId: userId,

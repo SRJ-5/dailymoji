@@ -1,6 +1,6 @@
-import "package:dailymoji/domain/entities/chat.dart";
+import "package:dailymoji/domain/entities/message.dart";
 
-class ChatDto {
+class MessageDto {
   final String? id;
   final DateTime? createdAt;
   final String? userId;
@@ -8,7 +8,7 @@ class ChatDto {
   final String? sender;
   final String? type;
 
-  ChatDto({
+  MessageDto({
     this.id,
     this.createdAt,
     this.userId,
@@ -17,7 +17,7 @@ class ChatDto {
     this.type,
   });
 
-  ChatDto.fromJson(Map<String, dynamic> map)
+  MessageDto.fromJson(Map<String, dynamic> map)
       : this(
           id: map["id"],
           createdAt: DateTime.tryParse(map["created_at"] ?? ""),
@@ -37,7 +37,7 @@ class ChatDto {
     };
   }
 
-  ChatDto copyWith({
+  MessageDto copyWith({
     String? id,
     DateTime? createdAt,
     String? userId,
@@ -45,7 +45,7 @@ class ChatDto {
     String? sender,
     String? type,
   }) {
-    return ChatDto(
+    return MessageDto(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       userId: userId ?? this.userId,
@@ -55,25 +55,25 @@ class ChatDto {
     );
   }
 
-  Chat toEntity() {
-    return Chat(
+  Message toEntity() {
+    return Message(
       id: id ?? "",
       createdAt: createdAt ?? DateTime.now(),
       userId: userId ?? "",
       content: content ?? "",
       sender: sender == "user" ? Sender.user : Sender.bot,
-      type: type == "solution" ? ChatType.solution : ChatType.normal,
+      type: type == "solution" ? MessageType.solution : MessageType.normal,
     );
   }
 
-  factory ChatDto.fromEntity(Chat entity) {
-    return ChatDto(
-      id: entity.id,
-      createdAt: entity.createdAt,
-      userId: entity.userId,
-      content: entity.content,
-      sender: entity.sender == Sender.user ? "user" : "bot",
-      type: entity.type == ChatType.solution ? "solution" : "normal",
+  factory MessageDto.fromEntity(Message message) {
+    return MessageDto(
+      id: message.id,
+      createdAt: message.createdAt,
+      userId: message.userId,
+      content: message.content,
+      sender: message.sender == Sender.user ? "user" : "bot",
+      type: message.type == MessageType.solution ? "solution" : "normal",
     );
   }
 }

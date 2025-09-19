@@ -1,9 +1,9 @@
-import 'package:dailymoji/domain/entities/chat.dart';
+import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/presentation/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ChatState {
-  final List<Chat> messages;
+  final List<Message> messages;
   final bool isTyping; // 봇이 입력 중인지 표시
   final String? errorMessage;
 
@@ -14,7 +14,7 @@ class ChatState {
   });
 
   ChatState copyWith({
-    List<Chat>? messages,
+    List<Message>? messages,
     bool? isTyping,
     String? errorMessage,
   }) {
@@ -42,8 +42,8 @@ class ChatViewModel extends Notifier<ChatState> {
       final subscribeUseCase = ref.read(subscribeMessagesUseCaseProvider);
       subscribeUseCase.execute(
         userId: userId,
-        onNewMessage: (chat) {
-          state = state.copyWith(messages: [...state.messages, chat]);
+        onNewMessage: (message) {
+          state = state.copyWith(messages: [...state.messages, message]);
         },
       );
     } catch (e) {
@@ -52,7 +52,7 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   // 메세지 전송
-  Future<void> sendMessage(Chat message) async {
+  Future<void> sendMessage(Message message) async {
     final sendMessageUseCase = ref.read(sendMessageUseCaseProvider);
     try {
       await sendMessageUseCase.execute(message);
