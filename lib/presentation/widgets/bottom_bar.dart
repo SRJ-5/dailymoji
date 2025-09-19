@@ -6,65 +6,75 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      color: Colors.grey[200],
-      child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(40),
-                    onTap: () {
-                      context.push('/next');
-                    },
-                    child: BottomBarIcon(title: 'Home'),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(40),
-                    onTap: () {},
-                    child: BottomBarIcon(title: 'Report'),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(40),
-                    onTap: () {},
-                    child: BottomBarIcon(title: 'My Page'),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return BottomNavigationBar(
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
+        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "보고서"),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: "마이"),
+      ],
     );
   }
 }
+
+//     Container(
+//       height: 100,
+//       color: Colors.grey[200],
+//       child: SafeArea(
+//         child: Row(
+//           children: [
+//             Expanded(
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(
+//                   horizontal: 20,
+//                 ),
+//                 child: Material(
+//                   color: Colors.transparent,
+//                   child: InkWell(
+//                     borderRadius: BorderRadius.circular(40),
+//                     onTap: () {
+//                       context.push('/next');
+//                     },
+//                     child: BottomBarIcon(title: 'Home'),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//             Expanded(
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(
+//                   horizontal: 20,
+//                 ),
+//                 child: Material(
+//                   color: Colors.transparent,
+//                   child: InkWell(
+//                     borderRadius: BorderRadius.circular(40),
+//                     onTap: () {},
+//                     child: BottomBarIcon(title: 'Report'),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//             Expanded(
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(
+//                   horizontal: 20,
+//                 ),
+//                 child: Material(
+//                   color: Colors.transparent,
+//                   child: InkWell(
+//                     borderRadius: BorderRadius.circular(40),
+//                     onTap: () {},
+//                     child: BottomBarIcon(title: 'My Page'),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 //TODO: 바텀에 사용될 아이콘이 정해지면 회색박스 대신 넣어야함
 class BottomBarIcon extends StatelessWidget {
