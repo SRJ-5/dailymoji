@@ -1,6 +1,7 @@
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -9,7 +10,18 @@ void main() async {
     url: const String.fromEnvironment('SUPABASE_URL'),
     anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
   );
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      child: ScreenUtilInit(
+        designSize: Size(375, 812), // Figma 기준 사이즈 (iPhone X 예시)
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) {
+          return MyApp();
+        },
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -21,6 +33,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: router,
+      theme: ThemeData(
+        fontFamily: "Pretendard",
+      ),
     );
   }
 }
