@@ -6,7 +6,15 @@ class LoadMessagesUseCase {
 
   LoadMessagesUseCase(this.repository);
 
-  Future<List<Chat>> execute(String userId) {
-    return repository.loadMessages(userId);
+  Future<List<Chat>> execute({
+    required String userId,
+    int limit = 50,
+    String? cursorIso,
+  }) {
+    return repository.loadMessages(
+      userId: userId,
+      limit: limit,
+      cursorIso: cursorIso,
+    );
   }
 }

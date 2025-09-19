@@ -9,19 +9,33 @@ class ChatRepositoryImpl implements ChatRepository {
   ChatRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<List<Chat>> loadMessages(String userId) async {
-    final dtos = await remoteDataSource.fetchChats(userId);
+  Future<List<Chat>> loadMessages({
+    required String userId,
+    int limit = 50,
+    String? cursorIso,
+  }) async {
+    final dtos = await remoteDataSource.fetchMessages(
+      userId: userId,
+      limit: limit,
+      cursorIso: cursorIso,
+    );
     return dtos.map((dto) => dto.toEntity()).toList();
   }
 
   @override
-  Future<bool> sendMessage(Chat chat) async {
-    final dto = ChatDto.fromEntity(chat);
-    return await remoteDataSource.insertChat(dto);
+  Future<void> sendMessage(Chat message) async {
+    final dto = ChatDto.fromEntity(message);
+    await remoteDataSource.insertMessage(dto);
   }
 
   @override
-  Stream<Chat> subscribeMessages(String userId) {
-    return remoteDataSource.subscribeToChats(userId).map((dto) => dto.toEntity());
+  void subscribeToMessages({
+    required String userId,
+    required void Function(Chat message) onNewMessage,
+  }) {
+    remoteDataSource.subscribeToMessages(
+      userId: userId,
+      onNewMessage: (dto) => onNewMessage(dto.toEntity()),
+    );
   }
 }

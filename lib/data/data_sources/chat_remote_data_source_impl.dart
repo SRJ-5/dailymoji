@@ -5,49 +5,63 @@ import 'package:dailymoji/data/dtos/chat_dto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
-  final supabase = Supabase.instance.client;
+  final SupabaseClient client;
+
+  ChatRemoteDataSourceImpl(this.client);
 
   @override
-  Future<List<ChatDto>> fetchChats(String userId) async {
-    final response = await supabase.from("chat").select().eq("user_id", userId).order("created_at", ascending: true);
+  Future<List<ChatDto>> fetchMessages({
+    required String userId,
+    int limit = 50,
+    String? cursorIso, // created_at 커서(ISO8601 문자열)
+  }) async {
+    // 오늘 00:00 ~ 내일 00:00 (로컬 기준) → UTC ISO
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    return (response as List).map((json) => ChatDto.fromJson(json)).toList();
-  }
+    final startIso = startOfDay.toUtc().toIso8601String();
+    final endIso = endOfDay.toUtc().toIso8601String();
 
-  @override
-  Future<bool> insertChat(ChatDto dto) async {
-    try {
-      await supabase.from("chat").insert(dto.toJson());
-      return true;
-    } catch (e) {
-      print("insertChat error: $e");
-      return false;
+    var base = client.from("chat").select().eq("user_id", userId).gte("created_at", startIso).lt("created_at", endIso);
+
+    if (cursorIso != null) {
+      base = base.gt("created_at", cursorIso);
     }
+
+    // 3) 그 다음에 정렬/리밋
+    final result = await base.order("created_at", ascending: true).limit(limit);
+
+    final rows = (result as List).cast<Map<String, dynamic>>();
+    return rows.map((m) => ChatDto.fromJson(m)).toList();
   }
 
   @override
-  Stream<ChatDto> subscribeToChats(String userId) {
-    final controller = StreamController<ChatDto>();
+  Future<void> insertMessage(ChatDto chat) async {
+    await client.from("chat").insert(chat.toJson());
+  }
 
-    final channel = supabase.channel("chat_stream_$userId");
-
-    channel.onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: "public",
-      table: "chat",
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: "user_id",
-        value: userId,
-      ),
-      callback: (payload) {
-        final chatDto = ChatDto.fromJson(payload.newRecord);
-        controller.add(chatDto);
-      },
-    );
-
-    channel.subscribe();
-
-    return controller.stream;
+  @override
+  void subscribeToMessages({
+    required String userId,
+    required void Function(ChatDto message) onNewMessage,
+  }) {
+    client
+        .channel("chat_changes_$userId")
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: "public",
+          table: "chat",
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: "user_id",
+            value: userId,
+          ),
+          callback: (payload) {
+            final record = payload.newRecord;
+            onNewMessage(ChatDto.fromJson(record));
+          },
+        )
+        .subscribe();
   }
 }

@@ -7,10 +7,16 @@ import 'package:dailymoji/domain/use_cases/load_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+final supabaseClientProvider = Provider<SupabaseClient>((ref) {
+  return Supabase.instance.client;
+});
 
 final chatRemoteDataSourceProvider = Provider<ChatRemoteDataSource>(
   (ref) {
-    return ChatRemoteDataSourceImpl();
+    final client = ref.read(supabaseClientProvider);
+    return ChatRemoteDataSourceImpl(client);
   },
 );
 

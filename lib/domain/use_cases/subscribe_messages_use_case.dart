@@ -6,7 +6,13 @@ class SubscribeMessagesUseCase {
 
   SubscribeMessagesUseCase(this.repository);
 
-  Stream<Chat> execute(String userId) {
-    return repository.subscribeMessages(userId);
+  void execute({
+    required String userId,
+    required void Function(Chat message) onNewMessage,
+  }) {
+    repository.subscribeToMessages(
+      userId: userId,
+      onNewMessage: onNewMessage,
+    );
   }
 }

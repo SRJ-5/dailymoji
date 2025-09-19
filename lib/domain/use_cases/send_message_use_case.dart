@@ -6,7 +6,7 @@ class SendMessageUseCase {
 
   SendMessageUseCase(this.repository);
 
-  Future<bool> execute(Chat chat) {
-    return repository.sendMessage(chat);
+  Future<void> execute(Chat message) {
+    return repository.sendMessage(message);
   }
 }

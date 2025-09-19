@@ -1,12 +1,17 @@
 import 'package:dailymoji/domain/entities/chat.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class ChatRepository {
-  // 특정 유저의 채팅 내역 불러오기
-  Future<List<Chat>> loadMessages(String userId);
+  Future<List<Chat>> loadMessages({
+    required String userId,
+    int limit,
+    String? cursorIso,
+  });
 
-  // 새로운 채팅 메시지지 전송
-  Future<bool> sendMessage(Chat chat);
+  Future<void> sendMessage(Chat chat);
 
-  // 특정 유저의 채팅 실시간 구독
-  Stream<Chat> subscribeMessages(String userId);
+  void subscribeToMessages({
+    required String userId,
+    required void Function(Chat chat) onNewMessage,
+  });
 }
