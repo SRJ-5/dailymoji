@@ -1,3 +1,5 @@
+import "package:dailymoji/domain/entities/chat.dart";
+
 class ChatDto {
   final String? id;
   final DateTime? createdAt;
@@ -50,6 +52,28 @@ class ChatDto {
       content: content ?? this.content,
       sender: sender ?? this.sender,
       type: type ?? this.type,
+    );
+  }
+
+  Chat toEntity() {
+    return Chat(
+      id: id ?? "",
+      createdAt: createdAt ?? DateTime.now(),
+      userId: userId ?? "",
+      content: content ?? "",
+      sender: sender == "user" ? Sender.user : Sender.bot,
+      type: type == "solution" ? ChatType.solution : ChatType.normal,
+    );
+  }
+
+  factory ChatDto.fromEntity(Chat entity) {
+    return ChatDto(
+      id: entity.id,
+      createdAt: entity.createdAt,
+      userId: entity.userId,
+      content: entity.content,
+      sender: entity.sender == Sender.user ? "user" : "bot",
+      type: entity.type == ChatType.solution ? "solution" : "normal",
     );
   }
 }
