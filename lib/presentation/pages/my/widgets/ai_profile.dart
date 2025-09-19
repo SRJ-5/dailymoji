@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AiProfil extends StatelessWidget {
-  const AiProfil({super.key});
+class AiProfile extends StatelessWidget {
+  const AiProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class AiProfil extends StatelessWidget {
           ),
           SizedBox(width: 10),
           Align(
-            alignment: AlignmentGeometry.centerRight,
+            alignment: Alignment.centerRight,
             child: Text(
               '편집',
               style: TextStyle(
