@@ -6,4 +6,7 @@ abstract class ChatRemoteDataSource {
 
   // 채팅 메세지 저장하기
   Future<bool> insertChat(ChatDto dto);
+
+  // 특정 유저의 채팅 실시간 구독
+  Stream<ChatDto> subscribeToChats(String userId);
 }
