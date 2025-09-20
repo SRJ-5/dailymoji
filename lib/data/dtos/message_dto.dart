@@ -1,4 +1,6 @@
-class ChatDto {
+import "package:dailymoji/domain/entities/message.dart";
+
+class MessageDto {
   final String? id;
   final DateTime? createdAt;
   final String? userId;
@@ -6,7 +8,7 @@ class ChatDto {
   final String? sender;
   final String? type;
 
-  ChatDto({
+  MessageDto({
     this.id,
     this.createdAt,
     this.userId,
@@ -15,7 +17,7 @@ class ChatDto {
     this.type,
   });
 
-  ChatDto.fromJson(Map<String, dynamic> map)
+  MessageDto.fromJson(Map<String, dynamic> map)
       : this(
           id: map["id"],
           createdAt: DateTime.tryParse(map["created_at"] ?? ""),
@@ -27,7 +29,6 @@ class ChatDto {
 
   Map<String, dynamic> toJson() {
     return {
-      "created_at": createdAt?.toIso8601String(),
       "user_id": userId,
       "content": content,
       "sender": sender,
@@ -35,7 +36,7 @@ class ChatDto {
     };
   }
 
-  ChatDto copyWith({
+  MessageDto copyWith({
     String? id,
     DateTime? createdAt,
     String? userId,
@@ -43,7 +44,7 @@ class ChatDto {
     String? sender,
     String? type,
   }) {
-    return ChatDto(
+    return MessageDto(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       userId: userId ?? this.userId,
@@ -52,4 +53,25 @@ class ChatDto {
       type: type ?? this.type,
     );
   }
+
+  Message toEntity() {
+    return Message(
+      id: id,
+      createdAt: createdAt ?? DateTime.now(),
+      userId: userId ?? "",
+      content: content ?? "",
+      sender: sender == "user" ? Sender.user : Sender.bot,
+      type: type == "solution" ? MessageType.solution : MessageType.normal,
+    );
+  }
+
+  MessageDto.fromEntity(Message message)
+      : this(
+          id: message.id,
+          createdAt: message.createdAt,
+          userId: message.userId,
+          content: message.content,
+          sender: message.sender == Sender.user ? "user" : "bot",
+          type: message.type == MessageType.solution ? "solution" : "normal",
+        );
 }
