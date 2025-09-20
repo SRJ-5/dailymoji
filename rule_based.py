@@ -37,6 +37,8 @@ def rule_scoring(text: str):
     tokens = tokenize(text)
     scores = {c: 0.0 for c in LEXICON}
     evidence = {c: [] for c in LEXICON}
+    ignored_tokens = []  # 잡담 로그
+
     debug_info = {"emphasis": [], "negation": False, "slang": []}
 
     emphasis_idx = [i for i, t in enumerate(tokens) if t in EMPHASIS_WORDS]
@@ -58,12 +60,14 @@ def rule_scoring(text: str):
             if tok in keywords:
                 scores = {c: (1.0 if c == cluster else 0.0) for c in scores}
                 evidence[cluster].append(tok)
-                return scores, evidence, debug_info  # hard hit이면 바로 리턴
+                return scores, evidence, {"emphasis": emphasis_idx, "negation": negation_present, "slang": [], "ignored": ignored_tokens}  # hard hit이면 바로 리턴
 
     # -------- 2) Lexicon 기반 --------
     for i, tok in enumerate(tokens):
+        matched = False
         for cluster, words in LEXICON.items():
             if tok in words:
+                matched = True
                 score = 0.3  # base score
                 boost = 1.0
 
@@ -78,6 +82,9 @@ def rule_scoring(text: str):
                 scores[cluster] = max(scores[cluster], score)
                 evidence[cluster].append(tok)
 
+        if not matched:
+            ignored_tokens.append(tok)
+
     # -------- 3) 부정어 보정 --------
     if negation_present:
         scores["positive"] = 0.0
@@ -88,4 +95,9 @@ def rule_scoring(text: str):
         if not evidence[c]:
             scores[c] = 0.0
 
-    return scores, evidence, debug_info
+    return scores, evidence, {
+        "emphasis": emphasis_idx,
+        "negation": negation_present,
+        "slang": [],
+        "ignored": ignored_tokens,
+    }

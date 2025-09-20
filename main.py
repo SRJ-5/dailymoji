@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import traceback
 from typing import Optional, List, Dict, Any
 
@@ -12,6 +13,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client
+
+# 형태소 분석: 설치되어 있지 않으면 graceful fallback
+try:
+    from kiwipiepy import Kiwi
+    _kiwi = Kiwi()
+except Exception:
+    _kiwi = None
 
 from rule_based import rule_scoring
 from srj5_constants import (
@@ -73,6 +81,9 @@ SCHEMA:
  'confidence': 0.0..1.0}
 
 RULES:
+- Input text may contain casual or irrelevant small talk. Ignore all non-emotional content.
+- Only assign nonzero scores when evidence keywords are explicitly present.
+
 A) Evidence & Gating
 - evidence_spans MUST copy exact words/phrases from the input text.
 - If evidence_spans is empty → corresponding cluster score MUST be <= 0.2.
@@ -87,41 +98,19 @@ B) Cluster Priorities
 
 C) DSM Hits
 - dsm_hits must only contain predefined survey codes:
-  PHQ9_Q1..9, GAD7_Q1..7, PSQI_Q1..7, ASRS_Q1..6, RSES_Q1..10.
+  PHQ9_Q1..9, BAT_Q1..4, GAD7_Q1..7, PSQI_Q1..7, ASRS_Q1..6, RSES_Q1..10.
 - Do NOT output disorder names like 'MDD' or 'GAD'.
+
+D) SAFETY RULES:
+- If the user explicitly expresses *their own desire or intention* to die, commit suicide, or end their life → mark intent.self_harm as "likely".
+- If the text only mentions someone else’s suicide, news, or a figurative joke ("죽겠다ㅋㅋ", "죽을만큼 맛있어") → keep self_harm as "none".
+- Be conservative: only assign "possible" or "likely" when the user clearly refers to themselves in first person (e.g. "죽고싶다", "나 이제 살고싶지 않아").
 
 STRICT:
 - Do NOT invent evidence.
 - Do NOT assign nonzero scores without matching evidence.
 - Do NOT output anything besides the JSON object.
 """
-
-# # 위 프롬프트 짧은 버전(토큰 최소화 버전)
-# """
-# You are an SRJ-5 clinical emotion analysis assistant. 
-# Return STRICT JSON ONLY following this schema (no prose):
-
-# {'schema_version':'srj5-v1',
-#  'text_cluster_scores':{'neg_low':0..1,'neg_high':0..1,'adhd_high':0..1,'sleep':0..1,'positive':0..1},
-#  'intensity':{'neg_low':0..3,'neg_high':0..3,'adhd_high':0..3,'sleep':0..3,'positive':0..3},
-#  'frequency':{'neg_low':0..3,'neg_high':0..3,'adhd_high':0..3,'sleep':0..3,'positive':0..3},
-#  'evidence_spans':{'neg_low':[str],'neg_high':[str],'adhd_high':[str],'sleep':[str],'positive':[str]},
-#  'dsm_hits':{'neg_low':[str],'neg_high':[str],'adhd_high':[str],'sleep':[str],'positive':[str]},
-#  'intent':{'self_harm':'none|possible|likely','other_harm':'none|possible|likely'},
-#  'irony_or_negation': bool,
-#  'valence_hint': -1.0..1.0,
-#  'arousal_hint': 0.0..1.0,
-#  'confidence': 0.0..1.0}
-
-# Rules:
-# - evidence_spans must copy exact input words; if empty → score ≤ 0.2. 
-# - Sleep >0.2 requires sleep keywords.
-# - neg_low has priority if 우울/무기력/번아웃 appear, even if neg_high present.
-# - adhd_high/sleep/positive require explicit keywords, else 0.0.
-# - positive ignores irony.
-# - dsm_hits must use only PHQ9/GAD7/PSQI/ASRS/RSES item codes.
-# """
-
 
 async def call_llm(user_payload: dict) -> dict:
     if not OPENAI_KEY:
@@ -147,6 +136,101 @@ async def call_llm(user_payload: dict) -> dict:
             return json.loads(content)
         except Exception:
             return {"error": "invalid_json", "raw": data}
+
+
+# ---------- Safety: Regex + Kiwi + LLM intent 결합 ----------
+# 1) 자살 암시/의사 표현 정규식(다양한 변형 포함)
+SAFETY_REGEX = [
+    r"죽고\s*싶(?:다|어|다\.)",              # 죽고싶다/죽고 싶어
+    r"살고\s*싶지\s*않(?:다|아)",           # 살고 싶지 않다
+    r"자살\s*(?:하고\s*싶|충동|생각)",       # 자살 하고 싶/충동/생각
+    r"목숨(?:을)?\s*(?:끊|버리|포기)\s*하고?\s*싶(?:다|어)?",
+    r"생을\s*마감하(?:고|고\s*싶|고싶)",
+    r"죽어버리(?:고)?\s*싶(?:다|어)?",
+    r"끝내버리(?:고)?\s*싶(?:다|어)?",
+    r"살기\s*싫(?:다|어)",
+]
+
+# 2) 거짓양성(비유/농담/긍정문맥) 필터
+SAFETY_FIGURATIVE = [
+    r"죽을\s*만큼\s*(?:맛있|재밌|웃기|행복|좋)",
+    r"죽겠다\s*ㅋㅋ",
+    r"개\s*맛있",   # 문맥에 따라 다르지만 기본 차단
+]
+
+def _find_regex_matches(text: str, patterns: List[str]) -> List[str]:
+    hits = []
+    for pat in patterns:
+        for m in re.finditer(pat, text, flags=re.IGNORECASE):
+            hits.append(m.group(0))
+    return hits
+
+def _kiwi_tokens(text: str) -> List[str]:
+    if not _kiwi:
+        return []
+    try:
+        return [t.form for t in _kiwi.tokenize(text)]
+    except Exception:
+        return []
+
+def _kiwi_has_selfharm_combo(text: str) -> bool:
+    """
+    죽/VV + 고 + 싶/VX 조합, 살/VV + 고 + 싶 + 지 않 조합 등 형태소 기반 탐지
+    """
+    if not _kiwi:
+        return False
+    try:
+        tokens = _kiwi.tokenize(text)
+        lemmas = [f"{t.tag}:{t.form}" for t in tokens]  # 디버깅용
+        # 단순 패턴: '죽' 동사 + '싶' 보조/형태, 혹은 '살' + '싶' + '않'
+        forms = [t.form for t in tokens]
+        tags = [t.tag for t in tokens]
+
+        # 죽-고-싶
+        for i in range(len(forms) - 2):
+            if ("죽" in forms[i] or "죽" in forms[i].rstrip("다")) and \
+               (forms[i+1] in ["고", "고요"]) and \
+               ("싶" in forms[i+2] or "싶" in forms[i+2].rstrip("다")):
+                return True
+
+        # 살-고-싶-지-않
+        for i in range(len(forms) - 4):
+            if ("살" in forms[i] or "살" in forms[i].rstrip("다")) and \
+               (forms[i+1] in ["고", "고요"]) and \
+               ("싶" in forms[i+2]) and \
+               (forms[i+3] in ["지"]) and \
+               ("않" in forms[i+4] or "아니" in forms[i+4]):
+                return True
+
+        return False
+    except Exception:
+        return False
+
+def is_safety_text(text: str, llm_json: dict | None, debug_log: dict) -> bool:
+    # 1) 정규식 탐지
+    regex_hits = _find_regex_matches(text, SAFETY_REGEX)
+    figurative_hits = _find_regex_matches(text, SAFETY_FIGURATIVE)
+
+    # 2) Kiwi 형태소 조합(옵션)
+    kiwi_combo = _kiwi_has_selfharm_combo(text)
+    kiwi_tokens = _kiwi_tokens(text)
+
+    # 3) LLM intent
+    safety_llm_flag = (llm_json or {}).get("intent", {}).get("self_harm") in {"possible", "likely"}
+
+    # 4) 최종 판정: (정규식 or kiwi 조합 or LLM) AND (비유/농담 패턴이 없음)
+    triggered = (bool(regex_hits) or kiwi_combo or safety_llm_flag) and not bool(figurative_hits)
+
+    # --- 로그 남기기 ---
+    debug_log["safety"] = {
+        "regex_matches": regex_hits,
+        "figurative_matches": figurative_hits,
+        "kiwi_combo": kiwi_combo,
+        "kiwi_tokens": kiwi_tokens[:50],  # 너무 길면 잘라서
+        "llm_intent_flag": safety_llm_flag,
+        "triggered": triggered,
+    }
+    return triggered
 
 
 # ---------- Helpers ----------
@@ -231,20 +315,20 @@ def g_score(final_scores: dict) -> float:
 async def checkin(payload: Checkin):
     try:
         text = payload.text or ""
-        debug_log={}
+        debug_log: Dict[str, Any] = {}
 
         # 1) Rule
         rule_scores, rule_evidence, debug_log_rule = rule_scoring(text)
         rule_max = max(rule_scores.values() or [0.0])
         debug_log["rule_scores"] = rule_scores
         debug_log["rule_evidence"] = rule_evidence
-        debug_log["rule_debug"] = debug_log_rule  # 강조어/슬랭 기록
+        debug_log["rule_debug"] = debug_log_rule  # 강조어/슬랭 기록 -- 여기서 ignored 토큰 확인 가능
 
         # 2) LLM
-        llm_json=None
+        llm_json = None
         if rule_max < RULE_SKIP_LLM:
-            llm_json=await call_llm(payload.dict())
-        debug_log["llm"]=llm_json
+            llm_json = await call_llm(payload.dict())
+        debug_log["llm"] = llm_json
 
         # 3) Fusion
         text_if={c:0.0 for c in CLUSTERS}
@@ -269,10 +353,17 @@ async def checkin(payload: Checkin):
         intervention=map_intervention(profile,final_scores,_is_night(payload.timestamp),llm_json)
         debug_log["intervention"]=intervention
 
-        # 6) Safety
-        if any(term in text for term in SAFETY_TERMS):
-            profile=1; intervention={"cluster":"neg_low","severity":"high","preset_id":"safety_crisis_modal_v1","priority":1000,"safety_check":True}
-            debug_log["safety_override"]=True
+        # 6) Safety (강화 버전: Regex/Ko-morph + LLM intent 결합)
+        if is_safety_text(text, llm_json, debug_log):
+            profile = 1
+            intervention = {
+                "cluster": "neg_low",
+                "severity": "high",
+                "preset_id": "safety_crisis_modal_v1",
+                "priority": 1000,
+                "safety_check": True,
+            }
+            debug_log["safety_override_applied"] = True
 
         # 7) G-score
         g=g_score(final_scores); debug_log["g_score"]=g
@@ -286,7 +377,7 @@ async def checkin(payload: Checkin):
                     "profile":profile,
                     "g_score":g,
                     "intervention":json.dumps(intervention),
-                    "debug_log":json.dumps(debug_log),
+                    "debug_log":json.dumps(debug_log, ensure_ascii=False),
                 }
                 supabase.table("sessions").insert(session_row).execute()
 
