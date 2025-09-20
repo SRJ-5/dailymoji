@@ -7,7 +7,7 @@ abstract class MessageRepository {
     String? cursorIso,
   });
 
-  Future<void> sendMessage(Message message);
+  Future<Message> sendMessage(Message message);
 
   void subscribeToMessages({
     required String userId,

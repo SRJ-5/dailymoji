@@ -37,8 +37,10 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
   }
 
   @override
-  Future<void> insertMessage(MessageDto messageDto) async {
-    await client.from("messages").insert(messageDto.toJson());
+  Future<MessageDto> insertMessage(MessageDto messageDto) async {
+    final response = await client.from("messages").insert(messageDto.toJson()).select().single();
+
+    return MessageDto.fromJson(response);
   }
 
   @override

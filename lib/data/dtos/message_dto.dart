@@ -29,7 +29,6 @@ class MessageDto {
 
   Map<String, dynamic> toJson() {
     return {
-      "created_at": createdAt?.toIso8601String(),
       "user_id": userId,
       "content": content,
       "sender": sender,
@@ -57,7 +56,7 @@ class MessageDto {
 
   Message toEntity() {
     return Message(
-      id: id ?? "",
+      id: id,
       createdAt: createdAt ?? DateTime.now(),
       userId: userId ?? "",
       content: content ?? "",
@@ -66,14 +65,13 @@ class MessageDto {
     );
   }
 
-  factory MessageDto.fromEntity(Message message) {
-    return MessageDto(
-      id: message.id,
-      createdAt: message.createdAt,
-      userId: message.userId,
-      content: message.content,
-      sender: message.sender == Sender.user ? "user" : "bot",
-      type: message.type == MessageType.solution ? "solution" : "normal",
-    );
-  }
+  MessageDto.fromEntity(Message message)
+      : this(
+          id: message.id,
+          createdAt: message.createdAt,
+          userId: message.userId,
+          content: message.content,
+          sender: message.sender == Sender.user ? "user" : "bot",
+          type: message.type == MessageType.solution ? "solution" : "normal",
+        );
 }

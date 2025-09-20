@@ -23,9 +23,10 @@ class MessageRepositoryImpl implements MessageRepository {
   }
 
   @override
-  Future<void> sendMessage(Message message) async {
+  Future<Message> sendMessage(Message message) async {
     final dto = MessageDto.fromEntity(message);
-    await remoteDataSource.insertMessage(dto);
+    final savedDto = await remoteDataSource.insertMessage(dto);
+    return savedDto.toEntity();
   }
 
   @override

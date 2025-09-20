@@ -6,7 +6,7 @@ class SendMessageUseCase {
 
   SendMessageUseCase(this.repository);
 
-  Future<void> execute(Message message) {
+  Future<Message> execute(Message message) {
     return repository.sendMessage(message);
   }
 }

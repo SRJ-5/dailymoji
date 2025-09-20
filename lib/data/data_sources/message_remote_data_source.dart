@@ -7,7 +7,7 @@ abstract class MessageRemoteDataSource {
     String? cursorIso,
   });
 
-  Future<void> insertMessage(MessageDto messageDto);
+  Future<MessageDto> insertMessage(MessageDto messageDto);
 
   void subscribeToMessages({
     required String userId,
