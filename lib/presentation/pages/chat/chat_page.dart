@@ -1,14 +1,17 @@
+import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
-class ChatPage extends StatefulWidget {
+class ChatPage extends ConsumerStatefulWidget {
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin {
+class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
   String selectedEmojiAsset = "assets/images/smile.png";
   final _messageInputController = TextEditingController();
@@ -38,12 +41,14 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     }
   }
 
-  String _formattedNow() {
-    return DateFormat("HH:mm").format(DateTime.now());
+  String _formattedNow(DateTime date) {
+    return DateFormat("HH:mm").format(date);
   }
 
   @override
   Widget build(BuildContext context) {
+    final chatState = ref.watch(chatViewModelProvider);
+
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
       appBar: AppBar(
@@ -77,10 +82,12 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               children: [
                 Expanded(
                   child: ListView.builder(
-                    reverse: true, // 최신 메세지가 맨 밑에 보여지게
-                    itemCount: 10,
+                    itemCount: chatState.messages.length,
                     itemBuilder: (context, index) {
-                      return index % 2 == 0 ? _botMessage("수니슈니님, 오늘 왜 화가 났어요?") : _userMessage("아 그냥 별거 아닌 일들이 계속 겹치니까 괜히 짜증나더라");
+                      final message = chatState.messages[index];
+                      return message.sender == Sender.user
+                          ? _userMessage(message.content, message.createdAt)
+                          : _botMessage(message.content, message.createdAt);
                     },
                   ),
                 ),
@@ -102,7 +109,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _userMessage(String message) {
+  Widget _userMessage(String message, DateTime? date) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
@@ -110,7 +117,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            _formattedNow(),
+            _formattedNow(date ?? DateTime.now()),
             style: TextStyle(
               fontSize: 14.sp,
               letterSpacing: 0.sp,
@@ -146,7 +153,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _botMessage(String message) {
+  Widget _botMessage(String message, DateTime? date) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
@@ -178,7 +185,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           ),
           SizedBox(width: 4.r),
           Text(
-            _formattedNow(),
+            _formattedNow(date ?? DateTime.now()),
             style: TextStyle(
               fontSize: 14.sp,
               letterSpacing: 0.sp,
@@ -369,7 +376,20 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
           ),
           GestureDetector(
             onTap: () {
-              // 전송 로직
+              final chatVm = ref.read(chatViewModelProvider.notifier);
+              // TODO 전송 로직
+              final text = _messageInputController.text.trim();
+              if (text.isNotEmpty) {
+                final message = Message(
+                  userId: "8dfc1a65-1fae-47f6-81f4-37257acc3db6",
+                  content: text,
+                  sender: Sender.user,
+                  type: MessageType.normal,
+                  createdAt: DateTime.now(),
+                );
+                chatVm.sendMessage(message);
+                _messageInputController.clear();
+              }
             },
             child: Container(
               width: 40.67.w,

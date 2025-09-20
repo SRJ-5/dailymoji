@@ -28,7 +28,15 @@ class ChatState {
 
 class ChatViewModel extends Notifier<ChatState> {
   @override
-  ChatState build() => ChatState();
+  ChatState build() {
+    final userId = "8dfc1a65-1fae-47f6-81f4-37257acc3db6";
+    _init(userId);
+    return ChatState();
+  }
+
+  Future<void> _init(String userId) async {
+    await loadMessages(userId);
+  }
 
   // 메세지 불러오기 + 실시간 구독 시작
   Future<void> loadMessages(String userId) async {
@@ -72,6 +80,7 @@ class ChatViewModel extends Notifier<ChatState> {
       await Future.delayed(const Duration(seconds: 2));
       state = state.copyWith(isTyping: false);
     } catch (e) {
+      print("send error : $e");
       // 혹시나 슈퍼베이스 저장 실패 시
       final updatedMessages = [...state.messages]..removeLast();
       state = state.copyWith(
