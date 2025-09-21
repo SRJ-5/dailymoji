@@ -1,9 +1,12 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
-import 'package:dailymoji/presentation/pages/onboarding/widgets/AiNameSetting.dart';
-import 'package:dailymoji/presentation/pages/onboarding/widgets/SelectAi.dart';
-import 'package:dailymoji/presentation/pages/onboarding/widgets/SelectAiPersonality.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/ai_name_setting.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai_personality.dart';
 import 'package:dailymoji/presentation/pages/onboarding/onboarding_part2_page.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/user_nick_name.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,7 +20,7 @@ class OnboardingPart1Page extends ConsumerStatefulWidget {
 class _OnboardingPart1PageState
     extends ConsumerState<OnboardingPart1Page> {
   int stepIndex = 0;
-  int totalSteps = 2;
+  int totalSteps = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +28,7 @@ class _OnboardingPart1PageState
       0 => ref.watch(onboardingViewModelProvider).step11,
       1 => ref.watch(onboardingViewModelProvider).step12,
       2 => ref.watch(onboardingViewModelProvider).step13,
+      3 => ref.watch(onboardingViewModelProvider).step14,
       _ => false,
     };
     return GestureDetector(
@@ -32,7 +36,6 @@ class _OnboardingPart1PageState
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
         backgroundColor: AppColors.yellow50,
         appBar: AppBar(
           backgroundColor: AppColors.yellow50,
@@ -44,17 +47,21 @@ class _OnboardingPart1PageState
                   icon: Icon(Icons.arrow_back))
               : null,
           title: Text(
-            'Step 1. 캐릭터 설정',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            stepIndex == 3
+                ? 'Step 1. 나의 닉네임 설정'
+                : 'Step 1. 캐릭터 설정',
+            style: AppFontStyles.bodyBold18
+                .copyWith(color: AppColors.grey900),
           ),
           centerTitle: true,
         ),
         body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20)
-              .copyWith(bottom: 20),
+          padding: EdgeInsets.symmetric(horizontal: 16.w)
+              .copyWith(bottom: 20.h),
           child: Column(
             children: [
               TopIndicator(
+                  width: 51,
                   totalSteps: totalSteps,
                   stepIndex: stepIndex), // indicator 맨 위
               Expanded(
@@ -62,6 +69,7 @@ class _OnboardingPart1PageState
                   SelectAi(),
                   AiNameSetting(),
                   SelectAiPersonality(),
+                  UserNickName(),
                 ][stepIndex],
               ),
             ],
@@ -69,11 +77,10 @@ class _OnboardingPart1PageState
         ),
         bottomNavigationBar: SafeArea(
           child: SizedBox(
-            width: 100,
-            height: 100,
+            width: 100.w,
+            height: 100.h,
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
                 children: [
                   ElevatedButton(
@@ -83,7 +90,8 @@ class _OnboardingPart1PageState
                           ? AppColors.green400
                           : AppColors.grey200,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius:
+                            BorderRadius.circular(12.r),
                       ),
                     ),
                     onPressed: isNextEnabled
@@ -104,59 +112,19 @@ class _OnboardingPart1PageState
                             }
                           }
                         : null,
-                    child: Text(
-                      '계속하기',
-                      style: TextStyle(
-                        color: isNextEnabled
-                            ? AppColors.grey900
-                            : AppColors.grey500,
-                        fontSize: 16,
-                      ),
-                    ),
+                    child: Text('계속하기',
+                        style:
+                            AppFontStyles.bodyMedium16.copyWith(
+                          color: isNextEnabled
+                              ? AppColors.grey900
+                              : AppColors.grey500,
+                        )),
                   )
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class TopIndicator extends StatelessWidget {
-  const TopIndicator({
-    super.key,
-    required this.totalSteps,
-    required this.stepIndex,
-  });
-
-  final int totalSteps;
-  final int stepIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 28.h,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: List.generate(totalSteps + 1, (index) {
-          bool isActive = index <= stepIndex;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Container(
-              width: 51.w,
-              height: 9.h,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4.5.r),
-                  color: isActive
-                      ? Color(0xff778654)
-                      : Color(0xffe8ebe0)),
-            ),
-          );
-        }),
       ),
     );
   }

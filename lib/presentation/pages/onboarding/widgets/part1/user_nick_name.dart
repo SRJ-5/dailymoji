@@ -1,23 +1,30 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class AiNameSetting extends ConsumerStatefulWidget {
-  const AiNameSetting({
-    super.key,
-  });
+class UserNickName extends ConsumerStatefulWidget {
+  const UserNickName({super.key});
 
   @override
-  ConsumerState<AiNameSetting> createState() =>
-      _AiNameSettingState();
+  ConsumerState<UserNickName> createState() =>
+      _UserNickNameState();
 }
 
-class _AiNameSettingState extends ConsumerState<AiNameSetting> {
-  bool isNameCheck = true;
-  final TextEditingController _textEditingController =
+class _UserNickNameState extends ConsumerState<UserNickName> {
+  bool _isNameCheck = true;
+  TextEditingController _textEditingController =
       TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _textEditingController = TextEditingController(
+        text:
+            ref.read(onboardingViewModelProvider).userNickName);
+  }
 
   @override
   void dispose() {
@@ -27,11 +34,12 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
 
   @override
   Widget build(BuildContext context) {
+    final _state = ref.read(onboardingViewModelProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          height: 24.h,
+          height: 24.r,
         ),
         Container(
           width: double.infinity,
@@ -39,11 +47,8 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              '캐릭터에게\n멋진 이름을 지어주세요',
-              softWrap: true,
-              overflow: TextOverflow.visible,
-              style: TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.bold),
+              '${_state.aiName}이(가)\n뭐라고 부르면 될까요?',
+              style: AppFontStyles.heading2,
             ),
           ),
         ),
@@ -55,40 +60,34 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           child: Container(
             width: double.infinity,
             height: 64.h,
-            padding: EdgeInsets.symmetric(vertical: 8),
             child: Align(
               alignment: Alignment.centerLeft,
               child: TextField(
                 maxLength: 10,
                 controller: _textEditingController,
+                style: AppFontStyles.bodyRegular16
+                    .copyWith(color: AppColors.grey900),
                 onChanged: (value) {
-                  final isValid = value.length >= 3;
+                  final isValid = value.length >= 2;
                   setState(() {
                     if (value.isEmpty) {
-                      isNameCheck = true;
+                      _isNameCheck = true;
                     } else {
-                      isNameCheck = isValid;
+                      _isNameCheck = isValid;
                     }
-                    // final length = value.length;
-                    // if (length == 0) {
-                    //   isNameCheck = true;
-                    // } else if (length < 3) {
-                    //   isNameCheck = false;
-                    // } else {
-                    //   isNameCheck = true;
-                    // }
                   });
                   // TODO: ViewModel로 상태 관리 하여 저장
                   ref
                       .watch(
                           onboardingViewModelProvider.notifier)
-                      .changeStep12(isValid);
+                      .setUserNickName(
+                          check: isValid, userNickName: value);
                 },
                 decoration: InputDecoration(
                     counterText: '',
-                    hintText: '캐릭터 이름을 적어주세요',
-                    hintStyle:
-                        TextStyle(color: AppColors.grey400),
+                    hintText: '별명을 입력해 주세요',
+                    hintStyle: AppFontStyles.bodyRegular16
+                        .copyWith(color: AppColors.grey400),
                     suffixIcon:
                         _textEditingController.text.isEmpty
                             ? null
@@ -97,46 +96,49 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                                 onPressed: () {
                                   _textEditingController.clear();
                                   setState(() {
-                                    isNameCheck = true;
+                                    _isNameCheck = true;
                                   });
                                   ref
                                       .watch(
                                           onboardingViewModelProvider
                                               .notifier)
-                                      .changeStep12(false);
+                                      .setUserNickName(
+                                          check: false,
+                                          userNickName: '');
                                 },
                               ),
                     contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 16),
+                        horizontal: 12.w, vertical: 16.h),
                     filled: true,
                     fillColor: AppColors.green50,
                     border: OutlineInputBorder(
                         borderSide: BorderSide(
                             width: 1, color: AppColors.grey200),
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius:
+                            BorderRadius.circular(12.r)),
                     focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                             width: 1, color: AppColors.green500),
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius:
+                            BorderRadius.circular(12.r)),
                     enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                             width: 1, color: AppColors.grey200),
                         borderRadius:
-                            BorderRadius.circular(12))),
+                            BorderRadius.circular(12.r))),
               ),
             ),
           ),
         ),
-        Text(
-          '• 3~10자만 사용 가능해요',
-          style: TextStyle(
-              color: isNameCheck
-                  ? AppColors.grey700
-                  : AppColors.orange500),
-        ),
+        Text('• 2~10자만 사용 가능해요',
+            style: AppFontStyles.bodyRegular12.copyWith(
+                color: _isNameCheck
+                    ? AppColors.grey700
+                    : AppColors.orange500)),
         Text(
           '• 나중에 언제든지 변경할 수 있어요',
-          style: TextStyle(color: AppColors.grey700),
+          style: AppFontStyles.bodyRegular12
+              .copyWith(color: AppColors.grey700),
         )
       ],
     );
