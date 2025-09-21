@@ -26,6 +26,7 @@ class EmotionalRecordDto {
     this.gScore,
     this.recommendedSolution,
     this.solutionId,
+    // TODO chat -> message 변경
     this.chatIds,
   });
 
