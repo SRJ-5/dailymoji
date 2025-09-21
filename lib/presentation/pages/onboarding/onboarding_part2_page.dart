@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/pages/onboarding/onboarding_part1_page.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,9 @@ class _OnboardingPart2PageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.yellow50,
       appBar: AppBar(
+        backgroundColor: AppColors.yellow50,
         leading: stepIndex > 0
             ? IconButton(
                 onPressed: () {

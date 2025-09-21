@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SelectAi extends StatelessWidget {
-  const SelectAi({
-    super.key,
-  });
+  const SelectAi({super.key});
 
   @override
   Widget build(BuildContext context) {
