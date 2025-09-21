@@ -12,26 +12,72 @@ class DailyMojiHomePage extends StatefulWidget {
 }
 
 class _DailyMojiHomePageState extends State<DailyMojiHomePage> {
-  final String fullText = "수니수니님, 오늘 왜 슬펐나요?";
+  String defaultText = "안녕!\n지금 기분이 어때?";
   String displayText = "";
   int _index = 0;
   Timer? _timer;
 
+  double angryScale = 1.0;
+  double cryScale = 1.0;
+  double shockedScale = 1.0;
+  double sleepingScale = 1.0;
+  double smileScale = 1.0;
+
   @override
   void initState() {
     super.initState();
-    _startTyping();
+    _startTyping("안녕!\n지금 기분이 어때?");
   }
 
-  void _startTyping() {
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_index < fullText.length) {
+  void _startTyping(String newText) {
+    _timer?.cancel();
+    setState(() {
+      displayText = "";
+      _index = 0;
+    });
+
+    _timer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
+      if (_index < newText.length) {
         setState(() {
-          displayText += fullText[_index];
+          displayText += newText[_index];
           _index++;
         });
       } else {
         _timer?.cancel();
+      }
+    });
+  }
+
+  void onEmojiTap(String newText, String emotion) {
+    // 텍스트 갱신
+    _startTyping(newText);
+
+    // 애니메이션 실행
+    setState(() {
+      if (emotion == "angry") {
+        angryScale = 0.8;
+      } else {
+        angryScale = 1.0;
+      }
+      if (emotion == "cry") {
+        cryScale = 0.8;
+      } else {
+        cryScale = 1.0;
+      }
+      if (emotion == "shocked") {
+        shockedScale = 0.8;
+      } else {
+        shockedScale = 1.0;
+      }
+      if (emotion == "sleeping") {
+        sleepingScale = 0.8;
+      } else {
+        sleepingScale = 1.0;
+      }
+      if (emotion == "smile") {
+        smileScale = 0.8;
+      } else {
+        smileScale = 1.0;
       }
     });
   }
@@ -45,92 +91,127 @@ class _DailyMojiHomePageState extends State<DailyMojiHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ AppBar
+      backgroundColor: Color(0xFFFEFBF4),
+      // AppBar
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFFEFBF4),
         title: Image.asset(
           "assets/images/logo.png", // DailyMoji 로고 이미지 경로
           height: 30,
         ),
       ),
 
-      // ✅ Body
+      // Body
       body: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            Image.asset(
-              "assets/images/cado_00.png", // 중앙 캐릭터 이미지
-              height: 240.h,
-              width: 160.w,
-            ),
-            Positioned(
-              top: -146,
-              child: Image.asset(
-                "assets/images/bubble_c 1.png",
-                height: 200.h,
-                width: 200.w,
-              ),
-            ),
-            Positioned(
-              top: -77,
-              child: Text(
-                displayText, // ✅ 타이핑 효과 적용된 텍스트
-                style: const TextStyle(
-                  fontSize: 22,
-                  color: Colors.black,
+        child: Align(
+          alignment: const Alignment(0, -0.4),
+          child: SizedBox(
+            height: 400.h,
+            width: 340.w,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Image.asset(
+                  "assets/images/cado_00.png", // 중앙 캐릭터 이미지
+                  height: 240.h,
+                  width: 160.w,
                 ),
-                textAlign: TextAlign.center,
-              ),
+                Positioned(
+                  top: -66,
+                  child: Image.asset(
+                    "assets/images/bubble_c 1.png",
+                    height: 200.h,
+                    width: 200.w,
+                  ),
+                ),
+                Positioned(
+                  top: -10,
+                  child: SizedBox(
+                    width: 150.w,
+                    child: Text(
+                      displayText, // 타이핑 효과 적용된 텍스트
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
+                    ),
+                  ),
+                ),
+                // ✅ 감정 이모티콘들 (Stack + Positioned)
+                Positioned(
+                  bottom: 30.h,
+                  child: GestureDetector(
+                    onTap: () {
+                      onEmojiTap("기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ", 'smile');
+                    },
+                    child: Image.asset(
+                      "assets/images/emoticon/emo_3d_smile_02.png",
+                      scale: smileScale,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 94.h,
+                  right: 38.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      onEmojiTap("왜..?\n무슨일이야!?\n나에게 얘기해볼래?", 'cry');
+                    },
+                    child: Image.asset(
+                      "assets/images/emoticon/emo_3d_crying_02.png",
+                      scale: cryScale,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 110.h,
+                  left: 24.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      onEmojiTap("왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?", 'shocked');
+                    },
+                    child: Image.asset(
+                      "assets/images/emoticon/emo_3d_shocked_02.png",
+                      scale: shockedScale,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 110.h,
+                  right: 24.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      onEmojiTap("왜..?\n요새 잠을 통모짜렐라\n나에게 얘기해볼래?", 'sleeping');
+                    },
+                    child: Image.asset(
+                      "assets/images/emoticon/emo_3d_sleeping_02.png",
+                      scale: sleepingScale,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 94.h,
+                  left: 38.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      onEmojiTap("왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?", 'angry');
+                    },
+                    child: Image.asset(
+                      "assets/images/emoticon/emo_3d_angry_02.png",
+                      scale: angryScale,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            // ✅ 감정 이모티콘들 (Stack + Positioned)
-            Positioned(
-              bottom: -51.h,
-              child: Image.asset(
-                "assets/images/emoticon/emo_3d_smile_02.png",
-                height: 60.h,
-                width: 60.w,
-              ),
-            ),
-            Positioned(
-              top: 13.h,
-              right: -53.w,
-              child: Image.asset(
-                "assets/images/emoticon/emo_3d_crying_02.png",
-                height: 60.h,
-                width: 60.w,
-              ),
-            ),
-            Positioned(
-              bottom: 29.h,
-              left: -65.w,
-              child: Image.asset(
-                "assets/images/emoticon/emo_3d_shocked_02.png",
-                height: 60.h,
-                width: 60.w,
-              ),
-            ),
-            Positioned(
-              bottom: 29.h,
-              right: -65.w,
-              child: Image.asset(
-                "assets/images/emoticon/emo_3d_sleeping_02.png",
-                height: 60.h,
-                width: 60.w,
-              ),
-            ),
-            Positioned(
-              top: 13.h,
-              left: -53.w,
-              child: Image.asset(
-                "assets/images/emoticon/emo_3d_angry_02.png",
-                height: 60.h,
-                width: 60.w,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
 
@@ -143,23 +224,27 @@ class _DailyMojiHomePageState extends State<DailyMojiHomePage> {
               ));
         },
         child: Container(
-          margin: EdgeInsets.all(12.r),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  "무엇이든 입력하세요",
-                  style: TextStyle(color: Colors.grey),
+          color: Color(0xFFFEFBF4),
+          child: Container(
+            height: 40.h,
+            margin: EdgeInsets.all(12.r),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    "무엇이든 입력하세요",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
-              ),
-              Image.asset("assets/icons/vector.png"),
-            ],
+                Image.asset("assets/icons/vector.png"),
+              ],
+            ),
           ),
         ),
       ),
@@ -169,6 +254,43 @@ class _DailyMojiHomePageState extends State<DailyMojiHomePage> {
 }
 
 
+
+
+// class EmojiButton extends StatelessWidget {
+//   final String text;
+//   final String emoji;
+//   final String assetPath;
+//   final double scale;
+//   final double height;
+//   final double width;
+//   final VoidCallback onTap;
+
+//   const EmojiButton({
+//     super.key,
+//     required this.text,
+//     required this.emoji,
+//     required this.assetPath,
+//     required this.scale,
+//     required this.height,
+//     required this.width,
+//     required this.onTap,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Positioned(
+//       top: height,
+//       left: width,
+//       child: GestureDetector(
+//         onTap: onTap,
+//         child: Image.asset(
+//           assetPath,
+//           scale: scale,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 
 

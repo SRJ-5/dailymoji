@@ -6,12 +6,19 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "보고서"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "마이"),
-      ],
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashFactory: NoSplash.splashFactory, // 👈 파동 효과 제거
+        highlightColor: Colors.transparent, // 클릭 시 하이라이트 제거
+      ),
+      child: BottomNavigationBar(
+        backgroundColor: Color(0xFFFEFBF4),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "보고서"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "마이"),
+        ],
+      ),
     );
   }
 }
