@@ -32,7 +32,9 @@ from srj5_constants import (
 # ---------- 환경설정 ----------
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-BIND_HOST = os.getenv("BIND_HOST", "127.0.0.1")
+# Docker 환경에서는 '0.0.0.0'을 사용해야 한다고 함.
+BIND_HOST = os.getenv("BIND_HOST", "0.0.0.0") 
+# BIND_HOST = os.getenv("BIND_HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8000"))
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -405,7 +407,7 @@ async def checkin(payload: Checkin):
         print(tb)
         return {"error": str(e), "trace": tb}
 
-
-if __name__=="__main__":
-    import uvicorn
-    uvicorn.run(app,host=BIND_HOST,port=PORT,reload=True)
+# 이 부분은 Dockerfile의 CMD가 처리하므로 삭제 가능.
+# if __name__=="__main__":
+#     import uvicorn
+#     uvicorn.run(app,host=BIND_HOST,port=PORT,reload=True)

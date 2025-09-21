@@ -61,7 +61,11 @@ class MessageDto {
       userId: userId ?? "",
       content: content ?? "",
       sender: sender == "user" ? Sender.user : Sender.bot,
-      type: type == "solution" ? MessageType.solution : MessageType.normal,
+      type: type == "solution"
+          ? MessageType.solution
+          : type == "analysis" // NEW: 분석 메시지 타입 추가
+              ? MessageType.analysis
+              : MessageType.normal,
     );
   }
 
