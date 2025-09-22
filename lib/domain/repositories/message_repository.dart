@@ -13,4 +13,9 @@ abstract class MessageRepository {
     required String userId,
     required void Function(Message message) onNewMessage,
   });
+
+  Future<void> updateMessageSessionId({
+    required String messageId,
+    required String sessionId,
+  });
 }

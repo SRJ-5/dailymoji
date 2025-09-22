@@ -4,12 +4,16 @@ class EmotionalRecord {
   final double gScore;
   final int profile;
   final String? interventionPresetId;
+  final Map<String, dynamic> intervention;
+  final String? sessionId;
 
   EmotionalRecord({
     required this.finalScores,
     required this.gScore,
     required this.profile,
     this.interventionPresetId,
+    this.intervention = const {},
+    this.sessionId, // 생성자에 추가
   });
 
   // 분석 결과를 요약 메시지로 변환하는 헬퍼 메서드

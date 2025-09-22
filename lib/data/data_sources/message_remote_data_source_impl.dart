@@ -23,7 +23,12 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     final startIso = startOfDay.toUtc().toIso8601String();
     final endIso = endOfDay.toUtc().toIso8601String();
 
-    var base = client.from("messages").select().eq("user_id", userId).gte("created_at", startIso).lt("created_at", endIso);
+    var base = client
+        .from("raw_chats")
+        .select()
+        .eq("user_id", userId)
+        .gte("created_at", startIso)
+        .lt("created_at", endIso);
 
     if (cursorIso != null) {
       base = base.gt("created_at", cursorIso);
@@ -38,7 +43,11 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
 
   @override
   Future<MessageDto> insertMessage(MessageDto messageDto) async {
-    final response = await client.from("messages").insert(messageDto.toJson()).select().single();
+    final response = await client
+        .from("messages")
+        .insert(messageDto.toJson())
+        .select()
+        .single();
 
     return MessageDto.fromJson(response);
   }
@@ -65,5 +74,15 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
           },
         )
         .subscribe();
+  }
+
+  @override
+  Future<void> updateMessageSessionId({
+    required String messageId,
+    required String sessionId,
+  }) async {
+    await client
+        .from("raw_chats")
+        .update({'session_id': sessionId}).eq('id', messageId);
   }
 }

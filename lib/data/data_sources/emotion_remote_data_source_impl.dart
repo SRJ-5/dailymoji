@@ -33,6 +33,12 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         }),
       );
 
+      // --- API 디버깅!! ---
+      final responseBody = utf8.decode(response.bodyBytes);
+      print("--- 백엔드로부터 받은 실제 응답 ---");
+      print(responseBody);
+      // ---------------------------------------------
+
       // 3. API 응답 처리
       if (response.statusCode == 200) {
         // 한글 깨짐 방지를 위해 UTF-8로 디코딩

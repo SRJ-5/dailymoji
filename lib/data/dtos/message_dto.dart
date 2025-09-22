@@ -57,7 +57,8 @@ class MessageDto {
   Message toEntity() {
     return Message(
       id: id,
-      createdAt: createdAt ?? DateTime.now(),
+      createdAt: createdAt?.toLocal() ??
+          DateTime.now(), // .toLocal()을 추가하여 UTC 시간을 현지 시간으로 변환!
       userId: userId ?? "",
       content: content ?? "",
       sender: sender == "user" ? Sender.user : Sender.bot,

@@ -39,4 +39,16 @@ class MessageRepositoryImpl implements MessageRepository {
       onNewMessage: (dto) => onNewMessage(dto.toEntity()),
     );
   }
+
+  @override
+  Future<void> updateMessageSessionId({
+    required String messageId,
+    required String sessionId,
+  }) {
+    // 실제 작업은 remoteDataSource에게 그대로 넘겨줍니다.
+    return remoteDataSource.updateMessageSessionId(
+      messageId: messageId,
+      sessionId: sessionId,
+    );
+  }
 }

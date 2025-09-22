@@ -14,6 +14,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client
 
+# LLM 호출 함수와 시스템 프롬프트를 분리해서 관리하기 편하게 만듭니다.
+from llm_prompts import (
+    call_llm,
+    ANALYSIS_SYSTEM_PROMPT,
+    FRIENDLY_SYSTEM_PROMPT
+)
+
 # 형태소 분석: 설치되어 있지 않으면 graceful fallback
 try:
     from kiwipiepy import Kiwi
@@ -44,7 +51,7 @@ if SUPABASE_URL and SUPABASE_KEY:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ---------- FastAPI ----------
-app = FastAPI(title="SRJ-5 PoC API")
+app = FastAPI(title="DailyMoji API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -64,8 +71,9 @@ class Checkin(BaseModel):
     onboarding: Optional[Dict[str, Any]] = None
 
 
-# ---------- LLM ----------
-SYSTEM_PROMPT = """
+# -------------------- LLM 프롬프트 및 호출 함수 --------------------
+# 1. 분석(코치) 모드 프롬프트
+ANALYSIS_SYSTEM_PROMPT = """
 You are a clinical-grade SRJ-5 emotion analysis assistant.
 Return STRICT JSON ONLY matching this schema. No prose.
 
@@ -114,30 +122,47 @@ STRICT:
 - Do NOT output anything besides the JSON object.
 """
 
-async def call_llm(user_payload: dict) -> dict:
+# 2. 친구 모드 프롬프트
+FRIENDLY_SYSTEM_PROMPT = """
+You are 'Moji', a friendly, warm, and supportive chatbot. Your personality is like a cheerful and empathetic friend.
+- Your primary goal is to be a good conversational partner.
+- Keep your responses short, typically 1-2 sentences.
+- Use emojis to convey warmth and friendliness. 😊
+- Your name is '모지'.
+- Respond in Korean.
+"""
+
+# 3. 통합 LLM 호출 함수
+async def call_llm(system_prompt: str, user_content: str, model: str = "gpt-4o-mini", temperature: float = 0.0) -> dict | str:
     if not OPENAI_KEY:
-        return {}
+        return {"error": "OpenAI key not found"}
+    
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {OPENAI_KEY}"},
-            json={
-                "model": "gpt-4o-mini",
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
-                ],
-                "temperature": 0.0,
-                "max_tokens": 700,
-            },
-            timeout=30.0,
-        )
-        data = resp.json()
         try:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENAI_KEY}"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_content},
+                    ],
+                    "temperature": temperature,
+                },
+                timeout=30.0,
+            )
+            data = resp.json()
             content = data["choices"][0]["message"]["content"]
-            return json.loads(content)
-        except Exception:
-            return {"error": "invalid_json", "raw": data}
+            try:
+                # 분석 모드는 JSON을 반환
+                return json.loads(content)
+            except json.JSONDecodeError:
+                # 친구 모드는 순수 텍스트를 반환
+                return content
+        except Exception as e:
+            print(f"LLM call failed: {e}")
+            return {"error": str(e)}
 
 
 # ---------- Safety: Regex + Kiwi + LLM intent 결합 ----------
@@ -311,14 +336,69 @@ def g_score(final_scores: dict) -> float:
     g=sum(final_scores.get(k,0.0)*w.get(k,0.0) for k in CLUSTERS)
     return round(clip01((g+1.0)/2.0),3)
 
+# ---------- "친구 모드"를 위한 새로운 함수 ----------
+async def generate_friendly_reply(text: str) -> str:
+    # 친구 페르소나를 가진 프롬프트를 사용합니다.
+    llm_response = await call_llm(
+        system_prompt=FRIENDLY_SYSTEM_PROMPT,
+        user_content=text,
+        model="gpt-4o-mini",
+        temperature=0.7 # 약간의 창의성을 부여
+    )
+    # LLM 응답에서 텍스트만 추출 (JSON이 아님)
+    try:
+        # 응답이 다양한 형태로 올 수 있으므로 안전하게 텍스트 추출
+        if isinstance(llm_response, dict) and "choices" in llm_response:
+             return llm_response["choices"][0]["message"]["content"].strip()
+        return str(llm_response).strip() # 만약의 경우를 대비해 문자열로 변환
+    except Exception:
+        return "음... 방금 뭐라고 하셨죠? 다시 한번 말씀해주시겠어요? 🤔"
+
 
 # ---------- API ----------
 @app.post("/checkin")
 async def checkin(payload: Checkin):
-    try:
-        text = payload.text or ""
-        debug_log: Dict[str, Any] = {}
+    text = (payload.text or "").strip()
+    debug_log: Dict[str, Any] = {}
 
+
+    try:
+ # --- 1단계: 안전 장치 최우선 검사 ---
+        # (LLM 없이, 정규식과 Kiwi 분석만으로 1차 검사)
+        if is_safety_text(text, None, debug_log):
+            print(f"🚨 안전 모드 실행: '{text}'")
+            debug_log["mode"] = "SAFETY_CRISIS"
+            return {
+                "session_id": None, "input": payload.dict(), "final_scores": {}, "g_score": 1.0, "profile": 1,
+                "intervention": {
+                    "preset_id": "SAFETY_CRISIS_MODAL",
+                    "text": "많이 힘든 마음이 느껴져요. 혼자 끙끙 앓지 말고, 이야기할 곳이 필요하다면 꼭 연락해보세요."
+                },
+                "debug_log": debug_log,
+            }
+
+        # --- 2단계: 모드 결정 (친구 모드 or 분석 모드) ---
+        rule_scores, _, _ = rule_scoring(text)
+        max_rule_score = max(rule_scores.values() or [0.0])
+        # (감정 점수가 0.1보다 크거나) AND (글자 길이가 5보다 크면) -> 분석 모드
+        is_emotional_text = max_rule_score > 0.1 and len(text) > 5 
+
+        if not is_emotional_text:
+            # --- 3-A. "친구 모드"로 작동 ---
+            debug_log["mode"] = "FRIENDLY_REPLY"
+            print(f"💬 친구 모드 실행: '{text}'")
+            friendly_text = await generate_friendly_reply(text)
+            return {
+                "session_id": None, "input": payload.dict(), "final_scores": {}, "g_score": 0.0, "profile": 0,
+                "intervention": {"preset_id": "FRIENDLY_REPLY", "text": friendly_text},
+                "debug_log": debug_log,
+            }
+        
+        # --- 3-B. "코치(분석) 모드"로 작동 ---
+        debug_log["mode"] = "ANALYSIS"
+        print(f"✨ 분석 모드 실행: '{text}'")
+        
+        # 기존의 분석 파이프라인 시작
         # 1) Rule
         rule_scores, rule_evidence, debug_log_rule = rule_scoring(text)
         rule_max = max(rule_scores.values() or [0.0])
@@ -371,6 +451,7 @@ async def checkin(payload: Checkin):
         g=g_score(final_scores); debug_log["g_score"]=g
 
         # ---------- Supabase 저장 ----------
+        new_session_id = None
         if supabase:
             try:
                 session_row={
@@ -381,13 +462,16 @@ async def checkin(payload: Checkin):
                     "intervention":json.dumps(intervention),
                     "debug_log":json.dumps(debug_log, ensure_ascii=False),
                 }
-                supabase.table("sessions").insert(session_row).execute()
+                response = supabase.table("sessions").insert(session_row).execute()
+                new_session_id = response.data[0]['id']
 
-                for c,v in final_scores.items():
-                    supabase.table("cluster_scores").insert({
-                        "created_at":dt.datetime.utcnow().isoformat(),
-                        "cluster":c,"score":v,"session_text":text[:100],
-                    }).execute()
+                if final_scores: # final_scores가 있을 때만 cluster_scores 저장
+                    for c,v in final_scores.items():
+                        supabase.table("cluster_scores").insert({
+                            "created_at":dt.datetime.utcnow().isoformat(),
+                            "cluster":c,"score":v,"session_text":text[:100],
+                            "user_id": payload.user_id 
+                        }).execute()
             except Exception as e:
                 print("Supabase 저장 실패:",e)
 

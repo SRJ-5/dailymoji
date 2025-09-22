@@ -10,6 +10,7 @@ import 'package:dailymoji/domain/use_cases/analyze_emotion_use_case.dart';
 import 'package:dailymoji/domain/use_cases/load_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
+import 'package:dailymoji/domain/use_cases/update_message_session_id_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -54,4 +55,9 @@ final subscribeMessagesUseCaseProvider =
 
 final analyzeEmotionUseCaseProvider = Provider<AnalyzeEmotionUseCase>((ref) {
   return AnalyzeEmotionUseCase(ref.watch(emotionRepositoryProvider));
+});
+
+final updateMessageSessionIdUseCaseProvider =
+    Provider<UpdateMessageSessionIdUseCase>((ref) {
+  return UpdateMessageSessionIdUseCase(ref.watch(messageRepositoryProvider));
 });
