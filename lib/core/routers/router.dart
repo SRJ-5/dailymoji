@@ -11,7 +11,7 @@ final router = GoRouter(
   initialLocation: '/',
   navigatorKey: navigatorkey,
   routes: [
-    GoRoute(path: '/', builder: (context, state) => ChatPage()),
+    // GoRoute(path: '/', builder: (context, state) => ChatPage()),
     GoRoute(path: '/', builder: (context, state) => ReportPage()),
     // GoRoute(
     //   path: '/next',

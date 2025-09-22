@@ -1,113 +1,101 @@
+import 'package:dailymoji/domain/entities/report_record.dart';
+import 'package:dailymoji/presentation/pages/report/report_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-class MonthlyReport extends StatelessWidget {
-  const MonthlyReport({
-    super.key,
-  });
+// MODIFIED: StatelessWidget -> ConsumerStatefulWidget으로 변경하여 상태 관리
+class MonthlyReport extends ConsumerStatefulWidget {
+  const MonthlyReport({super.key});
+
+  @override
+  ConsumerState<MonthlyReport> createState() => _MonthlyReportState();
+}
+
+class _MonthlyReportState extends ConsumerState<MonthlyReport> {
+  // 날짜별로 기록된 데이터를 매핑
+  Map<DateTime, List<ReportRecord>> getEventsForDay(
+      DateTime day, List<ReportRecord> records) {
+    final Map<DateTime, List<ReportRecord>> events = {};
+    for (var record in records) {
+      final dateKey =
+          DateTime.utc(record.date.year, record.date.month, record.date.day);
+      if (events[dateKey] == null) {
+        events[dateKey] = [];
+      }
+      events[dateKey]!.add(record);
+    }
+    return events;
+  }
+
+  // 감정 클러스터 이름에 따라 아이콘 경로 반환
+  String _getEmotionIconPath(String emotion) {
+    switch (emotion) {
+      case 'neg_low':
+        return 'assets/images/crying.png';
+      case 'neg_high':
+        return 'assets/images/angry.png';
+      case 'adhd_high':
+        return 'assets/images/shocked.png';
+      case 'sleep':
+        return 'assets/images/sleeping.png';
+      case 'positive':
+        return 'assets/images/smile.png';
+      default:
+        return 'assets/icons/emotion.png'; // 기본 아이콘
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return TableCalendar(
-      // 선택된 날짜 = 현재 날짜
-      focusedDay: DateTime.now(),
-      // 최소로 보여줄 수 있는 날짜 및 최대로 보여줄 수 있는 날짜
-      // lastDay를 몇 천년 뒤로 설정하면 initial rendering 시 연산량이 많아질 수 있다고 하여 일단 2099로 함
+    final reportState = ref.watch(reportViewModelProvider);
+    final reportNotifier = ref.read(reportViewModelProvider.notifier);
+
+    // 현재 포커스된 달의 기록만 가져옴
+    final recordsForMonth =
+        reportState.monthlyRecords[reportState.focusedMonth] ?? [];
+    final events = getEventsForDay(reportState.focusedMonth, recordsForMonth);
+
+    return TableCalendar<ReportRecord>(
+      focusedDay: reportState.focusedMonth,
       firstDay: DateTime.utc(2020, 1, 1),
       lastDay: DateTime.utc(2099, 12, 31),
-      headerStyle: HeaderStyle(
+      headerStyle: const HeaderStyle(
         formatButtonVisible: false,
         titleCentered: true,
       ),
+      // 사용자가 달을 변경할 때마다 ViewModel에 알려 새 데이터를 가져오게 함
+      onPageChanged: (focusedDay) {
+        final newMonth = DateTime(focusedDay.year, focusedDay.month);
+        reportNotifier.fetchRecordsForMonth(newMonth);
+      },
+      // 이벤트 로더: 특정 날짜에 어떤 기록이 있는지 알려줌
+      eventLoader: (day) {
+        return events[DateTime.utc(day.year, day.month, day.day)] ?? [];
+      },
       calendarBuilders: CalendarBuilders(
-        // 월 부분 커스텀 => 현재 0월로 표시되게 함
         headerTitleBuilder: (context, day) {
           return Center(
               child: Text(
             '${day.month}월',
-            style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ));
         },
-        // 요일 부분 일요일과 토요일은 빨간색과 파란색으로 표시되도록 커스텀 설정
-        dowBuilder: (context, day) {
-          if (day.weekday == DateTime.sunday) {
-            return Center(
-              child: Text(
-                'Sun',
-                style: TextStyle(color: Colors.red),
-              ),
-            );
-          } else if (day.weekday == DateTime.saturday) {
-            return Center(
-              child: Text(
-                'Sat',
-                style: TextStyle(color: Colors.blueAccent),
+        // 마커(아이콘) 빌더
+        markerBuilder: (context, day, events) {
+          if (events.isNotEmpty) {
+            // 그날의 첫 번째 기록의 대표 감정을 아이콘으로 표시
+            final dominantEmotion = events.first.dominantEmotion;
+            return Positioned(
+              bottom: 1,
+              child: Image.asset(
+                _getEmotionIconPath(dominantEmotion),
+                width: 20,
+                height: 20,
               ),
             );
           }
-        },
-        // 달력에 표시되는 날짜가 일요일, 또는 토요일이면 빨간색 또는 파란색으로 표시되도록 커스텀 설정
-        // 추가로 날짜 밑에 이모티콘이 들어가는 로직도 설정
-        defaultBuilder: (context, day, focusedDay) {
-          if (day.weekday == DateTime.sunday) {
-            return Column(
-              children: [
-                Center(
-                  child: Text(
-                    '${day.day}',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-                // TODO: 여기 조건에 감정이 있으면 으로 넣어서 사용하도록 변경하기
-                day.weekday == DateTime.sunday
-                    ? Center(
-                        child: Image.asset(
-                          'assets/icons/emotion.png',
-                          scale: 1.4,
-                        ),
-                      )
-                    : SizedBox.shrink()
-              ],
-            );
-          } else if (day.weekday == DateTime.saturday) {
-            return Column(
-              children: [
-                Center(
-                  child: Text(
-                    '${day.day}',
-                    style: TextStyle(color: Colors.blueAccent),
-                  ),
-                ),
-                // TODO: 여기 조건에 감정이 있으면 으로 넣어서 사용하도록 변경하기
-                day.weekday == DateTime.saturday
-                    ? Center(
-                        child: Image.asset(
-                          'assets/icons/emotion.png',
-                          scale: 1.4,
-                        ),
-                      )
-                    : SizedBox.shrink()
-              ],
-            );
-          } else {
-            return Column(
-              children: [
-                Center(
-                  child: Text('${day.day}'),
-                ),
-                // TODO: 여기 조건에 감정이 있으면 으로 넣어서 사용하도록 변경하기
-                day.weekday == DateTime.wednesday
-                    ? Center(
-                        child: Image.asset(
-                          'assets/icons/emotion.png',
-                          scale: 1.4,
-                        ),
-                      )
-                    : SizedBox.shrink()
-              ],
-            );
-          }
+          return null;
         },
       ),
     );
