@@ -6,5 +6,6 @@ abstract class EmotionRemoteDataSource {
     required String userId,
     required String text,
     String? emotion,
+    Map<String, dynamic>? onboarding,
   });
 }

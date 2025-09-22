@@ -6,5 +6,6 @@ abstract class EmotionRepository {
     required String userId,
     required String text,
     String? emotion,
+    Map<String, dynamic>? onboarding,
   });
 }

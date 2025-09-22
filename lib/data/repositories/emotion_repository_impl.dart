@@ -13,11 +13,13 @@ class EmotionRepositoryImpl implements EmotionRepository {
     required String userId,
     required String text,
     String? emotion,
+    Map<String, dynamic>? onboarding,
   }) async {
     final dto = await remoteDataSource.analyzeEmotion(
       userId: userId,
       text: text,
       emotion: emotion,
+      onboarding: onboarding,
     );
     return dto.toEntity();
   }

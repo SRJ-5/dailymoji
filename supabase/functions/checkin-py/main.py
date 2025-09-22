@@ -31,7 +31,7 @@ except Exception:
 from rule_based import rule_scoring
 from srj5_constants import (
     CLUSTERS, DSM_BETA, DSM_WEIGHTS, INTERVENTIONS,
-    META_WEIGHTS, PCA_PROXY, RULE_SKIP_LLM,
+    META_WEIGHTS, PCA_PROXY, RULE_SKIP_LLM, ONBOARDING_MAPPING,
     SAFETY_TERMS, SEVERITY_LOW_MAX, SEVERITY_MED_MAX,
     W_LLM, W_RULE
 )
@@ -63,6 +63,7 @@ app.add_middleware(
 
 # ---------- 데이터 모델 ----------
 class Checkin(BaseModel):
+    user_id: str 
     text: str
     icon: Optional[str] = None
     intensity: Optional[float] = None
@@ -75,14 +76,14 @@ class Checkin(BaseModel):
 # ---------- Safety: Regex + Kiwi + LLM intent 결합 ----------
 # 1) 자살 암시/의사 표현 정규식(다양한 변형 포함)
 SAFETY_REGEX = [
-    r"죽고\s*싶(?:다|어|다\.)",              # 죽고싶다/죽고 싶어
-    r"살고\s*싶지\s*않(?:다|아)",           # 살고 싶지 않다
+    r"죽고\s*싶",                  # "죽고 싶다", "죽고 싶어" 등
+    r"살고\s*싶지\s*(?:않|않아)",    # "살고 싶지 않다/않아"
+    r"살기\s*싫",                  # "살기 싫다/싫어"
     r"자살\s*(?:하고\s*싶|충동|생각)",       # 자살 하고 싶/충동/생각
     r"목숨(?:을)?\s*(?:끊|버리|포기)\s*하고?\s*싶(?:다|어)?",
     r"생을\s*마감하(?:고|고\s*싶|고싶)",
     r"죽어버리(?:고)?\s*싶(?:다|어)?",
     r"끝내버리(?:고)?\s*싶(?:다|어)?",
-    r"살기\s*싫(?:다|어)",
 ]
 
 # 2) 거짓양성(비유/농담/긍정문맥) 필터
@@ -140,7 +141,7 @@ def _kiwi_has_selfharm_combo(text: str) -> bool:
     except Exception:
         return False
 
-def is_safety_text(text: str, llm_json: dict | None, debug_log: dict) -> bool:
+def is_safety_text(text: str, llm_json: dict | None, debug_log: dict) -> (bool, dict):
     # 1) 정규식 탐지
     regex_hits = _find_regex_matches(text, SAFETY_REGEX)
     figurative_hits = _find_regex_matches(text, SAFETY_FIGURATIVE)
@@ -164,8 +165,13 @@ def is_safety_text(text: str, llm_json: dict | None, debug_log: dict) -> bool:
         "llm_intent_flag": safety_llm_flag,
         "triggered": triggered,
     }
-    return triggered
 
+    if triggered:
+            # 👇 위험이 감지되면, neg_low에 0.95점의 강력한 기본 점수를 부여하여 반환
+            safety_scores = {"neg_low": 0.95, "neg_high": 0.0, "adhd_high": 0.0, "sleep": 0.0, "positive": 0.0}
+            return (True, safety_scores)
+        
+    return (False, {})
 
 # ---------- Helpers ----------
 def clip01(x: float) -> float: return float(max(0.0, min(1.0, x)))
@@ -243,6 +249,41 @@ def g_score(final_scores: dict) -> float:
     g=sum(final_scores.get(k,0.0)*w.get(k,0.0) for k in CLUSTERS)
     return round(clip01((g+1.0)/2.0),3)
 
+# --- 베이스라인 점수 계산 함수 추가 ---
+def calculate_baseline_scores(onboarding_scores: Dict[str, int]) -> Dict[str, float]:
+    """온보딩 설문 점수를 바탕으로 클러스터별 베이스라인 점수를 계산합니다."""
+    if not onboarding_scores:
+        return {}
+        
+    baseline = {c: 0.0 for c in CLUSTERS}
+    
+    # 예시: onboarding_scores = {"q1": 2, "q2": 3, ...}
+    for q_key, score in onboarding_scores.items():
+        # --- q7(자존감) 역방향 처리 로직 ---
+        processed_score = score
+        if q_key == 'q7':
+            processed_score = 3 - score # 자존감은 역방향 점수이므로 Flutter에서 (3 - 점수)로 계산해서 보내야 함!
+            print(f"q7 점수 역방향 처리: {score} -> {processed_score}") # 디버깅용 로그
+
+        if q_key in ONBOARDING_MAPPING:
+            # 1. 점수 정규화 (0-3점 -> 0.0-1.0)
+            normalized_score = processed_score / 3.0
+            
+            # 2. 해당 문항에 연결된 모든 클러스터에 가중치 적용하여 누적
+            for mapping in ONBOARDING_MAPPING[q_key]:
+                cluster = mapping["cluster"]
+                weight = mapping["w"]
+                baseline[cluster] += normalized_score * weight
+    
+    # 3. 최종 점수가 0.0 ~ 1.0 범위를 벗어나지 않도록 보정
+    for c in CLUSTERS:
+        if c == 'positive': # 긍정 점수는 음수가 될 수 없음
+             baseline[c] = max(0.0, min(1.0, baseline[c]))
+        else: # 그 외 클러스터는 -1.0 ~ 1.0 가능 (긍정의 역방향 가중치 때문에)
+             baseline[c] = max(-1.0, min(1.0, baseline[c]))
+
+    return baseline
+
 # ---------- "친구 모드" 응답 생성 함수 ----------
 async def generate_friendly_reply(text: str) -> str:
     # 친구 페르소나를 가진 프롬프트를 사용합니다.
@@ -272,19 +313,52 @@ async def checkin(payload: Checkin):
 
     try:
  # --- 1단계: 안전 장치 최우선 검사 ---
-        # (LLM 없이, 정규식과 Kiwi 분석만으로 1차 검사)
-        if is_safety_text(text, None, debug_log):
+        is_safe, safety_scores = is_safety_text(text, None, debug_log)
+
+        if is_safe:
             print(f"🚨 안전 모드 실행: '{text}'")
             debug_log["mode"] = "SAFETY_CRISIS"
+            # is_safety_text가 반환한 강력한 점수를 최종 점수로 즉시 할당          
+            final_scores = safety_scores
+            
+            # 프로필과 개입(intervention)을 위기 상황에 맞게 강제로 설정
+            profile = 1
+            intervention = {
+                "preset_id": "SAFETY_CRISIS_MODAL",
+                "text": "🚨 안전 모드 실행 🚨 안전 모드 실행 🚨 안전 모드 실행."
+            }
+            # 최종 점수를 바탕으로 G-score를 계산
+            g = g_score(final_scores)
+
+            # 위기 상황도 데이터베이스에 기록하여 로그를 남김
+            new_session_id = None
+            if supabase:
+                try:
+                    session_row = {
+                        "user_id": payload.user_id, 
+                        "text": text,
+                        "profile": profile,
+                        "g_score": g,
+                        "intervention": json.dumps(intervention),
+                        "debug_log": json.dumps(debug_log, ensure_ascii=False),
+                    }
+                    response = supabase.table("sessions").insert(session_row).execute()
+                    new_session_id = response.data[0]['id']
+                except Exception as e:
+                    print(f"Supabase 위기 로그 저장 실패: {e}")
+
+            # 다른 분석을 모두 건너뛰고, 즉시 최종 응답을 반환
             return {
-                "session_id": None, "input": payload.dict(), "final_scores": {}, "g_score": 1.0, "profile": 1,
-                "intervention": {
-                    "preset_id": "SAFETY_CRISIS_MODAL",
-                    "text": "많이 힘든 마음이 느껴져요. 혼자 끙끙 앓지 말고, 이야기할 곳이 필요하다면 꼭 연락해보세요."
-                },
+                "session_id": new_session_id,
+                "input": payload.dict(),
+                "final_scores": final_scores,
+                "g_score": g,
+                "profile": profile,
+                "intervention": intervention,
                 "debug_log": debug_log,
             }
 
+        # --- (안전이 확인된 경우에만 아래의 하이브리드 분기 로직이 실행되도록!!) ---
         # --- 2단계: 하이브리드 분기 처리 시작 ---
         chosen_mode = "PENDING" # 초기 상태는 '보류'  
         rule_scores, rule_evidence, debug_log_rule = rule_scoring(text)
@@ -335,14 +409,30 @@ async def checkin(payload: Checkin):
             debug_log["rule_evidence"] = rule_evidence
             debug_log["rule_debug"] = debug_log_rule  # 강조어/슬랭 기록 -- 여기서 ignored 토큰 확인 가능
 
+            # --- 1-1. 온보딩 점수로 베이스라인 계산 --- 
+            onboarding_scores = payload.onboarding or {}
+            baseline_scores = calculate_baseline_scores(onboarding_scores)
+            debug_log["baseline_scores"] = baseline_scores
+
+            # --- 1-2. LLM에 전달할 데이터에 베이스라인 추가 --- 
+            llm_payload = payload.dict()
+            llm_payload["baseline_scores"] = baseline_scores
+           
             # 2) LLM
             # 수정된 코드
             llm_json = await call_llm(
                 system_prompt=ANALYSIS_SYSTEM_PROMPT, 
-                user_content=json.dumps(payload.dict(), ensure_ascii=False),
+                user_content=json.dumps(llm_payload, ensure_ascii=False),
                 openai_key=OPENAI_KEY, # 여기서 키전달
             )
             debug_log["llm"] = llm_json
+
+            # 👇 Valence/Arousal 데이터 추출
+            if llm_json and not llm_json.get("error"):
+                valence = llm_json.get("valence")
+                arousal = llm_json.get("arousal")
+                debug_log["valence_arousal"] = {"valence": valence, "arousal": arousal}
+
 
             # 3) Fusion
             text_if={c:0.0 for c in CLUSTERS}
@@ -357,9 +447,8 @@ async def checkin(payload: Checkin):
             debug_log["fused"]=fused
 
             # 4) Meta + DSM
-            meta_adj=meta_adjust(fused,payload); debug_log["meta"]=meta_adj
-            cal=dsm_calibrate(meta_adj,payload.surveys); debug_log["calibrated"]=cal
-            final_scores=cal; debug_log["final_scores"]=final_scores
+            meta_adj = meta_adjust(fused, payload)
+            final_scores = dsm_calibrate(meta_adj, payload.surveys) # dsm_calibrate 대신 meta_adj를 바로 사용함.
 
             # 5) PCA / Profile / Intervention
             pca=pca_proxy(final_scores); debug_log["pca"]=pca
@@ -367,19 +456,40 @@ async def checkin(payload: Checkin):
             intervention=map_intervention(profile,final_scores,_is_night(payload.timestamp),llm_json)
             debug_log["intervention"]=intervention
 
-            # 6) Safety (강화 버전: Regex/Ko-morph + LLM intent 결합)
-            if is_safety_text(text, llm_json, debug_log):
-                profile = 1
-                intervention = {
-                    "cluster": "neg_low",
-                    "severity": "high",
-                    "preset_id": "safety_crisis_modal_v1",
-                    "priority": 1000,
-                    "safety_check": True,
-                }
-                debug_log["safety_override_applied"] = True
+            # 6) 최종 Safety Override (LLM 분석 결과를 포함한 2차 확인)
+            is_safe_after_llm, _ = is_safety_text(text, llm_json, debug_log)
+            if is_safe_after_llm:
+                 # --- 👇 LLM의 판단에 따라 위기 단계를 나눕니다. ---
+                harm_intent = (llm_json or {}).get("intent", {}).get("self_harm", "none")
 
-            # 7) G-score
+                # 1단계: 명백한 위기 ("likely")
+                if harm_intent == "likely":
+                    print("🚨 1단계 안전 장치 발동: 강력한 Override 적용")
+                    # 기존의 강력한 Override 로직을 그대로 사용
+                    final_scores["neg_low"] = max(final_scores.get("neg_low", 0), 0.95)
+                    profile = 1
+                    intervention = {
+                        "preset_id": "SAFETY_CRISIS_SELF_HARM",
+                        # TODO: 전문가 연결
+                        "text": "🚨 1단계 안전 장치 발동 정말 많이 힘든 마음이 느껴져요. 혼자 감당하기 어려울 땐, 전문가의 도움을 받는 것이 중요해요. 이야기할 곳이 필요하다면 꼭 연락해보세요.",
+                        "cluster": "neg_low", "severity": "high", "priority": 1000, "safety_check": True,
+                    }
+                    debug_log["safety_override_applied"] = "Level 1: Likely"
+
+                # 2단계: 잠재적 위험 신호 ("possible")
+                elif harm_intent == "possible":
+                    print("⚠️ 2단계 안전 장치 발동: 소프트한 개입 적용")
+                    # 점수와 프로필은 그대로 두고, intervention만 확인형 메시지로 변경
+                    intervention = {
+                        "preset_id": "SAFETY_CHECK_IN", # 새로운 ID 부여
+                        "text": "⚠️ 2단계 안전 장치 발동 마음이 많이 지치고 힘드신 것 같아요. 괜찮으시다면, 지금 어떤 감정을 느끼고 계신지 조금 더 자세히 이야기해주실 수 있을까요?",
+                        "cluster": max(final_scores, key=final_scores.get), # 가장 높은 점수의 클러스터
+                        "severity": "medium", "priority": 900, "safety_check": True,
+                    }
+                    debug_log["safety_override_applied"] = "Level 2: Possible"
+              
+
+            # 7) G-score (Safety Override로 점수가 변경되었을 수 있으므로, 최종적으로 다시 계산)
             g=g_score(final_scores); debug_log["g_score"]=g
 
             # ---------- Supabase 저장 ----------

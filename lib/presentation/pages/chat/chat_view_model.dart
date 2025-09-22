@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/presets.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
@@ -80,6 +81,21 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(messages: [...state.messages, message]);
 
     try {
+      // --- TODO: 사용자 온보딩 점수를 가져오기!!  ---
+      // 이 부분은 나중에 User Repository에서 가져오는 로직으로 대체하면 됨.
+      // 예시: final onboardingData = await ref.read(userRepositoryProvider).getOnboardingScores();
+      final onboardingData = {
+        "q1": 2,
+        "q2": 3,
+        "q3": 1,
+        "q4": 2,
+        "q5": 1,
+        "q6": 2,
+        "q7": 1,
+        /* 3 - 1 = 2점 */ "q8": 2,
+        "q9": 1
+      };
+
       // 2. 메시지를 DB에 저장
       final savedMessage = await sendMessageUseCase.execute(message);
       // 로컬 메시지를 DB에 저장된 버전으로 교체
@@ -90,7 +106,7 @@ class ChatViewModel extends Notifier<ChatState> {
       // 3. 감정 분석 시작 (UI에 분석 중 메시지 표시)
       final analyzingMessage = Message(
         userId: _userId,
-        content: "모지가 입력하고 있어요...", // 그냥 "입력중.."?
+        content: "모지가 입력하고 있어요...", // TODO: 이거 닉네임 연결해야함
         sender: Sender.bot,
         type: MessageType.analysis,
       );
@@ -105,6 +121,7 @@ class ChatViewModel extends Notifier<ChatState> {
         userId: _userId,
         text: message.content,
         emotion: emotion,
+        onboarding: onboardingData,
       );
 
       // 5. 응답 결과에 따라 분기 처리!
@@ -112,26 +129,39 @@ class ChatViewModel extends Notifier<ChatState> {
       final String? newSessionId = emotionalRecord.sessionId;
 
       final presetId = emotionalRecord.interventionPresetId;
+      print("✅ Received presetId from backend: '$presetId'");
 
-      // 5-1. 안전 모드 또는 친구 모드인지 먼저 확인
-      // 둘 다 백엔드가 보내준 'text'를 그대로 보여주면 됩니다.
-      if (presetId == "FRIENDLY_REPLY" || presetId == "SAFETY_CRISIS_MODAL") {
+      // 5-1. 친구 모드인지 먼저 확인
+      if (presetId == PresetIds.friendlyReply) {
         botResponseMessage = Message(
             userId: _userId,
             content: emotionalRecord.intervention['text'] as String? ??
-                "미리 정의된 응답을 찾을 수 없어요.",
+                "죄송해요, 답변을 준비하는 중에 오류가 발생했어요. 다시 한번 말씀해주시겠어요?",
             sender: Sender.bot,
             type: MessageType.normal);
       }
-      // 5-2. 위 경우가 아니라면, 일반 "분석 모드"로 간주
+      // 5-2. 그 외 모든 경우("분석", "안전" 등)는 솔루션/개입으로 간주
       else {
+        String content;
+
+        // 5-2-1. intervention에 미리 작성된 'text'가 있는지 확인 (안전 모드 등)
+        if (emotionalRecord.intervention.containsKey('text')) {
+          content = emotionalRecord.intervention['text'] as String? ??
+              "분석 결과를 표시할 수 없어요.";
+        }
+        // 5-2-2. 'text'가 없다면, 점수를 바탕으로 요약문 생성 (일반 분석 모드)
+        else {
+          content = emotionalRecord.toSummaryMessage();
+        }
+
         botResponseMessage = Message(
             userId: _userId,
-            content: emotionalRecord.toSummaryMessage(),
+            content: content,
             sender: Sender.bot,
             type: MessageType.normal);
 
-        // (업데이트) "분석 모드"일 때만 session_id를 연결
+        // "분석 모드" 계열일 때만 session_id 업데이트
+        final newSessionId = emotionalRecord.sessionId;
         if (newSessionId != null && savedMessage.id != null) {
           await updateSessionIdUseCase.execute(
             messageId: savedMessage.id!,
