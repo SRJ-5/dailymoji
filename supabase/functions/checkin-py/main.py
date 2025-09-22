@@ -16,6 +16,7 @@ from supabase import create_client
 # LLM 호출 함수와 시스템 프롬프트를 분리해서 관리하기 편하게 만듭니다.
 from llm_prompts import (
     call_llm,
+    TRIAGE_SYSTEM_PROMPT,
     ANALYSIS_SYSTEM_PROMPT,
     FRIENDLY_SYSTEM_PROMPT
 )
@@ -284,116 +285,137 @@ async def checkin(payload: Checkin):
                 "debug_log": debug_log,
             }
 
-        # --- 2단계: 모드 결정 (친구 모드 or 분석 모드) ---
-        rule_scores, _, _ = rule_scoring(text)
+        # --- 2단계: 하이브리드 분기 처리 시작 ---
+        chosen_mode = "PENDING" # 초기 상태는 '보류'  
+        rule_scores, rule_evidence, debug_log_rule = rule_scoring(text)
         max_rule_score = max(rule_scores.values() or [0.0])
-        # (감정 점수가 0.1보다 크거나) AND (글자 길이가 4보다 크면) -> 분석 모드
-        is_emotional_text = max_rule_score > 0.1 and len(text) > 4 
 
-        if not is_emotional_text:
-            # --- 3-A. "친구 모드"로 작동 ---
+        
+        # 2-1. 규칙 기반으로 명백한 케이스 처리
+        if max_rule_score >= 0.7: # "우울", "분노" 등 확실한 감정 단어
+            chosen_mode = "ANALYSIS"
+            debug_log["triage_reason"] = "High rule score"
+        elif max_rule_score < 0.1 and len(text) < 10: # "하이", "ㅋㅋ" 등
+            chosen_mode = "FRIENDLY"
+            debug_log["triage_reason"] = "Low rule score and short text"
+        
+        # 2-2. 애매한 케이스는 LLM에게 판별 요청
+        if chosen_mode == "PENDING":
+            debug_log["triage_reason"] = "Ambiguous case, using LLM Triage"
+            # 판별 전용 LLM 호출. temperature=0으로 하여 일관된 답변 유도
+            triage_result = await call_llm(
+                system_prompt=TRIAGE_SYSTEM_PROMPT,
+                user_content=text,
+                openai_key=OPENAI_KEY,
+                temperature=0.0
+            )
+            chosen_mode = "ANALYSIS" if "ANALYSIS" in str(triage_result) else "FRIENDLY"
+            debug_log["triage_reason"] = f"LLM Triage classified as {chosen_mode}"
+
+        # --- 3단계: 결정된 모드 실행 ---
+        if chosen_mode == "FRIENDLY":
+                # "친구 모드" 실행
             debug_log["mode"] = "FRIENDLY_REPLY"
-            print(f"💬 친구 모드 실행: '{text}'")
+            print(f"💬 친구 모드 실행: '{text}' (Reason: {debug_log.get('triage_reason')})")
             friendly_text = await generate_friendly_reply(text)
             return {
                 "session_id": None, "input": payload.dict(), "final_scores": {}, "g_score": 0.0, "profile": 0,
                 "intervention": {"preset_id": "FRIENDLY_REPLY", "text": friendly_text},
                 "debug_log": debug_log,
             }
-        
-        # --- 3-B. "코치(분석) 모드"로 작동 ---
-        debug_log["mode"] = "ANALYSIS"
-        print(f"✨ 분석 모드 실행: '{text}'")
-        
-        # 기존의 분석 파이프라인 시작
-        # 1) Rule
-        rule_scores, rule_evidence, debug_log_rule = rule_scoring(text)
-        rule_max = max(rule_scores.values() or [0.0])
-        debug_log["rule_scores"] = rule_scores
-        debug_log["rule_evidence"] = rule_evidence
-        debug_log["rule_debug"] = debug_log_rule  # 강조어/슬랭 기록 -- 여기서 ignored 토큰 확인 가능
 
-        # 2) LLM
-        # 수정된 코드
-        llm_json = await call_llm(
-            system_prompt=ANALYSIS_SYSTEM_PROMPT, 
-            user_content=json.dumps(payload.dict(), ensure_ascii=False),
-            openai_key=OPENAI_KEY, # 여기서 키전달
-        )
-        debug_log["llm"] = llm_json
+        # --- 분석 모드  ---
+        else:
+            debug_log["mode"] = "ANALYSIS"
+            print(f"🔬 분석 모드 실행: '{text}' (Reason: {debug_log.get('triage_reason')})")
+            
+            # 기존의 분석 파이프라인 시작
+            # 1) Rule
+            debug_log["rule_scores"] = rule_scores
+            debug_log["rule_evidence"] = rule_evidence
+            debug_log["rule_debug"] = debug_log_rule  # 강조어/슬랭 기록 -- 여기서 ignored 토큰 확인 가능
 
-        # 3) Fusion
-        text_if={c:0.0 for c in CLUSTERS}
-        if llm_json and not llm_json.get("error"):
-            I,F=llm_json.get("intensity",{}),llm_json.get("frequency",{})
-            for c in CLUSTERS:
-                In=clip01((I.get(c,0.0) or 0.0)/3.0)
-                Fn=clip01((F.get(c,0.0) or 0.0)/3.0)
-                b_lex=0.1*rule_scores.get(c,0.0)
-                text_if[c]=clip01(0.6*In+0.4*Fn+b_lex)
-        fused={c:clip01(W_RULE*rule_scores.get(c,0.0)+W_LLM*text_if.get(c,0.0)) for c in CLUSTERS}
-        debug_log["fused"]=fused
+            # 2) LLM
+            # 수정된 코드
+            llm_json = await call_llm(
+                system_prompt=ANALYSIS_SYSTEM_PROMPT, 
+                user_content=json.dumps(payload.dict(), ensure_ascii=False),
+                openai_key=OPENAI_KEY, # 여기서 키전달
+            )
+            debug_log["llm"] = llm_json
 
-        # 4) Meta + DSM
-        meta_adj=meta_adjust(fused,payload); debug_log["meta"]=meta_adj
-        cal=dsm_calibrate(meta_adj,payload.surveys); debug_log["calibrated"]=cal
-        final_scores=cal; debug_log["final_scores"]=final_scores
+            # 3) Fusion
+            text_if={c:0.0 for c in CLUSTERS}
+            if llm_json and not llm_json.get("error"):
+                I,F=llm_json.get("intensity",{}),llm_json.get("frequency",{})
+                for c in CLUSTERS:
+                    In=clip01((I.get(c,0.0) or 0.0)/3.0)
+                    Fn=clip01((F.get(c,0.0) or 0.0)/3.0)
+                    b_lex=0.1*rule_scores.get(c,0.0)
+                    text_if[c]=clip01(0.6*In+0.4*Fn+b_lex)
+            fused={c:clip01(W_RULE*rule_scores.get(c,0.0)+W_LLM*text_if.get(c,0.0)) for c in CLUSTERS}
+            debug_log["fused"]=fused
 
-        # 5) PCA / Profile / Intervention
-        pca=pca_proxy(final_scores); debug_log["pca"]=pca
-        profile=pick_profile(final_scores,llm_json,payload.surveys); debug_log["profile"]=profile
-        intervention=map_intervention(profile,final_scores,_is_night(payload.timestamp),llm_json)
-        debug_log["intervention"]=intervention
+            # 4) Meta + DSM
+            meta_adj=meta_adjust(fused,payload); debug_log["meta"]=meta_adj
+            cal=dsm_calibrate(meta_adj,payload.surveys); debug_log["calibrated"]=cal
+            final_scores=cal; debug_log["final_scores"]=final_scores
 
-        # 6) Safety (강화 버전: Regex/Ko-morph + LLM intent 결합)
-        if is_safety_text(text, llm_json, debug_log):
-            profile = 1
-            intervention = {
-                "cluster": "neg_low",
-                "severity": "high",
-                "preset_id": "safety_crisis_modal_v1",
-                "priority": 1000,
-                "safety_check": True,
-            }
-            debug_log["safety_override_applied"] = True
+            # 5) PCA / Profile / Intervention
+            pca=pca_proxy(final_scores); debug_log["pca"]=pca
+            profile=pick_profile(final_scores,llm_json,payload.surveys); debug_log["profile"]=profile
+            intervention=map_intervention(profile,final_scores,_is_night(payload.timestamp),llm_json)
+            debug_log["intervention"]=intervention
 
-        # 7) G-score
-        g=g_score(final_scores); debug_log["g_score"]=g
-
-        # ---------- Supabase 저장 ----------
-        new_session_id = None
-        if supabase:
-            try:
-                session_row={
-                    "created_at":dt.datetime.utcnow().isoformat(),
-                    "text":text,
-                    "profile":profile,
-                    "g_score":g,
-                    "intervention":json.dumps(intervention),
-                    "debug_log":json.dumps(debug_log, ensure_ascii=False),
+            # 6) Safety (강화 버전: Regex/Ko-morph + LLM intent 결합)
+            if is_safety_text(text, llm_json, debug_log):
+                profile = 1
+                intervention = {
+                    "cluster": "neg_low",
+                    "severity": "high",
+                    "preset_id": "safety_crisis_modal_v1",
+                    "priority": 1000,
+                    "safety_check": True,
                 }
-                response = supabase.table("sessions").insert(session_row).execute()
-                new_session_id = response.data[0]['id']
+                debug_log["safety_override_applied"] = True
 
-                if final_scores: # final_scores가 있을 때만 cluster_scores 저장
-                    for c,v in final_scores.items():
-                        supabase.table("cluster_scores").insert({
-                            "created_at":dt.datetime.utcnow().isoformat(),
-                            "cluster":c,"score":v,"session_text":text[:100],
-                            "user_id": payload.user_id 
-                        }).execute()
-            except Exception as e:
-                print("Supabase 저장 실패:",e)
+            # 7) G-score
+            g=g_score(final_scores); debug_log["g_score"]=g
 
-        # --- 최종 응답 ---
-        return {
-            "input": payload.dict(),
-            "final_scores": final_scores,
-            "g_score": g,
-            "profile": profile,
-            "intervention": intervention,
-            "debug_log": debug_log,
-        }
+            # ---------- Supabase 저장 ----------
+            new_session_id = None
+            if supabase:
+                try:
+                    session_row={
+                        "created_at":dt.datetime.utcnow().isoformat(),
+                        "text":text,
+                        "profile":profile,
+                        "g_score":g,
+                        "intervention":json.dumps(intervention),
+                        "debug_log":json.dumps(debug_log, ensure_ascii=False),
+                    }
+                    response = supabase.table("sessions").insert(session_row).execute()
+                    new_session_id = response.data[0]['id']
+
+                    if final_scores: # final_scores가 있을 때만 cluster_scores 저장
+                        for c,v in final_scores.items():
+                            supabase.table("cluster_scores").insert({
+                                "created_at":dt.datetime.utcnow().isoformat(),
+                                "cluster":c,"score":v,"session_text":text[:100],
+                                "user_id": payload.user_id 
+                            }).execute()
+                except Exception as e:
+                    print("Supabase 저장 실패:",e)
+
+            # --- 최종 응답 ---
+            return {
+                "input": payload.dict(),
+                "final_scores": final_scores,
+                "g_score": g,
+                "profile": profile,
+                "intervention": intervention,
+                "debug_log": debug_log,
+            }
 
     except Exception as e:
         tb = traceback.format_exc()
@@ -401,7 +423,3 @@ async def checkin(payload: Checkin):
         print(tb)
         return {"error": str(e), "trace": tb}
 
-# 이 부분은 Dockerfile의 CMD가 처리하므로 삭제 가능.
-# if __name__=="__main__":
-#     import uvicorn
-#     uvicorn.run(app,host=BIND_HOST,port=PORT,reload=True)

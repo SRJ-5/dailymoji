@@ -111,30 +111,28 @@ class ChatViewModel extends Notifier<ChatState> {
       Message botResponseMessage;
       final String? newSessionId = emotionalRecord.sessionId;
 
-      // 4-A. 백엔드에서 "친구 모드"로 응답했을 때
-      // intervention 맵에서 'text' 키를 찾아 AI의 대화 내용을 가져옵니다.
+      final presetId = emotionalRecord.interventionPresetId;
 
-      if (emotionalRecord.interventionPresetId == "FRIENDLY_REPLY") {
+      // 5-1. 안전 모드 또는 친구 모드인지 먼저 확인
+      // 둘 다 백엔드가 보내준 'text'를 그대로 보여주면 됩니다.
+      if (presetId == "FRIENDLY_REPLY" || presetId == "SAFETY_CRISIS_MODAL") {
         botResponseMessage = Message(
-          userId: _userId,
-          content: emotionalRecord.intervention['text'] as String? ?? "...",
-          sender: Sender.bot,
-          type: MessageType.normal,
-        );
-      } else {
-        // 4-B. "분석 모드" 응답
-        // toSummaryMessage()를 사용해 분석 요약문을 생성합니다.
-
+            userId: _userId,
+            content: emotionalRecord.intervention['text'] as String? ??
+                "미리 정의된 응답을 찾을 수 없어요.",
+            sender: Sender.bot,
+            type: MessageType.normal);
+      }
+      // 5-2. 위 경우가 아니라면, 일반 "분석 모드"로 간주
+      else {
         botResponseMessage = Message(
             userId: _userId,
             content: emotionalRecord.toSummaryMessage(),
             sender: Sender.bot,
             type: MessageType.normal);
 
-        // (업데이트) "분석 모드"일 때만 session_id를 연결합니다.
-        // newSessionId와 savedUserMessage.id가 모두 유효한 값일 때만 실행합니다.
+        // (업데이트) "분석 모드"일 때만 session_id를 연결
         if (newSessionId != null && savedMessage.id != null) {
-          print("사용자 메시지(${savedMessage.id})에 세션(${newSessionId})을 연결합니다.");
           await updateSessionIdUseCase.execute(
             messageId: savedMessage.id!,
             sessionId: newSessionId,
@@ -142,12 +140,12 @@ class ChatViewModel extends Notifier<ChatState> {
         }
       }
 
-      // 5. 생성된 AI 응답 메시지를 DB(raw_chats)에 먼저 저장하고,
+      // 6. 생성된 AI 응답 메시지를 DB(raw_chats)에 먼저 저장하고,
       //    'ID가 부여된' 결과 객체를 돌려받습니다.
       final savedBotMessage =
           await sendMessageUseCase.execute(botResponseMessage);
 
-      // 6. UI 최종 업데이트
+      // 7. UI 최종 업데이트
       // 현재 메시지 목록에서 마지막 항목("모지가 입력하고 있어요...")을 제거합니다.
       final finalMessages = [...state.messages]..removeLast();
 

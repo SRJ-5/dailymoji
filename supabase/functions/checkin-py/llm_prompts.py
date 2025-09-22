@@ -5,8 +5,20 @@ import json
 import httpx
 from typing import Union
 
+# 0. 모드 판별 전용 프롬프트 
+TRIAGE_SYSTEM_PROMPT = """
+Your task is to classify the user's message into one of two categories: 'ANALYSIS' or 'FRIENDLY'.
+- If the message contains any hint of negative emotions (sadness, anger, anxiety, stress, fatigue, lethargy), specific emotional states, or seems to require a thoughtful response, you MUST respond with 'ANALYSIS'.
+- If the message is a simple greeting, small talk, a neutral statement, or a simple question, you MUST respond with 'FRIENDLY'.
+- You must only respond with the single word 'ANALYSIS' or 'FRIENDLY'. No other text is allowed.
 
-# OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+Examples:
+User: "~때문에 너무 무기력해" -> ANALYSIS
+User: "오늘 날씨 좋다" -> FRIENDLY
+User: "뭐해?" -> FRIENDLY
+User: "화가 나" -> ANALYSIS
+"""
+
 
 # 1. 코치(분석) 모드 시스템 프롬프트 
 ANALYSIS_SYSTEM_PROMPT = """
