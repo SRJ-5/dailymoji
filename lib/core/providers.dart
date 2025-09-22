@@ -26,7 +26,7 @@ final messageRemoteDataSourceProvider =
 
 final emotionRemoteDataSourceProvider =
     Provider<EmotionRemoteDataSource>((ref) {
-  return EmotionRemoteDataSourceImpl(ref.watch(supabaseClientProvider));
+  return EmotionRemoteDataSourceImpl();
 });
 
 // --- Repositories ---
