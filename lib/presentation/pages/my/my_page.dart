@@ -68,10 +68,10 @@ class _MyPageState extends State<MyPage> {
                 child: Container(
                   padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
                   decoration: BoxDecoration(
-                    color: Color(0xffE8EBE0),
+                    color: AppColors.green100,
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
-                      color: Color(0xffd2d2d2),
+                      color: AppColors.grey200,
                     ),
                   ),
                   child: Column(
@@ -151,10 +151,10 @@ class _MyPageState extends State<MyPage> {
     return Container(
       padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: Color(0xffE8E8E8),
+          color: AppColors.grey100,
         ),
       ),
       child: Column(
@@ -162,10 +162,8 @@ class _MyPageState extends State<MyPage> {
         children: [
           Text(
             title,
-            style: TextStyle(
-              color: Color(0xff333333),
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
+            style: AppFontStyles.bodyBold14.copyWith(
+              color: AppColors.grey900,
             ),
           ),
           ...List.generate(
@@ -181,7 +179,7 @@ class _MyPageState extends State<MyPage> {
                   )
                 : Divider(
                     height: 1.h,
-                    color: Color(0xFFE8E8E8),
+                    color: AppColors.grey100,
                   ),
           ),
         ],
@@ -200,10 +198,8 @@ class _MyPageState extends State<MyPage> {
         children: [
           Text(
             title,
-            style: TextStyle(
-              color: Color(0xff333333),
-              fontSize: 16.sp,
-              letterSpacing: 0,
+            style: AppFontStyles.bodyRegular16.copyWith(
+              color: AppColors.grey700,
             ),
           ),
           Spacer(),
@@ -211,7 +207,7 @@ class _MyPageState extends State<MyPage> {
           icon ??
               Icon(
                 Icons.chevron_right,
-                color: Color(0xFF606060),
+                color: AppColors.grey700,
                 size: 24.sp,
               ),
         ],
