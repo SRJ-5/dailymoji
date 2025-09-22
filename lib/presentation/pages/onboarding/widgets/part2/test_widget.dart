@@ -1,6 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,12 +21,12 @@ class TestWidget extends ConsumerStatefulWidget {
 class _TestWidgetState extends ConsumerState<TestWidget> {
   int _selectedIndex = -1;
 
-  final _answer = [
-    '전혀 없었어요',
-    '가끔 있었어요',
-    '자주 있었어요',
-    '거의 매일 있었어요'
-  ];
+  final Map<String, dynamic> _answerList = {
+    '전혀 없었어요': 0,
+    '가끔 있었어요': 1,
+    '자주 있었어요': 2,
+    '거의 매일 있었어요': 3
+  };
 
   @override
   void initState() {
@@ -44,7 +44,11 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
           height: 180.h,
           child: Row(
             children: [
-              Image.asset('assets/images/cado_profile.png'),
+              Image.asset(
+                'assets/images/cado_profile.png',
+                width: 120.w,
+                height: 180.h,
+              ),
               SizedBox(
                 width: 8.w,
               ),
@@ -69,8 +73,9 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
         SizedBox(height: 24.h),
         Column(
           children: List.generate(
-            _answer.length,
+            _answerList.length,
             (index) {
+              final answer = _answerList.entries.toList()[index];
               final isSelected = _selectedIndex == index;
               return Column(
                 children: [
@@ -83,15 +88,16 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                                   : index;
                         });
                         ref
-                            .read(onboardingViewModelProvider
-                                .notifier)
+                            .read(userViewModelProvider.notifier)
                             .setAnswer(
-                                check: _selectedIndex != -1,
-                                index: widget.questionIndex);
+                              check: _selectedIndex != -1,
+                              index: widget.questionIndex,
+                              score: answer.value,
+                            );
                       },
                       child: SelectBox(
                           isSelected: isSelected,
-                          text: _answer[index])),
+                          text: answer.key)),
                   SizedBox(height: 8.h),
                 ],
               );
