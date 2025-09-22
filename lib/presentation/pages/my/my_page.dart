@@ -10,6 +10,8 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
+  String userNickname = "치키차카초코";
+
   List<String> surveyTitles = [
     "우울 진단 검사하기",
     "스트레스 진단 검사하기",
@@ -23,6 +25,15 @@ class _MyPageState extends State<MyPage> {
     "캐릭터 설정",
     "튜토리얼",
     "알림 설정",
+  ];
+
+  String selectedCharacterOption = "문제 해결을 잘함";
+
+  List<String> characterOptions = [
+    "문제 해결을 잘함",
+    "감정 풍부하고 따뜻함",
+    "엉뚱하지만 따뜻함",
+    "따뜻함과 이성 모두 가짐",
   ];
 
   @override
@@ -88,14 +99,16 @@ class _MyPageState extends State<MyPage> {
                         child: Row(
                           children: [
                             Text(
-                              "치키차카초코",
+                              userNickname,
                               style: AppFontStyles.bodyRegular16.copyWith(
                                 color: AppColors.grey700,
                               ),
                             ),
                             SizedBox(width: 8.w),
                             GestureDetector(
-                              onTap: () {},
+                              onTap: () {
+                                _showEditUserNicknameDialog(context);
+                              },
                               child: Icon(
                                 Icons.edit,
                                 color: AppColors.grey900,
@@ -113,12 +126,65 @@ class _MyPageState extends State<MyPage> {
               _buildSection(
                 title: "맞춤 설정",
                 items: ["캐릭터 성격"],
-                onTapList: [...List.generate(1, (index) => () {})],
+                onTapList: [
+                  ...List.generate(
+                    1,
+                    (index) => () async {
+                      final result = await showMenu<String>(
+                        context: context,
+                        position: RelativeRect.fromLTRB(183.w, 293.h, 0, 0),
+                        color: AppColors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          side: BorderSide(color: AppColors.grey100),
+                        ),
+                        items: characterOptions.map((e) {
+                          return PopupMenuItem<String>(
+                            value: e,
+                            child: Row(
+                              children: [
+                                Radio<String>(
+                                  value: e,
+                                  groupValue: selectedCharacterOption,
+                                  activeColor: AppColors.green400,
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  onChanged: (_) {
+                                    // Navigator.pop(context, e); // 선택 시 메뉴 닫고 값 반환
+                                  },
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    e,
+                                    style: AppFontStyles.bodyRegular14.copyWith(
+                                      color: AppColors.grey900,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      );
+                      if (result != null) {
+                        setState(() {
+                          selectedCharacterOption = result;
+                        });
+                      }
+                    },
+                  ),
+                ],
                 widget: Text(
-                  "문제 해결을 잘함",
+                  selectedCharacterOption,
                   style: AppFontStyles.bodyRegular14.copyWith(
                     color: AppColors.grey500,
                   ),
+                ),
+                icon: Icon(
+                  Icons.unfold_more,
+                  color: AppColors.grey700,
+                  size: 24.sp,
                 ),
               ),
               SizedBox(height: 16.h),
@@ -171,7 +237,7 @@ class _MyPageState extends State<MyPage> {
             (index) => index.isEven
                 ? GestureDetector(
                     onTap: onTapList[index ~/ 2],
-                    child: _buildSurveyItem(
+                    child: _buildSettingItem(
                       title: items[index ~/ 2],
                       icon: icon,
                       widget: widget,
@@ -187,12 +253,13 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  Container _buildSurveyItem({
+  Container _buildSettingItem({
     required String title,
     Icon? icon,
     Widget? widget,
   }) {
     return Container(
+      color: AppColors.white,
       height: 48.h,
       child: Row(
         children: [
@@ -213,5 +280,107 @@ class _MyPageState extends State<MyPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _showEditUserNicknameDialog(BuildContext context) async {
+    final TextEditingController controller = TextEditingController(text: userNickname);
+
+    String? result = await showDialog(
+      context: context,
+      barrierDismissible: false, // 바깥 터치로 닫히지 않게
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16), // 둥근 모서리
+          ),
+          contentPadding: EdgeInsets.all(24.r),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "프로필 수정",
+                style: AppFontStyles.heading3.copyWith(
+                  color: AppColors.grey900,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Divider(
+                color: AppColors.grey100,
+                height: 1.h,
+              ),
+              SizedBox(height: 12.h),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.green50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.grey200,
+                        width: 1.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Text(
+                "3~10자만 사용 가능해요",
+                style: AppFontStyles.bodyRegular12.copyWith(
+                  color: AppColors.grey700,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Row(
+                children: [
+                  Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                      child: Text(
+                        "취소",
+                        style: AppFontStyles.bodyMedium14.copyWith(
+                          color: AppColors.grey700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      // 저장 로직
+                      print("닉네임: ${controller.text}");
+                      final nickname = controller.text;
+                      Navigator.pop(context, nickname);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                      child: Text(
+                        "완료",
+                        style: AppFontStyles.bodyMedium14.copyWith(
+                          color: AppColors.green600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        userNickname = result;
+      });
+    }
   }
 }
