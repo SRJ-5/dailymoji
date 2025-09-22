@@ -4,6 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
+const String angry = "angry";
+const String crying = "crying";
+const String shocked = "shocked";
+const String sleeping = "sleeping";
+const String smile = "smile";
+
+const String defaultText1 = "안녕!\n지금 기분이 어때?";
+const String angryText = "왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?";
+const String cryingText = "왜..?\n무슨일이야!?\n나에게 얘기해볼래?";
+const String shockedText = "왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?";
+const String sleepingText = "왜..?\n요새 잠을 통모짜렐라\n나에게 얘기해볼래?";
+const String smileText = "기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ";
+
+const String angryImage = "assets/images/emoticon/emo_3d_angry_02.png";
+const String cryingImage = "assets/images/emoticon/emo_3d_crying_02.png";
+const String shockedImage = "assets/images/emoticon/emo_3d_shocked_02.png";
+const String sleepingImage = "assets/images/emoticon/emo_3d_sleeping_02.png";
+const String smileImage = "assets/images/emoticon/emo_3d_smile_02.png";
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -17,11 +36,12 @@ class _HomePageState extends State<HomePage> {
   int _index = 0;
   Timer? _timer;
 
-  double angryScale = 1.0;
-  double cryScale = 1.0;
-  double shockedScale = 1.0;
-  double sleepingScale = 1.0;
-  double smileScale = 1.0;
+  String? selectedEmotion;
+  bool angrySelected = false;
+  bool cryingSelected = false;
+  bool shockedSelected = false;
+  bool sleepingSelected = false;
+  bool smileSelected = false;
 
   @override
   void initState() {
@@ -54,30 +74,10 @@ class _HomePageState extends State<HomePage> {
 
     // 애니메이션 실행
     setState(() {
-      if (emotion == "angry") {
-        angryScale = 0.8;
+      if (selectedEmotion == emotion) {
+        selectedEmotion = null; // 다시 누르면 해제
       } else {
-        angryScale = 1.0;
-      }
-      if (emotion == "cry") {
-        cryScale = 0.8;
-      } else {
-        cryScale = 1.0;
-      }
-      if (emotion == "shocked") {
-        shockedScale = 0.8;
-      } else {
-        shockedScale = 1.0;
-      }
-      if (emotion == "sleeping") {
-        sleepingScale = 0.8;
-      } else {
-        sleepingScale = 1.0;
-      }
-      if (emotion == "smile") {
-        smileScale = 0.8;
-      } else {
-        smileScale = 1.0;
+        selectedEmotion = emotion;
       }
     });
   }
@@ -150,69 +150,49 @@ class _HomePageState extends State<HomePage> {
                 ),
                 // 감정 이모티콘들 (Stack + Positioned)
                 Positioned(
-                  bottom: 30.h,
-                  child: GestureDetector(
-                    onTap: () {
-                      onEmojiTap("기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ", 'smile');
-                    },
-                    child: Image.asset(
-                      "assets/images/emoticon/emo_3d_smile_02.png",
-                      scale: smileScale,
-                    ),
-                  ),
-                ),
+                    bottom: 15.h,
+                    child: Imoge(
+                        imo: smile,
+                        imoText: smileText,
+                        imoImage: smileImage,
+                        selectedEmotion: selectedEmotion,
+                        onEmojiTap: onEmojiTap)),
                 Positioned(
-                  top: 94.h,
-                  right: 38.w,
-                  child: GestureDetector(
-                    onTap: () {
-                      onEmojiTap("왜..?\n무슨일이야!?\n나에게 얘기해볼래?", 'cry');
-                    },
-                    child: Image.asset(
-                      "assets/images/emoticon/emo_3d_crying_02.png",
-                      scale: cryScale,
-                    ),
-                  ),
-                ),
+                    top: 94.h,
+                    right: 25.w,
+                    child: Imoge(
+                        imo: crying,
+                        imoText: cryingText,
+                        imoImage: cryingImage,
+                        selectedEmotion: selectedEmotion,
+                        onEmojiTap: onEmojiTap)),
                 Positioned(
-                  bottom: 110.h,
-                  left: 24.w,
-                  child: GestureDetector(
-                    onTap: () {
-                      onEmojiTap("왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?", 'shocked');
-                    },
-                    child: Image.asset(
-                      "assets/images/emoticon/emo_3d_shocked_02.png",
-                      scale: shockedScale,
-                    ),
-                  ),
-                ),
+                    bottom: 110.h,
+                    left: 15.w,
+                    child: Imoge(
+                        imo: shocked,
+                        imoText: shockedText,
+                        imoImage: shockedImage,
+                        selectedEmotion: selectedEmotion,
+                        onEmojiTap: onEmojiTap)),
                 Positioned(
-                  bottom: 110.h,
-                  right: 24.w,
-                  child: GestureDetector(
-                    onTap: () {
-                      onEmojiTap("왜..?\n요새 잠을 통모짜렐라\n나에게 얘기해볼래?", 'sleeping');
-                    },
-                    child: Image.asset(
-                      "assets/images/emoticon/emo_3d_sleeping_02.png",
-                      scale: sleepingScale,
-                    ),
-                  ),
-                ),
+                    bottom: 110.h,
+                    right: 15.w,
+                    child: Imoge(
+                        imo: sleeping,
+                        imoText: sleepingText,
+                        imoImage: sleepingImage,
+                        selectedEmotion: selectedEmotion,
+                        onEmojiTap: onEmojiTap)),
                 Positioned(
-                  top: 94.h,
-                  left: 38.w,
-                  child: GestureDetector(
-                    onTap: () {
-                      onEmojiTap("왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?", 'angry');
-                    },
-                    child: Image.asset(
-                      "assets/images/emoticon/emo_3d_angry_02.png",
-                      scale: angryScale,
-                    ),
-                  ),
-                ),
+                    top: 94.h,
+                    left: 25.w,
+                    child: Imoge(
+                        imo: angry,
+                        imoText: angryText,
+                        imoImage: angryImage,
+                        selectedEmotion: selectedEmotion,
+                        onEmojiTap: onEmojiTap)),
               ],
             ),
           ),
@@ -220,7 +200,7 @@ class _HomePageState extends State<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/ChatPage'),
+        onTap: () => context.go('/home/ChatPage'),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
@@ -251,82 +231,54 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+class Imoge extends StatelessWidget {
+  final String imo;
+  final String imoText;
+  final String imoImage;
+  final String? selectedEmotion;
+  final void Function(String, String) onEmojiTap;
 
+  const Imoge({
+    required this.imo,
+    required this.imoText,
+    required this.imoImage,
+    required this.selectedEmotion,
+    required this.onEmojiTap,
+  });
 
-
-// class EmojiButton extends StatelessWidget {
-//   final String text;
-//   final String emoji;
-//   final String assetPath;
-//   final double scale;
-//   final double height;
-//   final double width;
-//   final VoidCallback onTap;
-
-//   const EmojiButton({
-//     super.key,
-//     required this.text,
-//     required this.emoji,
-//     required this.assetPath,
-//     required this.scale,
-//     required this.height,
-//     required this.width,
-//     required this.onTap,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Positioned(
-//       top: height,
-//       left: width,
-//       child: GestureDetector(
-//         onTap: onTap,
-//         child: Image.asset(
-//           assetPath,
-//           scale: scale,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-// Stack(
-//         children: [
-//           BottomNavigationBar(
-//             items: const [
-//               BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
-//               BottomNavigationBarItem(
-//                   icon: Icon(Icons.bar_chart), label: "보고서"),
-//               BottomNavigationBarItem(icon: Icon(Icons.person), label: "마이"),
-//             ],
-//           ),
-
-//           // ✅ 채팅 입력창 버튼 (네비게이터 위에 고정)
-//           Positioned(
-//             left: 16,
-//             right: 16,
-//             bottom: 60, // BottomNav 위에 띄우기
-//             child: Container(
-//               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-//               decoration: BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.circular(30),
-//                 border: Border.all(color: Colors.grey.shade300),
-//               ),
-//               child: Row(
-//                 children: [
-//                   const Expanded(
-//                     child: Text(
-//                       "무엇이든 입력하세요",
-//                       style: TextStyle(color: Colors.grey),
-//                     ),
-//                   ),
-//                   const Icon(Icons.send, color: Colors.grey),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        selectedEmotion == imo
+            ? onEmojiTap(defaultText1, imo)
+            : onEmojiTap(imoText, imo);
+      },
+      child: selectedEmotion == imo
+          ? SizedBox(
+              height: 80.h,
+              width: 80.w,
+              child: Image.asset(
+                imoImage,
+                fit: BoxFit.cover,
+              ),
+            )
+          : ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                0.2126, 0.7152, 0.0722, 0, 0, // R
+                0.2126, 0.7152, 0.0722, 0, 0, // G
+                0.2126, 0.7152, 0.0722, 0, 0, // B
+                0, 0, 0, 1, 0, // A
+              ]),
+              child: SizedBox(
+                height: 60.h,
+                width: 60.w,
+                child: Image.asset(
+                  imoImage,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+    );
+  }
+}

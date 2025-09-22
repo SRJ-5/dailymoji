@@ -16,8 +16,8 @@ final router = GoRouter(
     GoRoute(path: '/home', builder: (context, state) => HomePage(), routes: [
       GoRoute(path: '/report', builder: (context, state) => ReportPage()),
       GoRoute(path: '/my', builder: (context, state) => MyPage()),
+      GoRoute(path: '/ChatPage', builder: (context, state) => ChatPage()),
     ]),
-    GoRoute(path: '/ChatPage', builder: (context, state) => ChatPage()),
     GoRoute(
         path: '/BreathingSolutionPage',
         builder: (context, state) => BreathingSolutionPage(),
