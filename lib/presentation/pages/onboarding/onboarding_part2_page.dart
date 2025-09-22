@@ -105,6 +105,12 @@ class _OnboardingPart2PageState
                               stepIndex++;
                             });
                           } else if (stepIndex == totalSteps) {
+                            ref
+                                .read(userViewModelProvider
+                                    .notifier)
+                                .fetchInsertUser(
+                                    userProfile:
+                                        state.userProfile!);
                             // TODO: go router로 교체 해야함, 페이지 연결하고 진행
                             Navigator.push(
                               context,

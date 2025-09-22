@@ -1,10 +1,10 @@
 import 'package:dailymoji/domain/entities/survey_response.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:dailymoji/presentation/providers/user_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UserState {
   final UserProfile? userProfile;
-  final SurveyResponse? surveyResponse;
   final bool step11;
   final bool step12;
   final bool step13;
@@ -13,7 +13,6 @@ class UserState {
 
   UserState({
     required this.userProfile,
-    required this.surveyResponse,
     this.step11 = true,
     this.step12 = false,
     this.step13 = false,
@@ -27,7 +26,6 @@ class UserState {
 
   UserState copyWith({
     UserProfile? userProfile,
-    SurveyResponse? surveyResponse,
     bool? step11,
     bool? step12,
     bool? step13,
@@ -36,7 +34,6 @@ class UserState {
   }) {
     return UserState(
       userProfile: userProfile ?? this.userProfile,
-      surveyResponse: surveyResponse ?? this.surveyResponse,
       step11: step11 ?? this.step11,
       step12: step12 ?? this.step12,
       step13: step13 ?? this.step13,
@@ -50,19 +47,22 @@ class UserViewModel extends Notifier<UserState> {
   @override
   UserState build() {
     return UserState(
-        userProfile: UserProfile(
-            id: null,
-            createdAt: null,
-            userId: null,
-            userNickNm: null,
-            aiCharacter: null,
-            characterNm: null,
-            characterPersonality: null),
-        surveyResponse: SurveyResponse(
-            id: null,
-            userId: null,
-            createdAt: null,
-            onboardingScores: {}));
+      userProfile: UserProfile(
+          id: null,
+          createdAt: null,
+          userNickNm: null,
+          aiCharacter: null,
+          characterNm: null,
+          characterPersonality: null,
+          onboardingScores: {}),
+    );
+  }
+
+  void fetchInsertUser(
+      {required UserProfile userProfile}) async {
+    final insertUserProfile =
+        ref.read(insertUserProfileUseCaseProvier);
+    await insertUserProfile.execute(userProfile);
   }
 
   void setAiName({required bool check, required String aiName}) {
@@ -97,19 +97,24 @@ class UserViewModel extends Notifier<UserState> {
     newAnswers[index] = check;
 
     final currentScores = Map<String, dynamic>.from(
-        state.surveyResponse?.onboardingScores ?? {});
+        state.userProfile?.onboardingScores ?? {});
     currentScores['q${index + 1}'] = score;
 
-    final newSurveyResponse = (state.surveyResponse ??
-            SurveyResponse(
-                id: null,
-                userId: null,
-                createdAt: null,
-                onboardingScores: {}))
+    final newSurveyResponse = (state.userProfile ??
+            UserProfile(
+              id: null,
+              createdAt: null,
+              userNickNm: null,
+              aiCharacter: null,
+              characterNm: null,
+              characterPersonality: null,
+              onboardingScores: {},
+            ))
         .copyWith(onboardingScores: currentScores);
     state = state.copyWith(
         step2Answers: newAnswers,
-        surveyResponse: newSurveyResponse);
+        userProfile: newSurveyResponse);
+    print('survey: ${state.userProfile?.onboardingScores}');
   }
 }
 
