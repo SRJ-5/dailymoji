@@ -11,9 +11,7 @@ final router = GoRouter(
   initialLocation: '/',
   navigatorKey: navigatorkey,
   routes: [
-    GoRoute(
-        path: '/',
-        builder: (context, state) => OnboardingPart1Page()),
+    GoRoute(path: '/', builder: (context, state) => MyPage()),
     // GoRoute(
     //   path: '/next',
     //   // builder: (context, state) => ,

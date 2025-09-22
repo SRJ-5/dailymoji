@@ -7,18 +7,21 @@ class AppFontStyles {
     fontFamily: 'Pretendard',
     fontSize: 34.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
   static TextStyle heading2 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 26.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
   static TextStyle heading3 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 20.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
 
@@ -27,24 +30,28 @@ class AppFontStyles {
     fontFamily: 'Pretendard',
     fontSize: 12.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
   static TextStyle bodyBold14 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 14.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
   static TextStyle bodyBold16 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 16.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
   static TextStyle bodyBold18 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 18.sp,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0,
     height: 1.5,
   );
 
