@@ -5,9 +5,8 @@ import json
 import os
 import re
 import traceback
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 
-import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,6 +38,7 @@ from srj5_constants import (
 # ---------- 환경설정 ----------
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+
 # Docker 환경에서는 '0.0.0.0'을 사용해야 한다고 함.
 BIND_HOST = os.getenv("BIND_HOST", "0.0.0.0") 
 # BIND_HOST = os.getenv("BIND_HOST", "127.0.0.1")
@@ -69,100 +69,6 @@ class Checkin(BaseModel):
     timestamp: Optional[str] = None
     surveys: Optional[Dict[str, Any]] = None
     onboarding: Optional[Dict[str, Any]] = None
-
-
-# -------------------- LLM 프롬프트 및 호출 함수 --------------------
-# 1. 분석(코치) 모드 프롬프트
-ANALYSIS_SYSTEM_PROMPT = """
-You are a clinical-grade SRJ-5 emotion analysis assistant.
-Return STRICT JSON ONLY matching this schema. No prose.
-
-SCHEMA:
-{'schema_version':'srj5-v1',
- 'text_cluster_scores':{'neg_low':0..1,'neg_high':0..1,'adhd_high':0..1,'sleep':0..1,'positive':0..1},
- 'intensity':{'neg_low':0..3,'neg_high':0..3,'adhd_high':0..3,'sleep':0..3,'positive':0..3},
- 'frequency':{'neg_low':0..3,'neg_high':0..3,'adhd_high':0..3,'sleep':0..3,'positive':0..3},
- 'evidence_spans':{'neg_low':[str],'neg_high':[str],'adhd_high':[str],'sleep':[str],'positive':[str]},
- 'dsm_hits':{'neg_low':[str],'neg_high':[str],'adhd_high':[str],'sleep':[str],'positive':[str]},
- 'intent':{'self_harm':'none|possible|likely','other_harm':'none|possible|likely'},
- 'irony_or_negation': bool,
- 'valence_hint': -1.0..1.0,
- 'arousal_hint': 0.0..1.0,
- 'confidence': 0.0..1.0}
-
-RULES:
-- Input text may contain casual or irrelevant small talk. Ignore all non-emotional content.
-- Only assign nonzero scores when evidence keywords are explicitly present.
-
-A) Evidence & Gating
-- evidence_spans MUST copy exact words/phrases from the input text.
-- If evidence_spans is empty → corresponding cluster score MUST be <= 0.2.
-- For sleep: evidence must include keywords like '잠','수면','불면','깼다' to allow score > 0.2.
-
-B) Cluster Priorities
-- neg_low: If words like '우울','무기력','번아웃' appear → neg_low must dominate over neg_high.
-- neg_high: Only score high if explicit anger/anxiety/fear words are present.
-- adhd_high: Score >0 only if ADHD/산만/집중 안됨/충동 words appear.
-- sleep: Score >0 only if sleep-related keywords exist.
-- positive: Only if explicit positive words appear. Exclude irony/sarcasm.
-
-C) DSM Hits
-- dsm_hits must only contain predefined survey codes:
-  PHQ9_Q1..9, BAT_Q1..4, GAD7_Q1..7, PSQI_Q1..7, ASRS_Q1..6, RSES_Q1..10.
-- Do NOT output disorder names like 'MDD' or 'GAD'.
-
-D) SAFETY RULES:
-- If the user explicitly expresses *their own desire or intention* to die, commit suicide, or end their life → mark intent.self_harm as "likely".
-- If the text only mentions someone else’s suicide, news, or a figurative joke ("죽겠다ㅋㅋ", "죽을만큼 맛있어") → keep self_harm as "none".
-- Be conservative: only assign "possible" or "likely" when the user clearly refers to themselves in first person (e.g. "죽고싶다", "나 이제 살고싶지 않아").
-
-STRICT:
-- Do NOT invent evidence.
-- Do NOT assign nonzero scores without matching evidence.
-- Do NOT output anything besides the JSON object.
-"""
-
-# 2. 친구 모드 프롬프트
-FRIENDLY_SYSTEM_PROMPT = """
-You are 'Moji', a friendly, warm, and supportive chatbot. Your personality is like a cheerful and empathetic friend.
-- Your primary goal is to be a good conversational partner.
-- Keep your responses short, typically 1-2 sentences.
-- Use emojis to convey warmth and friendliness. 😊
-- Your name is '모지'.
-- Respond in Korean.
-"""
-
-# 3. 통합 LLM 호출 함수
-async def call_llm(system_prompt: str, user_content: str, model: str = "gpt-4o-mini", temperature: float = 0.0) -> dict | str:
-    if not OPENAI_KEY:
-        return {"error": "OpenAI key not found"}
-    
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {OPENAI_KEY}"},
-                json={
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content},
-                    ],
-                    "temperature": temperature,
-                },
-                timeout=30.0,
-            )
-            data = resp.json()
-            content = data["choices"][0]["message"]["content"]
-            try:
-                # 분석 모드는 JSON을 반환
-                return json.loads(content)
-            except json.JSONDecodeError:
-                # 친구 모드는 순수 텍스트를 반환
-                return content
-        except Exception as e:
-            print(f"LLM call failed: {e}")
-            return {"error": str(e)}
 
 
 # ---------- Safety: Regex + Kiwi + LLM intent 결합 ----------
@@ -336,12 +242,13 @@ def g_score(final_scores: dict) -> float:
     g=sum(final_scores.get(k,0.0)*w.get(k,0.0) for k in CLUSTERS)
     return round(clip01((g+1.0)/2.0),3)
 
-# ---------- "친구 모드"를 위한 새로운 함수 ----------
+# ---------- "친구 모드" 응답 생성 함수 ----------
 async def generate_friendly_reply(text: str) -> str:
     # 친구 페르소나를 가진 프롬프트를 사용합니다.
     llm_response = await call_llm(
         system_prompt=FRIENDLY_SYSTEM_PROMPT,
         user_content=text,
+        openai_key=OPENAI_KEY, # 여기서 키전달
         model="gpt-4o-mini",
         temperature=0.7 # 약간의 창의성을 부여
     )
@@ -380,8 +287,8 @@ async def checkin(payload: Checkin):
         # --- 2단계: 모드 결정 (친구 모드 or 분석 모드) ---
         rule_scores, _, _ = rule_scoring(text)
         max_rule_score = max(rule_scores.values() or [0.0])
-        # (감정 점수가 0.1보다 크거나) AND (글자 길이가 5보다 크면) -> 분석 모드
-        is_emotional_text = max_rule_score > 0.1 and len(text) > 5 
+        # (감정 점수가 0.1보다 크거나) AND (글자 길이가 4보다 크면) -> 분석 모드
+        is_emotional_text = max_rule_score > 0.1 and len(text) > 4 
 
         if not is_emotional_text:
             # --- 3-A. "친구 모드"로 작동 ---
@@ -407,9 +314,12 @@ async def checkin(payload: Checkin):
         debug_log["rule_debug"] = debug_log_rule  # 강조어/슬랭 기록 -- 여기서 ignored 토큰 확인 가능
 
         # 2) LLM
-        llm_json = None
-        if rule_max < RULE_SKIP_LLM:
-            llm_json = await call_llm(payload.dict())
+        # 수정된 코드
+        llm_json = await call_llm(
+            system_prompt=ANALYSIS_SYSTEM_PROMPT, 
+            user_content=json.dumps(payload.dict(), ensure_ascii=False),
+            openai_key=OPENAI_KEY, # 여기서 키전달
+        )
         debug_log["llm"] = llm_json
 
         # 3) Fusion
