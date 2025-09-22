@@ -1,5 +1,3 @@
-import 'package:dailymoji/presentation/pages/my/widgets/ai_profile.dart';
-import 'package:dailymoji/presentation/pages/my/widgets/diagnostic_test_box.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -53,7 +51,6 @@ class MyPage extends StatelessWidget {
         padding: const EdgeInsets.all(10.0),
         child: ListView(
           children: [
-            AiProfile(),
             SizedBox(height: 15),
             Container(
               height: 56,
@@ -70,7 +67,6 @@ class MyPage extends StatelessWidget {
                 ],
               ),
             ),
-            DiagnosticTestBox(),
           ],
         ),
       ),

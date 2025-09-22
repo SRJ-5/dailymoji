@@ -1,16 +1,14 @@
-import 'package:dailymoji/presentation/pages/solution/solution_page_ifame.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class SolutionDescriptionPage extends StatefulWidget {
-  const SolutionDescriptionPage({super.key});
+class BreathingSolutionPage extends StatefulWidget {
+  const BreathingSolutionPage({super.key});
 
   @override
-  State<SolutionDescriptionPage> createState() =>
-      _SolutionDescriptionPageState();
+  State<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
 }
 
-class _SolutionDescriptionPageState extends State<SolutionDescriptionPage>
+class _BreathingSolutionPageState extends State<BreathingSolutionPage>
     with SingleTickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
@@ -91,7 +89,7 @@ class _SolutionDescriptionPageState extends State<SolutionDescriptionPage>
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
         if (_showFinalHint) {
-          return context.go('/SolutionDescription/Solution');
+          return context.go('/BreathingSolutionPage/SolutionPage');
         }
       },
       child: Scaffold(

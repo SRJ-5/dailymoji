@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:dailymoji/presentation/pages/my/widgets/Ai_profile.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -120,26 +119,27 @@ class _HomePageState extends State<HomePage> {
                   width: 160.w,
                 ),
                 Positioned(
-                  top: -110,
+                  top: -6,
                   child: SizedBox(
-                    height: 250.h,
-                    width: 250.w,
+                    height: 95.h,
+                    width: 180.w,
                     child: Image.asset(
-                      "assets/images/bubble_c 1.png",
-                      fit: BoxFit.cover,
+                      "assets/images/Bubble.png",
+                      fit: BoxFit.fitWidth,
                     ),
                   ),
                 ),
                 Positioned(
-                  top: -10,
+                  top: 3,
                   child: SizedBox(
                     width: 150.w,
                     child: Text(
                       displayText, // 타이핑 효과 적용된 텍스트
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF333333),
+                        fontFamily: 'Pretendard',
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 4,
@@ -220,7 +220,7 @@ class _HomePageState extends State<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/SolutionDescription'),
+        onTap: () => context.go('/ChatPage'),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
