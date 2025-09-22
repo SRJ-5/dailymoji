@@ -26,25 +26,25 @@ class AppFontStyles {
   static TextStyle bodyBold12 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 12.sp,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.bold,
     height: 1.5,
   );
   static TextStyle bodyBold14 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 14.sp,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.bold,
     height: 1.5,
   );
   static TextStyle bodyBold16 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 16.sp,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.bold,
     height: 1.5,
   );
   static TextStyle bodyBold18 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 18.sp,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.bold,
     height: 1.5,
   );
 
