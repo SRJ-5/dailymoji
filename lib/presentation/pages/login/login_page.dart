@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -19,34 +20,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   late final StreamSubscription<AuthState> _authSubscription;
 
   // onAuthStateChange를 로그인페이지가 아닌 전페이지 즉, 스플레쉬 페이지에서
-  @override
-  void initState() {
-    super.initState();
+  // @override
+  // void initState() {
+  //   super.initState();
 
-    // Supabase 클라이언트에 쉽게 접근하기 위해 변수 선언
-    final supabase = Supabase.instance.client;
+  //   // Supabase 클라이언트에 쉽게 접근하기 위해 변수 선언
+  //   final supabase = Supabase.instance.client;
 
-    // initState에서 단 한 번만 onAuthStateChange 스트림을 구독 시작
-    _authSubscription =
-        supabase.auth.onAuthStateChange.listen((data) {
-      final session = data.session;
-      final event = data.event;
-
-      if (event == AuthChangeEvent.signedIn && session != null) {
-        if (mounted) {
-          final userId = supabase.auth.currentUser;
-          ref
-              .read(userViewModelProvider.notifier)
-              .insertUserId(userId!.id);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              context.go('/onboarding1');
-            }
-          });
-        }
-      }
-    });
-  }
+  //   // initState에서 단 한 번만 onAuthStateChange 스트림을 구독 시작
+  //   _authSubscription =
+  //       supabase.auth.onAuthStateChange.listen((data) {
+  //     final session = data.session;
+  //     final event = data.event;
+  //     print('!@#!@%');
+  //     print(event);
+  //     if (event == AuthChangeEvent.signedIn && session != null) {
+  //       if (mounted) {
+  //         final userId = supabase.auth.currentUser;
+  //         ref
+  //             .read(userViewModelProvider.notifier)
+  //             .insertUserId(userId!.id);
+  //         WidgetsBinding.instance.addPostFrameCallback((_) {
+  //           if (mounted) {
+  //             context.go('/onboarding1');
+  //           }
+  //         });
+  //       }
+  //     }
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -111,10 +113,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Expanded(
                         child: GestureDetector(
                           onTap: () async {
-                            await ref
+                            final result = await ref
                                 .read(userViewModelProvider
                                     .notifier)
                                 .googleLogin();
+                            if (result != null) {
+                              context.go('/onboarding1');
+                            }
                           },
                           child: CircleAvatar(
                             radius: 30.r,
@@ -127,10 +132,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Expanded(
                         child: GestureDetector(
                           onTap: () async {
-                            await ref
+                            final result = await ref
                                 .read(userViewModelProvider
                                     .notifier)
                                 .appleLogin();
+                            if (result != null) {
+                              context.go('/onboarding1');
+                            }
                           },
                           child: CircleAvatar(
                             radius: 30.r,

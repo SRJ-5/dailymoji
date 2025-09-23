@@ -10,12 +10,12 @@ class UserProfileRepositoryImpl
 
   @override
   Future<String?> appleLogin() async {
-    await _userDataSource.appleLogin();
+    return await _userDataSource.appleLogin();
   }
 
   @override
   Future<String?> googleLogin() async {
-    await _userDataSource.googleLogin();
+    return await _userDataSource.googleLogin();
   }
 
   @override

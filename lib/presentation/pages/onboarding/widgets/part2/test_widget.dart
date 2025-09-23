@@ -58,8 +58,10 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                 padding: EdgeInsets.symmetric(
                     horizontal: 16.w, vertical: 12.h),
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4.r)),
+                    color: AppColors.white,
+                    border: Border.all(
+                        width: 1, color: AppColors.grey100),
+                    borderRadius: BorderRadius.circular(12.r)),
                 child: Center(
                     child: Text(
                   widget.text,
