@@ -32,7 +32,7 @@ class UserProfileDto {
 
   Map<String, dynamic> toJson() {
     return {
-      // "id": id,
+      "id": id,
       "user_nick_nm": userNickNm,
       "ai_character": aiCharacter,
       "character_nm": characterNm,

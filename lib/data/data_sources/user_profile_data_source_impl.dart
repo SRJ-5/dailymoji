@@ -5,6 +5,37 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class UserProfileDataSourceImpl
     implements UserProfileDataSource {
   final supabase = Supabase.instance.client;
+  final auth = Supabase.instance.client.auth;
+
+  @override
+  Future<String?> appleLogin() async {
+    try {
+      await auth.signInWithOAuth(OAuthProvider.apple,
+          authScreenLaunchMode: LaunchMode.externalApplication,
+          redirectTo: 'dailymoji://login-callback');
+      final user = Supabase.instance.client.auth.currentUser;
+      return user!.id;
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
+  @override
+  Future<String?> googleLogin() async {
+    try {
+      await auth.signInWithOAuth(
+        OAuthProvider.google,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+        redirectTo: 'dailymoji://login-callback',
+      );
+      final user = Supabase.instance.client.auth.currentUser;
+      return user!.id;
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
 
   @override
   Future<UserProfileDto> getUserProfile(

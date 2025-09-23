@@ -11,6 +11,7 @@ import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/user_nick_
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class OnboardingPart1Page extends ConsumerStatefulWidget {
   @override
@@ -113,13 +114,7 @@ class _OnboardingPart1PageState
                                 stepIndex++;
                               });
                             } else if (stepIndex == totalSteps) {
-                              // TODO: go router로 교체 해야함, 페이지 연결하고 진행
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        OnboardingPart2Page()),
-                              );
+                              context.go('/onboarding2');
                             }
                           }
                         : null,

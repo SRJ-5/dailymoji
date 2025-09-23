@@ -58,6 +58,27 @@ class UserViewModel extends Notifier<UserState> {
     );
   }
 
+  Future<String?> googleLogin() async {
+    final googleLogin = ref.read(googleLoginUseCaseProvier);
+    final userId = await googleLogin.execute();
+    state = state.copyWith(
+        userProfile: state.userProfile?.copyWith(id: userId));
+    return userId;
+  }
+
+  Future<String?> appleLogin() async {
+    final appleLogin = ref.read(appleLoginUseCaseProvier);
+    final userId = await appleLogin.execute();
+    state = state.copyWith(
+        userProfile: state.userProfile?.copyWith(id: userId));
+    return userId;
+  }
+
+  void insertUserId(String userId) {
+    state = state.copyWith(
+        userProfile: state.userProfile?.copyWith(id: userId));
+  }
+
   void fetchInsertUser(
       {required UserProfile userProfile}) async {
     final insertUserProfile =

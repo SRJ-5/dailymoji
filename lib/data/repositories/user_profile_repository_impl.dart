@@ -9,7 +9,18 @@ class UserProfileRepositoryImpl
   final UserProfileDataSource _userDataSource;
 
   @override
-  Future<UserProfile> getUserProfile(UserProfile userProfile) {
+  Future<String?> appleLogin() async {
+    await _userDataSource.appleLogin();
+  }
+
+  @override
+  Future<String?> googleLogin() async {
+    await _userDataSource.googleLogin();
+  }
+
+  @override
+  Future<UserProfile> getUserProfile(
+      UserProfile userProfile) async {
     throw UnimplementedError();
   }
 
