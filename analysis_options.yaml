@@ -11,6 +11,7 @@ analyzer:
   errors:
     use_key_in_widget_constructors: ignore
     sized_box_for_whitespace: ignore
+    avoid_unnecessary_containers: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
