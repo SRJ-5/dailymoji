@@ -1,11 +1,13 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part2/test_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class OnboardingPart2Page extends ConsumerStatefulWidget {
   @override
@@ -28,25 +30,13 @@ class _OnboardingPart2PageState
   ];
 
   int stepIndex = 0;
-  late int totalSteps = personalities.length - 1;
+  late int totalSteps = personalities.length;
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(onboardingViewModelProvider);
-    final isNextEnabled = state.step2Answers[stepIndex]
-        // switch (stepIndex) {
-        //   0 => state.step2Answers[stepIndex],
-        //   1 => state.step22,
-        //   2 => state.step23,
-        //   3 => state.step24,
-        //   4 => state.step25,
-        //   5 => state.step26,
-        //   6 => state.step27,
-        //   7 => state.step28,
-        //   8 => state.step29,
-        //   _ => false,
-        // }
-        ;
+    final state = ref.watch(userViewModelProvider);
+    final isNextEnabled = state.step2Answers[stepIndex];
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
@@ -57,11 +47,13 @@ class _OnboardingPart2PageState
                 },
                 icon: Icon(Icons.arrow_back))
             : null,
-        title: Text(
-          '현재 ${state.userNickName}의 감정 기록',
-          style: AppFontStyles.bodyBold18
-              .copyWith(color: AppColors.grey900),
-        ),
+        title: stepIndex == totalSteps
+            ? null
+            : Text(
+                '현재 ${state.userProfile!.userNickNm}의 감정 기록',
+                style: AppFontStyles.bodyBold18
+                    .copyWith(color: AppColors.grey900),
+              ),
         centerTitle: true,
       ),
       body: Padding(
@@ -69,16 +61,22 @@ class _OnboardingPart2PageState
             .copyWith(bottom: 20.h),
         child: Column(
           children: [
-            TopIndicator(
-                width: 28,
-                totalSteps: totalSteps,
-                stepIndex: stepIndex), // indicator 맨 위
+            stepIndex == totalSteps
+                ? SizedBox.shrink()
+                : TopIndicator(
+                    width: 28,
+                    totalSteps: totalSteps - 1,
+                    stepIndex: stepIndex), // indicator 맨 위
             Expanded(
-                child: TestWidget(
-              key: ValueKey(stepIndex),
-              text: personalities[stepIndex],
-              questionIndex: stepIndex,
-            )),
+                child: stepIndex == totalSteps
+                    ? FinishWidget(
+                        text: '모든 준비 완료!\n함께 시작해 볼까요?',
+                      )
+                    : TestWidget(
+                        key: ValueKey(stepIndex),
+                        text: personalities[stepIndex],
+                        questionIndex: stepIndex,
+                      )),
           ],
         ),
       ),
@@ -108,18 +106,19 @@ class _OnboardingPart2PageState
                               stepIndex++;
                             });
                           } else if (stepIndex == totalSteps) {
-                            // TODO: go router로 교체 해야함, 페이지 연결하고 진행
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      OnboardingPart2Page()),
-                            );
+                            ref
+                                .read(userViewModelProvider
+                                    .notifier)
+                                .fetchInsertUser(
+                                    userProfile:
+                                        state.userProfile!);
+                            // TODO: 홈페이지 연결해야함
+                            context.go('/home');
                           }
                         }
                       : null,
                   child: Text(
-                      stepIndex == totalSteps ? '완료' : '계속하기',
+                      stepIndex == totalSteps ? '시작하기' : '계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
                             ? AppColors.grey900

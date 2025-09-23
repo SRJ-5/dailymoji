@@ -1,3 +1,5 @@
+import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -9,7 +11,11 @@ final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 class BottomBar extends ConsumerWidget {
   const BottomBar({super.key});
 
-  static const List<String> _routes = ['/home', '/home/report', '/home/my'];
+  static const List<String> _routes = [
+    '/home',
+    '/report',
+    '/my'
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,31 +31,25 @@ class BottomBar extends ConsumerWidget {
         onTap: (index) {
           // 이미 같은 탭을 눌렀다면 다시 이동할 필요 없음
           if (index != currentIndex) {
-            ref.read(bottomNavIndexProvider.notifier).state = index;
+            ref.read(bottomNavIndexProvider.notifier).state =
+                index;
             context.go(_routes[index]);
           }
         },
         iconSize: 24.r,
-        selectedItemColor: const Color(0xFF97A672),
-        unselectedItemColor: const Color(0xFF777777),
-        backgroundColor: const Color(0xFFFEFBF4),
-        selectedLabelStyle: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Pretendard',
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Pretendard',
-        ),
+        selectedItemColor: AppColors.green500,
+        unselectedItemColor: AppColors.grey700,
+        backgroundColor: AppColors.yellow50,
+        selectedLabelStyle: AppFontStyles.bodyMedium14,
+        unselectedLabelStyle: AppFontStyles.bodyMedium14,
         items: const [
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/icons/home.png')),
             label: '홈',
           ),
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/icons/report.png')),
+            icon:
+                ImageIcon(AssetImage('assets/icons/report.png')),
             label: "리포트",
           ),
           BottomNavigationBarItem(
