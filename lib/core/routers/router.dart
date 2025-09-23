@@ -13,7 +13,7 @@ final router = GoRouter(
   initialLocation: '/home',
   navigatorKey: navigatorkey,
   routes: [
-    GoRoute(path: '/home', builder: (context, state) => HomePage(), routes: [
+    GoRoute(path: '/home', builder: (context, state) => ReportPage(), routes: [
       GoRoute(path: '/report', builder: (context, state) => ReportPage()),
       GoRoute(path: '/my', builder: (context, state) => MyPage()),
       GoRoute(path: '/ChatPage', builder: (context, state) => ChatPage()),
