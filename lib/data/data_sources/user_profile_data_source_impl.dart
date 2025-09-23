@@ -1,6 +1,7 @@
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -44,8 +45,7 @@ class UserProfileDataSourceImpl
   Future<String?> googleLogin() async {
     try {
       final google = GoogleSignIn(
-          serverClientId:
-              '18885609599-o0jg2pk712561eakcm2qgu7nj8uglpic.apps.googleusercontent.com');
+          serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
       final id = await google.signIn();
       final auth = await id?.authentication;
       if (auth?.idToken == null) {

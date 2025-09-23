@@ -1,4 +1,3 @@
-import 'package:dailymoji/domain/entities/survey_response.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:dailymoji/presentation/providers/user_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

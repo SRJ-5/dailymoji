@@ -113,7 +113,7 @@ class _OnboardingPart2PageState
                                     userProfile:
                                         state.userProfile!);
                             // TODO: 홈페이지 연결해야함
-                            context.go('/');
+                            context.go('/home');
                           }
                         }
                       : null,
