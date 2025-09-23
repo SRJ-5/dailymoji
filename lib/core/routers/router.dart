@@ -25,18 +25,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/onboarding2',
           builder: (context, state) => OnboardingPart2Page()),
-      GoRoute(path: '/home', builder: (context, state) => HomePage(), routes: [
-        GoRoute(path: '/ChatPage', builder: (context, state) => ChatPage()),
-      ]),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => HomePage(),
+      ),
+      // ChatPage 라우트를 분리하여 extra를 받을 수 있도록 함
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) {
+          final emotion = state.extra as String?; // extra에서 이모지 데이터 받기
+          return ChatPage(emotionFromHome: emotion);
+        },
+      ),
       GoRoute(path: '/report', builder: (context, state) => ReportPage()),
       GoRoute(path: '/my', builder: (context, state) => MyPage()),
       GoRoute(
-        // 백엔드에서 받는 solutionId를 받도록 설정
         path: '/breathing/:solutionId',
         builder: (context, state) {
-          // URL에서 solutionId를 추출
           final solutionId = state.pathParameters['solutionId']!;
-          // 페이지에 solutionId를 전달
           return BreathingSolutionPage(solutionId: solutionId);
         },
       ),

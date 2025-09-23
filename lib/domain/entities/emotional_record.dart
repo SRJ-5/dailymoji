@@ -1,54 +1,30 @@
+// lib/domain/entities/emotional_record.dart
 // 감정 분석 결과의 핵심 비즈니스 모델
+// 0924 변경:
+// 1. 백엔드에서 생성된 분석/제안 텍스트를 담을 필드 추가
+// 2. toSummaryMessage() 메서드를 제거하고 analysisText 필드를 사용하도록 변경
+
 class EmotionalRecord {
   final Map<String, double> finalScores;
   final double gScore;
   final int profile;
-  final String? interventionPresetId;
-  final Map<String, dynamic> intervention;
   final String? sessionId;
+
+  // 백엔드 응답에서 직접 받을 텍스트 필드
+  final String? interventionPresetId;
+  final String? analysisText; // 예: "평소보다 우울해 보여요..."
+  final String? proposalText; // 예: "기분 전환을 위해... 해볼까요?"
+
+  final Map<String, dynamic> intervention; // 기타 솔루션 데이터 (solution_id 등)
 
   EmotionalRecord({
     required this.finalScores,
     required this.gScore,
     required this.profile,
+    this.sessionId,
     this.interventionPresetId,
+    this.analysisText,
+    this.proposalText,
     this.intervention = const {},
-    this.sessionId, // 생성자에 추가
   });
-
-  // 분석 결과를 요약 메시지로 변환하는 헬퍼 메서드
-  String toSummaryMessage() {
-    if (finalScores.isEmpty) {
-      return "감정 분석 결과를 요약할 수 없어요.";
-    }
-
-    // 가장 높은 점수를 받은 감정 찾기
-    final topEmotionEntry =
-        finalScores.entries.reduce((a, b) => a.value > b.value ? a : b);
-    final topEmotion = topEmotionEntry.key;
-    final topScore = (topEmotionEntry.value * 100).toInt();
-
-    String emotionKorean;
-    switch (topEmotion) {
-      case 'neg_low':
-        emotionKorean = '우울/무기력';
-        break;
-      case 'neg_high':
-        emotionKorean = '불안/분노';
-        break;
-      case 'adhd_high':
-        emotionKorean = '산만함';
-        break;
-      case 'sleep':
-        emotionKorean = '수면 문제';
-        break;
-      case 'positive':
-        emotionKorean = '긍정';
-        break;
-      default:
-        emotionKorean = topEmotion;
-    }
-
-    return "오늘 당신의 마음에는 '$emotionKorean' 감정이 $topScore%로 가장 크게 자리 잡고 있네요.";
-  }
 }

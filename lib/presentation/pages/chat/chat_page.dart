@@ -1,12 +1,24 @@
+// lib/presentation/pages/chat/chat_page.dart
+// 0924 변경:
+// 1. 홈에서 전달받은 이모지 처리를 위해 `emotionFromHome` 파라미터 추가.
+// 2. `initState`에서 `emotionFromHome`이 있으면 ViewModel의 `sendEmojiAsMessage` 호출.
+// 3. 자동 스크롤을 위한 `ScrollController` 추가 및 구현.
+// 4. AppBar의 title을 userViewModelProvider와 연동하여 동적으로 character_nm을 표시.
+
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
+  final String? emotionFromHome;
+
+  const ChatPage({super.key, this.emotionFromHome});
+
   @override
   ConsumerState<ChatPage> createState() => _ChatPageState();
 }
@@ -16,7 +28,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   bool showEmojiBar = false;
   String selectedEmojiAsset = "assets/images/smile.png";
   final _messageInputController = TextEditingController();
-
+  final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
 
   @override
@@ -26,13 +38,40 @@ class _ChatPageState extends ConsumerState<ChatPage>
       vsync: this,
       duration: const Duration(milliseconds: 700), // 전체 타이밍
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 홈에서 이모지를 선택하고 들어온 경우에만,
+      // selectedEmojiAsset 값을 해당 이모지 경로로 덮어쓰고 분석 시작
+
+      if (widget.emotionFromHome != null) {
+        final assetPath = "assets/images/${widget.emotionFromHome!}.png";
+        setState(() {
+          selectedEmojiAsset = assetPath;
+        });
+        ref
+            .read(chatViewModelProvider.notifier)
+            .sendEmojiAsMessage(widget.emotionFromHome!);
+      }
+      _scrollToBottom();
+    });
   }
 
   @override
   void dispose() {
     _messageInputController.dispose();
+    _scrollController.dispose();
     _emojiCtrl.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   void _toggleEmojiBar() {
@@ -49,6 +88,15 @@ class _ChatPageState extends ConsumerState<ChatPage>
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatViewModelProvider);
+    // 캐릭터 이름 연동
+    final userState = ref.watch(userViewModelProvider);
+    final characterName = userState.userProfile?.characterNm ?? "모지모지";
+    final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
+
+    ref.listen(chatViewModelProvider.select((state) => state.messages),
+        (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    });
 
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
@@ -56,14 +104,20 @@ class _ChatPageState extends ConsumerState<ChatPage>
         backgroundColor: Color(0xFFFEFBF4),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min, // 중앙 정렬을 위해 추가
+
           children: [
             CircleAvatar(
               radius: 16.r,
-              backgroundImage: NetworkImage("https://picsum.photos/300/200"),
+              backgroundImage:
+                  (characterImageUrl != null && characterImageUrl.isNotEmpty)
+                      ? NetworkImage(characterImageUrl)
+                      : const AssetImage("assets/images/cado_profile.png")
+                          as ImageProvider,
             ),
             SizedBox(width: 12.r),
             Text(
-              "모지모지",
+              characterName,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Color(0xFF333333),
@@ -73,6 +127,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
             ),
           ],
         ),
+        centerTitle: true,
       ),
       body: Stack(
         clipBehavior: Clip.none,
@@ -83,12 +138,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
               children: [
                 Expanded(
                   child: ListView.builder(
+                    controller: _scrollController,
                     itemCount: chatState.messages.length,
                     itemBuilder: (context, index) {
                       final message = chatState.messages[index];
                       // 메시지 타입에 따라 다른 위젯을 보여주도록 분기 처리
                       if (message.sender == Sender.user) {
-                        return _userMessage(message.content, message.createdAt);
+                        return _userMessage(message);
                       } else {
                         switch (message.type) {
                           case MessageType.analysis:
@@ -145,7 +201,31 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  Widget _userMessage(String message, DateTime? date) {
+  Widget _userMessage(Message message) {
+    // 메시지 타입에 따라 다른 내용을 표시할 위젯 변수
+    Widget messageContent;
+
+// branching: 메시지 타입이 'image'이고 이미지 경로가 있으면 Image 위젯을, 아니면 Text 위젯을 표시
+    if (message.type == MessageType.image && message.imageAssetPath != null) {
+      messageContent = Image.asset(
+        message.imageAssetPath!,
+        width: 100.w, // 필요에 따라 이미지 크기 조절
+        height: 100.w,
+      );
+    } else {
+      messageContent = Text(
+        message.content, // 일반 텍스트 메시지 내용
+        maxLines: 4,
+        softWrap: true,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: Color(0xff4A5565),
+          letterSpacing: 0.sp,
+          fontSize: 14.sp,
+        ),
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
@@ -153,7 +233,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            _formattedNow(date ?? DateTime.now()),
+            _formattedNow(message.createdAt),
             style: TextStyle(
               fontSize: 14.sp,
               letterSpacing: 0.sp,
@@ -162,7 +242,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
           ),
           SizedBox(width: 4.r),
           Container(
-            padding: EdgeInsets.all(16.r),
+            // 이미지일 경우와 텍스트일 경우 다른 패딩
+            padding: message.type == MessageType.image
+                ? EdgeInsets.all(2.r)
+                : EdgeInsets.all(16.r),
             constraints: BoxConstraints(maxWidth: 247.w),
             decoration: BoxDecoration(
               color: Color(0xffBAC4A1),
@@ -172,17 +255,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 bottomLeft: Radius.circular(12.r),
               ),
             ),
-            child: Text(
-              message,
-              maxLines: 4,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Color(0xff4A5565),
-                letterSpacing: 0.sp,
-                fontSize: 14.sp,
-              ),
-            ),
+            child: messageContent, //위에서 만든 위젯을 여기에 배치
           ),
         ],
       ),

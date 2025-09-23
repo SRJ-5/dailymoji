@@ -7,20 +7,17 @@ import 'package:dailymoji/data/dtos/emotional_record_dto.dart';
 import 'package:http/http.dart' as http; // http 패키지 추가
 
 class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
-  // SupabaseClient 의존성 제거, 생성자 비우기
-  EmotionRemoteDataSourceImpl();
-
   @override
   Future<EmotionalRecordDto> analyzeEmotion({
     required String userId,
     required String text,
-    String? emotion,
+    String? emotion, // 홈 또는 채팅에서 선택한 이모지
     Map<String, dynamic>? onboarding,
   }) async {
     try {
       // 1. .env 파일에 설정한 FastAPI 서버 URL로 /checkin 엔드포인트 호출
       final url = "${getBaseUrl()}/checkin";
-      print("Calling API: $url"); // 디버깅용 로그
+      print("Calling API: $url with text: '$text', icon: '$emotion'");
 
       // 2. 원래 코드처럼 http.post를 사용하여 API 호출
       final response = await http.post(
@@ -29,10 +26,9 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         body: jsonEncode({
           'user_id': userId,
           'text': text,
-          'icon': emotion, // 'emotion' 파라미터를 백엔드 모델에 맞게 'icon'으로 매핑
+          'icon': emotion,
           'timestamp': DateTime.now().toIso8601String(),
           'onboarding': onboarding,
-          // 필요하다면 다른 파라미터도 추가할 수 있습니다.
         }),
       );
 

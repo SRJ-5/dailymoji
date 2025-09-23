@@ -1,28 +1,14 @@
+// lib/presentation/pages/home/home_page.dart
+// 0924 변경:
+// 1. 선택된 이모지를 상태로 관리 (`selectedEmotion`)
+// 2. 채팅 입력창 클릭 시, 선택된 이모지 정보를 `/chat` 라우트로 전달
+
 import 'dart:async';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-const String angry = "angry";
-const String crying = "crying";
-const String shocked = "shocked";
-const String sleeping = "sleeping";
-const String smile = "smile";
-
-const String defaultText1 = "안녕!\n지금 기분이 어때?";
-const String angryText = "왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?";
-const String cryingText = "왜..?\n무슨일이야!?\n나에게 얘기해볼래?";
-const String shockedText = "왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?";
-const String sleepingText = "왜..?\n요새 잠을 통모짜렐라\n나에게 얘기해볼래?";
-const String smileText = "기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ";
-
-const String angryImage = "assets/images/emoticon/emo_3d_angry_02.png";
-const String cryingImage = "assets/images/emoticon/emo_3d_crying_02.png";
-const String shockedImage = "assets/images/emoticon/emo_3d_shocked_02.png";
-const String sleepingImage = "assets/images/emoticon/emo_3d_sleeping_02.png";
-const String smileImage = "assets/images/emoticon/emo_3d_smile_02.png";
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,22 +18,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String defaultText = "안녕!\n지금 기분이 어때?";
   String displayText = "";
   int _index = 0;
   Timer? _timer;
 
-  String? selectedEmotion;
-  bool angrySelected = false;
-  bool cryingSelected = false;
-  bool shockedSelected = false;
-  bool sleepingSelected = false;
-  bool smileSelected = false;
+  String? selectedEmotion; // 선택된 이모지 이름 (예: "smile")
+
+  static const String defaultText = "안녕!\n지금 기분이 어때?";
+  final Map<String, String> emotionTexts = {
+    "angry": "왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?",
+    "crying": "왜..?\n무슨일이야!?\n나에게 얘기해볼래?",
+    "shocked": "왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?",
+    "sleeping": "왜..?\n요새 잠을 잘 못자?\n나에게 얘기해볼래?",
+    "smile": "기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ"
+  };
 
   @override
   void initState() {
     super.initState();
-    _startTyping("안녕!\n지금 기분이 어때?");
+    _startTyping(defaultText);
   }
 
   void _startTyping(String newText) {
@@ -69,16 +58,14 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void onEmojiTap(String newText, String emotion) {
-    // 텍스트 갱신
-    _startTyping(newText);
-
-    // 애니메이션 실행
+  void onEmojiTap(String emotionKey) {
     setState(() {
-      if (selectedEmotion == emotion) {
+      if (selectedEmotion == emotionKey) {
         selectedEmotion = null; // 다시 누르면 해제
+        _startTyping(defaultText);
       } else {
-        selectedEmotion = emotion;
+        selectedEmotion = emotionKey;
+        _startTyping(emotionTexts[emotionKey] ?? defaultText);
       }
     });
   }
@@ -149,46 +136,36 @@ class _HomePageState extends State<HomePage> {
                 // 감정 이모티콘들 (Stack + Positioned)
                 Positioned(
                     bottom: 15.h,
-                    child: Imoge(
-                        imo: smile,
-                        imoText: smileText,
-                        imoImage: smileImage,
+                    child: _Imoge(
+                        imoKey: "smile",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     top: 94.h,
                     right: 25.w,
-                    child: Imoge(
-                        imo: crying,
-                        imoText: cryingText,
-                        imoImage: cryingImage,
+                    child: _Imoge(
+                        imoKey: "crying",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     bottom: 110.h,
                     left: 15.w,
-                    child: Imoge(
-                        imo: shocked,
-                        imoText: shockedText,
-                        imoImage: shockedImage,
+                    child: _Imoge(
+                        imoKey: "shocked",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     bottom: 110.h,
                     right: 15.w,
-                    child: Imoge(
-                        imo: sleeping,
-                        imoText: sleepingText,
-                        imoImage: sleepingImage,
+                    child: _Imoge(
+                        imoKey: "sleeping",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     top: 94.h,
                     left: 25.w,
-                    child: Imoge(
-                        imo: angry,
-                        imoText: angryText,
-                        imoImage: angryImage,
+                    child: _Imoge(
+                        imoKey: "angry",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
               ],
@@ -198,7 +175,7 @@ class _HomePageState extends State<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/home/chat'),
+        onTap: () => context.go('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
@@ -229,38 +206,26 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class Imoge extends StatelessWidget {
-  final String imo;
-  final String imoText;
-  final String imoImage;
+class _Imoge extends StatelessWidget {
+  final String imoKey;
   final String? selectedEmotion;
-  final void Function(String, String) onEmojiTap;
+  final void Function(String) onEmojiTap;
 
-  const Imoge({
-    required this.imo,
-    required this.imoText,
-    required this.imoImage,
-    required this.selectedEmotion,
-    required this.onEmojiTap,
-  });
+  const _Imoge(
+      {required this.imoKey,
+      required this.selectedEmotion,
+      required this.onEmojiTap});
+
+  String get imoAssetPath => "assets/images/emoticon/emo_3d_${imoKey}_02.png";
 
   @override
   Widget build(BuildContext context) {
+    final isSelected = selectedEmotion == imoKey;
     return GestureDetector(
-      onTap: () {
-        selectedEmotion == imo
-            ? onEmojiTap(defaultText1, imo)
-            : onEmojiTap(imoText, imo);
-      },
-      child: selectedEmotion == imo
-          ? SizedBox(
-              height: 80.h,
-              width: 80.w,
-              child: Image.asset(
-                imoImage,
-                fit: BoxFit.cover,
-              ),
-            )
+      onTap: () => onEmojiTap(imoKey),
+      child: isSelected
+          ? Image.asset(imoAssetPath,
+              height: 80.h, width: 80.w, fit: BoxFit.cover)
           : ColorFiltered(
               colorFilter: const ColorFilter.matrix(<double>[
                 0.2126, 0.7152, 0.0722, 0, 0, // R
@@ -268,14 +233,8 @@ class Imoge extends StatelessWidget {
                 0.2126, 0.7152, 0.0722, 0, 0, // B
                 0, 0, 0, 1, 0, // A
               ]),
-              child: SizedBox(
-                height: 60.h,
-                width: 60.w,
-                child: Image.asset(
-                  imoImage,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              child: Image.asset(imoAssetPath,
+                  height: 60.h, width: 60.w, fit: BoxFit.cover),
             ),
     );
   }
