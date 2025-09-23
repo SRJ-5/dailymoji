@@ -27,8 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   // TODO: test로 여기에 구현 test완료 후 클린아키텍쳐 구조로 변환해야함
   Future<bool> appleLogin() async {
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-          OAuthProvider.apple,
+      await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.apple,
           authScreenLaunchMode: LaunchMode.externalApplication,
           redirectTo: 'dailymoji://login-callback');
       return true;
@@ -88,8 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        DummyPage(),
+                                    builder: (context) => DummyPage(),
                                   ));
                             }
                           },
@@ -109,8 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        DummyPage(),
+                                    builder: (context) => DummyPage(),
                                   ));
                             }
                           },

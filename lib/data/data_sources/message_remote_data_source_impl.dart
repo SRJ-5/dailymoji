@@ -24,7 +24,7 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     final endIso = endOfDay.toUtc().toIso8601String();
 
     var base = client
-        .from("raw_chats")
+        .from("messages")
         .select()
         .eq("user_id", userId)
         .gte("created_at", startIso)
@@ -82,7 +82,7 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     required String sessionId,
   }) async {
     await client
-        .from("raw_chats")
+        .from("messages")
         .update({'session_id': sessionId}).eq('id', messageId);
   }
 }

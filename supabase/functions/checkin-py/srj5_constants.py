@@ -40,8 +40,24 @@ PCA_PROXY = {
     "pc2": {"neg_high": 0.70, "adhd_high": 0.40, "sleep": -0.50, "neg_low": 0.10, "positive": -0.05}
 }
 
-SAFETY_TERMS = [
-    "죽고 싶", "죽고싶", "죽고", "죽이고", "죽여", "자해", "끝내고", "사라지고", "해치고", "극단적", "유서", "고의로 다치", "살기싫"
+SAFETY_LEMMAS = [
+    "죽다", 
+    "자살하다", 
+    "뛰어내리다", 
+    "투신하다", 
+    "목매달다",
+    "자해하다",
+    "유서",
+    "극단적이다",
+    "죽이다",
+    "해치다",
+]
+
+# 함께 등장했을 때 위험한 '어근' 조합 목록
+SAFETY_LEMMA_COMBOS = [
+    {"살다", "싫다"},    # "살기 싫다"
+    {"목숨", "끊다"},    # "목숨을 끊다"
+    {"생", "마감하다"},  # "생을 마감하다"
 ]
 
 INTERVENTIONS = [
@@ -63,6 +79,35 @@ ONBOARDING_MAPPING = {
     "q7": [{"cluster": "positive", "w": 0.80}, {"cluster": "neg_low", "w": 0.20}], 
     "q8": [{"cluster": "neg_low", "w": 0.80}, {"cluster": "sleep", "w": 0.20}],
     "q9": [{"cluster": "adhd_high", "w": 0.85}, {"cluster": "neg_low", "w": 0.15}],
+}
+
+# --- 솔루션 ID를 클러스터별로 그룹화한 라이브러리 추가 ---
+SOLUTION_ID_LIBRARY = {
+    "neg_low": [
+        "neg_low_beach_01",
+        "neg_low_turtle_01",
+        "neg_low_snow_01"
+    ],
+    "neg_high": [
+        "neg_high_cityview_01",
+        "neg_high_campfire_01",
+        "neg_high_heartbeat_01"
+    ],
+    "adhd_high": [
+        "adhd_high_space_01",   
+        "adhd_high_pomodoro_01",
+        "adhd_high_training_01"
+    ],
+    "sleep": [
+        "sleep_forest_01",
+        "sleep_onsen_01",
+        "sleep_plane_01"
+    ],
+    "positive": [
+        "positive_forest_01",
+        "positive_beach_01",
+        "positive_cafe_01"
+    ]
 }
 
 

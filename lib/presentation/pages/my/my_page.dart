@@ -149,7 +149,8 @@ class _MyPageState extends State<MyPage> {
                                   groupValue: selectedCharacterOption,
                                   activeColor: AppColors.green400,
                                   visualDensity: VisualDensity.compact,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                   onChanged: (_) {
                                     // Navigator.pop(context, e); // 선택 시 메뉴 닫고 값 반환
                                   },
@@ -283,7 +284,8 @@ class _MyPageState extends State<MyPage> {
   }
 
   Future<void> _showEditUserNicknameDialog(BuildContext context) async {
-    final TextEditingController controller = TextEditingController(text: userNickname);
+    final TextEditingController controller =
+        TextEditingController(text: userNickname);
 
     String? result = await showDialog(
       context: context,
@@ -343,7 +345,8 @@ class _MyPageState extends State<MyPage> {
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                      padding: EdgeInsets.only(
+                          top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
                       child: Text(
                         "취소",
                         style: AppFontStyles.bodyMedium14.copyWith(
@@ -360,7 +363,8 @@ class _MyPageState extends State<MyPage> {
                       Navigator.pop(context, nickname);
                     },
                     child: Container(
-                      padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                      padding: EdgeInsets.only(
+                          top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
                       child: Text(
                         "완료",
                         style: AppFontStyles.bodyMedium14.copyWith(

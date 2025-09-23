@@ -37,11 +37,8 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
       routerConfig: router,
-      theme: ThemeData(
-        fontFamily: "Pretendard",
-      ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

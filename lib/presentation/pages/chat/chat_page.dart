@@ -90,14 +90,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       if (message.sender == Sender.user) {
                         return _userMessage(message.content, message.createdAt);
                       } else {
-                        if (message.type == MessageType.analysis) {
-                          return _analysisMessage(message.content);
+                        switch (message.type) {
+                          case MessageType.analysis:
+                            return _analysisMessage(message.content);
+                          case MessageType.solutionProposal:
+                            return _solutionProposalMessage(message);
+                          default:
+                            return _botMessage(
+                                message.content, message.createdAt);
                         }
-                        return _botMessage(message.content, message.createdAt);
                       }
-                      // return message.sender == Sender.user
-                      //     ? _userMessage(message.content, message.createdAt)
-                      //     : _botMessage(message.content, message.createdAt);
                     },
                   ),
                 ),
@@ -228,6 +230,41 @@ class _ChatPageState extends ConsumerState<ChatPage>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _solutionProposalMessage(Message message) {
+    final proposal = message.proposal!;
+    final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
+
+    // 봇 메시지 위젯을 재사용하여 텍스트를 표시하고, 아래에 버튼을 추가합니다.
+    return Column(
+      children: [
+        _botMessage(message.content, message.createdAt),
+        SizedBox(height: 8.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: options.map((option) {
+            return Padding(
+              padding: EdgeInsets.only(left: 8.w),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xffF8DA9C),
+                  foregroundColor: Color(0xff4A5565),
+                ),
+                onPressed: () {
+                  // 버튼을 누르면 ViewModel의 함수를 호출합니다.
+                  ref.read(chatViewModelProvider.notifier).respondToSolution(
+                        proposal['solution_id'] as String,
+                        option['action'] as String,
+                      );
+                },
+                child: Text(option['label'] as String),
+              ),
+            );
+          }).toList(),
+        )
+      ],
     );
   }
 
@@ -416,7 +453,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               final text = _messageInputController.text.trim();
               if (text.isNotEmpty) {
                 final message = Message(
-                  userId: "8dfc1a65-1fae-47f6-81f4-37257acc3db6",
+                  userId: "c4349dd9-39f2-4788-a175-6ec4bd4f7aba",
                   content: text,
                   sender: Sender.user,
                   type: MessageType.normal,

@@ -1,8 +1,13 @@
+import 'dart:math';
+
 import 'package:dailymoji/core/constants/presets.dart';
+import 'package:dailymoji/core/constants/solution_scripts.dart';
 import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class ChatState {
   final List<Message> messages;
@@ -29,7 +34,7 @@ class ChatState {
 }
 
 class ChatViewModel extends Notifier<ChatState> {
-  final _userId = "8dfc1a65-1fae-47f6-81f4-37257acc3db6";
+  final _userId = "c4349dd9-39f2-4788-a175-6ec4bd4f7aba";
   @override
   ChatState build() {
     _init(_userId);
@@ -77,13 +82,17 @@ class ChatViewModel extends Notifier<ChatState> {
     final updateSessionIdUseCase =
         ref.read(updateMessageSessionIdUseCaseProvider);
 
-    // 1. 사용자 메시지 UI에 표시
+    // 1. 사용자 메시지 UI에 먼저 표시하고 DB에 저장
     state = state.copyWith(messages: [...state.messages, message]);
+    final savedMessage = await sendMessageUseCase.execute(message);
+    // UI의 메시지를 DB에 저장된 버전(ID 포함)으로 교체
+    final updatedMessages = [...state.messages]..removeLast();
+    updatedMessages.add(savedMessage);
+    state = state.copyWith(messages: updatedMessages);
 
     try {
       // --- TODO: 사용자 온보딩 점수를 가져오기!!  ---
       // 이 부분은 나중에 User Repository에서 가져오는 로직으로 대체하면 됨.
-      // 예시: final onboardingData = await ref.read(userRepositoryProvider).getOnboardingScores();
       final onboardingData = {
         "q1": 2,
         "q2": 3,
@@ -92,16 +101,9 @@ class ChatViewModel extends Notifier<ChatState> {
         "q5": 1,
         "q6": 2,
         "q7": 1,
-        /* 3 - 1 = 2점 */ "q8": 2,
+        "q8": 2,
         "q9": 1
       };
-
-      // 2. 메시지를 DB에 저장
-      final savedMessage = await sendMessageUseCase.execute(message);
-      // 로컬 메시지를 DB에 저장된 버전으로 교체
-      final updatedMessages = [...state.messages];
-      updatedMessages[updatedMessages.length - 1] = savedMessage;
-      state = state.copyWith(messages: updatedMessages);
 
       // 3. 감정 분석 시작 (UI에 분석 중 메시지 표시)
       final analyzingMessage = Message(
@@ -123,78 +125,153 @@ class ChatViewModel extends Notifier<ChatState> {
         emotion: emotion,
         onboarding: onboardingData,
       );
+      // "입력 중..." 메시지 제거 (봇의 최종 응답을 추가하기 전)
+      final tempMessages = [...state.messages]..removeLast();
+      state = state.copyWith(messages: tempMessages);
 
       // 5. 응답 결과에 따라 분기 처리!
-      Message botResponseMessage;
-      final String? newSessionId = emotionalRecord.sessionId;
+      // Message botResponseMessage;
+      // final String? newSessionId = emotionalRecord.sessionId;
 
       final presetId = emotionalRecord.interventionPresetId;
       print("✅ Received presetId from backend: '$presetId'");
 
-      // 5-1. 친구 모드인지 먼저 확인
-      if (presetId == PresetIds.friendlyReply) {
-        botResponseMessage = Message(
+      switch (presetId) {
+        // 5-1. 친구 모드
+        case PresetIds.friendlyReply:
+          final botMessage = Message(
             userId: _userId,
-            content: emotionalRecord.intervention['text'] as String? ??
-                "죄송해요, 답변을 준비하는 중에 오류가 발생했어요. 다시 한번 말씀해주시겠어요?",
+            content: emotionalRecord.intervention['text'] as String,
             sender: Sender.bot,
-            type: MessageType.normal);
-      }
-      // 5-2. 그 외 모든 경우("분석", "안전" 등)는 솔루션/개입으로 간주
-      else {
-        String content;
-
-        // 5-2-1. intervention에 미리 작성된 'text'가 있는지 확인 (안전 모드 등)
-        if (emotionalRecord.intervention.containsKey('text')) {
-          content = emotionalRecord.intervention['text'] as String? ??
-              "분석 결과를 표시할 수 없어요.";
-        }
-        // 5-2-2. 'text'가 없다면, 점수를 바탕으로 요약문 생성 (일반 분석 모드)
-        else {
-          content = emotionalRecord.toSummaryMessage();
-        }
-
-        botResponseMessage = Message(
-            userId: _userId,
-            content: content,
-            sender: Sender.bot,
-            type: MessageType.normal);
-
-        // "분석 모드" 계열일 때만 session_id 업데이트
-        final newSessionId = emotionalRecord.sessionId;
-        if (newSessionId != null && savedMessage.id != null) {
-          await updateSessionIdUseCase.execute(
-            messageId: savedMessage.id!,
-            sessionId: newSessionId,
           );
-        }
+          await _addBotMessageToChat(botMessage);
+          break;
+
+        // 5-2. 안전 위기 모드
+        case PresetIds.safetyCrisisModal:
+        case PresetIds.safetyCrisisSelfHarm:
+        case PresetIds.safetyCrisisAngerAnxiety:
+        case PresetIds.safetyCheckIn:
+          final cluster = emotionalRecord.intervention['cluster'] as String;
+          final solutionId =
+              emotionalRecord.intervention['solution_id'] as String;
+          // 안전 위기 멘트는 Flutter에 내장된 라이브러리에서 가져옴
+          final safetyText = kSolutionProposalScripts[cluster]?.first ??
+              "많이 힘드시군요. 도움이 필요하시면 연락주세요.";
+
+          final botMessage = Message(
+              userId: _userId,
+              content: safetyText,
+              sender: Sender.bot,
+              type: MessageType.solutionProposal, // 제안 타입으로 버튼 표시
+              proposal: {
+                "solution_id": solutionId,
+                "options": [
+                  {"label": "도움받기", "action": "accept_solution"},
+                  {"label": "괜찮아요", "action": "decline_solution_and_talk"}
+                ]
+              });
+          await _addBotMessageToChat(botMessage);
+          break;
+
+        // 5-3. 일반 분석 및 솔루션 제안 모드
+        case PresetIds.solutionProposal:
+          final interventionData = emotionalRecord.intervention;
+
+          final topCluster =
+              emotionalRecord.intervention['top_cluster'] as String;
+
+          // 0. [분석 결과 요약] 메시지를 먼저 생성하기!!! (예: "우울/무기력 감정이 81%...")
+          final summaryMessage = Message(
+            userId: _userId,
+            content: emotionalRecord.toSummaryMessage(),
+            sender: Sender.bot,
+          );
+          // DB 저장 후 UI에 즉시 추가
+          await _addBotMessageToChat(summaryMessage);
+
+          // 사용자가 읽을 시간을 주기 위해 잠시 대기
+          await Future.delayed(const Duration(milliseconds: 1200));
+
+          // 1. 과학적 설명 멘트 (랜덤 선택)
+          final summaryScripts = kClusterSummaryScripts[topCluster]!;
+          final summaryText =
+              summaryScripts[Random().nextInt(summaryScripts.length)];
+          final scientificMessage = Message(
+              userId: _userId, content: summaryText, sender: Sender.bot);
+          await _addBotMessageToChat(scientificMessage);
+
+          await Future.delayed(const Duration(milliseconds: 1200));
+
+          // 2. [솔루션 제안] 멘트와 버튼을 생성합니다.
+          final proposalScripts = kSolutionProposalScripts[topCluster]!;
+          final proposalText =
+              proposalScripts[Random().nextInt(proposalScripts.length)];
+          final proposalMessage = Message(
+              userId: _userId,
+              content: proposalText,
+              sender: Sender.bot,
+              type: MessageType.solutionProposal,
+              proposal: {
+                "solution_id": emotionalRecord.intervention['solution_id'],
+                "options": [
+                  {"label": "좋아, 해볼게", "action": "accept_solution"},
+                  {"label": "아니, 그냥 말할래", "action": "decline_solution_and_talk"}
+                ]
+              });
+          await _addBotMessageToChat(proposalMessage);
+          break;
+
+        default:
+          final errorMessage = Message(
+              userId: _userId,
+              content: "죄송해요, 응답을 이해할 수 없었어요.",
+              sender: Sender.bot);
+          await _addBotMessageToChat(errorMessage);
       }
 
-      // 6. 생성된 AI 응답 메시지를 DB(raw_chats)에 먼저 저장하고,
-      //    'ID가 부여된' 결과 객체를 돌려받습니다.
-      final savedBotMessage =
-          await sendMessageUseCase.execute(botResponseMessage);
-
-      // 7. UI 최종 업데이트
-      // 현재 메시지 목록에서 마지막 항목("모지가 입력하고 있어요...")을 제거합니다.
-      final finalMessages = [...state.messages]..removeLast();
-
-      // 이전에 ID 없이 추가했던 botResponseMessage 대신,
-      // ID가 포함된 'savedBotMessage'를 화면에 추가합니다.      finalMessages.add(botResponseMessage);
-      finalMessages.add(savedBotMessage);
-
-      // 새로운 메시지 목록으로 state를 업데이트하고, isTyping 상태를 false로 변경합니다.
-      state = state.copyWith(messages: finalMessages, isTyping: false);
-    } catch (e) {
+      // "분석 모드" 계열일 때만 session_id 업데이트
+      final newSessionId = emotionalRecord.sessionId;
+      if (newSessionId != null && savedMessage.id != null) {
+        await updateSessionIdUseCase.execute(
+          messageId: savedMessage.id!,
+          sessionId: newSessionId,
+        );
+      }
+    } catch (e, stackTrace) {
       print("sendMessage or analyzeEmotion error : $e");
-
-      // 혹시나 슈퍼베이스 저장 실패 시
+      print(stackTrace);
       final updatedMessages = [...state.messages]..removeLast();
       state = state.copyWith(
         messages: updatedMessages,
         errorMessage: "감정 분석에 실패했어요. 😥",
-        isTyping: false,
       );
+    } finally {
+      state = state.copyWith(isTyping: false);
+    }
+  }
+
+  // --- 봇 메시지를 DB 저장 후 UI에 추가하는 헬퍼 메소드 ---
+  Future<void> _addBotMessageToChat(Message botMessage) async {
+    final savedBotMessage =
+        await ref.read(sendMessageUseCaseProvider).execute(botMessage);
+    state = state.copyWith(messages: [...state.messages, savedBotMessage]);
+  }
+
+  // --- 버튼 클릭 시 호출될 새로운 메소드 ---
+  Future<void> respondToSolution(String solutionId, String action) async {
+    if (action == "decline_solution_and_talk") {
+      final message = Message(
+          userId: _userId,
+          content: "네, 좋아요. 귀 기울여 듣고 있을게요.",
+          sender: Sender.bot);
+      await _addBotMessageToChat(message);
+      return;
+    }
+
+    if (action == "accept_solution") {
+      // solutionId를 가지고 Breathing 페이지로 이동
+      navigatorkey.currentContext?.go('/breathing/$solutionId');
     }
   }
 

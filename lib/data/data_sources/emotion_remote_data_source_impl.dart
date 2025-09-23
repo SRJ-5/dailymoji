@@ -44,12 +44,15 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
       // 3. API 응답 처리
       if (response.statusCode == 200) {
-        // 한글 깨짐 방지를 위해 UTF-8로 디코딩
-        final responseBody = utf8.decode(response.bodyBytes);
-        final json = jsonDecode(responseBody);
-        return EmotionalRecordDto.fromJson(json);
+        final jsonResult = jsonDecode(responseBody);
+
+        if (jsonResult == null || jsonResult is! Map<String, dynamic>) {
+          throw Exception(
+              'Received null or invalid JSON from API. Response Body: $responseBody');
+        }
+
+        return EmotionalRecordDto.fromJson(jsonResult); // 수정된 jsonResult 사용
       } else {
-        // 에러 발생 시
         throw Exception(
             'Failed to analyze emotion: ${response.statusCode} ${response.body}');
       }

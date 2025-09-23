@@ -92,15 +92,21 @@ You are 'Moji', a friendly, warm, and supportive chatbot. Your personality is li
 """
 
 # 3. 통합 LLM 호출 함수
-async def call_llm(system_prompt: str, user_content: str, openai_key: str, model: str = "gpt-4o-mini", temperature: float = 0.0) -> Union[dict, str]:
-    if not openai_key: # 파라미터로 받은 키를 확인
+async def call_llm(
+    system_prompt: str,
+    user_content: str,
+    openai_key: str,
+    model: str = "gpt-4o-mini",
+    temperature: float = 0.0,
+    expect_json: bool = True,  # 1. expect_json 파라미터 추가 (기본값 True)
+) -> Union[dict, str]:
+    if not openai_key:
         return {"error": "OpenAI key not found"}
-    
+
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
                 "https://api.openai.com/v1/chat/completions",
-                # 👇 --- 헤더에서 직접 키를 사용 --- 👇
                 headers={"Authorization": f"Bearer {openai_key}"},
                 json={
                     "model": model,
@@ -113,15 +119,23 @@ async def call_llm(system_prompt: str, user_content: str, openai_key: str, model
                 timeout=30.0,
             )
             data = resp.json()
-
-            # 응답이 JSON 형식인지, 단순 텍스트인지에 따라 다르게 처리
             content = data["choices"][0]["message"]["content"]
+
+            # 2. expect_json 값에 따라 로직 분리
+            if not expect_json:
+                # JSON을 기대하지 않는 경우 (친구 모드 등), 순수 텍스트 반환
+                return content
+
+            # JSON을 기대하는 경우, 파싱 시도
             try:
-                # 분석 모드는 JSON을 반환해야 함
                 return json.loads(content)
             except json.JSONDecodeError:
-                # 친구 모드는 순수 텍스트를 반환
-                return content
+                # 파싱에 실패하면, 원본 텍스트가 포함된 에러 dict를 반환
+                print(f"🚨 LLM JSON 파싱 실패. 원본 응답: {content}")
+                return {
+                    "error": "Failed to parse LLM response as JSON.",
+                    "raw_content": content,
+                }
 
         except Exception as e:
             print(f"LLM call failed: {e}")

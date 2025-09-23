@@ -7,6 +7,7 @@ class MessageDto {
   final String? content;
   final String? sender;
   final String? type;
+  final Map<String, dynamic>? proposal;
 
   MessageDto({
     this.id,
@@ -15,6 +16,7 @@ class MessageDto {
     this.content,
     this.sender,
     this.type,
+    this.proposal,
   });
 
   MessageDto.fromJson(Map<String, dynamic> map)
@@ -25,6 +27,9 @@ class MessageDto {
           content: map["content"],
           sender: map["sender"],
           type: map["type"],
+          proposal: map["proposal"] != null
+              ? Map<String, dynamic>.from(map["proposal"])
+              : null,
         );
 
   Map<String, dynamic> toJson() {
@@ -33,6 +38,7 @@ class MessageDto {
       "content": content,
       "sender": sender,
       "type": type,
+      "proposal": proposal,
     };
   }
 
@@ -43,6 +49,7 @@ class MessageDto {
     String? content,
     String? sender,
     String? type,
+    final Map<String, dynamic>? proposal,
   }) {
     return MessageDto(
       id: id ?? this.id,
@@ -51,6 +58,7 @@ class MessageDto {
       content: content ?? this.content,
       sender: sender ?? this.sender,
       type: type ?? this.type,
+      proposal: proposal ?? this.proposal,
     );
   }
 
@@ -62,11 +70,8 @@ class MessageDto {
       userId: userId ?? "",
       content: content ?? "",
       sender: sender == "user" ? Sender.user : Sender.bot,
-      type: type == "solution"
-          ? MessageType.solution
-          : type == "analysis" // NEW: 분석 메시지 타입 추가
-              ? MessageType.analysis
-              : MessageType.normal,
+      type: _mapTypeToEntity(type),
+      proposal: proposal,
     );
   }
 
@@ -77,6 +82,35 @@ class MessageDto {
           userId: message.userId,
           content: message.content,
           sender: message.sender == Sender.user ? "user" : "bot",
-          type: message.type == MessageType.solution ? "solution" : "normal",
+          type: _mapTypeFromEntity(message.type),
+          proposal: message.proposal,
         );
+
+// String -> MessageType 변환
+  static MessageType _mapTypeToEntity(String? typeString) {
+    switch (typeString) {
+      case 'solution':
+        return MessageType.solution;
+      case 'analysis':
+        return MessageType.analysis;
+      case 'solution_proposal':
+        return MessageType.solutionProposal;
+      default:
+        return MessageType.normal;
+    }
+  }
+
+  // MessageType -> String 변환
+  static String _mapTypeFromEntity(MessageType type) {
+    switch (type) {
+      case MessageType.solution:
+        return 'solution';
+      case MessageType.analysis:
+        return 'analysis';
+      case MessageType.solutionProposal:
+        return 'solution_proposal';
+      default:
+        return 'normal';
+    }
+  }
 }

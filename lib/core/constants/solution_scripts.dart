@@ -32,41 +32,142 @@ const Map<String, List<String>> kClusterSummaryScripts = {
 // 2. 솔루션 제안 멘트 라이브러리
 const Map<String, List<String>> kSolutionProposalScripts = {
   "neg_low": [
-    "지금은 기분이 바닥에 붙어있는 것 같아요. 하얀 눈 내리는 밤길을 걸으면서 고요한 소리에 마음을 맡겨보세요. 뇌가 새로운 공간을 감지하면서 기분이 조금씩 환기돼요.",
-    "이럴 땐 좁은 방 안에만 머물러 있는 느낌이 강해져요. 지금은 속이 탁 트이는 바닷가로 잠시 자리를 옮겨볼까요?",
-    "작은 공간에 갇힌 듯한 느낌을 깨는 것이 중요해요. 천천히 헤엄치는 거북이를 따라가며, 깊은 바다 속으로 시선을 옮겨보세요."
+    "지금은 기분이 바닥에 붙어있는 것 같아요. ",
+    "이럴 땐 좁은 방 안에만 머물러 있는 느낌이 강해져요. ",
+    "작은 공간에 갇힌 듯한 느낌을 깨는 것이 중요해요. "
   ],
   "neg_high": [
-    "지금은 뇌의 경보 시스템이 과도하게 울리고 있어요. 창밖 도시 불빛과 빗방울을 바라보며, 호흡을 가다듬어볼까요?",
-    "불안과 분노가 치밀어 오를 땐, 강가의 모닥불처럼 감정을 흡수해줄 탁 트인 공간이 필요해요. 불빛이 물결에 흔들리듯, 한 호흡 한 호흡 긴장을 내려놓아보세요.",
-    "몸의 긴장을 풀기엔 물속이 제격이에요. 엄마 뱃속처럼 고요한 물속에서 심장소리에 집중하면, 뇌가 점차 안정된 리듬을 회복하게 돼요."
+    "지금은 뇌의 경보 시스템이 과도하게 울리고 있어요. ",
+    "불안과 분노가 치밀어 오를 땐, ",
+    "몸의 긴장을 풀기엔 "
   ],
   "adhd_high": [
-    "집중이 자꾸 흩어질 땐 🚀 우주 공간처럼 자극이 최소화된 환경이 효과적이에요. 숨을 고르며 별빛에 시선을 모아보세요.",
-    "주의가 산만해질 땐 주변 맥락을 정리하는 게 좋아요. 조용한 도서관 같은 공간에 들어온 듯 호흡하면서 마음을 정리해볼까요?",
-    "산만할 때는 복잡한 자극 대신, 비어있는 하늘 같은 단순한 공간이 필요해요. 하늘에만 집중하며 숨을 들이마시고 내쉬어보세요."
+    "집중이 자꾸 흩어질 땐 ",
+    "주의가 산만해질 땐 주변 맥락을 정리하는 게 좋아요. ",
+    "산만할 때는 복잡한 자극 대신, "
   ],
-  "sleep": [
-    "수면 회로가 불안정할 때는 잔잔한 숲 속에서 포근한 텐트 안에 누운 듯, 빗방울이 떨어지는 리듬에 맞춰 몸을 호흡해보세요.",
-    "깊이 잠들기 힘들 땐 비행기에서 포근한 기내 좌석에 기대듯, 엔진 소리에 안정을 맡기고 천천히 숨을 쉬어보세요. 공간적 전환이 뇌의 각성을 낮춰줍니다.",
-    "깨어있는 몸을 진정시키기 위해, 온천의 따뜻한 품에서 보글보글 물소리와 풀벌레 소리에 집중해보세요. 잠 못 이루던 마음도 편안해질거예요."
-  ],
+  "sleep": ["수면 회로가 불안정할 때는 ", "깊이 잠들기 힘들 땐 ", "깨어있는 몸을 진정시키기 위해, "],
   "positive": [
-    "지금 좋은 감정을 더 크게 키워보면 좋아요. 🌸 햇살 가득한 들판에 앉아 호흡하며 그 기분을 오래 저장해보세요.",
-    "긍정적인 순간은 공간 기억과 함께 묶으면 더 오래갑니다. 푸른 하늘과 흰 구름 아래에 있는 상상을 해보세요.",
-    "좋은 기분은 넓은 바다 전망대 같은 공간과 함께 할 때 뇌가 회복탄력성을 더 강하게 저장해요."
+    "지금 좋은 감정을 더 크게 키워보면 좋아요. 🌸 ",
+    "긍정적인 순간은 공간 기억과 함께 묶으면 더 오래갑니다. ",
+    "좋은 기분은 "
   ]
 };
 
 // 3. 최종 솔루션 정보 라이브러리
 const Map<String, Map<String, String>> kSolutionsDb = {
+  // neg_low
   "neg_low_beach_01": {
     "text": "지금은 속이 탁 트이는 바닷가로 잠시 자리를 옮겨볼까요?",
     "type": "video",
-    "url": "https://youtu.be/n4Mdh3TEq_k?si=ZuJEn6CXJImRQ6nj&t=420"
+    "url": "https://youtu.be/n4Mdh3TEq_k?si=ZuJEn6CXJImRQ6nj",
+    "startAt": "420", // 7분 = 420초
+    "endAt": "540" // 9분 = 540초
   },
+  "neg_low_turtle_01": {
+    "text": "자유로이 헤엄치는 거북이를 따라가며, 깊은 바다 속으로 시선을 옮겨보세요.", //-> TODO: 이거 연결안됨
+    "type": "video",
+    "url": "https://youtu.be/9xQ6YlaYYHI?si=MuzNJcEO11iB_V0f",
+    "startAt": "0",
+    "endAt": "180"
+  },
+  "neg_low_snow_01": {
+    "text": "하얀 눈 내리는 밤길을 걸으면서 고요한 소리에 마음을 맡겨보세요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=31RokLEvUhg",
+    "startAt": "1290", // 21분 30초 = 1290초
+    "endAt": "1440"
+  },
+
+  // neg_high
+  "neg_high_cityview_01": {
+    "text": "창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬어볼까요?",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=xg1gNlxto2M",
+    "startAt": "0",
+    "endAt": "120"
+  },
+  "neg_high_campfire_01": {
+    "text": "강가의 모닥불처럼 감정을 흡수해줄 탁 트인 공간이 필요해요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=6nlEmH7eZLk",
+    "startAt": "20",
+    "endAt": "140"
+  },
+  "neg_high_heartbeat_01": {
+    "text": "엄마 뱃속처럼 고요한 물속에서 심장소리에 집중하면, 뇌가 점차 안정된 리듬을 회복하게 돼요.",
+    "type": "video",
+    "url": "https://youtu.be/vuctJwSi2To?si=UYXDQJOIFD9G3cSa",
+    "startAt": "8",
+    "endAt": "129"
+  },
+
+  // adhd_high
+  "adhd_high_space_01": {
+    "text": "우주 공간처럼 자극이 최소화된 환경이 효과적이에요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=qRitf7c3-nQ",
+    "startAt": "0",
+    "endAt": "120"
+  },
+  "adhd_high_pomodoro_01": {
+    "text": "딱 5분만, 가장 쉬운 일부터 시작해볼까요?",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=TA9SZawYm2k",
+    "startAt": "0",
+    "endAt": "120"
+  },
+  "adhd_high_training_01": {
+    "text": "공의 움직임을 따라가보세요! 집중력이 켜질겁니다!",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=E7HOlJ_OhEo",
+    "startAt": "0",
+    "endAt": "120"
+  },
+
+  // sleep
+  "sleep_forest_01": {
+    "text": "잔잔한 숲 속 텐트 안에 누운 듯, 빗방울 소리에 몸을 맡겨보세요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=IdTRKv2jLo4",
+    "startAt": "10",
+    "endAt": "130"
+  },
+  "sleep_onsen_01": {
+    "text": "온천의 따뜻한 품에서 물소리와 풀벌레 소리에 집중해보세요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=fz1f05GRSvA",
+    "startAt": "20",
+    "endAt": "140"
+  },
+  "sleep_plane_01": {
+    "text": "포근한 기내 좌석에 기대듯, 엔진 소리에 안정을 맡겨보세요.",
+    "type": "video",
+    "url": "https://youtu.be/LuMBRy_gly4?si=9_XpJLlhRgXJhCQT",
+    "startAt": "3540", // 59분 = 3540초
+    "endAt": "3600"
+  },
+
+  // positive
+  "positive_forest_01": {
+    "text": "햇살 가득한 숲에 앉아 호흡하며 그 기분을 오래 저장해보세요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=su14Bo0-uMI&list=LL&index=4",
+    "startAt": "0",
+    "endAt": "120"
+  },
+  "positive_beach_01": {
+    "text": "푸른 하늘과 흰 구름 아래에 있는 상상을 해보세요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=M_Q3YNlWfyA",
+    "startAt": "0",
+    "endAt": "120"
+  },
+  "positive_cafe_01": {
+    "text": "재즈가 흐르는 카페와 같은 공간과 함께 할 때 뇌가 회복탄력성을 더 강하게 저장해요.",
+    "type": "video",
+    "url": "https://www.youtube.com/watch?v=NJuSStkIZBg",
+    "startAt": "0",
+    "endAt": "120"
+  }
 };
-
-
-// TODO: crisis solution 준비
-// neg_low_crisis_01 , neg_high_crisis_01
