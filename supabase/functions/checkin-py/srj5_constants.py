@@ -64,3 +64,5 @@ ONBOARDING_MAPPING = {
     "q8": [{"cluster": "neg_low", "w": 0.80}, {"cluster": "sleep", "w": 0.20}],
     "q9": [{"cluster": "adhd_high", "w": 0.85}, {"cluster": "neg_low", "w": 0.15}],
 }
+
+
