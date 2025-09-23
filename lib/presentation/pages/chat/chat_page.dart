@@ -11,7 +11,8 @@ class ChatPage extends ConsumerStatefulWidget {
   ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderStateMixin {
+class _ChatPageState extends ConsumerState<ChatPage>
+    with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
   String selectedEmojiAsset = "assets/images/smile.png";
   final _messageInputController = TextEditingController();
@@ -319,7 +320,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                                 1,
                                 0,
                               ])
-                            : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                            : const ColorFilter.mode(
+                                Colors.transparent, BlendMode.multiply),
                         child: Image.asset(
                           emojiAssets[index],
                           width: 34.w,
