@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,6 +11,7 @@ void main() async {
     url: const String.fromEnvironment('SUPABASE_URL'),
     anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
   );
+  await dotenv.load(fileName: ".env");
   runApp(
     ProviderScope(
       child: ScreenUtilInit(
@@ -17,7 +19,7 @@ void main() async {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) {
-          return MyApp();
+          return const MyApp();
         },
       ),
     ),
@@ -31,11 +33,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
       routerConfig: router,
-      theme: ThemeData(
-        fontFamily: "Pretendard",
-      ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
