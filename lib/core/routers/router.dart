@@ -28,15 +28,13 @@ final router = GoRouter(
         builder: (context, state) => HomePage(),
         routes: [
           GoRoute(
-              path: '/report',
-              builder: (context, state) => ReportPage()),
-          GoRoute(
-              path: '/my',
-              builder: (context, state) => MyPage()),
-          GoRoute(
               path: '/ChatPage',
               builder: (context, state) => ChatPage()),
         ]),
+    GoRoute(
+        path: '/report',
+        builder: (context, state) => ReportPage()),
+    GoRoute(path: '/my', builder: (context, state) => MyPage()),
     GoRoute(
         path: '/BreathingSolutionPage',
         builder: (context, state) => BreathingSolutionPage(),

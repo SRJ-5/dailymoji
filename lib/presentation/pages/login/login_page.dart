@@ -105,7 +105,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 .getUserProfile(result);
                             if (isRegistered) {
                               // TODO: 여기에 홈페이지로 이동 넣어야함
-                              context.go('/onboarding2');
+                              context.go('/home');
                             } else {
                               context.go('/onboarding1');
                             }

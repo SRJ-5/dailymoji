@@ -13,8 +13,8 @@ class BottomBar extends ConsumerWidget {
 
   static const List<String> _routes = [
     '/home',
-    '/home/report',
-    '/home/my'
+    '/report',
+    '/my'
   ];
 
   @override
