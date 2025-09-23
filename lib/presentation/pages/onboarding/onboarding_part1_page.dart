@@ -1,15 +1,16 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/ai_name_setting.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai_personality.dart';
-import 'package:dailymoji/presentation/pages/onboarding/onboarding_part2_page.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/user_nick_name.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class OnboardingPart1Page extends ConsumerStatefulWidget {
   @override
@@ -20,22 +21,25 @@ class OnboardingPart1Page extends ConsumerStatefulWidget {
 class _OnboardingPart1PageState
     extends ConsumerState<OnboardingPart1Page> {
   int stepIndex = 0;
+  // 캐릭터 선택창이 생기면 totalSteps +1 해야함
   int totalSteps = 3;
 
   @override
   Widget build(BuildContext context) {
     final isNextEnabled = switch (stepIndex) {
-      0 => ref.watch(onboardingViewModelProvider).step11,
-      1 => ref.watch(onboardingViewModelProvider).step12,
-      2 => ref.watch(onboardingViewModelProvider).step13,
-      3 => ref.watch(onboardingViewModelProvider).step14,
-      _ => false,
+      // 캐릭터 선택창이 생기면 아래 step.11 활성화 해야하고 case 0~4로 해야함
+      // 0 => ref.watch(userViewModelProvider).step11,
+      0 => ref.watch(userViewModelProvider).step12,
+      1 => ref.watch(userViewModelProvider).step13,
+      2 => ref.watch(userViewModelProvider).step14,
+      _ => true,
     };
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.yellow50,
         appBar: AppBar(
           backgroundColor: AppColors.yellow50,
@@ -44,32 +48,42 @@ class _OnboardingPart1PageState
                   onPressed: () {
                     setState(() => stepIndex--);
                   },
-                  icon: Icon(Icons.arrow_back))
+                  icon: Icon(
+                    Icons.arrow_back,
+                    size: 24.r,
+                  ))
               : null,
-          title: Text(
-            stepIndex == 3
-                ? 'Step 1. 나의 닉네임 설정'
-                : 'Step 1. 캐릭터 설정',
-            style: AppFontStyles.bodyBold18
-                .copyWith(color: AppColors.grey900),
-          ),
+          title: stepIndex == totalSteps
+              ? null
+              : Text(
+                  stepIndex == 3
+                      ? 'Step 1. 나의 닉네임 설정'
+                      : 'Step 1. 캐릭터 설정',
+                  style: AppFontStyles.bodyBold18
+                      .copyWith(color: AppColors.grey900),
+                ),
           centerTitle: true,
         ),
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w)
-              .copyWith(bottom: 20.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Column(
             children: [
-              TopIndicator(
-                  width: 51,
-                  totalSteps: totalSteps,
-                  stepIndex: stepIndex), // indicator 맨 위
+              stepIndex == totalSteps
+                  ? SizedBox.shrink()
+                  : TopIndicator(
+                      width: 51,
+                      totalSteps: totalSteps - 1,
+                      stepIndex: stepIndex), // indicator 맨 위
               Expanded(
                 child: [
-                  SelectAi(),
+                  // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
+                  // SelectAi(),
                   AiNameSetting(),
                   SelectAiPersonality(),
                   UserNickName(),
+                  FinishWidget(
+                    text: '좋아요!\n이제 다음 단계로 가볼까요?',
+                  ),
                 ][stepIndex],
               ),
             ],
@@ -102,13 +116,7 @@ class _OnboardingPart1PageState
                                 stepIndex++;
                               });
                             } else if (stepIndex == totalSteps) {
-                              // TODO: go router로 교체 해야함, 페이지 연결하고 진행
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        OnboardingPart2Page()),
-                              );
+                              context.go('/onboarding2');
                             }
                           }
                         : null,

@@ -1,6 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,8 +66,7 @@ class _SelectAiPersonalityState
                                   : index;
                         });
                         ref
-                            .read(onboardingViewModelProvider
-                                .notifier)
+                            .read(userViewModelProvider.notifier)
                             .setAiPersonality(
                                 check: _selectedIndex != -1,
                                 aiPersonality:
@@ -85,7 +84,15 @@ class _SelectAiPersonalityState
               );
             },
           ),
-        )
+        ),
+        Spacer(),
+        Align(
+            alignment: Alignment.bottomRight,
+            child: Image.asset(
+              'assets/images/cado_profile.png',
+              width: 120.w,
+              height: 180.h,
+            )),
       ],
     );
   }
