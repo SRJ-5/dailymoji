@@ -209,7 +209,9 @@ def get_analysis_message(scores: dict) -> str:
 
 
 async def get_solution_proposal(top_cluster: str) -> Dict[str, Any]:
+    # 1. 멘트 라이브러리에서 랜덤으로 멘트 하나 선택
     proposal_script = random.choice(SOLUTION_PROPOSAL_SCRIPTS.get(top_cluster, [""]))
+    # 2. 솔루션 ID 라이브러리에서 랜덤으로 ID 하나 선택
     solution_id = random.choice(SOLUTION_ID_LIBRARY.get(top_cluster, [None]))
     
     if not solution_id:
@@ -218,7 +220,7 @@ async def get_solution_proposal(top_cluster: str) -> Dict[str, Any]:
     solution_data = None
     if supabase and solution_id:
         try:
-            # Supabase는 비동기 호출을 지원하지 않는다네..
+            # TODO: 나중에 비동기방식으로 호출하기
             response = supabase.table("solutions").select("*").eq("solution_id", solution_id).maybe_single().execute()
             solution_data = response.data
         except Exception as e:
