@@ -3,6 +3,7 @@ import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 const String angry = "angry";
 const String crying = "crying";
@@ -120,13 +121,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Positioned(
                   top: -6,
-                  child: SizedBox(
+                  child: SvgPicture.asset(
+                    "assets/images/Bubble.svg",
                     height: 95.h,
                     width: 180.w,
-                    child: Image.asset(
-                      "assets/images/Bubble.png",
-                      fit: BoxFit.fitWidth,
-                    ),
                   ),
                 ),
                 Positioned(
