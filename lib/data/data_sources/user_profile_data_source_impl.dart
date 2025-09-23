@@ -6,16 +6,14 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-class UserProfileDataSourceImpl
-    implements UserProfileDataSource {
+class UserProfileDataSourceImpl implements UserProfileDataSource {
   final supabase = Supabase.instance.client;
   final auth = Supabase.instance.client.auth;
 
   @override
   Future<String?> appleLogin() async {
     try {
-      final apple =
-          await SignInWithApple.getAppleIDCredential(scopes: [
+      final apple = await SignInWithApple.getAppleIDCredential(scopes: [
         AppleIDAuthorizationScopes.email,
         AppleIDAuthorizationScopes.fullName
       ]);
@@ -24,11 +22,10 @@ class UserProfileDataSourceImpl
       if (idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth
-          .signInWithIdToken(
-              provider: OAuthProvider.apple,
-              idToken: idToken,
-              accessToken: accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: idToken,
+          accessToken: accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(OAuthProvider.apple,
       //     authScreenLaunchMode: LaunchMode.externalApplication,
@@ -44,18 +41,17 @@ class UserProfileDataSourceImpl
   @override
   Future<String?> googleLogin() async {
     try {
-      final google = GoogleSignIn(
-          serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
+      final google =
+          GoogleSignIn(serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
       final id = await google.signIn();
       final auth = await id?.authentication;
       if (auth?.idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth
-          .signInWithIdToken(
-              provider: OAuthProvider.google,
-              idToken: auth!.idToken!,
-              accessToken: auth.accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: auth!.idToken!,
+          accessToken: auth.accessToken);
       print(result.user?.id);
       return result.user?.id;
       // await auth.signInWithOAuth(
@@ -87,10 +83,7 @@ class UserProfileDataSourceImpl
   }
 
   @override
-  Future<void> insertUserProfile(
-      UserProfileDto userProfileDto) async {
-    await supabase
-        .from('user_profiles')
-        .insert(userProfileDto.toJson());
+  Future<void> insertUserProfile(UserProfileDto userProfileDto) async {
+    await supabase.from('user_profiles').insert(userProfileDto.toJson());
   }
 }
