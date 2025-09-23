@@ -1,12 +1,16 @@
+import 'package:dailymoji/domain/entities/survey_response.dart';
+
+// TODO: 온보딩 Score가 User Profile로 옮겨져서 여기는 이대로 남겨둠
+// 쓰실 때 필요한게 있을까봐 남겨둡니다.
 class ServeyResponseDto {
   final String? id;
   final String? userId;
   final DateTime? createdAt;
 
   ServeyResponseDto({
-    this.id,
-    this.userId,
-    this.createdAt,
+    required this.id,
+    required this.userId,
+    required this.createdAt,
   });
 
   ServeyResponseDto.fromJson(Map<String, dynamic> map)
@@ -34,4 +38,19 @@ class ServeyResponseDto {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  SurveyResponse toEntity() {
+    return SurveyResponse(
+      id: id,
+      createdAt: createdAt ?? DateTime.now(),
+      userId: userId ?? "",
+    );
+  }
+
+  ServeyResponseDto.fromEntity(SurveyResponse surveyResponse)
+      : this(
+          id: surveyResponse.id,
+          createdAt: surveyResponse.createdAt,
+          userId: surveyResponse.userId,
+        );
 }
