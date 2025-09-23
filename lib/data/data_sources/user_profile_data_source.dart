@@ -4,6 +4,5 @@ abstract class UserProfileDataSource {
   Future<String?> googleLogin();
   Future<String?> appleLogin();
   Future<void> insertUserProfile(UserProfileDto userProfileDto);
-  Future<UserProfileDto> getUserProfile(
-      UserProfileDto userProfileDto);
+  Future<UserProfileDto?> getUserProfile(String uuid);
 }

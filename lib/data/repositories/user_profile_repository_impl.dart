@@ -19,9 +19,13 @@ class UserProfileRepositoryImpl
   }
 
   @override
-  Future<UserProfile> getUserProfile(
-      UserProfile userProfile) async {
-    throw UnimplementedError();
+  Future<UserProfile?> getUserProfile(String uuid) async {
+    final result = await _userDataSource.getUserProfile(uuid);
+    if (result != null) {
+      return result.toEntity();
+    } else {
+      return null;
+    }
   }
 
   @override

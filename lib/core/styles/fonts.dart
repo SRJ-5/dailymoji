@@ -122,4 +122,21 @@ class AppFontStyles {
     fontWeight: FontWeight.normal,
     height: 1.5,
   );
+
+  static TextStyle noticeRelgular10 = TextStyle(
+    fontFamily: 'Pretendard',
+    fontSize: 10.sp,
+    fontWeight: FontWeight.normal,
+    height: 1.5,
+    letterSpacing: 0,
+  );
+
+  static TextStyle underlinedNoticeRelgular10 = TextStyle(
+    decoration: TextDecoration.underline,
+    fontFamily: 'Pretendard',
+    fontSize: 10.sp,
+    fontWeight: FontWeight.normal,
+    height: 1.5,
+    letterSpacing: 0,
+  );
 }

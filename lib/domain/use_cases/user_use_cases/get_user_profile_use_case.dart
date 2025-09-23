@@ -5,7 +5,8 @@ class GetUserProfileUseCase {
   GetUserProfileUseCase(this._userRepository);
   final UserProfileRepository _userRepository;
 
-  // Future<void> execute(UserProfile userProfile) async {
-  //   return await _userRepository.insertUserProfile(userProfile);
-  // }
+  Future<UserProfile?> execute(String uuid) async {
+    final result = await _userRepository.getUserProfile(uuid);
+    return result;
+  }
 }

@@ -74,9 +74,16 @@ class UserViewModel extends Notifier<UserState> {
     return userId;
   }
 
-  void insertUserId(String userId) {
-    state = state.copyWith(
-        userProfile: state.userProfile?.copyWith(id: userId));
+  Future<bool> getUserProfile(String userId) async {
+    final userProfile = await ref
+        .read(getUserProfileUseCaseProvier)
+        .execute(userId);
+    if (userProfile?.userNickNm != null) {
+      state = state.copyWith(userProfile: userProfile);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void fetchInsertUser(

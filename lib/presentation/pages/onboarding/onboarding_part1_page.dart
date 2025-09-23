@@ -5,7 +5,6 @@ import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.da
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/ai_name_setting.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai_personality.dart';
-import 'package:dailymoji/presentation/pages/onboarding/onboarding_part2_page.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/user_nick_name.dart';
 import 'package:flutter/material.dart';
@@ -22,15 +21,17 @@ class OnboardingPart1Page extends ConsumerStatefulWidget {
 class _OnboardingPart1PageState
     extends ConsumerState<OnboardingPart1Page> {
   int stepIndex = 0;
-  int totalSteps = 4;
+  // 캐릭터 선택창이 생기면 totalSteps +1 해야함
+  int totalSteps = 3;
 
   @override
   Widget build(BuildContext context) {
     final isNextEnabled = switch (stepIndex) {
-      0 => ref.watch(userViewModelProvider).step11,
-      1 => ref.watch(userViewModelProvider).step12,
-      2 => ref.watch(userViewModelProvider).step13,
-      3 => ref.watch(userViewModelProvider).step14,
+      // 캐릭터 선택창이 생기면 아래 step.11 활성화 해야하고 case 0~4로 해야함
+      // 0 => ref.watch(userViewModelProvider).step11,
+      0 => ref.watch(userViewModelProvider).step12,
+      1 => ref.watch(userViewModelProvider).step13,
+      2 => ref.watch(userViewModelProvider).step14,
       _ => true,
     };
     return GestureDetector(
@@ -75,7 +76,8 @@ class _OnboardingPart1PageState
                       stepIndex: stepIndex), // indicator 맨 위
               Expanded(
                 child: [
-                  SelectAi(),
+                  // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
+                  // SelectAi(),
                   AiNameSetting(),
                   SelectAiPersonality(),
                   UserNickName(),

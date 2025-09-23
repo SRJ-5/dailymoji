@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -17,7 +16,7 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   // Stream을 구독하고 나중에 취소하기 위한 변수
-  late final StreamSubscription<AuthState> _authSubscription;
+  // late final StreamSubscription<AuthState> _authSubscription;
 
   // onAuthStateChange를 로그인페이지가 아닌 전페이지 즉, 스플레쉬 페이지에서
   // @override
@@ -25,7 +24,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   //   super.initState();
 
   //   // Supabase 클라이언트에 쉽게 접근하기 위해 변수 선언
-  //   final supabase = Supabase.instance.client;
 
   //   // initState에서 단 한 번만 onAuthStateChange 스트림을 구독 시작
   //   _authSubscription =
@@ -51,28 +49,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   // }
 
   @override
-  void dispose() {
-    // 페이지가 사라질 때 리스너를 반드시 취소하여 메모리 누수 방지
-    _authSubscription.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // auth.onAuthStateChange.listen(
-    //   (event) {
-    //     if (event.session != null) {
-    //       final userId = auth.currentUser!.id;
-    //       ref.read(userViewModelProvider);
-    //       context.go('/onboarding1');
-    //     }
-    //   },
-    // );
+    final platform = Theme.of(context).platform;
     return Scaffold(
       backgroundColor: AppColors.yellow50,
+      appBar: AppBar(
+        backgroundColor: AppColors.yellow50,
+      ),
       body: Column(
         children: [
-          SizedBox(height: 110.h),
           Expanded(
             child: Center(
               child: Column(
@@ -86,7 +71,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   SizedBox(
-                    height: 5.h,
+                    height: 8.h,
                   ),
                   Text(
                     '매일매일 감정 관리',
@@ -103,73 +88,88 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 75.w,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            final result = await ref
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final result = await ref
+                              .read(
+                                  userViewModelProvider.notifier)
+                              .googleLogin();
+                          if (result != null) {
+                            final isRegistered = await ref
                                 .read(userViewModelProvider
                                     .notifier)
-                                .googleLogin();
-                            if (result != null) {
+                                .getUserProfile(result);
+                            if (isRegistered) {
+                              // TODO: 여기에 홈페이지로 이동 넣어야함
+                              context.go('/onboarding2');
+                            } else {
                               context.go('/onboarding1');
                             }
-                          },
-                          child: CircleAvatar(
-                            radius: 30.r,
-                            child: Image.asset(
-                              'assets/icons/google_login_logo.png',
-                            ),
+                          }
+                        },
+                        child: CircleAvatar(
+                          radius: 30.r,
+                          child: Image.asset(
+                            'assets/icons/google_login_logo.png',
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            final result = await ref
-                                .read(userViewModelProvider
-                                    .notifier)
-                                .appleLogin();
-                            if (result != null) {
-                              context.go('/onboarding1');
-                            }
-                          },
-                          child: CircleAvatar(
-                            radius: 30.r,
-                            child: Image.asset(
-                              'assets/icons/apple_login_logo.png',
+                    ),
+                    platform == TargetPlatform.iOS
+                        ? Expanded(
+                            child: GestureDetector(
+                              onTap: () async {
+                                final result = await ref
+                                    .read(userViewModelProvider
+                                        .notifier)
+                                    .appleLogin();
+                                if (result != null) {
+                                  final isRegistered = await ref
+                                      .read(userViewModelProvider
+                                          .notifier)
+                                      .getUserProfile(result);
+                                  if (isRegistered) {
+                                    context.go('/onboarding1');
+                                  } else {
+                                    // TODO: 여기에 홈페이지로 이동 넣어야함
+                                    context.go('/onboarding2');
+                                  }
+                                }
+                              },
+                              child: CircleAvatar(
+                                radius: 30.r,
+                                child: Image.asset(
+                                  'assets/icons/apple_login_logo.png',
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                          )
+                        : SizedBox.shrink()
+                  ],
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 18.h),
                 RichText(
                   text: TextSpan(
                     text: '가입 시 ',
-                    style: AppFontStyles.bodyRegular12
-                        .copyWith(color: AppColors.grey600),
+                    style: AppFontStyles.noticeRelgular10
+                        .copyWith(color: AppColors.grey400),
                     children: <TextSpan>[
                       TextSpan(
                         text: '이용약관',
-                        style: AppFontStyles.bodyRegular12
-                            .copyWith(
-                                color: AppColors.orange400),
+                        style: AppFontStyles
+                            .underlinedNoticeRelgular10
+                            .copyWith(color: AppColors.grey400),
                       ),
                       TextSpan(text: '과 '),
                       TextSpan(
-                        text: '개인정보 수집 및 이용',
-                        style: AppFontStyles.bodyRegular12
-                            .copyWith(
-                                color: AppColors.orange400),
+                        text: '개인정보 처리방침',
+                        style: AppFontStyles
+                            .underlinedNoticeRelgular10
+                            .copyWith(color: AppColors.grey400),
                       ),
                       TextSpan(text: '에 동의하게 됩니다.'),
                     ],
@@ -178,7 +178,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ],
             ),
           ),
-          SafeArea(child: SizedBox(height: 40.h)),
+          SafeArea(child: SizedBox(height: 30.h)),
         ],
       ),
     );
