@@ -58,7 +58,7 @@ class UserViewModel extends Notifier<UserState> {
   }
 
   Future<String?> googleLogin() async {
-    final googleLogin = ref.read(googleLoginUseCaseProvier);
+    final googleLogin = ref.read(googleLoginUseCaseProvider);
     final userId = await googleLogin.execute();
     if (userId != null) {
       state =
@@ -68,7 +68,7 @@ class UserViewModel extends Notifier<UserState> {
   }
 
   Future<String?> appleLogin() async {
-    final appleLogin = ref.read(appleLoginUseCaseProvier);
+    final appleLogin = ref.read(appleLoginUseCaseProvider);
     final userId = await appleLogin.execute();
     if (userId != null) {
       state =
@@ -79,7 +79,7 @@ class UserViewModel extends Notifier<UserState> {
 
   Future<bool> getUserProfile(String userId) async {
     final userProfile =
-        await ref.read(getUserProfileUseCaseProvier).execute(userId);
+        await ref.read(getUserProfileUseCaseProvider).execute(userId);
     if (userProfile?.userNickNm != null) {
       state = state.copyWith(userProfile: userProfile);
       return true;
@@ -103,13 +103,13 @@ class UserViewModel extends Notifier<UserState> {
 
   void setAiName({required bool check, required String aiName}) {
     state = state.copyWith(
-        step12: check,
+        step13: check,
         userProfile: state.userProfile?.copyWith(characterNm: aiName));
   }
 
   void setAiPersonality({required bool check, required String aiPersonality}) {
     state = state.copyWith(
-        step13: check,
+        step12: check,
         userProfile:
             state.userProfile?.copyWith(characterPersonality: aiPersonality));
   }
@@ -144,6 +144,30 @@ class UserViewModel extends Notifier<UserState> {
     state = state.copyWith(
         step2Answers: newAnswers, userProfile: newSurveyResponse);
     print('survey: ${state.userProfile?.onboardingScores}');
+  }
+
+  Future<void> updateUserNickNM({required String newUserNickNM}) async {
+    final updateUserProfile = await ref
+        .read(updateUserNickNameUseCaseProvider)
+        .execute(userNickNM: newUserNickNM, uuid: state.userProfile!.id!);
+    state = state.copyWith(userProfile: updateUserProfile);
+  }
+
+  Future<void> updateCharacterNM({required String newCharacterNM}) async {
+    final updateUserProfile = await ref
+        .read(updateCharacterNameUseCaseProvider)
+        .execute(uuid: state.userProfile!.id!, characterNM: newCharacterNM);
+    state = state.copyWith(userProfile: updateUserProfile);
+  }
+
+  Future<void> updateCharacterPersonality(
+      {required String newCharacterPersonality}) async {
+    final updateUserProfile = await ref
+        .read(updateCharacterPersonalityUseCaseProvider)
+        .execute(
+            uuid: state.userProfile!.id!,
+            characterPersonality: newCharacterPersonality);
+    state = state.copyWith(userProfile: updateUserProfile);
   }
 }
 

@@ -21,10 +21,10 @@ class _SelectAiPersonalityState
   int _selectedIndex = -1;
 
   final _personalities = [
-    '차분하게 상황을 분석하고 문제를 해결하는 친구',
-    '감정 표현이 풍부하고 따뜻한 친구',
-    '어딘가 엉뚱하지만 마음만은 따뜻한 친구',
-    '따뜻함과 이성적인 사고를 모두 가진 친구'
+    '문제 해결을 잘함',
+    '감정 풍부하고 따뜻함',
+    '엉뚱하지만 따뜻함',
+    '따뜻함과 이성 모두 가짐'
   ];
 
   @override

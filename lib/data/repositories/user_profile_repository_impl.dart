@@ -34,4 +34,32 @@ class UserProfileRepositoryImpl
         UserProfileDto.fromEntity(userProfile);
     await _userDataSource.insertUserProfile(userProfileDto);
   }
+
+  @override
+  Future<UserProfile> updateUserNickNM(
+      {required String userNickNM, required String uuid}) async {
+    final result = await _userDataSource.updateUserNickNM(
+        userNickNM: userNickNM, uuid: uuid);
+    return result.toEntity();
+  }
+
+  @override
+  Future<UserProfile> updateCharacterNM(
+      {required String uuid,
+      required String characterNM}) async {
+    final result = await _userDataSource.updateCharacterNM(
+        uuid: uuid, characterNM: characterNM);
+    return result.toEntity();
+  }
+
+  @override
+  Future<UserProfile> updateCharacterPersonality(
+      {required String uuid,
+      required String characterPersonality}) async {
+    final result =
+        await _userDataSource.updateCharacterPersonality(
+            uuid: uuid,
+            characterPersonality: characterPersonality);
+    return result.toEntity();
+  }
 }
