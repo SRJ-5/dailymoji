@@ -2,7 +2,7 @@ import 'package:uuid/uuid.dart';
 
 enum Sender { user, bot }
 
-enum MessageType { normal, solution, analysis, solutionProposal, image }
+enum MessageType { normal, solution, analysis, solutionProposal, image, system }
 
 class Message {
   final String? id; // 슈퍼베이스에서 자동 생성

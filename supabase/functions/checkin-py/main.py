@@ -22,7 +22,7 @@ from supabase import create_client, Client
 from llm_prompts import call_llm, TRIAGE_SYSTEM_PROMPT, ANALYSIS_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT
 from rule_based import rule_scoring
 from srj5_constants import (
-    CLUSTERS, DSM_BETA, META_WEIGHTS, ONBOARDING_MAPPING,
+    CLUSTERS, DSM_BETA, ICON_TO_CLUSTER, META_WEIGHTS, ONBOARDING_MAPPING,
     W_LLM, W_RULE, SOLUTION_ID_LIBRARY, ANALYSIS_MESSAGE_LIBRARY, SOLUTION_PROPOSAL_SCRIPTS,
     SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, PCA_PROXY
 )
@@ -173,16 +173,9 @@ def meta_adjust(base_scores: dict, payload: AnalyzeRequest) -> dict:
         # '재계산' 또는 '강력한 보정' 개념으로 접근.
         # -> 백엔드에서 icon 파라미터가 들어왔을 때, 해당 클러스터에 가중치 부여.
 
-        # 클러스터 매핑 
-        icon_to_cluster = {
-            "angry": "neg_high",
-            "crying": "neg_low",
-            "shocked": "adhd_high",
-            "sleeping": "sleep",
-            "smile": "positive",
-        }
+       
         
-        selected_cluster = icon_to_cluster.get(payload.icon.lower())
+        selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
         if selected_cluster:
             s[selected_cluster] = clip01(s.get(selected_cluster, 0.0) + META_WEIGHTS["icon"])
     return s           
@@ -250,32 +243,68 @@ def get_analysis_message(scores: dict) -> str:
 #     return {"proposal_text": final_text, "solution_id": solution_id, "solution_data": solution_data}
 
 
-async def save_analysis_to_supabase(payload: AnalyzeRequest, profile: int, g: float,
-                              intervention: dict, debug_log: dict,
-                              final_scores: dict) -> Optional[str]:
+async def save_analysis_to_supabase(
+        payload: AnalyzeRequest, profile: int, g: float,
+        intervention: dict, debug_log: dict,
+        final_scores: dict) -> Optional[str]:
     if not supabase: 
+        print("RIN: 🚨 Supabase client not initialized.")
         return None
     try:
+        user_id = payload.user_id
+        
+        # 세션을 저장하기 전, user_profiles에 해당 유저가 있는지 확인하고 없으면 생성
+        profile_response = await run_in_threadpool(
+            supabase.table("user_profiles").select("id").eq("id", user_id).execute
+        )
+        if not profile_response.data:
+            print(f"RIN: ⚠️ [Backend] User profile for {user_id} not found. Creating one.")
+            await run_in_threadpool(
+                supabase.table("user_profiles").insert({"id": user_id, "user_nick_nm": "New User"}).execute
+            )
+
+
+
         session_row = {
-            "user_id": payload.user_id, "text": payload.text, "profile": profile,
-            "g_score": g, "intervention": json.dumps(intervention, ensure_ascii=False),
-            "debug_log": json.dumps(debug_log, ensure_ascii=False), "icon": payload.icon,
-        }
-        response = await run_in_threadpool(supabase.table("sessions").insert(session_row).execute)
-        new_session_id = response.data[0]['id']
+            "user_id": payload.user_id,
+            "text": payload.text,
+            "profile": int(profile), # profile은 정수(1,2,3)
+            "g_score": float(g), # g_score은 float
+            "intervention": json.dumps(intervention, ensure_ascii=False),
+            "debug_log": json.dumps(debug_log, ensure_ascii=False),
+            "icon": payload.icon,
+         }
+        print(f"RIN: ✅ Saving session to Supabase for user: {payload.user_id}")
+
+        response = await run_in_threadpool(
+                    supabase.table("sessions").insert(session_row).execute
+                )        
+        
+        if not response.data or not response.data[0].get('id'):
+            print("RIN: 🚨 ERROR: Failed to insert session, no data returned.")
+            return None
+        
+        # new_session_id = response.data[0]['id']
+        # 여기서 오류나서 계속 멈춘듯? .get()를 사용하여 id에 좀더 안전하게 접근하기!
+        new_session_id = response.data[0].get('id')
+
+
+        if not new_session_id:
+            print("RIN: 🚨 ERROR: Session ID is null in the returned data.")
+            return None
+                
+        print(f"RIN: ✅ Session saved successfully. session_id: {new_session_id}")
+
 
         if final_scores:
-            score_rows = [
-                {"session_id": new_session_id, "user_id": payload.user_id,
-                 "cluster": c, "score": v}
-                for c, v in final_scores.items()
-            ]
+            score_rows = [{"session_id": new_session_id, "user_id": user_id, "cluster": c, "score": v} for c, v in final_scores.items()]
             if score_rows:
                 await run_in_threadpool(supabase.table("cluster_scores").insert(score_rows).execute)
 
         return new_session_id
+    
     except Exception as e:
-        print(f"Supabase 저장 실패: {e}")
+        print(f"RIN: 🚨 Supabase 저장 실패: {e}")
         traceback.print_exc()
         return None
 
@@ -295,6 +324,11 @@ async def analyze_emotion(payload: AnalyzeRequest):
         # --- UX Flow 1: EMOJI_ONLY -> 공감/질문으로 응답 (0924 슬랙논의 2번 로직)---
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
+
+        #  이모지에 따른 top_cluster 매핑 - 솔루션 제안을 위함!
+            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low") # 기본값 설정
+
+
             # Supabase에서 해당 이모지 키를 가진 스크립트들을 모두 가져옴
             response = await run_in_threadpool(
                 supabase.table("reaction_scripts").select("script").eq("emotion_key", payload.icon.lower()).execute
@@ -305,7 +339,11 @@ async def analyze_emotion(payload: AnalyzeRequest):
             # 만약 스크립트가 있다면 그 중 하나를 랜덤으로 선택, 없다면 기본 메시지 사용
             reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신지 알려주세요."
 
-            intervention = {"preset_id": PresetIds.EMOJI_REACTION, "text": reaction_text}
+            intervention = {
+                            "preset_id": PresetIds.EMOJI_REACTION, 
+                "text": reaction_text,
+                "top_cluster": top_cluster # 솔루션 제안을 위해 클러스터 정보 전달
+            }
             session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
             
             return {"session_id": session_id, "intervention": intervention}

@@ -1,6 +1,6 @@
 // lib/core/constants/solution_scripts.dart
 
-// TODO: 멘트 다시 생각하기!!
+// TODO: 안전 위기 멘트 다시 생각하기!!
 // 안전 위기 상황에 사용할 제안 멘트
 const Map<String, List<String>> kSolutionProposalScripts = {
   "neg_low": [

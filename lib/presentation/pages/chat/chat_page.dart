@@ -15,6 +15,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
+//(구분선추가) 날짜 비교를 위한 Helper 함수
+bool isSameDay(DateTime date1, DateTime date2) {
+  return date1.year == date2.year &&
+      date1.month == date2.month &&
+      date1.day == date2.day;
+}
+
 class ChatPage extends ConsumerStatefulWidget {
   final String? emotionFromHome;
 
@@ -145,20 +152,32 @@ class _ChatPageState extends ConsumerState<ChatPage>
                           itemCount: chatState.messages.length,
                           itemBuilder: (context, index) {
                             final message = chatState.messages[index];
-                            // 메시지 타입에 따라 다른 위젯을 보여주도록 분기 처리
-                            if (message.sender == Sender.user) {
-                              return _userMessage(message);
+                            final messageKey = ValueKey(message.tempId);
+
+                            // --- 3번 요구사항: 날짜 구분선 표시 로직 ---
+                            bool showDateSeparator = false;
+                            if (index == 0) {
+                              showDateSeparator = true;
                             } else {
-                              switch (message.type) {
-                                case MessageType.analysis:
-                                  return _analysisMessage(message.content);
-                                case MessageType.solutionProposal:
-                                  return _solutionProposalMessage(message);
-                                default:
-                                  return _botMessage(
-                                      message.content, message.createdAt);
+                              final prevMessage = chatState.messages[index - 1];
+                              if (!isSameDay(
+                                  prevMessage.createdAt, message.createdAt)) {
+                                showDateSeparator = true;
                               }
                             }
+
+                            final messageWidget =
+                                _buildMessageWidget(message, key: messageKey);
+
+                            if (showDateSeparator) {
+                              return Column(
+                                children: [
+                                  _DateSeparator(date: message.createdAt),
+                                  messageWidget,
+                                ],
+                              );
+                            }
+                            return messageWidget;
                           },
                         ),
                 ),
@@ -180,9 +199,57 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-// 분석 중 메시지를 표시하기 위한 위젯
-  Widget _analysisMessage(String message) {
+  // (따로 뺌) --- 메시지 종류에 따라 위젯을 분기하는 Helper 함수 ---
+  Widget _buildMessageWidget(Message message, {required Key key}) {
+    if (message.sender == Sender.user) {
+      return _userMessage(message, key: key);
+    } else {
+      switch (message.type) {
+        case MessageType.analysis:
+          return _analysisMessage(message, key: key);
+        case MessageType.solutionProposal:
+          return _solutionProposalMessage(message, key: key);
+        // --- 시스템 메시지 UI case 추가 ---
+        case MessageType.system:
+          return _systemMessage(message, key: key);
+        default:
+          return _botMessage(message, key: key);
+      }
+    }
+  }
+
+  // (새로 추가) --- 시스템 메시지 위젯 ---
+  Widget _systemMessage(Message message, {required Key key}) {
     return Padding(
+      key: key,
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white, // 하얀 네모 박스
+            borderRadius: BorderRadius.circular(20.r), // 라운드 처리
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
+            ],
+          ),
+          child: Text(
+            message.content,
+            style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+          ),
+        ),
+      ),
+    );
+  }
+
+// 분석 중 메시지를 표시하기 위한 위젯
+  Widget _analysisMessage(Message message, {required Key key}) {
+    return Padding(
+      key: key,
       padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Center(
         child: Container(
@@ -192,7 +259,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Text(
-            message,
+            message.content,
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.grey.shade600,
@@ -204,7 +271,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  Widget _userMessage(Message message) {
+  Widget _userMessage(Message message, {required Key key}) {
     // 메시지 타입에 따라 다른 내용을 표시할 위젯 변수
     Widget messageContent;
 
@@ -236,6 +303,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     }
 
     return Padding(
+      key: key,
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -252,7 +320,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           SizedBox(width: 4.r),
           Container(
             padding: message.type == MessageType.image
-                ? EdgeInsets.all(16.r) // 이모지는 패딩 찔끔
+                ? EdgeInsets.all(8.r) // 이모지는 패딩 찔끔
                 : EdgeInsets.all(16.r),
             constraints: BoxConstraints(maxWidth: 247.w),
             decoration: BoxDecoration(
@@ -270,8 +338,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  Widget _botMessage(String message, DateTime? date) {
+  Widget _botMessage(Message message, {required Key key}) {
     return Padding(
+      key: key,
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -289,7 +358,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               ),
             ),
             child: Text(
-              message,
+              message.content,
               maxLines: 4,
               softWrap: true,
               overflow: TextOverflow.ellipsis,
@@ -302,7 +371,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           ),
           SizedBox(width: 4.r),
           Text(
-            _formattedNow(date ?? DateTime.now()),
+            _formattedNow(message.createdAt),
             style: TextStyle(
               fontSize: 14.sp,
               letterSpacing: 0.sp,
@@ -314,14 +383,15 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  Widget _solutionProposalMessage(Message message) {
+  Widget _solutionProposalMessage(Message message, {required Key key}) {
     final proposal = message.proposal!;
     final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
 
     // 봇 메시지 위젯을 재사용하여 텍스트를 표시하고, 아래에 버튼을 추가합니다.
     return Column(
+      key: key,
       children: [
-        _botMessage(message.content, message.createdAt),
+        _botMessage(message, key: ValueKey('${message.tempId}_text')),
         SizedBox(height: 8.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -563,6 +633,43 @@ class _ChatPageState extends ConsumerState<ChatPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// (새로 추가) --- 날짜 구분선 위젯 ---
+class _DateSeparator extends StatelessWidget {
+  final DateTime date;
+  const _DateSeparator({required this.date, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 16.h),
+      child: Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white, // 하얀 네모 박스
+            borderRadius: BorderRadius.circular(20.r), // 라운드 처리
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
+            ],
+          ),
+          child: Text(
+            '${DateFormat('MM.dd').format(date)}',
+            style: TextStyle(
+              fontSize: 12.sp, // 폰트 12
+              color: Colors.black87, // 검은 글씨
+              // fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
       ),
     );
   }
