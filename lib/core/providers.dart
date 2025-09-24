@@ -100,7 +100,7 @@ final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
 // Feature-Specific Providers
 // -----------------------------------------------------------------------------
 
-// solutionId를s 받아 특정 솔루션 정보를 비동기적으로 가져오는 FutureProvider
+// solutionId를 받아 특정 솔루션 정보를 비동기적으로 가져오는 FutureProvider
 final solutionProvider =
     FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
   final repository = ref.watch(solutionRepositoryProvider);

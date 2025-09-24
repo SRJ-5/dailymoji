@@ -27,7 +27,7 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage>
     with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
-  String selectedEmojiAsset = kEmojiAssetMap['smile']!;
+  late String selectedEmojiAsset;
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
@@ -39,6 +39,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
       vsync: this,
       duration: const Duration(milliseconds: 700), // 전체 타이밍
     );
+
+// emotionFromHome이 있으면 그 이모지로, 없으면 'smile'로 초기 상태 설정
+    selectedEmojiAsset =
+        kEmojiAssetMap[widget.emotionFromHome] ?? kEmojiAssetMap['smile']!;
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -214,8 +218,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
         borderRadius: BorderRadius.circular(50.r),
         child: Image.asset(
           message.imageAssetPath!,
-          width: 100.w,
-          height: 100.w,
+          width: 30.w,
+          height: 30.w,
           fit: BoxFit.cover,
         ),
       );
@@ -248,7 +252,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           SizedBox(width: 4.r),
           Container(
             padding: message.type == MessageType.image
-                ? EdgeInsets.all(2.r) // 이모지는 패딩 찔끔
+                ? EdgeInsets.all(16.r) // 이모지는 패딩 찔끔
                 : EdgeInsets.all(16.r),
             constraints: BoxConstraints(maxWidth: 247.w),
             decoration: BoxDecoration(
@@ -259,7 +263,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 bottomLeft: Radius.circular(12.r),
               ),
             ),
-            child: messageContent, //위에서 만든 위젯을 여기에 배치
+            child: Container(child: messageContent), //위에서 만든 위젯을 여기에 배치
           ),
         ],
       ),
@@ -534,7 +538,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 //     _messageInputController.clear();
                 //   }
                 // },
-                // Message 객체를 직접 만들지 않고, 텍스트만 ViewModel으로 전달하도록 변경!!
+
+                // RIN: Message 객체를 직접 만들지 않고, 텍스트만 ViewModel으로 전달하도록 변경!!
                 final selectedEmotionKey = kEmojiAssetMap.entries
                     .firstWhere((entry) => entry.value == selectedEmojiAsset,
                         orElse: () => kEmojiAssetMap.entries.first)

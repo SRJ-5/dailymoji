@@ -72,6 +72,7 @@ class MessageDto {
       sender: sender == "user" ? Sender.user : Sender.bot,
       type: _mapTypeToEntity(type),
       proposal: proposal,
+      // DTO에는 tempId가 없으므로 toEntity 시점에는 새로 생성됨
     );
   }
 
@@ -95,6 +96,10 @@ class MessageDto {
         return MessageType.analysis;
       case 'solution_proposal':
         return MessageType.solutionProposal;
+      // --- 'image' 타입 추가 ---
+      // 미췐 ㅠㅠ 이거때문에 이모지가 챗으로 안올라감 바보...ㅠ
+      case 'image':
+        return MessageType.image;
       default:
         return MessageType.normal;
     }
@@ -109,6 +114,9 @@ class MessageDto {
         return 'analysis';
       case MessageType.solutionProposal:
         return 'solution_proposal';
+      // --- 'image' 타입 추가 ---
+      case MessageType.image:
+        return 'image';
       default:
         return 'normal';
     }

@@ -4,52 +4,67 @@
 // 2. 채팅 입력창 클릭 시, 선택된 이모지 정보를 `/chat` 라우트로 전달
 
 import 'dart:async';
+import 'dart:convert';
+import 'package:dailymoji/core/config/api_config.dart';
+import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
 
-class HomePage extends StatefulWidget {
+// 현재 선택된 이모지 상태를 관리하는 Provider
+final selectedEmotionProvider = StateProvider<String?>((ref) => null);
+
+// 백엔드에서 대사를 비동기적으로 가져오는 Provider
+final homeDialogueProvider = FutureProvider<String>((ref) async {
+  final selectedEmotion = ref.watch(selectedEmotionProvider);
+
+  // URL에 쿼리 파라미터 추가
+  final url = selectedEmotion == null
+      ? Uri.parse('${ApiConfig.baseUrl}/dialogue/home')
+      : Uri.parse(
+          '${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
+
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data['dialogue'] as String;
+  } else {
+    // 에러 발생 시 기본 텍스트 반환
+    return "안녕!\n오늘 기분은 어때?";
+  }
+});
+
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   String displayText = "";
   int _index = 0;
   Timer? _timer;
-
-  String? selectedEmotion; // 선택된 이모지 이름 (예: "smile")
-
-  static const String defaultText = "안녕!\n지금 기분이 어때?";
-  final Map<String, String> emotionTexts = {
-    "angry": "왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?",
-    "crying": "왜..?\n무슨일이야!?\n나에게 얘기해볼래?",
-    "shocked": "왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?",
-    "sleeping": "왜..?\n요새 잠을 잘 못자?\n나에게 얘기해볼래?",
-    "smile": "기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ"
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _startTyping(defaultText);
-  }
+  String? currentDialogue;
 
   void _startTyping(String newText) {
     _timer?.cancel();
     setState(() {
       displayText = "";
       _index = 0;
+      currentDialogue = newText;
     });
 
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_index < newText.length) {
+      if (_index < (currentDialogue?.length ?? 0)) {
         setState(() {
-          displayText += newText[_index];
+          displayText += currentDialogue![_index];
           _index++;
         });
       } else {
@@ -59,15 +74,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    setState(() {
-      if (selectedEmotion == emotionKey) {
-        selectedEmotion = null; // 다시 누르면 해제
-        _startTyping(defaultText);
-      } else {
-        selectedEmotion = emotionKey;
-        _startTyping(emotionTexts[emotionKey] ?? defaultText);
-      }
-    });
+    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
+
+    if (selectedNotifier.state == emotionKey) {
+      selectedNotifier.state = null;
+    } else {
+      selectedNotifier.state = emotionKey;
+    }
   }
 
   @override
@@ -78,6 +91,18 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedEmotion = ref.watch(selectedEmotionProvider);
+    final dialogueAsync = ref.watch(homeDialogueProvider);
+
+    // dialogueAsync의 상태가 변경될 때마다 타이핑 효과를 다시 시작
+    ref.listen(homeDialogueProvider, (_, next) {
+      next.whenData((dialogue) {
+        if (dialogue != currentDialogue) {
+          _startTyping(dialogue);
+        }
+      });
+    });
+
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
       // AppBar
@@ -119,7 +144,9 @@ class _HomePageState extends State<HomePage> {
                   child: SizedBox(
                     width: 150.w,
                     child: Text(
-                      displayText, // 타이핑 효과 적용된 텍스트
+                      dialogueAsync.isLoading
+                          ? "..." // 로딩 중일 때 "..." 표시
+                          : displayText, // 타이핑 효과 적용된 텍스트
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w900,
@@ -216,16 +243,19 @@ class _Imoge extends StatelessWidget {
       required this.selectedEmotion,
       required this.onEmojiTap});
 
-  String get imoAssetPath => "assets/images/emoticon/emo_3d_${imoKey}_02.png";
+// 으아아아아아아아!!! 이게 문제였음 하.. 경로다른거!!
+  // String get imoAssetPath => "assets/images/emoticon/emo_3d_${imoKey}_02.png";
 
   @override
   Widget build(BuildContext context) {
+    // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(smile)를 보여줌.
+    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
     final isSelected = selectedEmotion == imoKey;
+
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
       child: isSelected
-          ? Image.asset(imoAssetPath,
-              height: 80.h, width: 80.w, fit: BoxFit.cover)
+          ? Image.asset(imagePath, height: 80.h, width: 80.w, fit: BoxFit.cover)
           : ColorFiltered(
               colorFilter: const ColorFilter.matrix(<double>[
                 0.2126, 0.7152, 0.0722, 0, 0, // R
@@ -233,7 +263,7 @@ class _Imoge extends StatelessWidget {
                 0.2126, 0.7152, 0.0722, 0, 0, // B
                 0, 0, 0, 1, 0, // A
               ]),
-              child: Image.asset(imoAssetPath,
+              child: Image.asset(imagePath,
                   height: 60.h, width: 60.w, fit: BoxFit.cover),
             ),
     );

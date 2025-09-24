@@ -457,3 +457,37 @@ async def propose_solution(payload: SolutionRequest):
         tb = traceback.format_exc()
         print(f"❌ Propose Solution Error: {e}\n{tb}")
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+
+
+
+# ======================================================================
+# ===          홈화면 대사 엔드포인트         ===
+# ======================================================================
+   
+@app.get("/dialogue/home")
+async def get_home_dialogue(emotion: Optional[str] = None):
+    """홈 화면에 표시할 대사를 반환합니다. emotion 파라미터 유무에 따라 다른 대사를 선택합니다."""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+    
+    try:
+        # 이모지가 선택되었다면 해당 감정 키로, 아니라면 'default' 키로 조회
+        emotion_key = emotion.lower() if emotion else "default"
+        
+        response = await run_in_threadpool(
+            supabase.table("reaction_scripts").select("script").eq("emotion_key", emotion_key).execute
+        )
+        
+        scripts = [row['script'] for row in response.data]
+        
+        if not scripts:
+            # 만약 DB에 해당 키의 대사가 없다면 비상용 기본 메시지 반환
+            fallback_script = "안녕!\n오늘 기분은 어때?"
+            return {"dialogue": fallback_script}
+
+        # 조회된 대사 중 하나를 랜덤으로 선택하여 반환
+        return {"dialogue": random.choice(scripts)}
+        
+    except Exception as e:
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})

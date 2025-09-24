@@ -142,28 +142,56 @@ class ChatViewModel extends Notifier<ChatState> {
 // 이모지 이미지가 채팅에 입력 지속되지 않는 문제 해결!
 // --> DB에서 돌아온 정보로 기존 메시지를 '업데이트' 하도록 변경
   Future<Message> _addUserMessageToChat(Message message) async {
-    // 1. UI에 즉시 메시지 추가 (id가 null인 상태)
+    // 1. UI에 즉시 메시지 추가
+    print(
+        "RIN: ✅ 1. Optimistic UI: Adding local message with tempId: ${message.tempId}, path: ${message.imageAssetPath}");
     state = state.copyWith(messages: [...state.messages, message]);
 
-    // 2. DB에 메시지 저장
-    final savedMessageFromDB =
-        await ref.read(sendMessageUseCaseProvider).execute(message);
+    try {
+      // 2. DB에 메시지 저장
+      final savedMessageFromDB =
+          await ref.read(sendMessageUseCaseProvider).execute(message);
+      print(
+          "RIN: ✅ 2. DB Response: Got message back with DB id: ${savedMessageFromDB.id}");
 
-    // 3. --- 핵심 수정 ---
-    // DB에서 받은 정보(id, createdAt)와 기존 정보(imageAssetPath)를 합침
-    final completeMessage = savedMessageFromDB.copyWith(
-      imageAssetPath: message.imageAssetPath,
-    );
+      // 3. DB에서 받은 정보(id, createdAt)와 기존 정보(imageAssetPath)를 합침
+      final completeMessage = savedMessageFromDB.copyWith(
+        imageAssetPath: message.imageAssetPath,
+        tempId: message.tempId,
+      );
+      print(
+          "RIN: ✅ 3. Merged Message: Final object has DB id: ${completeMessage.id}, tempId: ${completeMessage.tempId}, path: ${completeMessage.imageAssetPath}");
 
-    // 4. 상태 리스트에서 id가 null이었던 메시지를 완전한 메시지로 교체
-    final updatedMessages = state.messages
-        .map((m) => m.id == null && m.createdAt == message.createdAt
-            ? completeMessage
-            : m)
-        .toList();
-    state = state.copyWith(messages: updatedMessages);
+// ⭐️⭐️⭐️⭐️⭐️ 이모지 이미지가 채팅말풍선에 안남아있던 오류!
+//여기서 로컬&DB 매칭 로직이 더 안정적이었어야함!
+      // 4. 상태 리스트에서 id가 null이었던 메시지를 완전한 메시지로 교체
+      // createdAt으로 비교하는 대신, 방금 추가했던 'message' 객체 uuid를 찾아서 교체
+      final updatedMessages = List<Message>.from(state.messages);
+      // 임시 ID가 일치하는 메시지의 인덱스를 찾음
+      final index =
+          updatedMessages.indexWhere((m) => m.tempId == completeMessage.tempId);
+      print("RIN: ✅ 4. Finding message to replace: Index found is $index");
 
-    return completeMessage;
+      if (index != -1) {
+        // 객체를 찾았다면
+        updatedMessages[index] = completeMessage;
+        print("RIN: ✅ 5. Replacement successful!");
+      } else {
+        print(
+            "RIN: 🚨 5. ERROR: Could not find message with tempId ${completeMessage.tempId} to replace.");
+      }
+
+      state = state.copyWith(messages: updatedMessages);
+
+      return completeMessage;
+    } catch (e) {
+      print("RIN: 🚨 ERROR in _addUserMessageToChat: $e");
+      // 에러 발생 시, 낙관적으로 추가했던 메시지를 다시 제거
+      state = state.copyWith(
+          messages:
+              state.messages.where((m) => m.tempId != message.tempId).toList());
+      rethrow;
+    }
   }
 
   // ---------------------------------------------------------------------------
