@@ -131,10 +131,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                                 .notifier)
                                         .getUserProfile(result);
                                     if (isRegistered) {
-                                      context.go('/onboarding1');
+                                      context.go('/home');
                                     } else {
                                       // TODO: 여기에 홈페이지로 이동 넣어야함
-                                      context.go('/onboarding2');
+                                      context.go('/onboarding1');
                                     }
                                   }
                                 },
