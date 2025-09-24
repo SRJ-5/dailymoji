@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,10 +14,15 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   @override
   Future<String?> appleLogin() async {
     try {
-      final apple = await SignInWithApple.getAppleIDCredential(scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName
-      ]);
+      final apple = await SignInWithApple.getAppleIDCredential(
+          webAuthenticationOptions: WebAuthenticationOptions(
+              clientId: 'com.dailymoji.service',
+              redirectUri: Uri.parse(
+                  'https://dltzahlhemuigebsiafi.supabase.co/auth/v1/callback')),
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName
+          ]);
       final idToken = apple.identityToken;
       final accessToken = apple.authorizationCode;
       if (idToken == null) {
@@ -40,8 +47,9 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   @override
   Future<String?> googleLogin() async {
     try {
-      final google =
-          GoogleSignIn(serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
+      final google = GoogleSignIn(
+          clientId: Platform.isIOS ? dotenv.env['GOOGLE_IOS_CLIENT_ID'] : null,
+          serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
       final id = await google.signIn();
       final auth = await id?.authentication;
       if (auth?.idToken == null) {
@@ -51,7 +59,6 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
           provider: OAuthProvider.google,
           idToken: auth!.idToken!,
           accessToken: auth.accessToken);
-      print(result.user?.id);
       return result.user?.id;
       // await auth.signInWithOAuth(
       //   OAuthProvider.google,
@@ -102,8 +109,7 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
 
   @override
   Future<UserProfileDto> updateCharacterNM(
-      {required String uuid,
-      required String characterNM}) async {
+      {required String uuid, required String characterNM}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({'character_nm': characterNM})
@@ -115,11 +121,16 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
 
   @override
   Future<UserProfileDto> updateCharacterPersonality(
-      {required String uuid,
-      required String characterPersonality}) async {
+      {required String uuid, required String characterPersonality}) async {
     final updated = await supabase
         .from('user_profiles')
-        .update({'character_personality': characterPersonality})
+        .update({
+          'character_personality': CharacterPersonality.values
+              .firstWhere(
+                (e) => e.label == characterPersonality,
+              )
+              .dbValue
+        })
         .eq('id', uuid)
         .select()
         .single();

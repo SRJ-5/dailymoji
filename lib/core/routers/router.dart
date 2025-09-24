@@ -1,3 +1,4 @@
+import 'package:dailymoji/presentation/pages/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
 import 'package:dailymoji/presentation/pages/info/info_page.dart';
@@ -41,12 +42,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(path: '/report', builder: (context, state) => ReportPage()),
-      GoRoute(path: '/my', builder: (context, state) => MyPage(), routes: [
-        GoRoute(
-          path: 'info',
-          builder: (context, state) => InfoPage(),
-        )
-      ]),
+      GoRoute(
+        path: '/my',
+        builder: (context, state) => MyPage(),
+        routes: [
+          GoRoute(path: 'info', builder: (context, state) => InfoPage()),
+          GoRoute(
+              path: 'characterSetting',
+              builder: (context, state) => CharacterSettingPage()),
+        ],
+      ),
       GoRoute(
         path: '/breathing/:solutionId',
         builder: (context, state) {

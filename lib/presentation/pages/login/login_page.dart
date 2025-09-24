@@ -120,13 +120,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        // 공통 로그인 처리 함수 호출
-                        onTap: () {
-                          _handleLogin(ref
+                        onTap: () async {
+                          final result = await ref
                               .read(userViewModelProvider.notifier)
-                              .googleLogin());
+                              .googleLogin();
+                          if (result != null) {
+                            final isRegistered = await ref
+                                .read(userViewModelProvider.notifier)
+                                .getUserProfile(result);
+                            if (isRegistered) {
+                              // TODO: 여기에 홈페이지로 이동 넣어야함
+                              context.go('/home');
+                            } else {
+                              context.go('/onboarding1');
+                            }
+                          }
                         },
-
                         child: CircleAvatar(
                           radius: 30.r,
                           child: Image.asset(
@@ -135,24 +144,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
-
-                    // --- Apple 로그인 버튼 (iOS에서만 보임) ---
-                    if (platform == TargetPlatform.iOS)
-                      Expanded(
-                        child: GestureDetector(
-                          // 공통 로그인 처리 함수 호출
-                          onTap: () => _handleLogin(ref
-                              .read(userViewModelProvider.notifier)
-                              .appleLogin()),
-
-                          child: CircleAvatar(
-                            radius: 30.r,
-                            child: Image.asset(
-                              'assets/icons/apple_login_logo.png',
-                            ),
-                          ),
-                        ),
-                      )
+                    // iOS 플랫폼일 경우에만 애플 로그인 버튼 표시
+                    platform == TargetPlatform.iOS
+                        ? Row(
+                            children: [
+                              SizedBox(width: 24.w),
+                              GestureDetector(
+                                onTap: () => _handleLogin(ref
+                                    .read(userViewModelProvider.notifier)
+                                    .appleLogin()),
+                                child: CircleAvatar(
+                                  radius: 30.r,
+                                  child: Image.asset(
+                                    'assets/icons/apple_login_logo.png',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : SizedBox.shrink(),
+                    Spacer()
                   ],
                 ),
                 SizedBox(height: 18.h),
