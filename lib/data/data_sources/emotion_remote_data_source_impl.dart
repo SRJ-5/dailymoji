@@ -15,8 +15,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     Map<String, dynamic>? onboarding,
   }) async {
     try {
-      // 1. .env 파일에 설정한 FastAPI 서버 URL로 /checkin 엔드포인트 호출
-      final url = "${getBaseUrl()}/checkin";
+      // 1. .env 파일에 설정한 FastAPI 서버 URL로 /analyze 엔드포인트 호출
+      final url = "${ApiConfig.baseUrl}/analyze";
       print("Calling API: $url with text: '$text', icon: '$emotion'");
 
       // 2. 원래 코드처럼 http.post를 사용하여 API 호출

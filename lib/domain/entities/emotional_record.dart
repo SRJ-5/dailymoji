@@ -14,6 +14,7 @@ class EmotionalRecord {
   final String? interventionPresetId;
   final String? analysisText; // 예: "평소보다 우울해 보여요..."
   final String? proposalText; // 예: "기분 전환을 위해... 해볼까요?"
+  final String? topCluster;
 
   final Map<String, dynamic> intervention; // 기타 솔루션 데이터 (solution_id 등)
 
@@ -25,6 +26,7 @@ class EmotionalRecord {
     this.interventionPresetId,
     this.analysisText,
     this.proposalText,
+    this.topCluster,
     this.intervention = const {},
   });
 }

@@ -13,6 +13,8 @@ class PresetIds {
   static const String safetyCrisisAngerAnxiety = "SAFETY_CRISIS_ANGER_ANXIETY";
   static const String safetyCheckIn = "SAFETY_CHECK_IN";
 
-  // 최종 솔루션 제공 완료
-  static const String solutionProvided = "SOLUTION_PROVIDED";
+  // 사용자가 이모지만 보내면,
+  // 백엔드는 EMOJI_REACTION 프리셋과 함께 "화나는 일이 있었나봐요?" 같은
+  // 간단한 공감/질문을 보내야 함
+  static const String emojiReaction = "EMOJI_REACTION";
 }

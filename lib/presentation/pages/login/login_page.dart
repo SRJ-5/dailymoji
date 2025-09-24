@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -7,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   @override
@@ -46,7 +43,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   //       }
   //     }
   //   });
-  // }
+  //
+  // Rin: 가입여부 확인하고 프로필 이미 있으면 넘어가는 함수 따로 뺌
+  Future<void> _handleLogin(Future<String?> loginFuture) async {
+    try {
+      final userId = await loginFuture;
+      if (userId != null && mounted) {
+        // 로그인 성공 후, 프로필이 있는지 확인
+        final isRegistered = await ref
+            .read(userViewModelProvider.notifier)
+            .getUserProfile(userId);
+        if (mounted) {
+          // 프로필 유무에 따라 다른 페이지로 이동
+          if (isRegistered) {
+            context.go('/home'); // 이미 가입했으면 홈으로
+          } else {
+            context.go('/onboarding1'); // 처음이면 온보딩으로
+          }
+        }
+      } else if (mounted) {
+        // TODO: 로그인 실패 처리 디자인하기!!
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요.")));
+      }
+    } catch (e) {
+      // 예외 처리
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("오류가 발생했습니다: ${e.toString()}")));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,24 +120,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () async {
-                          final result = await ref
-                              .read(
-                                  userViewModelProvider.notifier)
-                              .googleLogin();
-                          if (result != null) {
-                            final isRegistered = await ref
-                                .read(userViewModelProvider
-                                    .notifier)
-                                .getUserProfile(result);
-                            if (isRegistered) {
-                              // TODO: 여기에 홈페이지로 이동 넣어야함
-                              context.go('/home');
-                            } else {
-                              context.go('/onboarding1');
-                            }
-                          }
+                        // 공통 로그인 처리 함수 호출
+                        onTap: () {
+                          _handleLogin(ref
+                              .read(userViewModelProvider.notifier)
+                              .googleLogin());
                         },
+
                         child: CircleAvatar(
                           radius: 30.r,
                           child: Image.asset(
@@ -119,36 +135,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
-                    platform == TargetPlatform.iOS
-                        ? Expanded(
-                            child: GestureDetector(
-                              onTap: () async {
-                                final result = await ref
-                                    .read(userViewModelProvider
-                                        .notifier)
-                                    .appleLogin();
-                                if (result != null) {
-                                  final isRegistered = await ref
-                                      .read(userViewModelProvider
-                                          .notifier)
-                                      .getUserProfile(result);
-                                  if (isRegistered) {
-                                    context.go('/onboarding1');
-                                  } else {
-                                    // TODO: 여기에 홈페이지로 이동 넣어야함
-                                    context.go('/onboarding2');
-                                  }
-                                }
-                              },
-                              child: CircleAvatar(
-                                radius: 30.r,
-                                child: Image.asset(
-                                  'assets/icons/apple_login_logo.png',
-                                ),
-                              ),
+
+                    // --- Apple 로그인 버튼 (iOS에서만 보임) ---
+                    if (platform == TargetPlatform.iOS)
+                      Expanded(
+                        child: GestureDetector(
+                          // 공통 로그인 처리 함수 호출
+                          onTap: () => _handleLogin(ref
+                              .read(userViewModelProvider.notifier)
+                              .appleLogin()),
+
+                          child: CircleAvatar(
+                            radius: 30.r,
+                            child: Image.asset(
+                              'assets/icons/apple_login_logo.png',
                             ),
-                          )
-                        : SizedBox.shrink()
+                          ),
+                        ),
+                      )
                   ],
                 ),
                 SizedBox(height: 18.h),
@@ -160,15 +164,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: <TextSpan>[
                       TextSpan(
                         text: '이용약관',
-                        style: AppFontStyles
-                            .underlinedNoticeRelgular10
+                        style: AppFontStyles.underlinedNoticeRelgular10
                             .copyWith(color: AppColors.grey400),
                       ),
                       TextSpan(text: '과 '),
                       TextSpan(
                         text: '개인정보 처리방침',
-                        style: AppFontStyles
-                            .underlinedNoticeRelgular10
+                        style: AppFontStyles.underlinedNoticeRelgular10
                             .copyWith(color: AppColors.grey400),
                       ),
                       TextSpan(text: '에 동의하게 됩니다.'),

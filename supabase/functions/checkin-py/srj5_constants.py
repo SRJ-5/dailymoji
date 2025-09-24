@@ -57,6 +57,18 @@ ONBOARDING_MAPPING = {
     "q9": [{"cluster": "adhd_high", "w": 0.85}, {"cluster": "neg_low", "w": 0.15}],
 }
 
+
+ICON_TO_CLUSTER = {
+    "angry": "neg_high",
+    "crying": "neg_low",
+    "shocked": "adhd_high",
+    "sleeping": "sleep",
+    "smile": "positive",
+}
+
+
+
+
 # --- Solution Libraries ---
 # Supabase로 이전될 데이터. 백엔드에서 랜덤 선택을 위해 유지.
 SOLUTION_ID_LIBRARY = {

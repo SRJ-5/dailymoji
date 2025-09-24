@@ -5,6 +5,7 @@
 // 3. 자동 스크롤을 위한 `ScrollController` 추가 및 구현.
 // 4. AppBar의 title을 userViewModelProvider와 연동하여 동적으로 character_nm을 표시.
 
+import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
@@ -26,7 +27,7 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage>
     with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
-  String selectedEmojiAsset = "assets/images/smile.png";
+  String selectedEmojiAsset = kEmojiAssetMap['smile']!;
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
@@ -39,20 +40,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
       duration: const Duration(milliseconds: 700), // 전체 타이밍
     );
 
+// Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 홈에서 이모지를 선택하고 들어온 경우에만,
-      // selectedEmojiAsset 값을 해당 이모지 경로로 덮어쓰고 분석 시작
-
-      if (widget.emotionFromHome != null) {
-        final assetPath = "assets/images/${widget.emotionFromHome!}.png";
-        setState(() {
-          selectedEmojiAsset = assetPath;
-        });
-        ref
-            .read(chatViewModelProvider.notifier)
-            .sendEmojiAsMessage(widget.emotionFromHome!);
-      }
-      _scrollToBottom();
+      ref
+          .read(chatViewModelProvider.notifier)
+          .enterChatRoom(widget.emotionFromHome);
     });
   }
 
@@ -66,11 +58,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
     }
   }
 
@@ -78,6 +72,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     setState(() => showEmojiBar = !showEmojiBar);
     if (showEmojiBar) {
       _emojiCtrl.forward(from: 0); // 열릴 때만 애니메이션 재생
+    } else {
+      _emojiCtrl.reverse();
     }
   }
 
@@ -93,14 +89,15 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final characterName = userState.userProfile?.characterNm ?? "모지모지";
     final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
 
-    ref.listen(chatViewModelProvider.select((state) => state.messages),
+    ref.listen(chatViewModelProvider.select((state) => state.messages.length),
         (_, __) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      _scrollToBottom();
     });
 
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
       appBar: AppBar(
+        automaticallyImplyLeading: true, // backbutton
         backgroundColor: Color(0xFFFEFBF4),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -137,27 +134,29 @@ class _ChatPageState extends ConsumerState<ChatPage>
             child: Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemCount: chatState.messages.length,
-                    itemBuilder: (context, index) {
-                      final message = chatState.messages[index];
-                      // 메시지 타입에 따라 다른 위젯을 보여주도록 분기 처리
-                      if (message.sender == Sender.user) {
-                        return _userMessage(message);
-                      } else {
-                        switch (message.type) {
-                          case MessageType.analysis:
-                            return _analysisMessage(message.content);
-                          case MessageType.solutionProposal:
-                            return _solutionProposalMessage(message);
-                          default:
-                            return _botMessage(
-                                message.content, message.createdAt);
-                        }
-                      }
-                    },
-                  ),
+                  child: chatState.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          controller: _scrollController,
+                          itemCount: chatState.messages.length,
+                          itemBuilder: (context, index) {
+                            final message = chatState.messages[index];
+                            // 메시지 타입에 따라 다른 위젯을 보여주도록 분기 처리
+                            if (message.sender == Sender.user) {
+                              return _userMessage(message);
+                            } else {
+                              switch (message.type) {
+                                case MessageType.analysis:
+                                  return _analysisMessage(message.content);
+                                case MessageType.solutionProposal:
+                                  return _solutionProposalMessage(message);
+                                default:
+                                  return _botMessage(
+                                      message.content, message.createdAt);
+                              }
+                            }
+                          },
+                        ),
                 ),
                 _buildInputField(),
               ],
@@ -207,19 +206,25 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // branching: 메시지 타입이 'image'이고 이미지 경로가 있으면 Image 위젯을, 아니면 Text 위젯을 표시
     if (message.type == MessageType.image && message.imageAssetPath != null) {
-      messageContent = Image.asset(
-        message.imageAssetPath!,
-        width: 100.w, // 필요에 따라 이미지 크기 조절
-        height: 100.w,
+      print(
+          "RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
+
+      // 동그랗게 만들기! (--> 그래야 하얀 박스안에 들어가지 않음)
+      messageContent = ClipRRect(
+        borderRadius: BorderRadius.circular(50.r),
+        child: Image.asset(
+          message.imageAssetPath!,
+          width: 100.w,
+          height: 100.w,
+          fit: BoxFit.cover,
+        ),
       );
     } else {
+      // 텍스트 메시지
       messageContent = Text(
-        message.content, // 일반 텍스트 메시지 내용
-        maxLines: 4,
-        softWrap: true,
-        overflow: TextOverflow.ellipsis,
+        message.content,
         style: TextStyle(
-          color: Color(0xff4A5565),
+          color: const Color(0xff4A5565),
           letterSpacing: 0.sp,
           fontSize: 14.sp,
         ),
@@ -242,9 +247,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
           ),
           SizedBox(width: 4.r),
           Container(
-            // 이미지일 경우와 텍스트일 경우 다른 패딩
             padding: message.type == MessageType.image
-                ? EdgeInsets.all(2.r)
+                ? EdgeInsets.all(2.r) // 이모지는 패딩 찔끔
                 : EdgeInsets.all(16.r),
             constraints: BoxConstraints(maxWidth: 247.w),
             decoration: BoxDecoration(
@@ -342,13 +346,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Widget _buildEmojiBarAnimated() {
-    final emojiAssets = [
-      "assets/images/angry.png",
-      "assets/images/crying.png",
-      "assets/images/shocked.png",
-      "assets/images/sleeping.png",
-      "assets/images/smile.png",
-    ];
+    final emojiKeys = kEmojiAssetMap.keys.toList();
+    final emojiAssets = kEmojiAssetMap.values.toList();
 
     // 0.0~0.25 구간: 배경 페이드인
     final bgOpacity = CurvedAnimation(
@@ -437,31 +436,27 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                     child: GestureDetector(
                       onTap: () {
-                        setState(() => selectedEmojiAsset = emojiAssets[index]);
+                        // emojiKeys 리스트에서 키 값을 가져옴
+                        final selectedEmotionKey = emojiKeys[index];
+
+                        setState(() {
+                          selectedEmojiAsset = emojiAssets[index];
+                          showEmojiBar = false; // 이모지 바 닫기
+                        });
+                        // 선택된 이모지를 메시지로 전송
+                        ref
+                            .read(chatViewModelProvider.notifier)
+                            .sendEmojiAsMessage(selectedEmotionKey);
+
+                        _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },
                       child: ColorFiltered(
                         colorFilter: selectedEmojiAsset != emojiAssets[index]
                             ? const ColorFilter.matrix(<double>[
-                                0.2126,
-                                0.7152,
-                                0.0722,
-                                0,
-                                0,
-                                0.2126,
-                                0.7152,
-                                0.0722,
-                                0,
-                                0,
-                                0.2126,
-                                0.7152,
-                                0.0722,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                1,
-                                0,
+                                0.2126, 0.7152, 0.0722, 0, 0, //R
+                                0.2126, 0.7152, 0.0722, 0, 0, //G
+                                0.2126, 0.7152, 0.0722, 0, 0, //B
+                                0, 0, 0, 1, 0, //A
                               ])
                             : const ColorFilter.mode(
                                 Colors.transparent, BlendMode.multiply),
@@ -522,30 +517,44 @@ class _ChatPageState extends ConsumerState<ChatPage>
           GestureDetector(
             onTap: () {
               final chatVm = ref.read(chatViewModelProvider.notifier);
-              // TODO 전송 로직
               final text = _messageInputController.text.trim();
+
               if (text.isNotEmpty) {
-                final message = Message(
-                  userId: "c4349dd9-39f2-4788-a175-6ec4bd4f7aba",
-                  content: text,
-                  sender: Sender.user,
-                  type: MessageType.normal,
-                  createdAt: DateTime.now(),
-                );
-                // ViewModel에 메시지와 함께 선택된 이모지 정보를 전달
-                final selectedEmotion =
-                    selectedEmojiAsset.split('/').last.split('.').first;
-                chatVm.sendMessage(message, selectedEmotion);
+                //     final message = Message(
+                //       userId: _userId,
+                //       content: text,
+                //       sender: Sender.user,
+                //       type: MessageType.normal,
+                //       createdAt: DateTime.now(),
+                //     );
+                //     // ViewModel에 메시지와 함께 선택된 이모지 정보를 전달
+                //                     final selectedEmotionKey = kEmojiAssetMap.entries.firstWhere((entry) => entry.value == selectedEmojiAsset, orElse: () => kEmojiAssetMap.entries.first).key;
+
+                //        chatVm.sendMessage(message, selectedEmotionKey);
+                //     _messageInputController.clear();
+                //   }
+                // },
+                // Message 객체를 직접 만들지 않고, 텍스트만 ViewModel으로 전달하도록 변경!!
+                final selectedEmotionKey = kEmojiAssetMap.entries
+                    .firstWhere((entry) => entry.value == selectedEmojiAsset,
+                        orElse: () => kEmojiAssetMap.entries.first)
+                    .key;
+
+                chatVm.sendMessage(text, selectedEmotionKey);
                 _messageInputController.clear();
               }
             },
             child: Container(
-              width: 40.67.w,
-              height: 40.h,
-              child: Image.asset(
-                "assets/icons/send_icon.png",
-                color: Color(0xff777777),
-              ),
+              padding: EdgeInsets.all(8.r),
+              child: Image.asset("assets/icons/send_icon.png",
+                  width: 24.w, height: 24.h, color: const Color(0xff777777)),
+
+              // width: 40.67.w,
+              // height: 40.h,
+              // child: Image.asset(
+              //   "assets/icons/send_icon.png",
+              //   color: Color(0xff777777),
+              // ),
             ),
           ),
         ],

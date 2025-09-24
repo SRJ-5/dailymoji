@@ -96,6 +96,18 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       },
       child: Scaffold(
         backgroundColor: Colors.black,
+        appBar: AppBar(actions: [
+          TextButton(
+            onPressed: () {
+              // 개발 편의용: 바로 Chat으로 이동
+              context.go('/chat');
+            },
+            child: const Text(
+              "Skip",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ]),
         body: SafeArea(
           child: Stack(
             alignment: Alignment.center,
