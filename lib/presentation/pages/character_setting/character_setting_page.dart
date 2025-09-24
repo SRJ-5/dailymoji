@@ -1,4 +1,4 @@
-import 'package:dailymoji/core/constants/enum_data.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/widgets/edit_nickname_card.dart';
@@ -78,9 +78,13 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                               SizedBox(width: 8.w),
                               Text(
                                 e,
-                                style: AppFontStyles.bodyRegular14.copyWith(
-                                  color: AppColors.grey900,
-                                ),
+                                style: userState.userProfile!.characterPersonality! == e
+                                    ? AppFontStyles.bodySemiBold14.copyWith(
+                                        color: AppColors.grey900,
+                                      )
+                                    : AppFontStyles.bodyRegular14.copyWith(
+                                        color: AppColors.grey900,
+                                      ),
                               ),
                             ],
                           ),

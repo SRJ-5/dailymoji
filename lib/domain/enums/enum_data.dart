@@ -1,3 +1,7 @@
+enum Sender { user, bot }
+
+enum MessageType { normal, solution }
+
 enum CharacterPersonality {
   probSolver("문제 해결을 잘함", "prob_solver"),
   warmHeart("감정 풍부하고 따뜻함", "warm_heart"),
