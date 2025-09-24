@@ -78,7 +78,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
       builder: (context) {
         return StatefulBuilder(builder: (context, setStateDialog) {
           final len = controller.text.length;
-          final invalid = len < 3 || len > 10;
+          final invalid = len < 2 || len > 10;
           return AlertDialog(
             backgroundColor: AppColors.white,
             shape: RoundedRectangleBorder(
@@ -108,6 +108,8 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                     onChanged: (value) {
                       setStateDialog(() {});
                     },
+                    maxLines: 1,
+                    maxLength: 10,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AppColors.green50,
@@ -122,7 +124,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                   ),
                 ),
                 Text(
-                  "3~10자만 사용 가능해요",
+                  "2~10자만 사용 가능해요",
                   style: AppFontStyles.bodyRegular12.copyWith(
                     color: invalid ? AppColors.orange500 : AppColors.grey700,
                   ),
