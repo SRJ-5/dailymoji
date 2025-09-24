@@ -11,23 +11,17 @@ class AiNameSetting extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AiNameSetting> createState() =>
-      _AiNameSettingState();
+  ConsumerState<AiNameSetting> createState() => _AiNameSettingState();
 }
 
 class _AiNameSettingState extends ConsumerState<AiNameSetting> {
   bool _isNameCheck = true;
-  TextEditingController _textEditingController =
-      TextEditingController();
+  TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _textEditingController = TextEditingController(
-        text: ref
-            .read(userViewModelProvider)
-            .userProfile
-            ?.characterNm);
+    _textEditingController = TextEditingController(text: ref.read(userViewModelProvider).userProfile?.characterNm);
   }
 
   @override
@@ -68,8 +62,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
               child: TextField(
                 maxLength: 10,
                 controller: _textEditingController,
-                style: AppFontStyles.bodyRegular16
-                    .copyWith(color: AppColors.grey900),
+                style: AppFontStyles.bodyRegular16.copyWith(color: AppColors.grey900),
                 onChanged: (value) {
                   final isValid = value.length >= 2;
                   setState(() {
@@ -80,17 +73,13 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                     }
                   });
                   // TODO: ViewModel로 상태 관리 하여 저장
-                  ref
-                      .watch(userViewModelProvider.notifier)
-                      .setAiName(check: isValid, aiName: value);
+                  ref.watch(userViewModelProvider.notifier).setAiName(check: isValid, aiName: value);
                 },
                 decoration: InputDecoration(
                     counterText: '',
                     hintText: '캐릭터 이름을 적어주세요',
-                    hintStyle: AppFontStyles.bodyRegular16
-                        .copyWith(color: AppColors.grey400),
-                    suffixIcon: _textEditingController
-                            .text.isEmpty
+                    hintStyle: AppFontStyles.bodyRegular16.copyWith(color: AppColors.grey400),
+                    suffixIcon: _textEditingController.text.isEmpty
                         ? null
                         : IconButton(
                             icon: Icon(
@@ -102,45 +91,25 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                               setState(() {
                                 _isNameCheck = true;
                               });
-                              ref
-                                  .watch(userViewModelProvider
-                                      .notifier)
-                                  .setAiName(
-                                      check: false, aiName: '');
+                              ref.watch(userViewModelProvider.notifier).setAiName(check: false, aiName: '');
                             },
                           ),
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 16.h),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
                     filled: true,
                     fillColor: AppColors.green50,
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            width: 1, color: AppColors.grey200),
-                        borderRadius:
-                            BorderRadius.circular(12.r)),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            width: 1, color: AppColors.green500),
-                        borderRadius:
-                            BorderRadius.circular(12.r)),
-                    enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            width: 1, color: AppColors.grey200),
-                        borderRadius:
-                            BorderRadius.circular(12.r))),
+                    border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: AppColors.grey200), borderRadius: BorderRadius.circular(12.r)),
+                    focusedBorder:
+                        OutlineInputBorder(borderSide: BorderSide(width: 1, color: AppColors.green500), borderRadius: BorderRadius.circular(12.r)),
+                    enabledBorder:
+                        OutlineInputBorder(borderSide: BorderSide(width: 1, color: AppColors.grey200), borderRadius: BorderRadius.circular(12.r))),
               ),
             ),
           ),
         ),
-        Text('• 2~10자만 사용 가능해요',
-            style: AppFontStyles.bodyRegular12.copyWith(
-                color: _isNameCheck
-                    ? AppColors.grey700
-                    : AppColors.orange500)),
+        Text('• 3~10자만 사용 가능해요', style: AppFontStyles.bodyRegular12.copyWith(color: _isNameCheck ? AppColors.grey700 : AppColors.orange500)),
         Text(
           '• 나중에 언제든지 변경할 수 있어요',
-          style: AppFontStyles.bodyRegular12
-              .copyWith(color: AppColors.grey700),
+          style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey700),
         ),
         Spacer(),
         Align(
