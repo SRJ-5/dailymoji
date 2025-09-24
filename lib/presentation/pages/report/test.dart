@@ -12,8 +12,8 @@ import 'package:flutter_svg/svg.dart';
 List<DateTime> generateLast14Days() {
   final today = DateTime.now();
   return List.generate(
-    14,
-    (index) => today.subtract(Duration(days: 13 - index)), // 오래된 → 최신 순
+    15,
+    (index) => today.subtract(Duration(days: 14 - index)), // 오래된 → 최신 순
   );
 }
 
@@ -31,8 +31,8 @@ List<FlSpot> generateRandomSpots(List<DateTime> days) {
 
 // 감정 데이터 맵 (랜덤 값 예시)
 final emotionMap = {
-  "종합 감정": EmotionData(
-    color: AppColors.green500,
+  "종합 감정 점수": EmotionData(
+    color: AppColors.totalScore,
     spots: generateRandomSpots(last14Days),
     avg: 6,
     max: 8,
@@ -40,7 +40,7 @@ final emotionMap = {
     description: "종합적인 감정 흐름을 보여줍니다.",
   ),
   "불안/분노": EmotionData(
-    color: Color(0xFFFFB06F),
+    color: AppColors.negHigh,
     spots: generateRandomSpots(last14Days),
     avg: 6,
     max: 8,
@@ -49,7 +49,7 @@ final emotionMap = {
         "스트레스 지수가 연속 3일간 상승했어요. 잠시라도 깊게 숨을 들이쉬고 내쉬는 것만으로도 마음이 한결 가벼워질 수 있어요. 자신에게 짧은 휴식을 선물해보세요.",
   ),
   "우울/무기력/번아웃": EmotionData(
-    color: Color(0xFF18A0FB),
+    color: AppColors.negLow,
     spots: generateRandomSpots(last14Days),
     avg: 6,
     max: 8,
@@ -57,7 +57,23 @@ final emotionMap = {
     description: "지쳤다는 신호가 보여요. 잠시 쉬어가세요.",
   ),
   "평온/회복": EmotionData(
-    color: Color(0xFF8855D2),
+    color: AppColors.positive,
+    spots: generateRandomSpots(last14Days),
+    avg: 7,
+    max: 9,
+    min: 5,
+    description: "안정적인 감정 상태가 유지되고 있어요.",
+  ),
+  "불면/과다수면": EmotionData(
+    color: AppColors.sleep,
+    spots: generateRandomSpots(last14Days),
+    avg: 7,
+    max: 9,
+    min: 5,
+    description: "안정적인 감정 상태가 유지되고 있어요.",
+  ),
+  "ADHD": EmotionData(
+    color: AppColors.adhd,
     spots: generateRandomSpots(last14Days),
     avg: 7,
     max: 9,
@@ -88,7 +104,7 @@ class EmotionData {
 // 필터 Provider
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
-    "종합 감정": true,
+    "종합 감정 점수": true,
     "불안/분노": true,
     "우울/무기력/번아웃": false,
     "ADHD": false,
@@ -137,37 +153,71 @@ class Test extends ConsumerWidget {
                     height: 64.h,
                     width: 64.w,
                     child: PopupMenuButton<String>(
+                      color: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
                       icon: SvgPicture.asset(
                         "assets/icons/stroke.svg",
                         height: 18.h,
                         width: 18.w,
                       ),
-                      onSelected: (_) {},
                       itemBuilder: (context) {
-                        return filters.keys.map((key) {
-                          return PopupMenuItem<String>(
-                            value: key,
+                        return [
+                          // 직접 만든 체크박스
+                          PopupMenuItem<String>(
                             child: Consumer(
                               builder: (context, ref, _) {
-                                final currentFilters =
-                                    ref.watch(filterProvider);
-                                return CheckboxListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  dense: true,
-                                  title: Text(key,
-                                      style: const TextStyle(fontSize: 14)),
-                                  value: currentFilters[key],
-                                  onChanged: (value) {
-                                    ref.read(filterProvider.notifier).state = {
-                                      ...currentFilters,
-                                      key: value ?? false,
-                                    };
-                                  },
+                                final filters = ref.watch(filterProvider);
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: filters.keys.map((key) {
+                                    return InkWell(
+                                      onTap: () {
+                                        // 체크박스와 텍스트 클릭 시 상태 토글
+                                        ref
+                                            .read(filterProvider.notifier)
+                                            .state = {
+                                          ...filters,
+                                          key: !(filters[key] ?? false),
+                                        };
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Checkbox(
+                                            value: filters[key] ?? false,
+                                            activeColor:
+                                                AppColors.green400, // 체크 시 색상
+                                            checkColor:
+                                                AppColors.white, // 체크 표시 색상
+                                            onChanged: (value) {
+                                              ref
+                                                  .read(filterProvider.notifier)
+                                                  .state = {
+                                                ...filters,
+                                                key: value ?? false,
+                                              };
+                                            },
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            key,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: filters[key] == true
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
                                 );
                               },
                             ),
-                          );
-                        }).toList();
+                          ),
+                        ];
                       },
                     ),
                   ),
@@ -193,7 +243,19 @@ class Test extends ConsumerWidget {
                         gridData: FlGridData(show: true),
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: true),
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: 2, // y축 간격 (예: 2단위)
+                              getTitlesWidget: (value, meta) {
+                                if (value.toInt() == 0) {
+                                  return const SizedBox.shrink(); // ✅ 0은 표시 안 함
+                                }
+                                return Text(
+                                  value.toInt().toString(),
+                                  style: const TextStyle(fontSize: 10),
+                                );
+                              },
+                            ),
                           ),
                           rightTitles: AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
@@ -242,27 +304,32 @@ class Test extends ConsumerWidget {
                   const SizedBox(height: 8),
 
                   // 범례
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 6,
-                    children: selectedEmotions
-                        .map((key) => Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 4,
-                                  decoration: ShapeDecoration(
-                                    color: emotionMap[key]!.color,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(2)),
+                  SizedBox(
+                    width: 300.w,
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8.r,
+                      children: selectedEmotions
+                          .map((key) => Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 4,
+                                    decoration: ShapeDecoration(
+                                      color: emotionMap[key]!.color,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(2)),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(key, style: const TextStyle(fontSize: 12)),
-                              ],
-                            ))
-                        .toList(),
+                                  const SizedBox(width: 4),
+                                  Text(key,
+                                      style: const TextStyle(fontSize: 12)),
+                                ],
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ],
               ),
@@ -271,81 +338,96 @@ class Test extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // 기록 감정 부분
-            ...selectedEmotions.map((key) {
-              final data = emotionMap[key]!;
-              return Container(
-                padding: EdgeInsets.only(top: 16.h),
-                child: Column(
-                  children: [
-                    Row(
-                      spacing: 4.r,
-                      children: [
-                        Container(
-                            width: 8.w,
-                            height: 16.h,
-                            decoration: BoxDecoration(
-                              color: data.color,
-                              borderRadius: BorderRadius.circular(2),
-                            )),
-                        Text(
-                          key,
-                          style: AppFontStyles.bodyBold16.copyWith(
-                            color: AppColors.grey900,
-                          ),
-                        ),
-                      ],
+            if (selectedEmotions.isEmpty) // 감정선택이 안됐을 때
+              Padding(
+                padding: EdgeInsets.only(top: 70.h),
+                child: Center(
+                  child: Text(
+                    "감정을 선택해주세요",
+                    style: AppFontStyles.bodyBold14.copyWith(
+                      color: AppColors.grey500,
                     ),
-                    SizedBox(height: 8.h),
-                    Container(
-                      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.green100,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+              )
+            else // 감정 선택 됐을 때
+              ...selectedEmotions.map((key) {
+                final data = emotionMap[key]!;
+                return Container(
+                  padding: EdgeInsets.only(top: 16.h),
+                  child: Column(
+                    children: [
+                      Row(
+                        spacing: 4.r,
                         children: [
-                          // Text(key,
-                          //     style: const TextStyle(
-                          //         fontWeight: FontWeight.bold, fontSize: 16)),
-                          // const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _ScoreBox(
-                                  label: "평균 감정 점수",
-                                  value: "${data.avg}점",
-                                  color: Colors.black),
-                              _ScoreBox(
-                                  label: "최고 감정 점수",
-                                  value: "${data.max}점",
-                                  color: Colors.red),
-                              _ScoreBox(
-                                  label: "최저 감정 점수",
-                                  value: "${data.min}점",
-                                  color: Colors.blue),
-                            ],
-                          ),
-                          SizedBox(height: 8.h),
+                          Container(
+                              width: 8.w,
+                              height: 16.h,
+                              decoration: BoxDecoration(
+                                color: data.color,
+                                borderRadius: BorderRadius.circular(2),
+                              )),
                           Text(
-                            data.description,
-                            style: TextStyle(
-                              fontSize: 12,
+                            key,
+                            style: AppFontStyles.bodyBold16.copyWith(
                               color: AppColors.grey900,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                      SizedBox(height: 8.h),
+                      Container(
+                        padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.green100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _ScoreBox(
+                                    label: "평균 감정 점수",
+                                    value: "${data.avg}점",
+                                    color: AppColors.green700),
+                                separator(),
+                                _ScoreBox(
+                                    label: "최고 감정 점수",
+                                    value: "${data.max}점",
+                                    color: AppColors.noti100),
+                                separator(),
+                                _ScoreBox(
+                                    label: "최저 감정 점수",
+                                    value: "${data.min}점",
+                                    color: AppColors.noti200),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(data.description,
+                                style: AppFontStyles.bodyRegular12_180
+                                    .copyWith(color: AppColors.grey900)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
           ],
         ),
       ),
     );
   }
+}
+
+// 감정 상태 카드의 분리선
+Widget separator() {
+  return Container(
+      width: 1,
+      height: 35, // 선 높이
+      color: Color(0xFFD2D2D2));
 }
 
 // 점수 박스 위젯
@@ -364,13 +446,11 @@ class _ScoreBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: color)),
-        const SizedBox(height: 4),
+        Text(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
+        SizedBox(height: 2.h),
         Text(value,
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade700)),
+            style:
+                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
       ],
     );
   }

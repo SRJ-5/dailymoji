@@ -105,6 +105,13 @@ class AppFontStyles {
     height: 1.5,
   );
 
+  static TextStyle bodyRegular12_180 = TextStyle(
+    fontFamily: 'Pretendard',
+    fontSize: 12.sp,
+    fontWeight: FontWeight.normal,
+    height: 1.8,
+  );
+
   static TextStyle bodyRegular12 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 12.sp,
