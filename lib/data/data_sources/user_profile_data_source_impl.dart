@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,12 +16,15 @@ class UserProfileDataSourceImpl
   Future<String?> appleLogin() async {
     try {
       final apple =
-          await SignInWithApple.getAppleIDCredential(scopes: [
+          await SignInWithApple.getAppleIDCredential(
+            webAuthenticationOptions: WebAuthenticationOptions(clientId: 'com.dailymoji.service', redirectUri: Uri.parse('https://dltzahlhemuigebsiafi.supabase.co/auth/v1/callback')),
+            scopes: [
         AppleIDAuthorizationScopes.email,
         AppleIDAuthorizationScopes.fullName
       ]);
       final idToken = apple.identityToken;
       final accessToken = apple.authorizationCode;
+      print('idtoken : $idToken');
       if (idToken == null) {
         return null;
       }
@@ -28,6 +33,7 @@ class UserProfileDataSourceImpl
               provider: OAuthProvider.apple,
               idToken: idToken,
               accessToken: accessToken);
+        print('result : ${result.user!.id}');
       return result.user?.id;
       // await auth.signInWithOAuth(OAuthProvider.apple,
       //     authScreenLaunchMode: LaunchMode.externalApplication,
@@ -43,10 +49,13 @@ class UserProfileDataSourceImpl
   @override
   Future<String?> googleLogin() async {
     try {
+      print('!@!@##');
       final google = GoogleSignIn(
+          clientId: Platform.isIOS ? dotenv.env['GOOGLE_IOS_CLIENT_ID'] : null,
           serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
       final id = await google.signIn();
       final auth = await id?.authentication;
+      print('id : $id');
       if (auth?.idToken == null) {
         return null;
       }
