@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+//TODO : 처음 주간 페이지를 들어오면 종합 감정 점수로 픽
+//TODO : 체크리스트에는 5가지 감정만 두고 선택을 아무것도 안하면 종합 감정 점수, 선택하면 선택한 감정 점수
 
 // 최근 14일 날짜 리스트 생성
 List<DateTime> generateLast14Days() {
@@ -101,15 +103,15 @@ class EmotionData {
   });
 }
 
-// 필터 Provider
+// 필터 Provider (종합 감정 점수 제외 → 체크리스트는 5개만)
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
     "종합 감정 점수": true,
-    "불안/분노": true,
+    "불안/분노": false,
     "우울/무기력/번아웃": false,
     "ADHD": false,
     "불면/과다수면": false,
-    "평온/회복": true,
+    "평온/회복": false,
   };
 });
 
@@ -335,7 +337,12 @@ class Test extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: 24),
+            Container(
+              padding: EdgeInsets.only(top: 23.h),
+              height: 2,
+              width: double.infinity,
+              color: AppColors.grey100,
+            ),
 
             // 기록 감정 부분
             if (selectedEmotions.isEmpty) // 감정선택이 안됐을 때
