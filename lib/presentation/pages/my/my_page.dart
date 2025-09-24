@@ -190,7 +190,6 @@ class _MyPageState extends ConsumerState<MyPage> {
                             .read(userViewModelProvider.notifier)
                             .updateCharacterPersonality(
                                 newCharacterPersonality: result);
-                        setState(() {});
                       }
                     },
                   ),
