@@ -169,3 +169,30 @@ class WeeklyReport extends ConsumerWidget {
     );
   }
 }
+
+// 점수 박스 위젯
+class _ScoreBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ScoreBox(
+      {required this.label,
+      required this.value,
+      required this.color,
+      super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+      ],
+    );
+  }
+}
