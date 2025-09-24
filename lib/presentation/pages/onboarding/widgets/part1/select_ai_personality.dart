@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
 import 'package:flutter/material.dart';
@@ -12,20 +13,13 @@ class SelectAiPersonality extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SelectAiPersonality> createState() =>
-      _SelectAiPersonalityState();
+  ConsumerState<SelectAiPersonality> createState() => _SelectAiPersonalityState();
 }
 
-class _SelectAiPersonalityState
-    extends ConsumerState<SelectAiPersonality> {
+class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
   int _selectedIndex = -1;
 
-  final _personalities = [
-    '문제 해결을 잘함',
-    '감정 풍부하고 따뜻함',
-    '엉뚱하지만 따뜻함',
-    '따뜻함과 이성 모두 가짐'
-  ];
+  final _personalities = CharacterPersonality.values.map((e) => e.label).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +36,7 @@ class _SelectAiPersonalityState
             alignment: Alignment.centerLeft,
             child: Text(
               '캐릭터의 성격을\n골라볼까요?',
-              style: AppFontStyles.heading2
-                  .copyWith(color: AppColors.grey900),
+              style: AppFontStyles.heading2.copyWith(color: AppColors.grey900),
             ),
           ),
         ),
@@ -60,21 +53,11 @@ class _SelectAiPersonalityState
                   GestureDetector(
                       onTap: () {
                         setState(() {
-                          _selectedIndex =
-                              (_selectedIndex == index)
-                                  ? -1
-                                  : index;
+                          _selectedIndex = (_selectedIndex == index) ? -1 : index;
                         });
-                        ref
-                            .read(userViewModelProvider.notifier)
-                            .setAiPersonality(
-                                check: _selectedIndex != -1,
-                                aiPersonality:
-                                    _personalities[index]);
+                        ref.read(userViewModelProvider.notifier).setAiPersonality(check: _selectedIndex != -1, aiPersonality: _personalities[index]);
                       },
-                      child: SelectBox(
-                          isSelected: isSelected,
-                          text: _personalities[index])),
+                      child: SelectBox(isSelected: isSelected, text: _personalities[index])),
                   _personalities.length - 1 == index
                       ? SizedBox.shrink()
                       : SizedBox(

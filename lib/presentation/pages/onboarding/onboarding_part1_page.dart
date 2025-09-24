@@ -78,8 +78,8 @@ class _OnboardingPart1PageState
                 child: [
                   // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
                   // SelectAi(),
-                  AiNameSetting(),
                   SelectAiPersonality(),
+                  AiNameSetting(),
                   UserNickName(),
                   FinishWidget(
                     text: '좋아요!\n이제 다음 단계로 가볼까요?',

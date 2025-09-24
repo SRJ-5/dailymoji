@@ -88,65 +88,67 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () async {
-                        final result = await ref
-                            .read(
-                                userViewModelProvider.notifier)
-                            .googleLogin();
-                        if (result != null) {
-                          final isRegistered = await ref
-                              .read(userViewModelProvider
-                                  .notifier)
-                              .getUserProfile(result);
-                          if (isRegistered) {
-                            // TODO: 여기에 홈페이지로 이동 넣어야함
-                            context.go('/home');
-                          } else {
-                            context.go('/onboarding1');
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final result = await ref
+                              .read(
+                                  userViewModelProvider.notifier)
+                              .googleLogin();
+                          if (result != null) {
+                            final isRegistered = await ref
+                                .read(userViewModelProvider
+                                    .notifier)
+                                .getUserProfile(result);
+
+                            if (isRegistered) {
+                              context.go('/home');
+                            } else {
+                              context.go('/onboarding1');
+                            }
                           }
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 30.r,
-                        child: Image.asset(
-                          'assets/icons/google_login_logo.png',
+                        },
+                        child: CircleAvatar(
+                          radius: 30.r,
+                          child: Image.asset(
+                            'assets/icons/google_login_logo.png',
+                          ),
                         ),
                       ),
                     ),
                     platform == TargetPlatform.iOS
                         ? Row(
-                          children: [
-                            SizedBox(width: 24.w),
-                            GestureDetector(
-                              onTap: () async {
-                                final result = await ref
-                                    .read(userViewModelProvider
-                                        .notifier)
-                                    .appleLogin();
-                                if (result != null) {
-                                  final isRegistered = await ref
+                            children: [
+                              SizedBox(width: 24.w),
+                              GestureDetector(
+                                onTap: () async {
+                                  final result = await ref
                                       .read(userViewModelProvider
                                           .notifier)
-                                      .getUserProfile(result);
-                                  if (isRegistered) {
-                                    context.go('/onboarding1');
-                                  } else {
-                                    // TODO: 여기에 홈페이지로 이동 넣어야함
-                                    context.go('/onboarding2');
+                                      .appleLogin();
+                                  if (result != null) {
+                                    final isRegistered = await ref
+                                        .read(
+                                            userViewModelProvider
+                                                .notifier)
+                                        .getUserProfile(result);
+                                    if (isRegistered) {
+                                      context.go('/onboarding1');
+                                    } else {
+                                      // TODO: 여기에 홈페이지로 이동 넣어야함
+                                      context.go('/onboarding2');
+                                    }
                                   }
-                                }
-                              },
-                              child: CircleAvatar(
-                                radius: 30.r,
-                                child: Image.asset(
-                                  'assets/icons/apple_login_logo.png',
+                                },
+                                child: CircleAvatar(
+                                  radius: 30.r,
+                                  child: Image.asset(
+                                    'assets/icons/apple_login_logo.png',
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )
+                            ],
+                          )
                         : SizedBox.shrink(),
                     Spacer()
                   ],
