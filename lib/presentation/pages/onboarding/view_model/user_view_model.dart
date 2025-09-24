@@ -96,7 +96,7 @@ class UserViewModel extends Notifier<UserState> {
       return;
     }
 
-    final insertUserProfile = ref.read(insertUserProfileUseCaseProvier);
+    final insertUserProfile = ref.read(insertUserProfileUseCaseProvider);
     // id가 확실히 포함된 profileToInsert를 전달
     await insertUserProfile.execute(profileToInsert);
   }
