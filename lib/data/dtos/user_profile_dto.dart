@@ -1,4 +1,5 @@
 import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 
 class UserProfileDto {
   final String? id;
@@ -26,7 +27,11 @@ class UserProfileDto {
           userNickNm: map["user_nick_nm"],
           aiCharacter: map["ai_character"],
           characterNm: map["character_nm"],
-          characterPersonality: map["character_personality"],
+          characterPersonality: CharacterPersonality.values
+              .firstWhere(
+                (e) => e.dbValue == map["character_personality"],
+              )
+              .label,
           onboardingScores: map['onboarding_scores'] ?? {},
         );
 
@@ -36,7 +41,12 @@ class UserProfileDto {
       "user_nick_nm": userNickNm,
       "ai_character": aiCharacter,
       "character_nm": characterNm,
-      "character_personality": characterPersonality,
+      "character_personality": CharacterPersonality.values
+          .firstWhere(
+            (e) => e.label == characterPersonality,
+            orElse: () => CharacterPersonality.probSolver,
+          )
+          .dbValue,
       "onboarding_scores": onboardingScores
     };
   }
@@ -55,10 +65,8 @@ class UserProfileDto {
         userNickNm: userNickNm ?? this.userNickNm,
         aiCharacter: aiCharacter ?? this.aiCharacter,
         characterNm: characterNm ?? this.characterNm,
-        characterPersonality:
-            characterPersonality ?? this.characterPersonality,
-        onboardingScores:
-            onboardingScores ?? this.onboardingScores);
+        characterPersonality: characterPersonality ?? this.characterPersonality,
+        onboardingScores: onboardingScores ?? this.onboardingScores);
   }
 
   UserProfile toEntity() {
@@ -79,8 +87,7 @@ class UserProfileDto {
           userNickNm: surveyResponse.userNickNm,
           aiCharacter: surveyResponse.aiCharacter,
           characterNm: surveyResponse.characterNm,
-          characterPersonality:
-              surveyResponse.characterPersonality,
+          characterPersonality: surveyResponse.characterPersonality,
           onboardingScores: surveyResponse.onboardingScores,
         );
 }
