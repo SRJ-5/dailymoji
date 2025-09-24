@@ -1,33 +1,25 @@
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-class UserProfileDataSourceImpl
-    implements UserProfileDataSource {
+class UserProfileDataSourceImpl implements UserProfileDataSource {
   final supabase = Supabase.instance.client;
   final auth = Supabase.instance.client.auth;
 
   @override
   Future<String?> appleLogin() async {
     try {
-      final apple =
-          await SignInWithApple.getAppleIDCredential(scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName
-      ]);
+      final apple = await SignInWithApple.getAppleIDCredential(scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName]);
       final idToken = apple.identityToken;
       final accessToken = apple.authorizationCode;
       if (idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth
-          .signInWithIdToken(
-              provider: OAuthProvider.apple,
-              idToken: idToken,
-              accessToken: accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(provider: OAuthProvider.apple, idToken: idToken, accessToken: accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(OAuthProvider.apple,
       //     authScreenLaunchMode: LaunchMode.externalApplication,
@@ -43,18 +35,14 @@ class UserProfileDataSourceImpl
   @override
   Future<String?> googleLogin() async {
     try {
-      final google = GoogleSignIn(
-          serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
+      final google = GoogleSignIn(serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
       final id = await google.signIn();
       final auth = await id?.authentication;
       if (auth?.idToken == null) {
         return null;
       }
       final result = await Supabase.instance.client.auth
-          .signInWithIdToken(
-              provider: OAuthProvider.google,
-              idToken: auth!.idToken!,
-              accessToken: auth.accessToken);
+          .signInWithIdToken(provider: OAuthProvider.google, idToken: auth!.idToken!, accessToken: auth.accessToken);
       print(result.user?.id);
       return result.user?.id;
       // await auth.signInWithOAuth(
@@ -73,11 +61,7 @@ class UserProfileDataSourceImpl
 
   @override
   Future<UserProfileDto?> getUserProfile(String uuid) async {
-    final result = await supabase
-        .from('user_profiles')
-        .select()
-        .eq('id', uuid)
-        .maybeSingle();
+    final result = await supabase.from('user_profiles').select().eq('id', uuid).maybeSingle();
     if (result != null) {
       return UserProfileDto.fromJson(result);
     } else {
@@ -86,16 +70,12 @@ class UserProfileDataSourceImpl
   }
 
   @override
-  Future<void> insertUserProfile(
-      UserProfileDto userProfileDto) async {
-    await supabase
-        .from('user_profiles')
-        .insert(userProfileDto.toJson());
+  Future<void> insertUserProfile(UserProfileDto userProfileDto) async {
+    await supabase.from('user_profiles').insert(userProfileDto.toJson());
   }
 
   @override
-  Future<UserProfileDto> updateUserNickNM(
-      {required String userNickNM, required String uuid}) async {
+  Future<UserProfileDto> updateUserNickNM({required String userNickNM, required String uuid}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({
@@ -108,25 +88,22 @@ class UserProfileDataSourceImpl
   }
 
   @override
-  Future<UserProfileDto> updateCharacterNM(
-      {required String uuid,
-      required String characterNM}) async {
-    final updated = await supabase
-        .from('user_profiles')
-        .update({'character_nm': characterNM})
-        .eq('id', uuid)
-        .select()
-        .single();
+  Future<UserProfileDto> updateCharacterNM({required String uuid, required String characterNM}) async {
+    final updated = await supabase.from('user_profiles').update({'character_nm': characterNM}).eq('id', uuid).select().single();
     return UserProfileDto.fromJson(updated);
   }
 
   @override
-  Future<UserProfileDto> updateCharacterPersonality(
-      {required String uuid,
-      required String characterPersonality}) async {
+  Future<UserProfileDto> updateCharacterPersonality({required String uuid, required String characterPersonality}) async {
     final updated = await supabase
         .from('user_profiles')
-        .update({'character_personality': characterPersonality})
+        .update({
+          'character_personality': CharacterPersonality.values
+              .firstWhere(
+                (e) => e.label == characterPersonality,
+              )
+              .dbValue
+        })
         .eq('id', uuid)
         .select()
         .single();

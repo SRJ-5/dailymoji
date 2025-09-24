@@ -72,8 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   Text(
                     '매일매일 감정 관리',
-                    style: AppFontStyles.bodyRegular18
-                        .copyWith(color: AppColors.grey500),
+                    style: AppFontStyles.bodyRegular18.copyWith(color: AppColors.grey500),
                   ),
                 ],
               ),
@@ -91,17 +90,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Expanded(
                       child: GestureDetector(
                         onTap: () async {
-                          final result = await ref
-                              .read(
-                                  userViewModelProvider.notifier)
-                              .googleLogin();
+                          final result = await ref.read(userViewModelProvider.notifier).googleLogin();
                           if (result != null) {
-                            final isRegistered = await ref
-                                .read(userViewModelProvider
-                                    .notifier)
-                                .getUserProfile(result);
+                            final isRegistered = await ref.read(userViewModelProvider.notifier).getUserProfile(result);
+
                             if (isRegistered) {
-                              // TODO: 여기에 홈페이지로 이동 넣어야함
                               context.go('/home');
                             } else {
                               context.go('/onboarding1');
@@ -120,15 +113,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ? Expanded(
                             child: GestureDetector(
                               onTap: () async {
-                                final result = await ref
-                                    .read(userViewModelProvider
-                                        .notifier)
-                                    .appleLogin();
+                                final result = await ref.read(userViewModelProvider.notifier).appleLogin();
                                 if (result != null) {
-                                  final isRegistered = await ref
-                                      .read(userViewModelProvider
-                                          .notifier)
-                                      .getUserProfile(result);
+                                  final isRegistered = await ref.read(userViewModelProvider.notifier).getUserProfile(result);
                                   if (isRegistered) {
                                     context.go('/onboarding1');
                                   } else {
@@ -152,21 +139,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 RichText(
                   text: TextSpan(
                     text: '가입 시 ',
-                    style: AppFontStyles.noticeRelgular10
-                        .copyWith(color: AppColors.grey500),
+                    style: AppFontStyles.noticeRelgular10.copyWith(color: AppColors.grey500),
                     children: <TextSpan>[
                       TextSpan(
                         text: '이용약관',
-                        style: AppFontStyles
-                            .underlinedNoticeRelgular10
-                            .copyWith(color: AppColors.grey500),
+                        style: AppFontStyles.underlinedNoticeRelgular10.copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '과 '),
                       TextSpan(
                         text: '개인정보 처리방침',
-                        style: AppFontStyles
-                            .underlinedNoticeRelgular10
-                            .copyWith(color: AppColors.grey500),
+                        style: AppFontStyles.underlinedNoticeRelgular10.copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '에 동의하게 됩니다.'),
                     ],

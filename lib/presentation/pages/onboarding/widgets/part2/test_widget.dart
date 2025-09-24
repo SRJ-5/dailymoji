@@ -66,7 +66,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                       bottom: 0,
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 16.w, vertical: 12.h),
+                            horizontal: 16.w, vertical: 10.h),
                         child: Center(
                             child: Text(
                           widget.text,
