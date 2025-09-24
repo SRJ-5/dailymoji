@@ -6,6 +6,9 @@ import 'package:dailymoji/domain/use_cases/user_use_cases/apple_login_use_case.d
 import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/google_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/insert_user_profile_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_name_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_personality_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/update_user_nickname_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _userDataSourceProvider = Provider<UserProfileDataSource>(
@@ -21,28 +24,49 @@ final _userRepositoryProvider = Provider<UserProfileRepository>(
   },
 );
 
-final googleLoginUseCaseProvier = Provider(
+final googleLoginUseCaseProvider = Provider(
   (ref) {
     return GoogleLoginUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
-final appleLoginUseCaseProvier = Provider(
+final appleLoginUseCaseProvider = Provider(
   (ref) {
     return AppleLoginUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
-final insertUserProfileUseCaseProvier = Provider(
+final insertUserProfileUseCaseProvider = Provider(
   (ref) {
     return InsertUserProfileUseCase(
         ref.read(_userRepositoryProvider));
   },
 );
 
-final getUserProfileUseCaseProvier = Provider(
+final getUserProfileUseCaseProvider = Provider(
   (ref) {
     return GetUserProfileUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final updateUserNickNameUseCaseProvider = Provider(
+  (ref) {
+    return UpdateUserNicknameUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final updateCharacterNameUseCaseProvider = Provider(
+  (ref) {
+    return UpdateCharacterNameUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final updateCharacterPersonalityUseCaseProvider = Provider(
+  (ref) {
+    return UpdateCharacterPersonalityUseCase(
         ref.read(_userRepositoryProvider));
   },
 );

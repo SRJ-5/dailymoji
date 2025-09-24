@@ -1,6 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/part2/speech_bubble.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,21 +54,30 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                 width: 8.w,
               ),
               Container(
-                width: 187.w,
-                height: 96.h,
-                padding: EdgeInsets.symmetric(
-                    horizontal: 16.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                    color: AppColors.white,
-                    border: Border.all(
-                        width: 1, color: AppColors.grey100),
-                    borderRadius: BorderRadius.circular(12.r)),
-                child: Center(
-                    child: Text(
-                  widget.text,
-                  style: AppFontStyles.bodyBold16
-                      .copyWith(color: AppColors.grey900),
-                )),
+                width: 206.17.w,
+                height: 110.h,
+                child: Stack(
+                  children: [
+                    SpeechBubble(),
+                    Positioned(
+                      left: 7.w,
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 12.h),
+                        child: Center(
+                            child: Text(
+                          widget.text,
+                          style: AppFontStyles.bodyBold16
+                              .copyWith(
+                                  color: AppColors.grey900),
+                        )),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -1,6 +1,5 @@
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
-import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -92,5 +91,45 @@ class UserProfileDataSourceImpl
     await supabase
         .from('user_profiles')
         .insert(userProfileDto.toJson());
+  }
+
+  @override
+  Future<UserProfileDto> updateUserNickNM(
+      {required String userNickNM, required String uuid}) async {
+    final updated = await supabase
+        .from('user_profiles')
+        .update({
+          'user_nick_nm': userNickNM,
+        })
+        .eq('id', uuid)
+        .select()
+        .single();
+    return UserProfileDto.fromJson(updated);
+  }
+
+  @override
+  Future<UserProfileDto> updateCharacterNM(
+      {required String uuid,
+      required String characterNM}) async {
+    final updated = await supabase
+        .from('user_profiles')
+        .update({'character_nm': characterNM})
+        .eq('id', uuid)
+        .select()
+        .single();
+    return UserProfileDto.fromJson(updated);
+  }
+
+  @override
+  Future<UserProfileDto> updateCharacterPersonality(
+      {required String uuid,
+      required String characterPersonality}) async {
+    final updated = await supabase
+        .from('user_profiles')
+        .update({'character_personality': characterPersonality})
+        .eq('id', uuid)
+        .select()
+        .single();
+    return UserProfileDto.fromJson(updated);
   }
 }
