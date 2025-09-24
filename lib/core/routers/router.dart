@@ -18,8 +18,11 @@ final router = GoRouter(
   initialLocation: '/',
   navigatorKey: navigatorkey,
   routes: [
-    // GoRoute(path: '/', builder: (context, state) => SplashPage()),
-    GoRoute(path: '/', builder: (context, state) => LoginPage()),
+    GoRoute(
+        path: '/', builder: (context, state) => SplashPage()),
+    GoRoute(
+        path: '/login',
+        builder: (context, state) => LoginPage()),
     GoRoute(
         path: '/onboarding1',
         builder: (context, state) => OnboardingPart1Page()),
