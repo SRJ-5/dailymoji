@@ -1,17 +1,19 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/providers/user_providers.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
-class MyPage extends StatefulWidget {
+class MyPage extends ConsumerStatefulWidget {
   @override
-  State<MyPage> createState() => _MyPageState();
+  ConsumerState<MyPage> createState() => _MyPageState();
 }
 
-class _MyPageState extends State<MyPage> {
-  String userNickname = "치키차카초코";
-
+class _MyPageState extends ConsumerState<MyPage> {
   List<String> surveyTitles = [
     "우울 진단 검사하기",
     "스트레스 진단 검사하기",
@@ -27,8 +29,6 @@ class _MyPageState extends State<MyPage> {
     "알림 설정",
   ];
 
-  String selectedCharacterOption = "문제 해결을 잘함";
-
   List<String> characterOptions = [
     "문제 해결을 잘함",
     "감정 풍부하고 따뜻함",
@@ -38,6 +38,10 @@ class _MyPageState extends State<MyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final userState = ref.watch(userViewModelProvider);
+    final userNickname = userState.userProfile!.userNickNm!;
+    final characterPersonality =
+        userState.userProfile!.characterPersonality!;
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
@@ -77,7 +81,8 @@ class _MyPageState extends State<MyPage> {
                   // TODO 유저 닉네임 변경 페이지
                 },
                 child: Container(
-                  padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+                  padding: EdgeInsets.only(
+                      top: 16.h, left: 16.w, right: 16.w),
                   decoration: BoxDecoration(
                     color: AppColors.green100,
                     borderRadius: BorderRadius.circular(12.r),
@@ -95,19 +100,22 @@ class _MyPageState extends State<MyPage> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 12.h),
                         child: Row(
                           children: [
                             Text(
                               userNickname,
-                              style: AppFontStyles.bodyRegular16.copyWith(
+                              style: AppFontStyles.bodyRegular16
+                                  .copyWith(
                                 color: AppColors.grey700,
                               ),
                             ),
                             SizedBox(width: 8.w),
                             GestureDetector(
                               onTap: () {
-                                _showEditUserNicknameDialog(context);
+                                _showEditUserNicknameDialog(
+                                    context, userNickname);
                               },
                               child: Icon(
                                 Icons.edit,
@@ -132,12 +140,15 @@ class _MyPageState extends State<MyPage> {
                     (index) => () async {
                       final result = await showMenu<String>(
                         context: context,
-                        position: RelativeRect.fromLTRB(183.w, 293.h, 0, 0),
+                        position: RelativeRect.fromLTRB(
+                            183.w, 293.h, 0, 0),
                         color: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          side: BorderSide(color: AppColors.grey100),
+                          borderRadius:
+                              BorderRadius.circular(12.r),
+                          side: BorderSide(
+                              color: AppColors.grey100),
                         ),
                         items: characterOptions.map((e) {
                           return PopupMenuItem<String>(
@@ -146,19 +157,25 @@ class _MyPageState extends State<MyPage> {
                               children: [
                                 Radio<String>(
                                   value: e,
-                                  groupValue: selectedCharacterOption,
-                                  activeColor: AppColors.green400,
-                                  visualDensity: VisualDensity.compact,
+                                  groupValue:
+                                      characterPersonality,
+                                  activeColor:
+                                      AppColors.green400,
+                                  visualDensity:
+                                      VisualDensity.compact,
                                   materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                      MaterialTapTargetSize
+                                          .shrinkWrap,
                                   onChanged: (_) {
-                                    // Navigator.pop(context, e); // 선택 시 메뉴 닫고 값 반환
+                                    Navigator.pop(context, e);
                                   },
                                 ),
                                 Expanded(
                                   child: Text(
                                     e,
-                                    style: AppFontStyles.bodyRegular14.copyWith(
+                                    style: AppFontStyles
+                                        .bodyRegular14
+                                        .copyWith(
                                       color: AppColors.grey900,
                                     ),
                                   ),
@@ -169,15 +186,16 @@ class _MyPageState extends State<MyPage> {
                         }).toList(),
                       );
                       if (result != null) {
-                        setState(() {
-                          selectedCharacterOption = result;
-                        });
+                        ref
+                            .read(userViewModelProvider.notifier)
+                            .updateCharacterPersonality(
+                                newCharacterPersonality: result);
                       }
                     },
                   ),
                 ],
                 widget: Text(
-                  selectedCharacterOption,
+                  characterPersonality,
                   style: AppFontStyles.bodyRegular14.copyWith(
                     color: AppColors.grey500,
                   ),
@@ -192,13 +210,25 @@ class _MyPageState extends State<MyPage> {
               _buildSection(
                 title: "정보",
                 items: ["공지사항", "언어 설정", "이용 약관"],
-                onTapList: [...List.generate(3, (index) => () {})],
+                onTapList: [
+                  ...List.generate(
+                      3,
+                      (index) => () {
+                            context.push('/my/info');
+                          })
+                ],
               ),
               SizedBox(height: 16.h),
               _buildSection(
                 title: "기타",
                 items: ["로그아웃", "회원 탈퇴"],
-                onTapList: [...List.generate(2, (index) => () {})],
+                onTapList: [
+                  ...List.generate(
+                      2,
+                      (index) => () {
+                            context.push('/my/info');
+                          })
+                ],
               ),
             ],
           ),
@@ -216,7 +246,8 @@ class _MyPageState extends State<MyPage> {
     Widget? widget,
   }) {
     return Container(
-      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding:
+          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12.r),
@@ -283,9 +314,10 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  Future<void> _showEditUserNicknameDialog(BuildContext context) async {
+  Future<void> _showEditUserNicknameDialog(
+      BuildContext context, String userNickName) async {
     final TextEditingController controller =
-        TextEditingController(text: userNickname);
+        TextEditingController(text: userNickName);
 
     String? result = await showDialog(
       context: context,
@@ -346,10 +378,14 @@ class _MyPageState extends State<MyPage> {
                     },
                     child: Container(
                       padding: EdgeInsets.only(
-                          top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                          top: 8.h,
+                          bottom: 8.h,
+                          left: 16.w,
+                          right: 10.w),
                       child: Text(
                         "취소",
-                        style: AppFontStyles.bodyMedium14.copyWith(
+                        style:
+                            AppFontStyles.bodyMedium14.copyWith(
                           color: AppColors.grey700,
                         ),
                       ),
@@ -357,17 +393,20 @@ class _MyPageState extends State<MyPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // 저장 로직
                       print("닉네임: ${controller.text}");
                       final nickname = controller.text;
                       Navigator.pop(context, nickname);
                     },
                     child: Container(
                       padding: EdgeInsets.only(
-                          top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                          top: 8.h,
+                          bottom: 8.h,
+                          left: 16.w,
+                          right: 10.w),
                       child: Text(
                         "완료",
-                        style: AppFontStyles.bodyMedium14.copyWith(
+                        style:
+                            AppFontStyles.bodyMedium14.copyWith(
                           color: AppColors.green600,
                         ),
                       ),
@@ -382,9 +421,9 @@ class _MyPageState extends State<MyPage> {
     );
 
     if (result != null && result.isNotEmpty) {
-      setState(() {
-        userNickname = result;
-      });
+      ref
+          .read(userViewModelProvider.notifier)
+          .updateUserNickNM(newUserNickNM: result);
     }
   }
 }

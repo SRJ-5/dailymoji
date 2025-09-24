@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -7,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   @override
@@ -76,7 +73,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Text(
                     '매일매일 감정 관리',
                     style: AppFontStyles.bodyRegular18
-                        .copyWith(color: AppColors.grey400),
+                        .copyWith(color: AppColors.grey500),
                   ),
                 ],
               ),
@@ -156,20 +153,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   text: TextSpan(
                     text: '가입 시 ',
                     style: AppFontStyles.noticeRelgular10
-                        .copyWith(color: AppColors.grey400),
+                        .copyWith(color: AppColors.grey500),
                     children: <TextSpan>[
                       TextSpan(
                         text: '이용약관',
                         style: AppFontStyles
                             .underlinedNoticeRelgular10
-                            .copyWith(color: AppColors.grey400),
+                            .copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '과 '),
                       TextSpan(
                         text: '개인정보 처리방침',
                         style: AppFontStyles
                             .underlinedNoticeRelgular10
-                            .copyWith(color: AppColors.grey400),
+                            .copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '에 동의하게 됩니다.'),
                     ],
