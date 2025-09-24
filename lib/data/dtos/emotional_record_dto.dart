@@ -41,6 +41,7 @@ class EmotionalRecordDto {
       profile: profile ?? 0,
       sessionId: sessionId,
       interventionPresetId: intervention?['preset_id'] as String?,
+      empathyText: intervention?['empathy_text'] as String?, // 공감 메시지
       analysisText: intervention?['analysis_text'] as String?,
       proposalText: intervention?['proposal_text'] as String?,
       intervention: intervention ?? {},

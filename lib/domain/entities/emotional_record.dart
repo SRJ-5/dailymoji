@@ -12,6 +12,7 @@ class EmotionalRecord {
 
   // 백엔드 응답에서 직접 받을 텍스트 필드
   final String? interventionPresetId;
+  final String? empathyText; // 공감 추가 (분석 결과 말하기전에 상황 이해하고 공감해주기)
   final String? analysisText; // 예: "평소보다 우울해 보여요..."
   final String? proposalText; // 예: "기분 전환을 위해... 해볼까요?"
   final String? topCluster;
@@ -24,6 +25,7 @@ class EmotionalRecord {
     required this.profile,
     this.sessionId,
     this.interventionPresetId,
+    this.empathyText,
     this.analysisText,
     this.proposalText,
     this.topCluster,

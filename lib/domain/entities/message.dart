@@ -23,4 +23,28 @@ class Message {
     DateTime? createdAt,
     this.imageAssetPath,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  // Rin: 이모지를 채팅으로 보내서 채팅 말풍선에 남아있게 하려면
+  // copyWith으로 데이터를 병합하도록 해야한다!
+  Message copyWith({
+    String? id,
+    String? userId,
+    String? content,
+    Sender? sender,
+    MessageType? type,
+    DateTime? createdAt,
+    Map<String, dynamic>? proposal,
+    String? imageAssetPath,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      content: content ?? this.content,
+      sender: sender ?? this.sender,
+      type: type ?? this.type,
+      createdAt: createdAt ?? this.createdAt,
+      proposal: proposal ?? this.proposal,
+      imageAssetPath: imageAssetPath ?? this.imageAssetPath,
+    );
+  }
 }

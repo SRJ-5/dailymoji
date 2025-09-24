@@ -139,14 +139,31 @@ class ChatViewModel extends Notifier<ChatState> {
     );
   }
 
+// 이모지 이미지가 채팅에 입력 지속되지 않는 문제 해결!
+// --> DB에서 돌아온 정보로 기존 메시지를 '업데이트' 하도록 변경
   Future<Message> _addUserMessageToChat(Message message) async {
+    // 1. UI에 즉시 메시지 추가 (id가 null인 상태)
     state = state.copyWith(messages: [...state.messages, message]);
-    final savedMessage =
+
+    // 2. DB에 메시지 저장
+    final savedMessageFromDB =
         await ref.read(sendMessageUseCaseProvider).execute(message);
-    final updatedMessages =
-        state.messages.map((m) => m == message ? savedMessage : m).toList();
+
+    // 3. --- 핵심 수정 ---
+    // DB에서 받은 정보(id, createdAt)와 기존 정보(imageAssetPath)를 합침
+    final completeMessage = savedMessageFromDB.copyWith(
+      imageAssetPath: message.imageAssetPath,
+    );
+
+    // 4. 상태 리스트에서 id가 null이었던 메시지를 완전한 메시지로 교체
+    final updatedMessages = state.messages
+        .map((m) => m.id == null && m.createdAt == message.createdAt
+            ? completeMessage
+            : m)
+        .toList();
     state = state.copyWith(messages: updatedMessages);
-    return savedMessage;
+
+    return completeMessage;
   }
 
   // ---------------------------------------------------------------------------
@@ -209,7 +226,18 @@ class ChatViewModel extends Notifier<ChatState> {
               emotionalRecord.intervention['top_cluster'] as String? ??
                   emotionalRecord.topCluster;
 
-          // 분석 결과 메시지 먼저
+          // 1. [공감] 메시지 먼저 보내기
+          if (emotionalRecord.empathyText != null) {
+            final empathyMessage = Message(
+              userId: currentUserId,
+              content: emotionalRecord.empathyText!,
+              sender: Sender.bot,
+            );
+            await _addBotMessageToChat(empathyMessage);
+            await Future.delayed(const Duration(milliseconds: 1000)); // 잠시 딜레이
+          }
+
+          // 2. [분석 결과] 메시지 보내기
           if (emotionalRecord.analysisText != null) {
             final analysisMessage = Message(
                 userId: currentUserId,
@@ -218,7 +246,7 @@ class ChatViewModel extends Notifier<ChatState> {
             await _addBotMessageToChat(analysisMessage);
             await Future.delayed(const Duration(milliseconds: 1200));
           }
-          // 2단계: /solutions/propose 호출
+          // 3. [솔루션 제안]을 위해 /solutions/propose 호출
           if (sessionId != null && topCluster != null) {
             final proposalResponse =
                 await ref.read(proposeSolutionUseCaseProvider).execute(

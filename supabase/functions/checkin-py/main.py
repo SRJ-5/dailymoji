@@ -295,21 +295,21 @@ async def analyze_emotion(payload: AnalyzeRequest):
         # --- UX Flow 1: EMOJI_ONLY -> 공감/질문으로 응답 (0924 슬랙논의 2번 로직)---
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
-            reaction_scripts = {
-                "angry": "무슨 일 있었어요? 화나는 일이 있었나봐요.",
-                "crying": "어떡해요, 무슨 슬픈 일이라도 있었어요?",
-                "shocked": "깜짝 놀란 일이 있었나 보네요. 괜찮으세요?",
-                "sleeping": "많이 피곤하신가 봐요. 기운 없어 보여요.",
-                "smile": "좋은 일이 있나봐요! 저도 기분이 좋네요. 무슨 일이에요?"
-            }
-            reaction_text = reaction_scripts.get(payload.icon.lower(), "지금 기분이 어떻신지 알려주세요.")
-            intervention = {"preset_id": PresetIds.EMOJI_REACTION, "text": reaction_text}
+            # Supabase에서 해당 이모지 키를 가진 스크립트들을 모두 가져옴
+            response = await run_in_threadpool(
+                supabase.table("reaction_scripts").select("script").eq("emotion_key", payload.icon.lower()).execute
+            )
             
-            # EMOJI_ONLY는 스코어링 없이 세션만 기록하고 바로 응답
+            scripts = [row['script'] for row in response.data]
+            
+            # 만약 스크립트가 있다면 그 중 하나를 랜덤으로 선택, 없다면 기본 메시지 사용
+            reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신지 알려주세요."
+
+            intervention = {"preset_id": PresetIds.EMOJI_REACTION, "text": reaction_text}
             session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
             
             return {"session_id": session_id, "intervention": intervention}
-   
+
 
 
         # --- 텍스트 입력 케이스 ---
@@ -377,11 +377,17 @@ async def analyze_emotion(payload: AnalyzeRequest):
         g = g_score(adjusted_scores)
         profile = pick_profile(adjusted_scores, llm_json)
         top_cluster = max(adjusted_scores, key=adjusted_scores.get, default="neg_low")
+        
+        # LLM으로부터 공감 메시지와 분석 메시지를 각각 가져옴
+        empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
         analysis_text = get_analysis_message(adjusted_scores)
+    
+        
         
         # 4-4. Intervention 객체 생성 및 반환 (API 응답 구조 수정함)
         intervention = {
             "preset_id": PresetIds.SOLUTION_PROPOSAL,
+            "empathy_text": empathy_text, # 공감 텍스트 추가
             "analysis_text": analysis_text,
             "top_cluster": top_cluster
         }
@@ -393,7 +399,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
             "final_scores": adjusted_scores,
             "g_score": g,
             "profile": profile,
-            "intervention": intervention # intervention 객체 포함!
+            "intervention": intervention 
         }
 
     except Exception as e:
