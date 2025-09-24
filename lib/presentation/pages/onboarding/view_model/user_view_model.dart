@@ -94,7 +94,7 @@ class UserViewModel extends Notifier<UserState> {
 
   void setAiName({required bool check, required String aiName}) {
     state = state.copyWith(
-        step12: check,
+        step13: check,
         userProfile:
             state.userProfile?.copyWith(characterNm: aiName));
   }
@@ -102,7 +102,7 @@ class UserViewModel extends Notifier<UserState> {
   void setAiPersonality(
       {required bool check, required String aiPersonality}) {
     state = state.copyWith(
-        step13: check,
+        step12: check,
         userProfile: state.userProfile
             ?.copyWith(characterPersonality: aiPersonality));
   }
