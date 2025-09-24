@@ -88,31 +88,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () async {
-                          final result = await ref
+                    Spacer(),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await ref
+                            .read(userViewModelProvider.notifier)
+                            .googleLogin();
+                        if (result != null) {
+                          final isRegistered = await ref
                               .read(
                                   userViewModelProvider.notifier)
-                              .googleLogin();
-                          if (result != null) {
-                            final isRegistered = await ref
-                                .read(userViewModelProvider
-                                    .notifier)
-                                .getUserProfile(result);
+                              .getUserProfile(result);
 
-                            if (isRegistered) {
-                              context.go('/home');
-                            } else {
-                              context.go('/onboarding1');
-                            }
+                          if (isRegistered) {
+                            context.go('/home');
+                          } else {
+                            context.go('/onboarding1');
                           }
-                        },
-                        child: CircleAvatar(
-                          radius: 30.r,
-                          child: Image.asset(
-                            'assets/icons/google_login_logo.png',
-                          ),
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 30.r,
+                        child: Image.asset(
+                          'assets/icons/google_login_logo.png',
                         ),
                       ),
                     ),
