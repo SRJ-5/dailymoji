@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -158,7 +159,7 @@ class WeeklyReport extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       icon: SvgPicture.asset(
-                        "assets/icons/stroke.svg",
+                        AppIcons.stroke,
                         height: 18.h,
                         width: 18.w,
                       ),

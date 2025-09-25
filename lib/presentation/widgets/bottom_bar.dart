@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -44,16 +45,15 @@ class BottomBar extends ConsumerWidget {
         unselectedLabelStyle: AppFontStyles.bodyMedium14,
         items: const [
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/icons/home.png')),
+            icon: ImageIcon(AssetImage(AppIcons.home)),
             label: '홈',
           ),
           BottomNavigationBarItem(
-            icon:
-                ImageIcon(AssetImage('assets/icons/report.png')),
+            icon: ImageIcon(AssetImage(AppIcons.report)),
             label: "리포트",
           ),
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/icons/my.png')),
+            icon: ImageIcon(AssetImage(AppIcons.my)),
             label: "마이",
           ),
         ],

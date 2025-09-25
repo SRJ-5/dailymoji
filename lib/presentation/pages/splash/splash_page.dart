@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:flutter/material.dart';
 
@@ -8,7 +9,8 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
 
@@ -19,7 +21,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       vsync: this,
       duration: Duration(seconds: 1), // 페이드아웃 시간 = 1초
     );
-    _opacity = Tween<double>(begin: 1, end: 0).animate(_controller);
+    _opacity =
+        Tween<double>(begin: 1, end: 0).animate(_controller);
 
     // 2초 유지 후 → 1초 동안 페이드아웃
     Future.delayed(Duration(seconds: 2), () {
@@ -48,7 +51,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
           child: IgnorePointer(
             ignoring: _opacity.value != 0,
             child: Image.asset(
-              "assets/images/splash_image.png",
+              AppImages.splashImage,
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
