@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-//TODO : 처음 주간 페이지를 들어오면 종합 감정 점수로 픽
-//TODO : 체크리스트에는 5가지 감정만 두고 선택을 아무것도 안하면 종합 감정 점수, 선택하면 선택한 감정 점수
 
 // 최근 14일 날짜 리스트 생성
 List<DateTime> generateLast14Days() {
@@ -115,8 +113,8 @@ final filterProvider = StateProvider<Map<String, bool>>((ref) {
   };
 });
 
-class Test extends ConsumerWidget {
-  const Test({super.key});
+class WeeklyReport extends ConsumerWidget {
+  const WeeklyReport({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

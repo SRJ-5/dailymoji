@@ -16,14 +16,14 @@ final currentMoodProvider = StateProvider<String>((ref) {
   return "angry";
 });
 
-class Test2 extends StatefulWidget {
-  const Test2({super.key});
+class MonthlyReport extends StatefulWidget {
+  const MonthlyReport({super.key});
 
   @override
-  State<Test2> createState() => _Test2State();
+  State<MonthlyReport> createState() => _MonthlyReportState();
 }
 
-class _Test2State extends State<Test2> {
+class _MonthlyReportState extends State<MonthlyReport> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 

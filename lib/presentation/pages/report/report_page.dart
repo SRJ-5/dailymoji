@@ -1,7 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/report/test.dart';
-import 'package:dailymoji/presentation/pages/report/test2.dart';
+import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
+import 'package:dailymoji/presentation/pages/report/monthly_report.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -46,8 +46,8 @@ class ReportPage extends StatelessWidget {
             ),
             Expanded(
               child: TabBarView(children: [
-                Test2(),
-                Test(), // MODIFIED: 위젯 이름 변경
+                MonthlyReport(),
+                WeeklyReport(), // MODIFIED: 위젯 이름 변경
               ]),
             )
           ],
