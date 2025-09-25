@@ -54,24 +54,24 @@ class _HomePageState extends ConsumerState<HomePage> {
   String? currentDialogue;
 
   void _startTyping(String newText) {
-    // _timer?.cancel();
+    _timer?.cancel();
     setState(() {
-      // displayText = "";
-      displayText = newText;
-      // _index = 0;
-      // currentDialogue = newText;
+      displayText = "";
+      // displayText = newText;
+      _index = 0;
+      currentDialogue = newText;
     });
 
-    // _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-    //   if (_index < (currentDialogue?.length ?? 0)) {
-    //     setState(() {
-    //       displayText += currentDialogue![_index];
-    //       _index++;
-    //     });
-    //   } else {
-    //     _timer?.cancel();
-    //   }
-    // });
+    _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (_index < (currentDialogue?.length ?? 0)) {
+        setState(() {
+          displayText += currentDialogue![_index];
+          _index++;
+        });
+      } else {
+        _timer?.cancel();
+      }
+    });
   }
 
   void onEmojiTap(String emotionKey) {
@@ -145,9 +145,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: SizedBox(
                     width: 150.w,
                     child: Text(
-                      dialogueAsync.isLoading
-                          ? "..." // 로딩 중일 때 "..." 표시
-                          : displayText, // 타이핑 효과 적용된 텍스트
+                      displayText, // 타이핑 효과 적용된 텍스트
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w900,
