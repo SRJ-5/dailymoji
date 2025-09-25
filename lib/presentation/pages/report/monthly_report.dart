@@ -55,6 +55,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
           children: [
             // 📅 달력
             TableCalendar(
+              daysOfWeekHeight: 40,
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2035, 12, 31),
               focusedDay: _focusedDay,
@@ -72,10 +73,17 @@ class _MonthlyReportState extends State<MonthlyReport> {
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle: AppFontStyles.bodyMedium14
-                    .copyWith(color: AppColors.grey900),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.grey),
-                rightChevronIcon: Icon(Icons.chevron_right, color: Colors.grey),
+                titleTextFormatter: (date, locale) {
+                  // 원하는 형태로 변환
+                  return "${date.year}년 ${date.month}월";
+                },
+                titleTextStyle: AppFontStyles.bodyMedium14.copyWith(
+                  color: AppColors.grey900,
+                ),
+                leftChevronIcon:
+                    const Icon(Icons.chevron_left, color: AppColors.grey900),
+                rightChevronIcon:
+                    const Icon(Icons.chevron_right, color: AppColors.grey900),
               ),
 
               // 📌 달력 기본 스타일 (선택 색상은 제거)
@@ -111,8 +119,9 @@ class _MonthlyReportState extends State<MonthlyReport> {
                 defaultBuilder: (context, day, focusedDay) {
                   if (_emotions.containsKey(day)) {
                     return Center(
-                        child: SizedBox(
-                            height: 28.h, width: 28.w, child: _emotions[day]));
+                      child: SizedBox(
+                          height: 28.h, width: 28.w, child: _emotions[day]),
+                    );
                   }
                   return SizedBox(
                     width: 40.w,
@@ -122,10 +131,26 @@ class _MonthlyReportState extends State<MonthlyReport> {
                     ),
                   );
                 },
+                todayBuilder: (context, day, focusedDay) {
+                  return Container(
+                    height: 40.h,
+                    width: 40.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.orange600, // 오늘 날짜 강조
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${day.day}',
+                      style: AppFontStyles.bodySemiBold14
+                          .copyWith(color: AppColors.grey50),
+                    ),
+                  );
+                },
                 selectedBuilder: (context, day, focusedDay) {
                   return Container(
-                    height: 32.h,
-                    width: 32.w,
+                    height: 40.h,
+                    width: 40.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.orange100, // 선택된 날짜 강조
@@ -164,53 +189,53 @@ class _MonthlyReportState extends State<MonthlyReport> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    color: AppColors.green100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.green200)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "이날 기록된 감정을 요약했어요",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
-                      "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
-                    ),
-                    Container(
-                      height: 40.h,
-                      width: 133.w,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 16.w, vertical: 9.5.h),
-                      decoration: ShapeDecoration(
-                        color: AppColors.green400,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    Text("이날 기록된 감정을 요약했어요",
+                        style: AppFontStyles.bodyBold14
+                            .copyWith(color: AppColors.green700)),
+                    SizedBox(height: 6.h),
+                    Text(
+                        "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
+                        "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
+                        style: AppFontStyles.bodyRegular12_180
+                            .copyWith(color: AppColors.grey900)),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Container(
+                        height: 40.h,
+                        width: 133.w,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 9.5.h),
+                        decoration: ShapeDecoration(
+                          color: AppColors.green400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              '채팅 확인하기',
+                              style: TextStyle(
+                                color: Color(0xFF333333),
+                                fontSize: 14,
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w500,
+                                height: 1.50,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.arrow_forward),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '채팅 확인하기',
-                            style: TextStyle(
-                              color: Color(0xFF333333),
-                              fontSize: 14,
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w500,
-                              height: 1.50,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward),
-                        ],
-                      ),
-                    ),
+                    )
                   ],
                 ),
               ),
