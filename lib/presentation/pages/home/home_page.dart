@@ -18,8 +18,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 
 // 현재 선택된 이모지 상태를 관리하는 Provider
-final selectedEmotionProvider =
-    StateProvider<String?>((ref) => null);
+final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 
 // 백엔드에서 대사를 비동기적으로 가져오는 Provider
 final homeDialogueProvider = FutureProvider<String>((ref) async {
@@ -77,8 +76,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    final selectedNotifier =
-        ref.read(selectedEmotionProvider.notifier);
+    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
 
     if (selectedNotifier.state == emotionKey) {
       selectedNotifier.state = null;
@@ -212,15 +210,13 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () =>
-            context.push('/chat', extra: selectedEmotion),
+        onTap: () => context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
             height: 40.h,
             margin: EdgeInsets.all(12.r),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -261,15 +257,13 @@ class _Imoge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(smile)를 보여줌.
-    final imagePath =
-        kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
+    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
     final isSelected = selectedEmotion == imoKey;
 
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
       child: isSelected
-          ? Image.asset(imagePath,
-              height: 80.h, width: 80.w, fit: BoxFit.cover)
+          ? Image.asset(imagePath, height: 80.h, width: 80.w, fit: BoxFit.cover)
           : ColorFiltered(
               colorFilter: const ColorFilter.matrix(<double>[
                 0.2126, 0.7152, 0.0722, 0, 0, // R

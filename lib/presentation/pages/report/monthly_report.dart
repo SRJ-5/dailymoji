@@ -69,30 +69,13 @@ class _MonthlyReportState extends State<MonthlyReport> {
               },
 
               // 📌 헤더 스타일
-              headerStyle: const HeaderStyle(
+              headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                titleTextStyle: AppFontStyles.bodyMedium14
+                    .copyWith(color: AppColors.grey900),
                 leftChevronIcon: Icon(Icons.chevron_left, color: Colors.grey),
                 rightChevronIcon: Icon(Icons.chevron_right, color: Colors.grey),
-              ),
-
-              // 📌 요일 스타일
-              daysOfWeekStyle: const DaysOfWeekStyle(
-                weekdayStyle: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black54,
-                ),
-                weekendStyle: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black54,
-                ),
               ),
 
               // 📌 달력 기본 스타일 (선택 색상은 제거)
@@ -114,15 +97,28 @@ class _MonthlyReportState extends State<MonthlyReport> {
 
               // 📌 날짜 커스텀 빌더
               calendarBuilders: CalendarBuilders(
-                defaultBuilder: (context, day, focusedDay) {
-                  if (_emotions.containsKey(day)) {
-                    return Center(child: _emotions[day]);
-                  }
+                // 📌 요일 스타일
+                dowBuilder: (context, day) {
+                  final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
                   return Center(
                     child: Text(
-                      '${day.day}',
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black87),
+                        weekdays[
+                            day.weekday % 7], // ✅ DateTime.weekday는 월=1 … 일=7
+                        style: AppFontStyles.bodyMedium14
+                            .copyWith(color: AppColors.grey900)),
+                  );
+                },
+                defaultBuilder: (context, day, focusedDay) {
+                  if (_emotions.containsKey(day)) {
+                    return Center(
+                        child: SizedBox(
+                            height: 28.h, width: 28.w, child: _emotions[day]));
+                  }
+                  return SizedBox(
+                    width: 40.w,
+                    height: 40.h,
+                    child: Center(
+                      child: Text('${day.day}'),
                     ),
                   );
                 },
@@ -156,8 +152,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "${_selectedDay!.year}년 ${_selectedDay!.month}월 ${_selectedDay!.day}일",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppFontStyles.bodyBold16
+                      .copyWith(color: AppColors.grey900),
                 ),
               ),
 
