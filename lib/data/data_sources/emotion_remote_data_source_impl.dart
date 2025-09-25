@@ -26,7 +26,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         body: jsonEncode({
           'user_id': userId,
           'text': text,
-          'icon': emotion,
+          'icon': emotion, // 백엔드의 payload.icon과 매칭
           'timestamp': DateTime.now().toIso8601String(),
           'onboarding': onboarding,
         }),

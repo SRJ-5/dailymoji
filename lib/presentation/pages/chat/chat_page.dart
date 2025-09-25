@@ -120,7 +120,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               backgroundImage:
                   (characterImageUrl != null && characterImageUrl.isNotEmpty)
                       ? NetworkImage(characterImageUrl)
-                      : const AssetImage("assets/images/cado_profile.png")
+                      : const AssetImage("assets/images/cado_face.png")
                           as ImageProvider,
             ),
             SizedBox(width: 12.r),
@@ -285,8 +285,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
         borderRadius: BorderRadius.circular(50.r),
         child: Image.asset(
           message.imageAssetPath!,
-          width: 30.w,
-          height: 30.w,
+          width: 100.w,
+          height: 100.w,
           fit: BoxFit.cover,
         ),
       );
@@ -320,11 +320,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
           SizedBox(width: 4.r),
           Container(
             padding: message.type == MessageType.image
-                ? EdgeInsets.all(8.r) // 이모지는 패딩 찔끔
+                ? EdgeInsets.zero // 이모지는 패딩 찔끔
                 : EdgeInsets.all(16.r),
             constraints: BoxConstraints(maxWidth: 247.w),
             decoration: BoxDecoration(
-              color: Color(0xffBAC4A1),
+              color: message.type == MessageType.image
+                  ? Colors.transparent
+                  : Color(0xffBAC4A1),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 bottomRight: Radius.circular(12.r),

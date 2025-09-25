@@ -2,9 +2,9 @@
 
 // 앱 전체에서 사용할 이모지 에셋 경로 맵
 final Map<String, String> kEmojiAssetMap = {
-  "angry": "assets/images/angry.png",
-  "crying": "assets/images/crying.png",
-  "shocked": "assets/images/shocked.png",
-  "sleeping": "assets/images/sleeping.png",
-  "smile": "assets/images/smile.png"
+  "angry": "assets/images/emojis/angry.png",
+  "crying": "assets/images/emojis/crying.png",
+  "shocked": "assets/images/emojis/shocked.png",
+  "sleeping": "assets/images/emojis/sleeping.png",
+  "smile": "assets/images/emojis/smile.png"
 };

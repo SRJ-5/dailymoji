@@ -3,7 +3,9 @@ import 'package:dailymoji/data/data_sources/emotion_remote_data_source_impl.dart
 import 'package:dailymoji/data/data_sources/message_remote_data_source.dart';
 import 'package:dailymoji/data/data_sources/message_remote_data_source_impl.dart';
 import 'package:dailymoji/data/data_sources/solution_remote_data_source_impl.dart';
+import 'package:dailymoji/data/repositories/emoji_reaction_repository.dart';
 import 'package:dailymoji/data/repositories/emotion_repository_impl.dart';
+import 'package:dailymoji/data/repositories/home_dialogue_repository.dart';
 import 'package:dailymoji/data/repositories/message_repository_impl.dart';
 import 'package:dailymoji/data/repositories/reaction_repository.dart';
 import 'package:dailymoji/data/repositories/solution_repository_impl.dart';
@@ -69,8 +71,14 @@ final solutionRepositoryProvider = Provider<SolutionRepository>((ref) {
   return SolutionRepositoryImpl(ref.watch(solutionRemoteDataSourceProvider));
 });
 
-final reactionRepositoryProvider = Provider<ReactionRepository>((ref) {
-  return ReactionRepositoryImpl();
+// 홈 대사
+final homeDialogueRepositoryProvider =
+    Provider<HomeDialogueRepository>((ref) => HomeDialogueRepositoryImpl());
+// 이모지 대사
+final emojiReactionRepositoryProvider =
+    Provider<EmojiReactionRepository>((ref) {
+  final analyze = ref.watch(analyzeEmotionUseCaseProvider);
+  return EmojiReactionRepositoryImpl(analyze);
 });
 
 // -----------------------------------------------------------------------------
@@ -104,12 +112,6 @@ final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
   return ProposeSolutionUseCase(ref.watch(solutionRepositoryProvider));
 });
 
-final getReactionScriptUseCaseProvider =
-    Provider<GetReactionScriptUseCase>((ref) {
-  final repository = ref.watch(reactionRepositoryProvider);
-  return GetReactionScriptUseCase(repository);
-});
-
 // -----------------------------------------------------------------------------
 // Feature-Specific Providers
 // -----------------------------------------------------------------------------
@@ -126,5 +128,6 @@ final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 // 홈에서 말시키는 대사 (그때그때 랜덤하게 하나만 받아오기)
 final homeDialogueProvider = FutureProvider<String>((ref) async {
   final selectedEmotion = ref.watch(selectedEmotionProvider);
-  return ref.watch(getReactionScriptUseCaseProvider).execute(selectedEmotion);
+  final repo = ref.watch(homeDialogueRepositoryProvider);
+  return repo.fetchHomeDialogue(selectedEmotion);
 });

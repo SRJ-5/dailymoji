@@ -186,24 +186,53 @@ class ChatViewModel extends Notifier<ChatState> {
     // Optimistic UI: UI에 메시지가 이미 있는지 확인하여 중복 추가 방지
     final isAlreadyInState =
         state.messages.any((m) => m.tempId == emojiMessage.tempId);
+
+// [CHANGED] 저장된 메시지 객체를 반드시 확보해서 sessionId 업데이트에 사용
+    Message savedEmojiMsg;
+
     if (isAlreadyInState) {
       // DB에만 저장하고 UI는 건드리지 않음
-      await ref.read(sendMessageUseCaseProvider).execute(emojiMessage);
+      final saved =
+          await ref.read(sendMessageUseCaseProvider).execute(emojiMessage);
+      savedEmojiMsg = saved;
     } else {
       // 만약 UI에 없다면 추가 (안전장치)
-      await _addUserMessageToChat(emojiMessage);
+      final saved = await _addUserMessageToChat(
+          emojiMessage); // _addUserMessageToChat은 Message를 반환
+      savedEmojiMsg = saved;
     }
 
     _pendingEmotionForAnalysis = emotion;
     final currentUserId = _userId!;
 
     try {
-      final botResponse =
-          await ref.read(getReactionScriptUseCaseProvider).execute(emotion);
+      //리액션 스크립트로 질문/공감 멘트
+      // - 서버 /analyze(text="") 퀵세이브 → sessionId + 대사(text) 동시 수신
+      final emojiRepo = ref.read(emojiReactionRepositoryProvider);
+      final result = await emojiRepo.getReactionWithSession(
+        userId: currentUserId,
+        emotion: emotion,
+        onboarding:
+            ref.read(userViewModelProvider).userProfile?.onboardingScores ?? {},
+      );
+
+      // 세션 연결
+      if (result.sessionId != null && savedEmojiMsg.id != null) {
+        await ref.read(updateMessageSessionIdUseCaseProvider).execute(
+              messageId: savedEmojiMsg.id!,
+              sessionId: result.sessionId!,
+            );
+      }
+
+      // 받은 대사 보여지기
       final questionMessage = Message(
-          userId: currentUserId, sender: Sender.bot, content: botResponse);
+        userId: currentUserId,
+        sender: Sender.bot,
+        content: result.text, // 서버가 준 reaction_text
+      );
       await _addBotMessageToChat(questionMessage);
     } catch (e) {
+      //fallback
       print("RIN: 🚨 Failed to fetch reaction script: $e");
       final fallbackMessage = Message(
           userId: currentUserId,

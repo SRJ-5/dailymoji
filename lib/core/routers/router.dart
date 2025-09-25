@@ -18,7 +18,7 @@ final navigatorkey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/',
     navigatorKey: navigatorkey,
     routes: [
       GoRoute(path: '/', builder: (context, state) => SplashPage()),

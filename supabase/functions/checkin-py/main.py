@@ -167,20 +167,17 @@ def meta_adjust(base_scores: dict, payload: AnalyzeRequest) -> dict:
 
     # 이모지 아이콘 점수 가중치 
     if payload.icon:
-        # 이모지 선택 시 70%, 온보딩 30%를 백엔드에서 결합
-        # 여기서 base_scores는 이미 LLM과 Rule 기반 점수가 융합된 상태.
-        # 기존 점수(LLM+Rule)에 이모지 점수를 '추가'하는 방식이 아닌,
-        # '재계산' 또는 '강력한 보정' 개념으로 접근.
-        # -> 백엔드에서 icon 파라미터가 들어왔을 때, 해당 클러스터에 가중치 부여.
-
-       
+        # [CHANGED] 아이콘 보정 방식을 "가산" → "가중치 융합"으로 변경
+        #  - 기존: s[selected] += META_WEIGHTS["icon"]
+        #  - 변경: s = (1 - alpha) * s + alpha * prior(icon-onehot)
         
         selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
-        if selected_cluster:
-            s[selected_cluster] = clip01(s.get(selected_cluster, 0.0) + META_WEIGHTS["icon"])
-    return s           
-            
-
+        # alpha는 META_WEIGHTS에 없으면 0.2로 (가중치 크기)
+        alpha = META_WEIGHTS.get("icon_alpha", 0.2) 
+        for c in s.keys():
+            prior = 1.0 if c == selected_cluster else 0.0
+            s[c] = clip01((1.0 - alpha) * s[c] + alpha * prior)
+        return s           
 
 
 # def dsm_calibrate(scores: dict) -> dict:
@@ -325,9 +322,16 @@ async def analyze_emotion(payload: AnalyzeRequest):
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
 
-        #  이모지에 따른 top_cluster 매핑 - 솔루션 제안을 위함!
-            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low") # 기본값 설정
+        #  이모지에 따른 top_cluster 매핑 - 솔루션 제안을 위해 이모지 only도 클러스터 저장!
+            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low") 
 
+            # [CHANGED] 이모지 단독도 "baseline + 아이콘 prior(가중 융합)"으로 스코어링
+            #  - 기존: top_cluster=0.3 고정
+            #  - 변경: baseline 계산 후 meta_adjust로 동일한 아이콘 보정 로직 적용
+            baseline_scores = calculate_baseline_scores(payload.onboarding or {})  # [ADDED]
+            final_scores = meta_adjust(baseline_scores, payload)                   # [ADDED]
+            g = g_score(final_scores)                                             # [ADDED]
+            profile = pick_profile(final_scores, None)   
 
             # Supabase에서 해당 이모지 키를 가진 스크립트들을 모두 가져옴
             response = await run_in_threadpool(
@@ -340,15 +344,29 @@ async def analyze_emotion(payload: AnalyzeRequest):
             reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신지 알려주세요."
 
             intervention = {
-                            "preset_id": PresetIds.EMOJI_REACTION, 
+                "preset_id": PresetIds.EMOJI_REACTION, 
                 "text": reaction_text,
                 "top_cluster": top_cluster # 솔루션 제안을 위해 클러스터 정보 전달
             }
-            session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
+
+            # session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
             
-            return {"session_id": session_id, "intervention": intervention}
+            # [CHANGED] g_score/score 저장을 baseline+prior 기반으로 저장
+            session_id = await save_analysis_to_supabase(
+                payload, profile=profile, g=g,
+                intervention=intervention,
+                debug_log=debug_log,
+                final_scores=final_scores
+            )
 
-
+            # return {"session_id": session_id, "intervention": intervention}
+            return {
+                "session_id": session_id,
+                "final_scores": final_scores,  
+                "g_score": 0.3,
+                "profile": 0,
+                "intervention": intervention
+            }
 
         # --- 텍스트 입력 케이스 ---
 
@@ -407,7 +425,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
         
         fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
         
-        # 4-2. Meta Adjust
+        # 4-2. Meta Adjust(아이콘 보정 적용됨) 
         adjusted_scores = meta_adjust(fused_scores, payload)
         debug_log["scores"] = {"llm_detail": text_if, "rule": rule_scores, "fused": fused_scores, "final": adjusted_scores}
         

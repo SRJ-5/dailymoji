@@ -19,7 +19,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
       userId: userId,
       text: text,
       emotion: emotion,
-      onboarding: onboarding,
+      onboarding: onboarding ?? const {},
     );
     return dto.toEntity();
   }
