@@ -2,8 +2,6 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/report/test.dart';
 import 'package:dailymoji/presentation/pages/report/test2.dart';
-import 'package:dailymoji/presentation/pages/report/widgets/monthly_report.dart';
-import 'package:dailymoji/presentation/pages/report/widgets/weekly_report.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
