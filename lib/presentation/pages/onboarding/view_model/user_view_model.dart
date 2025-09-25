@@ -60,23 +60,26 @@ class UserViewModel extends Notifier<UserState> {
   Future<String?> googleLogin() async {
     final googleLogin = ref.read(googleLoginUseCaseProvider);
     final userId = await googleLogin.execute();
-    state = state.copyWith(
-        userProfile: state.userProfile?.copyWith(id: userId));
+    if (userId != null) {
+      state =
+          state.copyWith(userProfile: state.userProfile?.copyWith(id: userId));
+    }
     return userId;
   }
 
   Future<String?> appleLogin() async {
     final appleLogin = ref.read(appleLoginUseCaseProvider);
     final userId = await appleLogin.execute();
-    state = state.copyWith(
-        userProfile: state.userProfile?.copyWith(id: userId));
+    if (userId != null) {
+      state =
+          state.copyWith(userProfile: state.userProfile?.copyWith(id: userId));
+    }
     return userId;
   }
 
   Future<bool> getUserProfile(String userId) async {
-    final userProfile = await ref
-        .read(getUserProfileUseCaseProvider)
-        .execute(userId);
+    final userProfile =
+        await ref.read(getUserProfileUseCaseProvider).execute(userId);
     if (userProfile?.userNickNm != null) {
       state = state.copyWith(userProfile: userProfile);
       return true;
@@ -85,46 +88,46 @@ class UserViewModel extends Notifier<UserState> {
     }
   }
 
-  Future<void> fetchInsertUser(
-      {required UserProfile userProfile}) async {
-    final insertUserProfile =
-        ref.read(insertUserProfileUseCaseProvider);
-    await insertUserProfile.execute(userProfile);
+  void fetchInsertUser() async {
+    // 저장 직전에 현재 state에 id가 있는지 다시 한번 확인
+    final profileToInsert = state.userProfile;
+    if (profileToInsert == null || profileToInsert.id == null) {
+      print("Error: User ID is null. Cannot insert profile.");
+      return;
+    }
+
+    final insertUserProfile = ref.read(insertUserProfileUseCaseProvider);
+    // id가 확실히 포함된 profileToInsert를 전달
+    await insertUserProfile.execute(profileToInsert);
   }
 
   void setAiName({required bool check, required String aiName}) {
     state = state.copyWith(
         step13: check,
-        userProfile:
-            state.userProfile?.copyWith(characterNm: aiName));
+        userProfile: state.userProfile?.copyWith(characterNm: aiName));
   }
 
-  void setAiPersonality(
-      {required bool check, required String aiPersonality}) {
+  void setAiPersonality({required bool check, required String aiPersonality}) {
     state = state.copyWith(
         step12: check,
-        userProfile: state.userProfile
-            ?.copyWith(characterPersonality: aiPersonality));
+        userProfile:
+            state.userProfile?.copyWith(characterPersonality: aiPersonality));
   }
 
-  void setUserNickName(
-      {required bool check, required String userNickName}) {
+  void setUserNickName({required bool check, required String userNickName}) {
     state = state.copyWith(
         step14: check,
-        userProfile: state.userProfile
-            ?.copyWith(userNickNm: userNickName));
+        userProfile: state.userProfile?.copyWith(userNickNm: userNickName));
   }
 
   void setAnswer(
-      {required int index,
-      required bool check,
-      required int score}) {
+      {required int index, required bool check, required int score}) {
     if (index < 0 || index >= state.step2Answers.length) return;
     final newAnswers = List<bool>.from(state.step2Answers);
     newAnswers[index] = check;
 
-    final currentScores = Map<String, dynamic>.from(
-        state.userProfile?.onboardingScores ?? {});
+    final currentScores =
+        Map<String, dynamic>.from(state.userProfile?.onboardingScores ?? {});
     currentScores['q${index + 1}'] = score;
 
     final newSurveyResponse = (state.userProfile ??
@@ -139,28 +142,21 @@ class UserViewModel extends Notifier<UserState> {
             ))
         .copyWith(onboardingScores: currentScores);
     state = state.copyWith(
-        step2Answers: newAnswers,
-        userProfile: newSurveyResponse);
+        step2Answers: newAnswers, userProfile: newSurveyResponse);
     print('survey: ${state.userProfile?.onboardingScores}');
   }
 
-  Future<void> updateUserNickNM(
-      {required String newUserNickNM}) async {
+  Future<void> updateUserNickNM({required String newUserNickNM}) async {
     final updateUserProfile = await ref
         .read(updateUserNickNameUseCaseProvider)
-        .execute(
-            userNickNM: newUserNickNM,
-            uuid: state.userProfile!.id!);
+        .execute(userNickNM: newUserNickNM, uuid: state.userProfile!.id!);
     state = state.copyWith(userProfile: updateUserProfile);
   }
 
-  Future<void> updateCharacterNM(
-      {required String newCharacterNM}) async {
+  Future<void> updateCharacterNM({required String newCharacterNM}) async {
     final updateUserProfile = await ref
         .read(updateCharacterNameUseCaseProvider)
-        .execute(
-            uuid: state.userProfile!.id!,
-            characterNM: newCharacterNM);
+        .execute(uuid: state.userProfile!.id!, characterNM: newCharacterNM);
     state = state.copyWith(userProfile: updateUserProfile);
   }
 
@@ -175,7 +171,6 @@ class UserViewModel extends Notifier<UserState> {
   }
 }
 
-final userViewModelProvider =
-    NotifierProvider<UserViewModel, UserState>(() {
+final userViewModelProvider = NotifierProvider<UserViewModel, UserState>(() {
   return UserViewModel();
 });

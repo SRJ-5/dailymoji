@@ -37,6 +37,7 @@ dependencies:
   go_router: ^16.2.1
   supabase_flutter: ^2.10.0
   flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^3.0.0
   flutter_screenutil: ^5.9.3
   google_sign_in: 6.0.0
   intl: ^0.20.2
@@ -45,6 +46,8 @@ dependencies:
   youtube_player_flutter: ^9.1.2
   flutter_svg: ^2.0.9
   sign_in_with_apple: ^7.0.1
+  http: ^0.13.5
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
@@ -71,13 +74,10 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/fonts/
-    - assets/images/
-    - .env
     - assets/icons/
     - assets/images/
     - assets/images/emoticon/
-    
-  #   - images/a_dot_burr.jpeg
+    - .env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
