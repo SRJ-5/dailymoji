@@ -38,31 +38,6 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
     return "안녕!\n오늘 기분은 어때?";
   }
 });
-import 'package:http/http.dart' as http;
-
-// 현재 선택된 이모지 상태를 관리하는 Provider
-final selectedEmotionProvider = StateProvider<String?>((ref) => null);
-
-// 백엔드에서 대사를 비동기적으로 가져오는 Provider
-final homeDialogueProvider = FutureProvider<String>((ref) async {
-  final selectedEmotion = ref.watch(selectedEmotionProvider);
-
-  // URL에 쿼리 파라미터 추가
-  final url = selectedEmotion == null
-      ? Uri.parse('${ApiConfig.baseUrl}/dialogue/home')
-      : Uri.parse(
-          '${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
-
-  final response = await http.get(url);
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(utf8.decode(response.bodyBytes));
-    return data['dialogue'] as String;
-  } else {
-    // 에러 발생 시 기본 텍스트 반환
-    return "안녕!\n오늘 기분은 어때?";
-  }
-});
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -177,9 +152,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: SizedBox(
                     width: 150.w,
                     child: Text(
-                      dialogueAsync.isLoading
-                          ? "..." // 로딩 중일 때 "..." 표시
-                          : displayText, // 타이핑 효과 적용된 텍스트
+                      displayText, // 타이핑 효과 적용된 텍스트
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w900,
