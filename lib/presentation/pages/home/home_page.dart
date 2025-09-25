@@ -49,29 +49,29 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   String displayText = "";
-  int _index = 0;
-  Timer? _timer;
+  // int _index = 0;
+  // Timer? _timer;
   String? currentDialogue;
 
   void _startTyping(String newText) {
-    _timer?.cancel();
+    // _timer?.cancel();
     setState(() {
-      displayText = "";
-      // displayText = newText;
-      _index = 0;
-      currentDialogue = newText;
+      // displayText = "";
+      displayText = newText;
+      // _index = 0;
+      // currentDialogue = newText;
     });
 
-    _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
-      if (_index < (currentDialogue?.length ?? 0)) {
-        setState(() {
-          displayText += currentDialogue![_index];
-          _index++;
-        });
-      } else {
-        _timer?.cancel();
-      }
-    });
+    // _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+    //   if (_index < (currentDialogue?.length ?? 0)) {
+    //     setState(() {
+    //       displayText += currentDialogue![_index];
+    //       _index++;
+    //     });
+    //   } else {
+    //     _timer?.cancel();
+    //   }
+    // });
   }
 
   void onEmojiTap(String emotionKey) {
@@ -86,14 +86,14 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    // _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final selectedEmotion = ref.watch(selectedEmotionProvider);
-    final dialogueAsync = ref.watch(homeDialogueProvider);
+    // final dialogueAsync = ref.watch(homeDialogueProvider);
 
     // dialogueAsync의 상태가 변경될 때마다 타이핑 효과를 다시 시작
     ref.listen(homeDialogueProvider, (_, next) {
