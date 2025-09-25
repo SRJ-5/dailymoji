@@ -85,28 +85,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
       body: Column(
         children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: 47.44.h,
-                    child: Image.asset(
-                      'assets/icons/dailymoji_logo.png',
-                      fit: BoxFit.cover,
-                    ),
+          Spacer(),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 47.44.h,
+                  child: Image.asset(
+                    'assets/icons/dailymoji_logo.png',
+                    fit: BoxFit.cover,
                   ),
-                  SizedBox(
-                    height: 8.h,
-                  ),
-                  Text(
-                    '매일매일 감정 관리',
-                    style: AppFontStyles.bodyRegular18
-                        .copyWith(color: AppColors.grey500),
-                  ),
-                ],
-              ),
+                ),
+                SizedBox(
+                  height: 8.h,
+                ),
+                Text(
+                  '매일매일 감정 관리',
+                  style: AppFontStyles.bodyRegular18
+                      .copyWith(color: AppColors.grey500),
+                ),
+              ],
             ),
           ),
           Container(
@@ -129,7 +128,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 .read(userViewModelProvider.notifier)
                                 .getUserProfile(result);
                             if (isRegistered) {
-                              // TODO: 여기에 홈페이지로 이동 넣어야함
                               context.go('/home');
                             } else {
                               context.go('/onboarding1');
