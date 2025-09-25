@@ -1,24 +1,61 @@
+import 'package:dailymoji/core/constants/solution_scripts.dart';
+import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/domain/entities/solution.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-class SolutionPage extends StatefulWidget {
-  const SolutionPage({super.key});
+class SolutionPage extends ConsumerWidget {
+  final String solutionId;
+
+  const SolutionPage({super.key, required this.solutionId});
 
   @override
-  State<SolutionPage> createState() => _SolutionPageState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final solutionAsync = ref.watch(solutionProvider(solutionId));
+
+    return solutionAsync.when(
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.black,
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: AppColors.black,
+        body: Center(
+          child: Text("솔루션을 불러오는 데 실패했습니다: $err",
+              style: const TextStyle(color: AppColors.white)),
+        ),
+      ),
+      data: (solution) {
+        // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
+        return _PlayerView(solution: solution);
+      },
+    );
+  }
 }
 
-class _SolutionPageState extends State<SolutionPage> {
-  late final YoutubePlayerController _controller;
+// 실제 플레이어 UI를 담당하는 위젯
+class _PlayerView extends ConsumerStatefulWidget {
+  final Solution solution;
 
-  bool _showControls = false; // 오버레이 표시 여부
-  bool _isMuted = false; // 음소거 상태
+  const _PlayerView({required this.solution});
+
+  @override
+  ConsumerState<_PlayerView> createState() => _PlayerViewState();
+}
+
+class _PlayerViewState extends ConsumerState<_PlayerView> {
+  late final YoutubePlayerController _controller;
+  bool _showControls = false;
+  bool _isMuted = true;
 
   @override
   void initState() {
     super.initState();
-
     // ✅ 가로 고정 + 몰입형 UI
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -26,19 +63,20 @@ class _SolutionPageState extends State<SolutionPage> {
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
+    // Provider로부터 받은 solution 데이터로 컨트롤러 초기화
     _controller = YoutubePlayerController(
-      initialVideoId: 'IHt4kgF-Ytk', // 원하는 영상 ID
-      flags: const YoutubePlayerFlags(
+      initialVideoId: widget.solution.videoId,
+      flags: YoutubePlayerFlags(
         autoPlay: true, // 페이지 진입 시 자동 재생
         hideControls: true, // 기본 컨트롤 숨김
         disableDragSeek: true, // 드래그 시킹 비활성화(원하면 false)
         enableCaption: false,
         mute: true, // 자동재생 정책 회피하려면 true로 시작 후 첫 탭에서 unMute()
-        startAt: 498,
-        endAt: 618,
+        startAt: widget.solution.startAt,
+        endAt: widget.solution.endAt,
       ),
     );
-    _isMuted = true; // ← 플래그와 맞추기
+    // _isMuted = true; // ← 플래그와 맞추기
 
     // 플레이어 상태 리스너(음소거 아이콘 동기화 등 필요시)
     // _controller.addListener(() {
@@ -82,9 +120,12 @@ class _SolutionPageState extends State<SolutionPage> {
                   child: Transform.scale(
                     alignment: Alignment.center,
                     scale: zoom, // ✅ 통째 확대(가로 꽉, 위아래 크롭)
-                    child: const AspectRatio(
+                    child: AspectRatio(
                       aspectRatio: ar, // 플레이어 캔버스 비율 유지
-                      child: _InnerPlayer(), // 실제 플레이어
+                      // child: _InnerPlayer(), // 실제 플레이어
+                      child: _InnerPlayer(
+                          controller:
+                              _controller), // Rin: _InnerPlayer에 controller를 직접 전달
                     ),
                   ),
                 ),
@@ -108,27 +149,28 @@ class _SolutionPageState extends State<SolutionPage> {
                 children: [
                   // 닫기(X)
                   Positioned(
-                    right: 16,
-                    top: 16,
+                    right: 16.w,
+                    top: 16.h,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
-                        color: Colors.white,
-                        size: 32,
+                        color: AppColors.white,
+                        size: 32.r,
                       ),
-                      onPressed: () => Navigator.of(context).pop(),
+                      // onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => context.go('/chat'), // Rin: gorouter 사용
                     ),
                   ),
 
                   // 음소거 토글
                   Positioned(
-                    left: 16,
-                    top: 16,
+                    left: 16.w,
+                    top: 16.h,
                     child: IconButton(
                       icon: Icon(
                         _isMuted ? Icons.volume_off : Icons.volume_up,
-                        color: Colors.white,
-                        size: 28,
+                        color: AppColors.white,
+                        size: 28.r,
                       ),
                       onPressed: () {
                         if (_isMuted) {
@@ -136,8 +178,7 @@ class _SolutionPageState extends State<SolutionPage> {
                         } else {
                           _controller.mute();
                         }
-                        _isMuted = !_isMuted; // 로컬 상태 토글
-                        setState(() {});
+                        setState(() => _isMuted = !_isMuted);
                       },
                     ),
                   ),
@@ -145,8 +186,8 @@ class _SolutionPageState extends State<SolutionPage> {
                   // ▶️/⏸ 중앙 플레이/일시정지
                   Center(
                     child: IconButton(
-                      iconSize: 64,
-                      color: Colors.white,
+                      iconSize: 64.r,
+                      color: AppColors.white,
                       icon: Icon(
                         _controller.value.isPlaying
                             ? Icons.pause_circle_filled
@@ -173,13 +214,16 @@ class _SolutionPageState extends State<SolutionPage> {
 
 // YoutubePlayer 위젯을 분리해 두면 Transform/Clip 위에 올리기 편함
 class _InnerPlayer extends StatelessWidget {
-  const _InnerPlayer({super.key});
+// Rin: _InnerPlayer가 controller를 받도록 수정
+  final YoutubePlayerController controller;
+  const _InnerPlayer({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final state = context.findAncestorStateOfType<_SolutionPageState>()!;
+    // final state = context.findAncestorStateOfType<_SolutionPageState>()!;
     return YoutubePlayer(
-      controller: state._controller,
+      // controller: state._controller,
+      controller: controller,
       showVideoProgressIndicator: false,
       // progressColors: ProgressBarColors(...), // 필요시
       // onReady: () {},
