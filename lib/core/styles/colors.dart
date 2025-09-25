@@ -52,4 +52,16 @@ class AppColors {
   static const Color orange700 = Color(0xFF7A3700);
   static const Color orange800 = Color(0xFF512500);
   static const Color orange900 = Color(0xFF291200);
+
+  // Report Noti
+  static const Color noti100 = Color(0xFFD65052);
+  static const Color noti200 = Color(0xFF4F84D4);
+
+  // Report Chart
+  static const Color totalScore = Color(0xFF778654);
+  static const Color negHigh = Color(0xFFFF9A46);
+  static const Color negLow = Color(0xFF18A0FB);
+  static const Color sleep = Color(0xFF55D288);
+  static const Color positive = Color(0xFF8855D2);
+  static const Color adhd = Color(0xFF5655D2);
 }

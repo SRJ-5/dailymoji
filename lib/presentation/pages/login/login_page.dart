@@ -85,27 +85,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
       body: Column(
         children: [
-          Spacer(),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 47.44.h,
-                  child: Image.asset(
-                    'assets/icons/dailymoji_logo.png',
-                    fit: BoxFit.cover,
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 47.44.h,
+                    child: Image.asset(
+                      'assets/icons/dailymoji_logo.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 8.h,
-                ),
-                Text(
-                  '매일매일 감정 관리',
-                  style: AppFontStyles.bodyRegular18
-                      .copyWith(color: AppColors.grey500),
-                ),
-              ],
+                  SizedBox(
+                    height: 8.h,
+                  ),
+                  Text(
+                    '매일매일 감정 관리',
+                    style: AppFontStyles.bodyRegular18
+                        .copyWith(color: AppColors.grey500),
+                  ),
+                ],
+              ),
             ),
           ),
           Container(
@@ -117,28 +118,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () async {
-                          final result = await ref
+                    Spacer(),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await ref
+                            .read(userViewModelProvider.notifier)
+                            .googleLogin();
+                        if (result != null) {
+                          final isRegistered = await ref
                               .read(userViewModelProvider.notifier)
-                              .googleLogin();
-                          if (result != null) {
-                            final isRegistered = await ref
-                                .read(userViewModelProvider.notifier)
-                                .getUserProfile(result);
-                            if (isRegistered) {
-                              context.go('/home');
-                            } else {
-                              context.go('/onboarding1');
-                            }
+                              .getUserProfile(result);
+                          if (isRegistered) {
+                            context.go('/home');
+                          } else {
+                            context.go('/onboarding1');
                           }
-                        },
-                        child: CircleAvatar(
-                          radius: 30.r,
-                          child: Image.asset(
-                            'assets/icons/google_login_logo.png',
-                          ),
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 30.r,
+                        child: Image.asset(
+                          'assets/icons/google_login_logo.png',
                         ),
                       ),
                     ),
