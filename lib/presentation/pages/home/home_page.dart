@@ -1,96 +1,116 @@
-import 'dart:async';
+// lib/presentation/pages/home/home_page.dart
+// 0924 변경:
+// 1. 선택된 이모지를 상태로 관리 (`selectedEmotion`)
+// 2. 채팅 입력창 클릭 시, 선택된 이모지 정보를 `/chat` 라우트로 전달
+
+import 'dart:convert';
+import 'package:dailymoji/core/config/api_config.dart';
+import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
 
-const String angry = "angry";
-const String crying = "crying";
-const String shocked = "shocked";
-const String sleeping = "sleeping";
-const String smile = "smile";
+// 현재 선택된 이모지 상태를 관리하는 Provider
+final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 
-const String defaultText1 = "안녕!\n지금 기분이 어때?";
-const String angryText = "왜..?\n기분이 안 좋아?\n나에게 얘기해줄래?";
-const String cryingText = "왜..?\n무슨일이야!?\n나에게 얘기해볼래?";
-const String shockedText = "왜..?\n집중이 잘 안돼?\n나에게 얘기해볼래?";
-const String sleepingText = "왜..?\n요새 잠을 통모짜렐라\n나에게 얘기해볼래?";
-const String smileText = "기분좋은 일이 \n있나보구나!\n무슨일일려나?ㅎㅎ";
+// 백엔드에서 대사를 비동기적으로 가져오는 Provider
+final homeDialogueProvider = FutureProvider<String>((ref) async {
+  final selectedEmotion = ref.watch(selectedEmotionProvider);
 
-const String angryImage = "assets/images/emoticon/emo_3d_angry_02.png";
-const String cryingImage = "assets/images/emoticon/emo_3d_crying_02.png";
-const String shockedImage = "assets/images/emoticon/emo_3d_shocked_02.png";
-const String sleepingImage = "assets/images/emoticon/emo_3d_sleeping_02.png";
-const String smileImage = "assets/images/emoticon/emo_3d_smile_02.png";
+  // URL에 쿼리 파라미터 추가
+  final url = selectedEmotion == null
+      ? Uri.parse('${ApiConfig.baseUrl}/dialogue/home')
+      : Uri.parse(
+          '${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
 
-class HomePage extends StatefulWidget {
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data['dialogue'] as String;
+  } else {
+    // 에러 발생 시 기본 텍스트 반환
+    return "안녕!\n오늘 기분은 어때?";
+  }
+});
+
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  String defaultText = "안녕!\n지금 기분이 어때?";
+class _HomePageState extends ConsumerState<HomePage> {
   String displayText = "";
-  int _index = 0;
-  Timer? _timer;
+  // int _index = 0;
+  // Timer? _timer;
+  String? currentDialogue;
 
-  String? selectedEmotion;
-  bool angrySelected = false;
-  bool cryingSelected = false;
-  bool shockedSelected = false;
-  bool sleepingSelected = false;
-  bool smileSelected = false;
+  void _startTyping(String newText) {
+    // _timer?.cancel();
+    setState(() {
+      // displayText = "";
+      displayText = newText;
+      // _index = 0;
+      // currentDialogue = newText;
+    });
+
+    // _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+    //   if (_index < (currentDialogue?.length ?? 0)) {
+    //     setState(() {
+    //       displayText += currentDialogue![_index];
+    //       _index++;
+    //     });
+    //   } else {
+    //     _timer?.cancel();
+    //   }
+    // });
+  }
+
+  void onEmojiTap(String emotionKey) {
+    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
+
+    if (selectedNotifier.state == emotionKey) {
+      selectedNotifier.state = null;
+    } else {
+      selectedNotifier.state = emotionKey;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _startTyping("안녕!\n지금 기분이 어때?");
-  }
-
-  void _startTyping(String newText) {
-    _timer?.cancel();
-    setState(() {
-      displayText = "";
-      _index = 0;
-    });
-
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_index < newText.length) {
-        setState(() {
-          displayText += newText[_index];
-          _index++;
-        });
-      } else {
-        _timer?.cancel();
-      }
-    });
-  }
-
-  void onEmojiTap(String newText, String emotion) {
-    // 텍스트 갱신
-    _startTyping(newText);
-
-    // 애니메이션 실행
-    setState(() {
-      if (selectedEmotion == emotion) {
-        selectedEmotion = null; // 다시 누르면 해제
-      } else {
-        selectedEmotion = emotion;
-      }
+    Future.microtask(() {
+      ref.invalidate(homeDialogueProvider);
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    // _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedEmotion = ref.watch(selectedEmotionProvider);
+    // final dialogueAsync = ref.watch(homeDialogueProvider);
+
+    // dialogueAsync의 상태가 변경될 때마다 타이핑 효과를 다시 시작
+    ref.listen(homeDialogueProvider, (_, next) {
+      next.whenData((dialogue) {
+        if (dialogue != currentDialogue) {
+          _startTyping(dialogue);
+        }
+      });
+    });
+
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
       // AppBar
@@ -149,46 +169,36 @@ class _HomePageState extends State<HomePage> {
                 // 감정 이모티콘들 (Stack + Positioned)
                 Positioned(
                     bottom: 15.h,
-                    child: Imoge(
-                        imo: smile,
-                        imoText: smileText,
-                        imoImage: smileImage,
+                    child: _Imoge(
+                        imoKey: "smile",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     top: 94.h,
                     right: 25.w,
-                    child: Imoge(
-                        imo: crying,
-                        imoText: cryingText,
-                        imoImage: cryingImage,
+                    child: _Imoge(
+                        imoKey: "crying",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     bottom: 110.h,
                     left: 15.w,
-                    child: Imoge(
-                        imo: shocked,
-                        imoText: shockedText,
-                        imoImage: shockedImage,
+                    child: _Imoge(
+                        imoKey: "shocked",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     bottom: 110.h,
                     right: 15.w,
-                    child: Imoge(
-                        imo: sleeping,
-                        imoText: sleepingText,
-                        imoImage: sleepingImage,
+                    child: _Imoge(
+                        imoKey: "sleeping",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
                 Positioned(
                     top: 94.h,
                     left: 25.w,
-                    child: Imoge(
-                        imo: angry,
-                        imoText: angryText,
-                        imoImage: angryImage,
+                    child: _Imoge(
+                        imoKey: "angry",
                         selectedEmotion: selectedEmotion,
                         onEmojiTap: onEmojiTap)),
               ],
@@ -198,7 +208,7 @@ class _HomePageState extends State<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/home/ChatPage'),
+        onTap: () => context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
@@ -229,38 +239,29 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class Imoge extends StatelessWidget {
-  final String imo;
-  final String imoText;
-  final String imoImage;
+class _Imoge extends StatelessWidget {
+  final String imoKey;
   final String? selectedEmotion;
-  final void Function(String, String) onEmojiTap;
+  final void Function(String) onEmojiTap;
 
-  const Imoge({
-    required this.imo,
-    required this.imoText,
-    required this.imoImage,
-    required this.selectedEmotion,
-    required this.onEmojiTap,
-  });
+  const _Imoge(
+      {required this.imoKey,
+      required this.selectedEmotion,
+      required this.onEmojiTap});
+
+// 으아아아아아아아!!! 이게 문제였음 하.. 경로다른거!!
+  // String get imoAssetPath => "assets/images/emoticon/emo_3d_${imoKey}_02.png";
 
   @override
   Widget build(BuildContext context) {
+    // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(smile)를 보여줌.
+    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
+    final isSelected = selectedEmotion == imoKey;
+
     return GestureDetector(
-      onTap: () {
-        selectedEmotion == imo
-            ? onEmojiTap(defaultText1, imo)
-            : onEmojiTap(imoText, imo);
-      },
-      child: selectedEmotion == imo
-          ? SizedBox(
-              height: 80.h,
-              width: 80.w,
-              child: Image.asset(
-                imoImage,
-                fit: BoxFit.cover,
-              ),
-            )
+      onTap: () => onEmojiTap(imoKey),
+      child: isSelected
+          ? Image.asset(imagePath, height: 80.h, width: 80.w, fit: BoxFit.cover)
           : ColorFiltered(
               colorFilter: const ColorFilter.matrix(<double>[
                 0.2126, 0.7152, 0.0722, 0, 0, // R
@@ -268,14 +269,8 @@ class Imoge extends StatelessWidget {
                 0.2126, 0.7152, 0.0722, 0, 0, // B
                 0, 0, 0, 1, 0, // A
               ]),
-              child: SizedBox(
-                height: 60.h,
-                width: 60.w,
-                child: Image.asset(
-                  imoImage,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              child: Image.asset(imagePath,
+                  height: 60.h, width: 60.w, fit: BoxFit.cover),
             ),
     );
   }

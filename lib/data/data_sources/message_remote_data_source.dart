@@ -13,4 +13,9 @@ abstract class MessageRemoteDataSource {
     required String userId,
     required void Function(MessageDto message) onNewMessage,
   });
+
+  Future<void> updateMessageSessionId({
+    required String messageId,
+    required String sessionId,
+  });
 }

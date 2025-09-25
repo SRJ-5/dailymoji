@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class BreathingSolutionPage extends StatefulWidget {
-  const BreathingSolutionPage({super.key});
+  final String solutionId;
+
+  const BreathingSolutionPage({super.key, required this.solutionId});
 
   @override
   State<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
@@ -89,11 +91,23 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
         if (_showFinalHint) {
-          return context.go('/BreathingSolutionPage/SolutionPage');
+          context.go('/solution/${widget.solutionId}');
         }
       },
       child: Scaffold(
         backgroundColor: Colors.black,
+        appBar: AppBar(actions: [
+          TextButton(
+            onPressed: () {
+              // 개발 편의용: 바로 Chat으로 이동
+              context.go('/chat');
+            },
+            child: const Text(
+              "Skip",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ]),
         body: SafeArea(
           child: Stack(
             alignment: Alignment.center,

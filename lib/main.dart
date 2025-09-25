@@ -7,15 +7,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   await dotenv.load(fileName: ".env");
   runApp(
     ProviderScope(
       child: ScreenUtilInit(
-        designSize: Size(375, 812), // Figma 기준 사이즈 (iPhone X 예시)
+        designSize: const Size(375, 812),
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) {
@@ -26,12 +29,13 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,

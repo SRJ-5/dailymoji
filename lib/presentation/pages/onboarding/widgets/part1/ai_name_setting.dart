@@ -1,6 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/onboarding/view_model/onboarding_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,7 +24,10 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
   void initState() {
     super.initState();
     _textEditingController = TextEditingController(
-        text: ref.read(onboardingViewModelProvider).aiName);
+        text: ref
+            .read(userViewModelProvider)
+            .userProfile
+            ?.characterNm);
   }
 
   @override
@@ -78,8 +81,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                   });
                   // TODO: ViewModel로 상태 관리 하여 저장
                   ref
-                      .watch(
-                          onboardingViewModelProvider.notifier)
+                      .watch(userViewModelProvider.notifier)
                       .setAiName(check: isValid, aiName: value);
                 },
                 decoration: InputDecoration(
@@ -87,25 +89,26 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                     hintText: '캐릭터 이름을 적어주세요',
                     hintStyle: AppFontStyles.bodyRegular16
                         .copyWith(color: AppColors.grey400),
-                    suffixIcon:
-                        _textEditingController.text.isEmpty
-                            ? null
-                            : IconButton(
-                                icon: Icon(Icons.clear),
-                                onPressed: () {
-                                  _textEditingController.clear();
-                                  setState(() {
-                                    _isNameCheck = true;
-                                  });
-                                  ref
-                                      .watch(
-                                          onboardingViewModelProvider
-                                              .notifier)
-                                      .setAiName(
-                                          check: false,
-                                          aiName: '');
-                                },
-                              ),
+                    suffixIcon: _textEditingController
+                            .text.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              size: 24.r,
+                            ),
+                            onPressed: () {
+                              _textEditingController.clear();
+                              setState(() {
+                                _isNameCheck = true;
+                              });
+                              ref
+                                  .watch(userViewModelProvider
+                                      .notifier)
+                                  .setAiName(
+                                      check: false, aiName: '');
+                            },
+                          ),
                     contentPadding: EdgeInsets.symmetric(
                         horizontal: 12.w, vertical: 16.h),
                     filled: true,
@@ -138,7 +141,15 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           '• 나중에 언제든지 변경할 수 있어요',
           style: AppFontStyles.bodyRegular12
               .copyWith(color: AppColors.grey700),
-        )
+        ),
+        Spacer(),
+        Align(
+            alignment: Alignment.bottomRight,
+            child: Image.asset(
+              'assets/images/cado_profile.png',
+              width: 120.w,
+              height: 180.h,
+            )),
       ],
     );
   }

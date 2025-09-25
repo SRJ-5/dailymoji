@@ -1,0 +1,19 @@
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+
+class Solution {
+  final String videoId;
+  final int startAt;
+  final int? endAt;
+
+  Solution({required this.videoId, required this.startAt, this.endAt});
+
+  factory Solution.fromJson(Map<String, dynamic> json) {
+    // 백엔드가 전체 YouTube URL을 주면 ID를 추출, ID만 주면 그대로 사용
+    final videoId = YoutubePlayer.convertUrlToId(json['url']) ?? json['url'];
+    return Solution(
+      videoId: videoId,
+      startAt: int.tryParse(json['startAt']?.toString() ?? '0') ?? 0,
+      endAt: int.tryParse(json['endAt']?.toString() ?? '0'),
+    );
+  }
+}

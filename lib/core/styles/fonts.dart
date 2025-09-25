@@ -60,24 +60,31 @@ class AppFontStyles {
     fontSize: 12.sp,
     fontWeight: FontWeight.w600,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodySemiBold14 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 14.sp,
     fontWeight: FontWeight.w600,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodySemiBold16 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 16.sp,
     fontWeight: FontWeight.w600,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodySemiBold18 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 18.sp,
     fontWeight: FontWeight.w600,
     height: 1.5,
+    letterSpacing: 0,
   );
 
   static TextStyle bodyMedium12 = TextStyle(
@@ -85,24 +92,31 @@ class AppFontStyles {
     fontSize: 12.sp,
     fontWeight: FontWeight.w500,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodyMedium14 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 14.sp,
     fontWeight: FontWeight.w500,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodyMedium16 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 16.sp,
     fontWeight: FontWeight.w500,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodyMedium18 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 18.sp,
     fontWeight: FontWeight.w500,
     height: 1.5,
+    letterSpacing: 0,
   );
 
   static TextStyle bodyRegular12_180 = TextStyle(
@@ -117,23 +131,47 @@ class AppFontStyles {
     fontSize: 12.sp,
     fontWeight: FontWeight.normal,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodyRegular14 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 14.sp,
     fontWeight: FontWeight.normal,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodyRegular16 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 16.sp,
     fontWeight: FontWeight.normal,
     height: 1.5,
+    letterSpacing: 0,
   );
+
   static TextStyle bodyRegular18 = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 18.sp,
     fontWeight: FontWeight.normal,
     height: 1.5,
+    letterSpacing: 0,
+  );
+
+  static TextStyle noticeRelgular10 = TextStyle(
+    fontFamily: 'Pretendard',
+    fontSize: 10.sp,
+    fontWeight: FontWeight.normal,
+    height: 1.5,
+    letterSpacing: 0,
+  );
+
+  static TextStyle underlinedNoticeRelgular10 = TextStyle(
+    decoration: TextDecoration.underline,
+    fontFamily: 'Pretendard',
+    fontSize: 10.sp,
+    fontWeight: FontWeight.normal,
+    height: 1.5,
+    letterSpacing: 0,
   );
 }

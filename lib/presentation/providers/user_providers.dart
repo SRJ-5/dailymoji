@@ -1,0 +1,72 @@
+import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
+import 'package:dailymoji/data/data_sources/user_profile_data_source_impl.dart';
+import 'package:dailymoji/data/repositories/user_profile_repository_impl.dart';
+import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/apple_login_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/google_login_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/insert_user_profile_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_name_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_personality_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/update_user_nickname_use_case.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final _userDataSourceProvider = Provider<UserProfileDataSource>(
+  (ref) {
+    return UserProfileDataSourceImpl();
+  },
+);
+
+final _userRepositoryProvider = Provider<UserProfileRepository>(
+  (ref) {
+    return UserProfileRepositoryImpl(
+        ref.read(_userDataSourceProvider));
+  },
+);
+
+final googleLoginUseCaseProvider = Provider(
+  (ref) {
+    return GoogleLoginUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final appleLoginUseCaseProvider = Provider(
+  (ref) {
+    return AppleLoginUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final insertUserProfileUseCaseProvider = Provider(
+  (ref) {
+    return InsertUserProfileUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final getUserProfileUseCaseProvider = Provider(
+  (ref) {
+    return GetUserProfileUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final updateUserNickNameUseCaseProvider = Provider(
+  (ref) {
+    return UpdateUserNicknameUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final updateCharacterNameUseCaseProvider = Provider(
+  (ref) {
+    return UpdateCharacterNameUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final updateCharacterPersonalityUseCaseProvider = Provider(
+  (ref) {
+    return UpdateCharacterPersonalityUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
