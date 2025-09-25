@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,8 @@ List<DateTime> generateLast14Days() {
   final today = DateTime.now();
   return List.generate(
     15,
-    (index) => today.subtract(Duration(days: 14 - index)), // 오래된 → 최신 순
+    (index) =>
+        today.subtract(Duration(days: 14 - index)), // 오래된 → 최신 순
   );
 }
 
@@ -25,7 +27,8 @@ List<FlSpot> generateRandomSpots(List<DateTime> days) {
   final random = Random();
   return List.generate(
     days.length,
-    (i) => FlSpot(i.toDouble(), random.nextInt(10).toDouble()), // 0~9 사이 랜덤
+    (i) => FlSpot(i.toDouble(),
+        random.nextInt(10).toDouble()), // 0~9 사이 랜덤
   );
 }
 
@@ -122,7 +125,8 @@ class WeeklyReport extends ConsumerWidget {
 
     // 현재 선택된 감정 리스트
     final selectedEmotions = filters.entries
-        .where((entry) => entry.value && emotionMap.containsKey(entry.key))
+        .where((entry) =>
+            entry.value && emotionMap.containsKey(entry.key))
         .map((entry) => entry.key)
         .toList();
 
@@ -155,10 +159,11 @@ class WeeklyReport extends ConsumerWidget {
                     child: PopupMenuButton<String>(
                       color: AppColors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius:
+                            BorderRadius.circular(12.r),
                       ),
                       icon: SvgPicture.asset(
-                        "assets/icons/stroke.svg",
+                        AppIcons.stroke,
                         height: 18.h,
                         width: 18.w,
                       ),
@@ -168,45 +173,58 @@ class WeeklyReport extends ConsumerWidget {
                           PopupMenuItem<String>(
                             child: Consumer(
                               builder: (context, ref, _) {
-                                final filters = ref.watch(filterProvider);
+                                final filters =
+                                    ref.watch(filterProvider);
                                 return Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: filters.keys.map((key) {
+                                  children:
+                                      filters.keys.map((key) {
                                     return InkWell(
                                       onTap: () {
                                         // 체크박스와 텍스트 클릭 시 상태 토글
                                         ref
-                                            .read(filterProvider.notifier)
+                                            .read(filterProvider
+                                                .notifier)
                                             .state = {
                                           ...filters,
-                                          key: !(filters[key] ?? false),
+                                          key: !(filters[key] ??
+                                              false),
                                         };
                                       },
                                       child: Row(
                                         children: [
                                           Checkbox(
-                                            value: filters[key] ?? false,
-                                            activeColor:
-                                                AppColors.green400, // 체크 시 색상
-                                            checkColor:
-                                                AppColors.white, // 체크 표시 색상
+                                            value:
+                                                filters[key] ??
+                                                    false,
+                                            activeColor: AppColors
+                                                .green400, // 체크 시 색상
+                                            checkColor: AppColors
+                                                .white, // 체크 표시 색상
                                             onChanged: (value) {
                                               ref
-                                                  .read(filterProvider.notifier)
+                                                  .read(filterProvider
+                                                      .notifier)
                                                   .state = {
                                                 ...filters,
-                                                key: value ?? false,
+                                                key: value ??
+                                                    false,
                                               };
                                             },
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(
+                                              width: 8),
                                           Text(
                                             key,
                                             style: TextStyle(
                                               fontSize: 14,
-                                              fontWeight: filters[key] == true
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
+                                              fontWeight: filters[
+                                                          key] ==
+                                                      true
+                                                  ? FontWeight
+                                                      .bold
+                                                  : FontWeight
+                                                      .normal,
                                             ),
                                           ),
                                         ],
@@ -248,20 +266,24 @@ class WeeklyReport extends ConsumerWidget {
                               interval: 2, // y축 간격 (예: 2단위)
                               getTitlesWidget: (value, meta) {
                                 if (value.toInt() == 0) {
-                                  return const SizedBox.shrink(); // ✅ 0은 표시 안 함
+                                  return const SizedBox
+                                      .shrink(); // ✅ 0은 표시 안 함
                                 }
                                 return Text(
                                   value.toInt().toString(),
-                                  style: const TextStyle(fontSize: 10),
+                                  style: const TextStyle(
+                                      fontSize: 10),
                                 );
                               },
                             ),
                           ),
                           rightTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
+                            sideTitles:
+                                SideTitles(showTitles: false),
                           ),
                           topTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
+                            sideTitles:
+                                SideTitles(showTitles: false),
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
@@ -269,13 +291,15 @@ class WeeklyReport extends ConsumerWidget {
                               interval: 2,
                               getTitlesWidget: (value, meta) {
                                 final index = value.toInt();
-                                if (index < 0 || index >= last14Days.length) {
+                                if (index < 0 ||
+                                    index >= last14Days.length) {
                                   return const SizedBox.shrink();
                                 }
                                 final date = last14Days[index];
                                 return Text(
                                   "${date.month}.${date.day}",
-                                  style: const TextStyle(fontSize: 10),
+                                  style: const TextStyle(
+                                      fontSize: 10),
                                 );
                               },
                             ),
@@ -288,7 +312,8 @@ class WeeklyReport extends ConsumerWidget {
                         maxX: (last14Days.length - 1).toDouble(),
                         minY: 0,
                         maxY: 10,
-                        lineBarsData: selectedEmotions.map((key) {
+                        lineBarsData:
+                            selectedEmotions.map((key) {
                           final data = emotionMap[key]!;
                           return LineChartBarData(
                             color: data.color,
@@ -316,15 +341,20 @@ class WeeklyReport extends ConsumerWidget {
                                     width: 8,
                                     height: 4,
                                     decoration: ShapeDecoration(
-                                      color: emotionMap[key]!.color,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(2)),
+                                      color:
+                                          emotionMap[key]!.color,
+                                      shape:
+                                          RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius
+                                                      .circular(
+                                                          2)),
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(key,
-                                      style: const TextStyle(fontSize: 12)),
+                                      style: const TextStyle(
+                                          fontSize: 12)),
                                 ],
                               ))
                           .toList(),
@@ -369,11 +399,13 @@ class WeeklyReport extends ConsumerWidget {
                               height: 16.h,
                               decoration: BoxDecoration(
                                 color: data.color,
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius:
+                                    BorderRadius.circular(2),
                               )),
                           Text(
                             key,
-                            style: AppFontStyles.bodyBold16.copyWith(
+                            style: AppFontStyles.bodyBold16
+                                .copyWith(
                               color: AppColors.grey900,
                             ),
                           ),
@@ -381,16 +413,20 @@ class WeeklyReport extends ConsumerWidget {
                       ),
                       SizedBox(height: 8.h),
                       Container(
-                        padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
+                        padding: EdgeInsets.fromLTRB(
+                            16.w, 20.h, 16.w, 16.h),
                         decoration: BoxDecoration(
                           color: AppColors.green100,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                              BorderRadius.circular(12),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceAround,
                               children: [
                                 _ScoreBox(
                                     label: "평균 감정 점수",
@@ -410,8 +446,11 @@ class WeeklyReport extends ConsumerWidget {
                             ),
                             SizedBox(height: 8.h),
                             Text(data.description,
-                                style: AppFontStyles.bodyRegular12_180
-                                    .copyWith(color: AppColors.grey900)),
+                                style: AppFontStyles
+                                    .bodyRegular12_180
+                                    .copyWith(
+                                        color:
+                                            AppColors.grey900)),
                           ],
                         ),
                       ),
@@ -450,11 +489,13 @@ class _ScoreBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
+        Text(label,
+            style:
+                AppFontStyles.bodyBold14.copyWith(color: color)),
         SizedBox(height: 2.h),
         Text(value,
-            style:
-                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
+            style: AppFontStyles.bodyRegular14
+                .copyWith(color: AppColors.grey900)),
       ],
     );
   }

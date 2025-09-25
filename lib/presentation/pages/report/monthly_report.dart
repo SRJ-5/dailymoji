@@ -1,15 +1,16 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-const String angryImage = "assets/images/emoticon/emo_3d_angry_02.png";
-const String cryingImage = "assets/images/emoticon/emo_3d_crying_02.png";
-const String shockedImage = "assets/images/emoticon/emo_3d_shocked_02.png";
-const String sleepingImage = "assets/images/emoticon/emo_3d_sleeping_02.png";
-const String smileImage = "assets/images/emoticon/emo_3d_smile_02.png";
+const String angryImage = AppImages.angryEmoji;
+const String cryingImage = AppImages.cryingEmoji;
+const String shockedImage = AppImages.shockedEmoji;
+const String sleepingImage = AppImages.sleepingEmoji;
+const String smileImage = AppImages.smileEmoji;
 
 // 현재 기분 상태 (예시: Riverpod)
 final currentMoodProvider = StateProvider<String>((ref) {
@@ -57,7 +58,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2035, 12, 31),
               focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+              selectedDayPredicate: (day) =>
+                  isSameDay(_selectedDay, day),
               calendarFormat: CalendarFormat.month,
               startingDayOfWeek: StartingDayOfWeek.sunday,
               onDaySelected: (selectedDay, focusedDay) {
@@ -76,8 +78,10 @@ class _MonthlyReportState extends State<MonthlyReport> {
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.grey),
-                rightChevronIcon: Icon(Icons.chevron_right, color: Colors.grey),
+                leftChevronIcon:
+                    Icon(Icons.chevron_left, color: Colors.grey),
+                rightChevronIcon: Icon(Icons.chevron_right,
+                    color: Colors.grey),
               ),
 
               // 📌 요일 스타일
@@ -120,8 +124,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
                   return Center(
                     child: Text(
                       '${day.day}',
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black87),
+                      style: const TextStyle(
+                          fontSize: 14, color: Colors.black87),
                     ),
                   );
                 },
@@ -132,7 +136,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.orange100, // 선택된 날짜 강조
-                      border: Border.all(color: AppColors.orange600, width: 1),
+                      border: Border.all(
+                          color: AppColors.orange600, width: 1),
                     ),
                     alignment: Alignment.center,
                     child: _emotions.containsKey(day)
@@ -140,7 +145,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
                         : Text(
                             '${day.day}',
                             style: AppFontStyles.bodySemiBold14
-                                .copyWith(color: AppColors.orange600),
+                                .copyWith(
+                                    color: AppColors.orange600),
                           ),
                   );
                 },
@@ -193,7 +199,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
                       decoration: ShapeDecoration(
                         color: AppColors.green400,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius:
+                              BorderRadius.circular(10),
                         ),
                       ),
                       child: Row(

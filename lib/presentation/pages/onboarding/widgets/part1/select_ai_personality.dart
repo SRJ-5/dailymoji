@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
@@ -13,13 +14,16 @@ class SelectAiPersonality extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SelectAiPersonality> createState() => _SelectAiPersonalityState();
+  ConsumerState<SelectAiPersonality> createState() =>
+      _SelectAiPersonalityState();
 }
 
-class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
+class _SelectAiPersonalityState
+    extends ConsumerState<SelectAiPersonality> {
   int _selectedIndex = -1;
 
-  final _personalities = CharacterPersonality.values.map((e) => e.label).toList();
+  final _personalities =
+      CharacterPersonality.values.map((e) => e.label).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +40,8 @@ class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
             alignment: Alignment.centerLeft,
             child: Text(
               '캐릭터의 성격을\n골라볼까요?',
-              style: AppFontStyles.heading2.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.heading2
+                  .copyWith(color: AppColors.grey900),
             ),
           ),
         ),
@@ -53,11 +58,21 @@ class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
                   GestureDetector(
                       onTap: () {
                         setState(() {
-                          _selectedIndex = (_selectedIndex == index) ? -1 : index;
+                          _selectedIndex =
+                              (_selectedIndex == index)
+                                  ? -1
+                                  : index;
                         });
-                        ref.read(userViewModelProvider.notifier).setAiPersonality(check: _selectedIndex != -1, aiPersonality: _personalities[index]);
+                        ref
+                            .read(userViewModelProvider.notifier)
+                            .setAiPersonality(
+                                check: _selectedIndex != -1,
+                                aiPersonality:
+                                    _personalities[index]);
                       },
-                      child: SelectBox(isSelected: isSelected, text: _personalities[index])),
+                      child: SelectBox(
+                          isSelected: isSelected,
+                          text: _personalities[index])),
                   _personalities.length - 1 == index
                       ? SizedBox.shrink()
                       : SizedBox(
@@ -72,7 +87,7 @@ class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
         Align(
             alignment: Alignment.bottomRight,
             child: Image.asset(
-              'assets/images/cado_profile.png',
+              AppImages.cadoProfile,
               width: 120.w,
               height: 180.h,
             )),

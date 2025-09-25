@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -12,10 +13,12 @@ class CharacterSettingPage extends ConsumerStatefulWidget {
   const CharacterSettingPage({super.key});
 
   @override
-  ConsumerState<CharacterSettingPage> createState() => _CharacterSettingPageState();
+  ConsumerState<CharacterSettingPage> createState() =>
+      _CharacterSettingPageState();
 }
 
-class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
+class _CharacterSettingPageState
+    extends ConsumerState<CharacterSettingPage> {
   @override
   void initState() {
     super.initState();
@@ -24,7 +27,8 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
-    final userViewModel = ref.read(userViewModelProvider.notifier);
+    final userViewModel =
+        ref.read(userViewModelProvider.notifier);
 
     return Scaffold(
       backgroundColor: AppColors.yellow50,
@@ -33,7 +37,8 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
         centerTitle: true,
         title: Text(
           "캐릭터 설정",
-          style: AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
+          style: AppFontStyles.bodyBold18
+              .copyWith(color: AppColors.grey900),
         ),
       ),
       body: Padding(
@@ -42,25 +47,31 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
           child: Column(
             children: [
               SizedBox(height: 16.h),
-              NicknameEditCard(nickname: userState.userProfile!.characterNm!, isUser: false),
+              NicknameEditCard(
+                  nickname: userState.userProfile!.characterNm!,
+                  isUser: false),
               SizedBox(height: 16.h),
               GestureDetector(
                 onTap: () async {
                   final result = await showMenu<String>(
                     context: context,
-                    position: RelativeRect.fromLTRB(183.w, 263.h, 12.w, 0),
+                    position: RelativeRect.fromLTRB(
+                        183.w, 263.h, 12.w, 0),
                     color: AppColors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                       side: BorderSide(color: AppColors.grey100),
                     ),
-                    items: CharacterPersonality.values.map((e) => e.label).map((e) {
+                    items: CharacterPersonality.values
+                        .map((e) => e.label)
+                        .map((e) {
                       return PopupMenuItem<String>(
                         padding: EdgeInsets.zero,
                         value: e,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 12.w, vertical: 8.h),
                           child: Row(
                             children: [
                               GestureDetector(
@@ -68,9 +79,11 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                                   Navigator.pop(context, e);
                                 },
                                 child: SvgPicture.asset(
-                                  userState.userProfile!.characterPersonality! == e
-                                      ? "assets/icons/radio_selected.svg"
-                                      : "assets/icons/radio_unselected.svg",
+                                  userState.userProfile!
+                                              .characterPersonality! ==
+                                          e
+                                      ? AppIcons.radioSelected
+                                      : AppIcons.radioUnselected,
                                   width: 16.r,
                                   height: 16.r,
                                 ),
@@ -78,11 +91,16 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                               SizedBox(width: 8.w),
                               Text(
                                 e,
-                                style: userState.userProfile!.characterPersonality! == e
-                                    ? AppFontStyles.bodySemiBold14.copyWith(
+                                style: userState.userProfile!
+                                            .characterPersonality! ==
+                                        e
+                                    ? AppFontStyles
+                                        .bodySemiBold14
+                                        .copyWith(
                                         color: AppColors.grey900,
                                       )
-                                    : AppFontStyles.bodyRegular14.copyWith(
+                                    : AppFontStyles.bodyRegular14
+                                        .copyWith(
                                         color: AppColors.grey900,
                                       ),
                               ),
@@ -94,11 +112,15 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                   );
                   if (result != null) {
                     print(result);
-                    ref.read(userViewModelProvider.notifier).updateCharacterPersonality(newCharacterPersonality: result);
+                    ref
+                        .read(userViewModelProvider.notifier)
+                        .updateCharacterPersonality(
+                            newCharacterPersonality: result);
                   }
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 16.w, vertical: 12.h),
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(12.r),
@@ -108,14 +130,17 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                     children: [
                       Text(
                         "캐릭터 성격",
-                        style: AppFontStyles.bodyRegular16.copyWith(
+                        style:
+                            AppFontStyles.bodyRegular16.copyWith(
                           color: AppColors.grey700,
                         ),
                       ),
                       Spacer(),
                       Text(
-                        userState.userProfile!.characterPersonality!,
-                        style: AppFontStyles.bodyRegular14.copyWith(
+                        userState
+                            .userProfile!.characterPersonality!,
+                        style:
+                            AppFontStyles.bodyRegular14.copyWith(
                           color: AppColors.grey500,
                         ),
                       ),
