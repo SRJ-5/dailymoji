@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part2/speech_bubble.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
@@ -46,7 +47,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
           child: Row(
             children: [
               Image.asset(
-                'assets/images/cado_profile.png',
+                AppImages.cadoProfile,
                 width: 120.w,
                 height: 180.h,
               ),

@@ -1,16 +1,20 @@
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class BreathingSolutionPage extends StatefulWidget {
   final String solutionId;
 
-  const BreathingSolutionPage({super.key, required this.solutionId});
+  const BreathingSolutionPage(
+      {super.key, required this.solutionId});
 
   @override
-  State<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
+  State<BreathingSolutionPage> createState() =>
+      _BreathingSolutionPageState();
 }
 
-class _BreathingSolutionPageState extends State<BreathingSolutionPage>
+class _BreathingSolutionPageState
+    extends State<BreathingSolutionPage>
     with SingleTickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
@@ -120,7 +124,8 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
                   duration: const Duration(seconds: 1),
                   child: Text(
                     _steps[_step]["text"],
-                    style: const TextStyle(color: Colors.white, fontSize: 35),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 35),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -133,7 +138,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
                   width: 250,
                   height: 400,
                   child: Image(
-                    image: AssetImage("assets/images/cado_00.png"),
+                    image: AssetImage(AppImages.cadoWalk),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -147,7 +152,8 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
                     opacity: _blinkAnimation,
                     child: const Text(
                       "탭하여 영상으로 넘어가기",
-                      style: TextStyle(color: Colors.white70, fontSize: 18),
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 18),
                     ),
                   ),
                 ),

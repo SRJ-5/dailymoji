@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter/material.dart';
 
 class SelectAi extends StatelessWidget {
@@ -18,8 +19,7 @@ class SelectAi extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 60,
-                  child: Image.asset(
-                      'assets/images/cado_profile.png'),
+                  child: Image.asset(AppImages.cadoProfile),
                 ),
                 SizedBox(
                   width: 20,
