@@ -293,7 +293,6 @@ class Test extends ConsumerWidget {
                         lineBarsData: selectedEmotions.map((key) {
                           final data = emotionMap[key]!;
                           return LineChartBarData(
-                            isCurved: false,
                             color: data.color,
                             barWidth: 2,
                             dotData: FlDotData(show: false),
@@ -347,7 +346,7 @@ class Test extends ConsumerWidget {
             // 기록 감정 부분
             if (selectedEmotions.isEmpty) // 감정선택이 안됐을 때
               Padding(
-                padding: EdgeInsets.only(top: 70.h),
+                padding: EdgeInsets.only(top: 90.h),
                 child: Center(
                   child: Text(
                     "감정을 선택해주세요",
