@@ -3,7 +3,6 @@
 // 1. 선택된 이모지를 상태로 관리 (`selectedEmotion`)
 // 2. 채팅 입력창 클릭 시, 선택된 이모지 정보를 `/chat` 라우트로 전달
 
-import 'dart:async';
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/emoji_assets.dart';
@@ -82,6 +81,14 @@ class _HomePageState extends ConsumerState<HomePage> {
     } else {
       selectedNotifier.state = emotionKey;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.invalidate(homeDialogueProvider);
+    });
   }
 
   @override
