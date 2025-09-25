@@ -3,7 +3,6 @@
 // 1. 선택된 이모지를 상태로 관리 (`selectedEmotion`)
 // 2. 채팅 입력창 클릭 시, 선택된 이모지 정보를 `/chat` 라우트로 전달
 
-import 'dart:async';
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/emoji_assets.dart';
@@ -39,6 +38,31 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
     return "안녕!\n오늘 기분은 어때?";
   }
 });
+import 'package:http/http.dart' as http;
+
+// 현재 선택된 이모지 상태를 관리하는 Provider
+final selectedEmotionProvider = StateProvider<String?>((ref) => null);
+
+// 백엔드에서 대사를 비동기적으로 가져오는 Provider
+final homeDialogueProvider = FutureProvider<String>((ref) async {
+  final selectedEmotion = ref.watch(selectedEmotionProvider);
+
+  // URL에 쿼리 파라미터 추가
+  final url = selectedEmotion == null
+      ? Uri.parse('${ApiConfig.baseUrl}/dialogue/home')
+      : Uri.parse(
+          '${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
+
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data['dialogue'] as String;
+  } else {
+    // 에러 발생 시 기본 텍스트 반환
+    return "안녕!\n오늘 기분은 어때?";
+  }
+});
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -49,8 +73,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   String displayText = "";
-  int _index = 0;
-  Timer? _timer;
+  // int _index = 0;
+  // Timer? _timer;
   String? currentDialogue;
 
   void _startTyping(String newText) {
@@ -62,7 +86,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       // currentDialogue = newText;
     });
 
-    // _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    // _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
     //   if (_index < (currentDialogue?.length ?? 0)) {
     //     setState(() {
     //       displayText += currentDialogue![_index];
@@ -85,15 +109,23 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.invalidate(homeDialogueProvider);
+    });
+  }
+
+  @override
   void dispose() {
-    _timer?.cancel();
+    // _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final selectedEmotion = ref.watch(selectedEmotionProvider);
-    final dialogueAsync = ref.watch(homeDialogueProvider);
+    // final dialogueAsync = ref.watch(homeDialogueProvider);
 
     // dialogueAsync의 상태가 변경될 때마다 타이핑 효과를 다시 시작
     ref.listen(homeDialogueProvider, (_, next) {
