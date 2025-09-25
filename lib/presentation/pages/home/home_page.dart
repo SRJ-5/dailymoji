@@ -6,6 +6,8 @@
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/emoji_assets.dart';
+import 'package:dailymoji/core/styles/icons.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +18,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 
 // 현재 선택된 이모지 상태를 관리하는 Provider
-final selectedEmotionProvider = StateProvider<String?>((ref) => null);
+final selectedEmotionProvider =
+    StateProvider<String?>((ref) => null);
 
 // 백엔드에서 대사를 비동기적으로 가져오는 Provider
 final homeDialogueProvider = FutureProvider<String>((ref) async {
@@ -74,7 +77,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
+    final selectedNotifier =
+        ref.read(selectedEmotionProvider.notifier);
 
     if (selectedNotifier.state == emotionKey) {
       selectedNotifier.state = null;
@@ -118,7 +122,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         elevation: 0,
         backgroundColor: Color(0xFFFEFBF4),
         title: Image.asset(
-          "assets/images/logo.png", // DailyMoji 로고 이미지 경로
+          AppImages.dailymojiLogoBlack, // DailyMoji 로고 이미지 경로
           height: 30,
         ),
       ),
@@ -135,14 +139,14 @@ class _HomePageState extends ConsumerState<HomePage> {
               clipBehavior: Clip.none,
               children: [
                 Image.asset(
-                  "assets/images/cado_00.png", // 중앙 캐릭터 이미지
+                  AppImages.cadoWalk, // 중앙 캐릭터 이미지
                   height: 240.h,
                   width: 160.w,
                 ),
                 Positioned(
                   top: -6,
                   child: SvgPicture.asset(
-                    "assets/images/Bubble.svg",
+                    AppIcons.bubbleUnder,
                     height: 95.h,
                     width: 180.w,
                   ),
@@ -208,13 +212,15 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.push('/chat', extra: selectedEmotion),
+        onTap: () =>
+            context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
             height: 40.h,
             margin: EdgeInsets.all(12.r),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -228,7 +234,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
-                Image.asset("assets/icons/vector.png"),
+                Image.asset(AppIcons.send),
               ],
             ),
           ),
@@ -255,13 +261,15 @@ class _Imoge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(smile)를 보여줌.
-    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
+    final imagePath =
+        kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
     final isSelected = selectedEmotion == imoKey;
 
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
       child: isSelected
-          ? Image.asset(imagePath, height: 80.h, width: 80.w, fit: BoxFit.cover)
+          ? Image.asset(imagePath,
+              height: 80.h, width: 80.w, fit: BoxFit.cover)
           : ColorFiltered(
               colorFilter: const ColorFilter.matrix(<double>[
                 0.2126, 0.7152, 0.0722, 0, 0, // R

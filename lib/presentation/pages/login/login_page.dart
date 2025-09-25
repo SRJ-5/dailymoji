@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,38 +13,6 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  // Stream을 구독하고 나중에 취소하기 위한 변수
-  // late final StreamSubscription<AuthState> _authSubscription;
-
-  // onAuthStateChange를 로그인페이지가 아닌 전페이지 즉, 스플레쉬 페이지에서
-  // @override
-  // void initState() {
-  //   super.initState();
-
-  //   // Supabase 클라이언트에 쉽게 접근하기 위해 변수 선언
-
-  //   // initState에서 단 한 번만 onAuthStateChange 스트림을 구독 시작
-  //   _authSubscription =
-  //       supabase.auth.onAuthStateChange.listen((data) {
-  //     final session = data.session;
-  //     final event = data.event;
-  //     print('!@#!@%');
-  //     print(event);
-  //     if (event == AuthChangeEvent.signedIn && session != null) {
-  //       if (mounted) {
-  //         final userId = supabase.auth.currentUser;
-  //         ref
-  //             .read(userViewModelProvider.notifier)
-  //             .insertUserId(userId!.id);
-  //         WidgetsBinding.instance.addPostFrameCallback((_) {
-  //           if (mounted) {
-  //             context.go('/onboarding1');
-  //           }
-  //         });
-  //       }
-  //     }
-  //   });
-  //
   // Rin: 가입여부 확인하고 프로필 이미 있으면 넘어가는 함수 따로 뺌
   Future<void> _handleLogin(Future<String?> loginFuture) async {
     try {
@@ -64,13 +33,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       } else if (mounted) {
         // TODO: 로그인 실패 처리 디자인하기!!
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요.")));
+            const SnackBar(
+                content: Text("로그인에 실패했습니다. 다시 시도해주세요.")));
       }
     } catch (e) {
       // 예외 처리
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("오류가 발생했습니다: ${e.toString()}")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("오류가 발생했습니다: ${e.toString()}")));
       }
     }
   }
@@ -93,7 +63,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   SizedBox(
                     height: 47.44.h,
                     child: Image.asset(
-                      'assets/icons/dailymoji_logo.png',
+                      AppImages.dailymojiLogoColor,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -120,25 +90,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   children: [
                     Spacer(),
                     GestureDetector(
-                      onTap: () async {
-                        final result = await ref
-                            .read(userViewModelProvider.notifier)
-                            .googleLogin();
-                        if (result != null) {
-                          final isRegistered = await ref
-                              .read(userViewModelProvider.notifier)
-                              .getUserProfile(result);
-                          if (isRegistered) {
-                            context.go('/home');
-                          } else {
-                            context.go('/onboarding1');
-                          }
-                        }
-                      },
+                      onTap: () => _handleLogin(ref
+                          .read(userViewModelProvider.notifier)
+                          .googleLogin()),
                       child: CircleAvatar(
                         radius: 30.r,
                         child: Image.asset(
-                          'assets/icons/google_login_logo.png',
+                          AppImages.googleLoginLogo,
                         ),
                       ),
                     ),
@@ -149,12 +107,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               SizedBox(width: 24.w),
                               GestureDetector(
                                 onTap: () => _handleLogin(ref
-                                    .read(userViewModelProvider.notifier)
+                                    .read(userViewModelProvider
+                                        .notifier)
                                     .appleLogin()),
                                 child: CircleAvatar(
                                   radius: 30.r,
                                   child: Image.asset(
-                                    'assets/icons/apple_login_logo.png',
+                                    AppImages.appleLoginLogo,
                                   ),
                                 ),
                               ),
@@ -173,13 +132,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: <TextSpan>[
                       TextSpan(
                         text: '이용약관',
-                        style: AppFontStyles.underlinedNoticeRelgular10
+                        style: AppFontStyles
+                            .underlinedNoticeRelgular10
                             .copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '과 '),
                       TextSpan(
                         text: '개인정보 처리방침',
-                        style: AppFontStyles.underlinedNoticeRelgular10
+                        style: AppFontStyles
+                            .underlinedNoticeRelgular10
                             .copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '에 동의하게 됩니다.'),
