@@ -76,7 +76,7 @@ flutter:
     - assets/fonts/
     - assets/icons/
     - assets/images/
-    - assets/images/emoticon/
+    - assets/images/emojis/
     - .env
   #   - images/a_dot_ham.jpeg
 
