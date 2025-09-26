@@ -1,5 +1,7 @@
 # main.py
 # 이거 엔드포인트 분석/솔루션 두개로 나눈버전!!
+# 0926 로직 변경: 케이스 1-텍스트만 입력 / 케이스2-이모지만 입력 / 케이스 3-텍스트+이모지 같이 입력
+
 
 from __future__ import annotations
 
@@ -167,14 +169,17 @@ def calculate_baseline_scores(onboarding_scores: Optional[Dict[str, int]]) -> Di
 def meta_adjust(base_scores: dict, payload: AnalyzeRequest) -> dict:
     s = base_scores.copy()
 
-    # 이모지 아이콘 점수 가중치 
+    # RIN ♥ : 이모지 아이콘 점수 가중치 
     if payload.icon:
-        # [CHANGED] 아이콘 보정 방식을 "가산" → "가중치 융합"으로 변경
+        # 아이콘 보정 방식을 "가산" → "가중치 융합"으로 변경
         #  - 기존: s[selected] += META_WEIGHTS["icon"]
         #  - 변경: s = (1 - alpha) * s + alpha * prior(icon-onehot)
         
         selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
-        # alpha는 META_WEIGHTS에 없으면 0.2로 (가중치 크기)
+        # 'default' 이모지는 감정 분석에 영향을 주지 않음
+        if selected_cluster == "neutral": # ♥ 추가: 디폴트 이모지인 경우 감정 가중치 미적용
+            return s
+        
         alpha = META_WEIGHTS.get("icon_alpha", 0.2) 
         for c in s.keys():
             prior = 1.0 if c == selected_cluster else 0.0
@@ -320,6 +325,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
     text = (payload.text or "").strip()
     debug_log: Dict[str, Any] = {"input": payload.dict()}
     try:
+        # RIN ♥ : save_analysis_to_supabase 호출 위치 변경하느라 주석 처리!
         # DB 저장을 먼저 시도해서 session_id를 확보
         session_id = await save_analysis_to_supabase(payload, 0, 0.5, {}, debug_log, {})
         # DB 저장이 실패하면 임시 ID를 생성
@@ -327,14 +333,38 @@ async def analyze_emotion(payload: AnalyzeRequest):
             session_id = f"temp_{uuid.uuid4()}"
             print(f"⚠️ WARNING: DB 저장 실패. 임시 세션 ID 발급: {session_id}")
         
+        # RIN ♥ : CASE 2 - 'icon'이 있고 'text'가 비어있을 때 (이모지 단독 입력)
         # --- UX Flow 1: EMOJI_ONLY -> 공감/질문으로 응답 (0924 슬랙논의 2번 로직)---
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
 
         #  이모지에 따른 top_cluster 매핑 - 솔루션 제안을 위해 이모지 only도 클러스터 저장!
-            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low") 
+            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low")
+            # RIN ♥ : 1) 디폴트 이모지는 분석하지 않음 
+            #  ui에서 막아놓긴 할건데, 혹시 모르니까 일단 구현 
+            if top_cluster == "neutral": 
+                intervention = {
+                    "preset_id": PresetIds.EMOJI_REACTION, 
+                    "text": "오늘은 기분이 어떠신가요?",
+                    "top_cluster": "neutral"
+                }
+                session_id = await save_analysis_to_supabase(
+                    payload, profile=0, g=0.5,
+                    intervention=intervention,
+                    debug_log=debug_log,
+                    final_scores={}
+                )
+                if session_id:
+                    intervention['session_id'] = session_id
+                return {
+                    "session_id": session_id,
+                    "final_scores": {},  
+                    "g_score": 0.5,
+                    "profile": 0,
+                    "intervention": intervention
+                }
 
-            # [CHANGED] 이모지 단독도 "baseline + 아이콘 prior(가중 융합)"으로 스코어링
+            #  이모지 단독도 "baseline + 아이콘 prior(가중 융합)"으로 스코어링
             #  - 기존: top_cluster=0.3 고정
             #  - 변경: baseline 계산 후 meta_adjust로 동일한 아이콘 보정 로직 적용
             baseline_scores = calculate_baseline_scores(payload.onboarding or {})  # [ADDED]
@@ -350,17 +380,17 @@ async def analyze_emotion(payload: AnalyzeRequest):
             scripts = [row['script'] for row in response.data]
             
             # 만약 스크립트가 있다면 그 중 하나를 랜덤으로 선택, 없다면 기본 메시지 사용
-            reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신지 알려주세요."
+            reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신가요?"
 
             intervention = {
                 "preset_id": PresetIds.EMOJI_REACTION, 
-                "text": reaction_text,
+                "empathy_text": reaction_text,
                 "top_cluster": top_cluster # 솔루션 제안을 위해 클러스터 정보 전달
             }
 
             # session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
             
-            # [CHANGED] g_score/score 저장을 baseline+prior 기반으로 저장
+            # g_score/score 저장을 baseline+prior 기반으로 저장
             session_id = await save_analysis_to_supabase(
                 payload, profile=profile, g=g,
                 intervention=intervention,
@@ -375,8 +405,8 @@ async def analyze_emotion(payload: AnalyzeRequest):
             return {
                 "session_id": session_id,
                 "final_scores": final_scores,  
-                "g_score": 0.3,
-                "profile": 0,
+                "g_score": g,
+                "profile": profile,
                 "intervention": intervention
             }
 
@@ -394,6 +424,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
         # --- 파이프라인 2: Triage (친구 모드 / 분석 모드 분기) ---
         rule_scores, _, _ = rule_scoring(text)
+                # 텍스트가 짧고 (15자 미만) 룰 스코어가 낮을 때만 칭긔칭긔 모드 진입
         if max(rule_scores.values() or [0.0]) < 0.3 and len(text) < 15:
             debug_log["mode"] = "FRIENDLY"
             friendly_text = await call_llm(FRIENDLY_SYSTEM_PROMPT, text, OPENAI_KEY, expect_json=False)
@@ -438,6 +469,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
         fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
         
         # 4-2. Meta Adjust(아이콘 보정 적용됨) 
+        # RIN ♥ : payload.icon이 있으면 meta_adjust에서 가중치 융합 적용 (텍스트+이모지 케이스)
         adjusted_scores = meta_adjust(fused_scores, payload)
         debug_log["scores"] = {"llm_detail": text_if, "rule": rule_scores, "fused": fused_scores, "final": adjusted_scores}
         
@@ -448,8 +480,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
         
         # LLM으로부터 공감 메시지와 분석 메시지를 각각 가져옴
         empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
-        analysis_text = get_analysis_message(adjusted_scores)
-    
+        analysis_text = get_analysis_message(adjusted_scores, top_cluster)
         
         
         # 4-4. Intervention 객체 생성 및 반환 
@@ -506,7 +537,7 @@ async def propose_solution(payload: SolutionRequest):
         solution_data = None
 
         
-        # 3. 일단 수퍼베이스 안되니까 나중에 올리고, 지금은 하드코딩된거로!
+        # 3. 일단 수퍼베이스 안되니까 나중에 올리고, 지금은 하드코딩된거로!(3-2)
         # 3-1. Supabase에서 먼저 조회 시도
         if supabase:
             try:

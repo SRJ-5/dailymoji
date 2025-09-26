@@ -15,7 +15,9 @@ W_RULE = 0.6
 W_LLM = 0.4
 
 META_WEIGHTS = {
-    "icon": 0.30,
+    # "icon": 0.30, # icon 가산점 --> 가중치로 할거라 alpha로 대체
+    "icon_alpha": 0.2, # ♥ 추가: 이모지 가중치 융합 시 사용할 alpha 값 (0.2는 조정 가능)
+
     # "intensity_self": 0.20, # 자기가 슬라이드 하도록 하려고 했었음
     # "time": 0.10, # 시간적 맥락 조절: 야간(수면 관련), 월요일 오전(우울/불안 ↑), 생체리듬 구간 등
     # "text": 0.15, # 텍스트 신뢰도 계산 지금은 안함(텍스트 길이·문장수·키워드 정합성)
@@ -64,6 +66,7 @@ ICON_TO_CLUSTER = {
     "shocked": "adhd_high",
     "sleeping": "sleep",
     "smile": "positive",
+    "default": "neutral" 
 }
 
 

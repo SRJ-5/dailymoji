@@ -35,7 +35,7 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage>
     with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
-  late String selectedEmojiAsset;
+  late String currentSelectedEmojiKey;
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
@@ -56,9 +56,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
 // 봇입력중일때 사용자입력못하게
     _messageInputController.addListener(_onInputChanged);
 
-// emotionFromHome이 있으면 그 이모지로, 없으면 'smile'로 초기 상태 설정
-    selectedEmojiAsset =
-        kEmojiAssetMap[widget.emotionFromHome] ?? kEmojiAssetMap['smile']!;
+// emotionFromHome이 있으면 그 이모지로, 없으면 'default'로 초기 상태 설정
+    currentSelectedEmojiKey = widget.emotionFromHome ?? 'default';
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -573,7 +572,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         final selectedEmotionKey = emojiKeys[index];
 
                         setState(() {
-                          selectedEmojiAsset = emojiAssets[index];
+                          currentSelectedEmojiKey = selectedEmotionKey;
                           showEmojiBar = false; // 이모지 바 닫기
                         });
                         // 선택된 이모지를 메시지로 전송
@@ -584,15 +583,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },
                       child: ColorFiltered(
-                        colorFilter: selectedEmojiAsset != emojiAssets[index]
-                            ? const ColorFilter.matrix(<double>[
-                                0.2126, 0.7152, 0.0722, 0, 0, //R
-                                0.2126, 0.7152, 0.0722, 0, 0, //G
-                                0.2126, 0.7152, 0.0722, 0, 0, //B
-                                0, 0, 0, 1, 0, //A
-                              ])
-                            : const ColorFilter.mode(
-                                Colors.transparent, BlendMode.multiply),
+                        colorFilter:
+                            currentSelectedEmojiKey != emojiAssets[index]
+                                ? const ColorFilter.matrix(<double>[
+                                    0.2126, 0.7152, 0.0722, 0, 0, //R
+                                    0.2126, 0.7152, 0.0722, 0, 0, //G
+                                    0.2126, 0.7152, 0.0722, 0, 0, //B
+                                    0, 0, 0, 1, 0, //A
+                                  ])
+                                : const ColorFilter.mode(
+                                    Colors.transparent, BlendMode.multiply),
                         child: Image.asset(
                           emojiAssets[index],
                           width: 34.w,
@@ -659,7 +659,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                 child: Image.asset(
-                  selectedEmojiAsset,
+                  kEmojiAssetMap[currentSelectedEmojiKey]!,
                   width: 24.w,
                   height: 24.h,
                 ),
@@ -672,14 +672,26 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 ? () {
                     final chatVm = ref.read(chatViewModelProvider.notifier);
                     final text = _messageInputController.text.trim();
-                    final selectedEmotionKey = kEmojiAssetMap.entries
-                        .firstWhere(
-                            (entry) => entry.value == selectedEmojiAsset,
-                            orElse: () => kEmojiAssetMap.entries.first)
-                        .key;
+                    // RIN ♥ 텍스트만, 이모지만, 텍스트+이모지 케이스 분리
+                    if (text.isNotEmpty &&
+                        currentSelectedEmojiKey != 'default') {
+                      // 케이스 3: 텍스트 + 이모지 같이 입력
+                      chatVm.sendTextAndEmojiAsMessages(
+                          text, currentSelectedEmojiKey);
+                    } else if (text.isNotEmpty) {
+                      // 케이스 1: 텍스트만 입력
+                      chatVm.sendMessage(text, null);
+                    } else if (currentSelectedEmojiKey != 'default') {
+                      // 케이스 2: 이모지만 입력
+                      // 디폴트 이미지면 아예 안보내지게!!
+                      chatVm.sendEmojiAsMessage(currentSelectedEmojiKey);
+                    }
 
-                    chatVm.sendMessage(text, selectedEmotionKey);
                     _messageInputController.clear();
+                    setState(() {
+                      currentSelectedEmojiKey =
+                          'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
+                    });
                   }
                 : null,
             child: Container(

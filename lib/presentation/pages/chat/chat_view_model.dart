@@ -1,10 +1,12 @@
 // 0924 변경: 채팅방 상태 오류 및 분석 누락 해결 (EMOJI ONLY)
+// 0926 로직 변경: 케이스 1-텍스트만 입력 / 케이스2-이모지만 입력 / 케이스 3-텍스트+이모지 같이 입력
 import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/constants/emotion_map.dart';
 import 'package:dailymoji/core/constants/presets.dart';
 import 'package:dailymoji/core/constants/solution_scripts.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/routers/router.dart';
+import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -51,6 +53,8 @@ class ChatViewModel extends Notifier<ChatState> {
 
   //사용자의 텍스트 답변을 기다리는 이모지 상태
   String? _pendingEmotionForAnalysis;
+  String? _lastEmojiOnlyCluster; // RIN ♥ 이모지 전송 직후의 클러스터 저장
+  String? _lastEmojiMessageId; // RIN ♥ 이모지 전송 직후의 메시지 ID 저장 (세션 업데이트용)
 
   @override
   ChatState build() => ChatState();
@@ -107,8 +111,8 @@ class ChatViewModel extends Notifier<ChatState> {
   // // ---------------------------------------------------------------------------
 
   /// 사용자 텍스트 메시지 전송
-  Future<void> sendMessage(
-      String content, String currentSelectedEmotion) async {
+  Future<void> sendMessage(String content, String? selectedEmotionKey) async {
+    // ♥ 변경: String? emotion으로 변경
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -121,19 +125,40 @@ class ChatViewModel extends Notifier<ChatState> {
     final savedMessage = await _addUserMessageToChat(message);
 
 // 대기 중인 이모지가 있으면 그것을 분석에 사용하고, 없으면 현재 입력창의 이모지를 사용
-    final emotionForAnalysis =
-        _pendingEmotionForAnalysis ?? currentSelectedEmotion;
+    final emotionForAnalysis = _pendingEmotionForAnalysis ??
+        selectedEmotionKey; // ♥ 변경: selectedEmotionKey 사용
 
     // 대기 중인 이모지를 사용했으므로, 이제 상태를 초기화
     if (_pendingEmotionForAnalysis != null) {
       _pendingEmotionForAnalysis = null;
     }
-    // 백엔드에 종합 분석 요청
-    await _analyzeAndRespond(
-      userMessage: savedMessage,
-      textForAnalysis: message.content,
-      emotion: emotionForAnalysis,
-    );
+
+    // RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
+    // 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
+    EmotionalRecord? emotionalRecordFromEmojiOnly;
+    if (_lastEmojiOnlyCluster != null &&
+        _lastEmojiMessageId != null &&
+        emotionForAnalysis != null) {
+      // 백엔드에 _pendingEmotionForAnalysis (이모지)와 텍스트를 함께 전달하여 풀파이프라인 분석 요청
+      // 이모지+텍스트 가중치를 붙여 최종 점수로 저장
+      emotionalRecordFromEmojiOnly = await _analyzeAndRespond(
+        userMessage: savedMessage,
+        textForAnalysis: message.content,
+        emotion: emotionForAnalysis,
+        updateSessionIdForMessageId:
+            _lastEmojiMessageId, // 이전 이모지 메시지 ID로 세션 업데이트
+      );
+      // 이모지-텍스트 연계 분석이 완료되면 상태 초기화
+      _lastEmojiOnlyCluster = null;
+      _lastEmojiMessageId = null;
+    } else {
+      // 백엔드에 종합 분석 요청
+      await _analyzeAndRespond(
+        userMessage: savedMessage,
+        textForAnalysis: message.content,
+        emotion: emotionForAnalysis, //이모지 키 전달
+      );
+    }
   }
 
   /// 이모지 메시지 전송 (채팅방 내에서 선택 시)
@@ -148,28 +173,48 @@ class ChatViewModel extends Notifier<ChatState> {
       imageAssetPath: kEmojiAssetMap[emotion],
     );
 
-    // // 2. 시스템 메시지 객체 생성
-    // final displayEmotion = kEmotionKeyToDisplay[emotion] ?? emotion;
-    // final systemMessage = Message(
-    //   userId: currentUserId,
-    //   sender: Sender.bot,
-    //   type: MessageType.system,
-    //   content: "$displayEmotion 상태에 맞춰 대화를 진행할게요.",
-    // );
-
-    // // 3. 이모지와 시스템 메시지를 한 번에 UI에 업데이트
-    // state = state
-    //     .copyWith(messages: [...state.messages, emojiMessage, systemMessage]);
-
-    // 4. 백그라운드에서 대화 시작 로직 실행
-    //    (UI에는 이미 추가했으므로, 이 함수는 DB 저장 및 봇 질문 로직만 담당)
+    // 백그라운드에서 대화 시작 로직 실행
+    // (UI에는 이미 추가했으므로, 이 함수는 DB 저장 및 봇 질문 로직만 담당)
     await _startConversationWithEmoji(emojiMessage, emotion);
+  }
+
+// RIN ♥ : 텍스트와 이모지를 별도의 메시지로 전송 (케이스 3)
+  Future<void> sendTextAndEmojiAsMessages(
+      String text, String emotionKey) async {
+    final currentUserId = _userId;
+    if (currentUserId == null) return;
+
+    // 1. 텍스트 메시지 먼저 전송
+    final textMessage = Message(
+      userId: currentUserId,
+      content: text,
+      sender: Sender.user,
+      type: MessageType.normal,
+    );
+    final savedTextMessage = await _addUserMessageToChat(textMessage);
+
+    // 2. 이모지 메시지 전송 (지연 없이 바로)
+    final emojiMessage = Message(
+      userId: currentUserId,
+      sender: Sender.user,
+      type: MessageType.image,
+      imageAssetPath: kEmojiAssetMap[emotionKey],
+    );
+    final savedEmojiMessage = await _addUserMessageToChat(emojiMessage);
+
+    // 3. 백엔드에 텍스트와 이모지 가중치를 붙여 풀 파이프라인으로 분석 요청
+    await _analyzeAndRespond(
+      userMessage: savedTextMessage, // 텍스트 메시지에 세션 ID 연결
+      textForAnalysis: text,
+      emotion: emotionKey,
+    );
   }
 
 // ---------------------------------------------------------------------------
 // Helper Methods
 // ---------------------------------------------------------------------------
 
+// RIN ♥ : 여기서 이모지 전송 직후에 텍스트 받는 로직으로 modify
   /// 이모지 선택 후 공감 질문으로 이어지는 대화 시작 로직
   /// DB 저장 및 봇 질문 로직을 담당하므로
   /// UI에 메시지를 중복으로 추가하지 않도록 조심하기!!
@@ -179,7 +224,7 @@ class ChatViewModel extends Notifier<ChatState> {
     final isAlreadyInState =
         state.messages.any((m) => m.tempId == emojiMessage.tempId);
 
-// [CHANGED] 저장된 메시지 객체를 반드시 확보해서 sessionId 업데이트에 사용
+// 저장된 메시지 객체를 반드시 확보해서 sessionId 업데이트에 사용
     Message savedEmojiMsg;
 
     if (isAlreadyInState) {
@@ -194,25 +239,33 @@ class ChatViewModel extends Notifier<ChatState> {
       savedEmojiMsg = saved;
     }
 
-    _pendingEmotionForAnalysis = emotion;
+    _pendingEmotionForAnalysis = emotion; // 텍스트 입력 대기중인 이모지 설정
     final currentUserId = _userId!;
 
     try {
       //리액션 스크립트로 질문/공감 멘트
       // - 서버 /analyze(text="") 퀵세이브 → sessionId + 대사(text) 동시 수신
       final emojiRepo = ref.read(emojiReactionRepositoryProvider);
-      final result = await emojiRepo.getReactionWithSession(
+      final EmotionalRecord emotionalRecord =
+          await emojiRepo.getReactionWithSession(
+        // EmotionalRecord 타입으로 받기
         userId: currentUserId,
         emotion: emotion,
         onboarding:
             ref.read(userViewModelProvider).userProfile?.onboardingScores ?? {},
       );
 
+      // 이모지 전송 직후의 클러스터와 메시지 ID 저장
+      _lastEmojiOnlyCluster = emotionalRecord.topCluster;
+      _lastEmojiMessageId = savedEmojiMsg.id;
+
       // 세션 연결
-      if (result.sessionId != null && savedEmojiMsg.id != null) {
+      if (emotionalRecord.sessionId != null && savedEmojiMsg.id != null) {
+        //emotionalRecord.sessionId 사용
         await ref.read(updateMessageSessionIdUseCaseProvider).execute(
               messageId: savedEmojiMsg.id!,
-              sessionId: result.sessionId!,
+              sessionId:
+                  emotionalRecord.sessionId!, // emotionalRecord.sessionId 사용
             );
       }
 
@@ -220,7 +273,8 @@ class ChatViewModel extends Notifier<ChatState> {
       final questionMessage = Message(
         userId: currentUserId,
         sender: Sender.bot,
-        content: result.text, // 서버가 준 reaction_text
+        content: emotionalRecord.empathyText ??
+            "어떤 일 때문에 그렇게 느끼셨나요?", //emotionalRecord의 empathyText 사용
       );
       await _addBotMessageToChat(questionMessage);
     } catch (e) {
@@ -235,13 +289,15 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   // 백엔드에 감정 분석 및 솔루션 제안 요청
-  Future<void> _analyzeAndRespond({
+  // RIN ♥ : EmotionalRecord? 타입 반환, updateSessionIdForMessageId 파라미터 추가
+  Future<EmotionalRecord?> _analyzeAndRespond({
     required Message userMessage,
     required String textForAnalysis,
-    required String emotion,
+    required String? emotion, // nullable
+    String? updateSessionIdForMessageId, // 세션 ID 업데이트할 메시지 ID
   }) async {
     final currentUserId = _userId;
-    if (currentUserId == null) return;
+    if (currentUserId == null) return null;
 
     final userState = ref.read(userViewModelProvider);
     final characterName = userState.userProfile?.characterNm ?? "모지";
@@ -272,13 +328,12 @@ class ChatViewModel extends Notifier<ChatState> {
               .toList());
 
       final sessionId = emotionalRecord.sessionId;
-      // intervention은 이제 항상 Map 형태입니다.
+      // intervention은 항상 Map 형태
       final intervention = emotionalRecord.intervention;
       final presetId = intervention['preset_id'] as String?;
 
       switch (presetId) {
-        // // Rin: 이모지에 대한 공감/질문 응답 처리하는 case
-        // case PresetIds.emojiReaction:
+        // Rin: 칭긔칭긔모드
         case PresetIds.friendlyReply:
           final botMessage = Message(
             userId: currentUserId,
@@ -288,9 +343,10 @@ class ChatViewModel extends Notifier<ChatState> {
           await _addBotMessageToChat(botMessage);
           break; // 여기서 대화 흐름이 한번 끝남
 
+        // 솔루션 제안 모드
         case PresetIds.solutionProposal:
-          // intervention 맵에서 직접 데이터를 안전하게 추출합니다.
-          // `as String?`을 사용하여, 혹시 키가 없더라도 null로 처리되어 앱이 멈추지 않습니다.
+          // intervention 맵에서 직접 데이터 추출 (안전성)
+          // `as String?`을 사용하여, 혹시 키가 없더라도 null로 처리되어 앱이 멈추지 않도록
           final empathyText = intervention['empathy_text'] as String?;
           final analysisText = intervention['analysis_text'] as String?;
           final topCluster = intervention['top_cluster'] as String?;
@@ -347,6 +403,19 @@ class ChatViewModel extends Notifier<ChatState> {
           await _addBotMessageToChat(botMessage);
           break;
 
+        // RIN ♥ : 이모지 단독 입력 시의 응답 처리 (백엔드에서 EMOJI_REACTION presetId로 옴)
+        case PresetIds.emojiReaction:
+          final reactionText = intervention['empathy_text'] as String?;
+          if (reactionText != null) {
+            final botMessage = Message(
+              userId: currentUserId,
+              content: reactionText,
+              sender: Sender.bot,
+            );
+            await _addBotMessageToChat(botMessage);
+          }
+          break;
+
         default:
           final errorMessage = Message(
             userId: currentUserId,
@@ -363,6 +432,14 @@ class ChatViewModel extends Notifier<ChatState> {
               sessionId: sessionId,
             );
       }
+      // RIN ♥ : 이모지-텍스트 연계 분석 시 이전 이모지 메시지에도 세션 ID 업데이트
+      if (sessionId != null && updateSessionIdForMessageId != null) {
+        await ref.read(updateMessageSessionIdUseCaseProvider).execute(
+              messageId: updateSessionIdForMessageId,
+              sessionId: sessionId,
+            );
+      }
+      return emotionalRecord; // emotionalRecord 반환
     } catch (e, stackTrace) {
       print("analyzeAndRespond error : $e\n$stackTrace");
       state = state.copyWith(
@@ -371,6 +448,7 @@ class ChatViewModel extends Notifier<ChatState> {
             .toList(),
         errorMessage: "감정 분석에 실패했어요. 😥",
       );
+      return null;
     } finally {
       state = state.copyWith(isTyping: false);
     }
