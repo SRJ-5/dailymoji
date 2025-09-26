@@ -313,8 +313,12 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
       );
     } else {
       // 텍스트 메시지
-      messageContent =
-          Text(message.content, maxLines: 10, overflow: TextOverflow.ellipsis, style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900));
+      messageContent = Text(
+        message.content,
+        maxLines: 10,
+        overflow: TextOverflow.ellipsis,
+        style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+      );
     }
 
     return Padding(
@@ -324,12 +328,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(_formattedNow(message.createdAt), style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey700)),
+          Text(
+            _formattedNow(message.createdAt),
+            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
+          ),
           SizedBox(width: 4.w),
           Container(
             padding: message.type == MessageType.image ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
 
-            constraints: BoxConstraints(maxWidth: 260.w), // 말풍선 가로 길이 최대
+            constraints: BoxConstraints(maxWidth: 292.w), // 말풍선 가로 길이 최대
             decoration: BoxDecoration(
               color: message.type == MessageType.image ? Colors.transparent : AppColors.green200,
               borderRadius: BorderRadius.only(
@@ -355,7 +362,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         children: [
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            constraints: BoxConstraints(maxWidth: 260.w),
+            constraints: BoxConstraints(maxWidth: 292.w),
             decoration: BoxDecoration(
               color: AppColors.yellow200,
               borderRadius: BorderRadius.only(
@@ -364,11 +371,19 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                 bottomLeft: Radius.circular(12.r),
               ),
             ),
-            child: Text(message.content,
-                maxLines: 10, softWrap: true, overflow: TextOverflow.ellipsis, style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900)),
+            child: Text(
+              message.content,
+              maxLines: 10,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+            ),
           ),
           SizedBox(width: 4.w),
-          Text(_formattedNow(message.createdAt), style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey700)),
+          Text(
+            _formattedNow(message.createdAt),
+            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
+          ),
         ],
       ),
     );
