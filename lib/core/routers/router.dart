@@ -53,7 +53,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           // extra를 Object?로 받아 유연하게 처리
           // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
-          final extraData = state.extra as Object;
+          final extraData = state.extra as Object?;
           String? emotion;
           Map<String, dynamic>? navData;
 

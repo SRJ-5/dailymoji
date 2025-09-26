@@ -3,6 +3,7 @@
 import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
@@ -617,8 +618,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     return Container(
       margin: EdgeInsets.only(bottom: 46.h),
       decoration: BoxDecoration(
-        // TODO: 봇이 입력중일때 채팅창 색 변화?
-        color: isBotTyping ? AppColors.grey100 : Colors.white,
+        // // TODO: 봇이 입력중일때 채팅창 색 변화?
+        // color: isBotTyping ? AppColors.grey100 : Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.grey200),
       ),
@@ -683,7 +684,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 : null,
             child: Container(
               padding: EdgeInsets.all(8.r),
-              child: Image.asset("assets/icons/send_icon.png",
+              child: Image.asset(AppIcons.send,
                   width: 24.w,
                   height: 24.h,
                   // 봇 입력 중이거나 텍스트가 비어있으면 아이콘 흐리게
