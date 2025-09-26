@@ -18,8 +18,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 
 // 현재 선택된 이모지 상태를 관리하는 Provider
-final selectedEmotionProvider =
-    StateProvider<String?>((ref) => null);
+final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 
 // 백엔드에서 대사를 비동기적으로 가져오는 Provider
 final homeDialogueProvider = FutureProvider<String>((ref) async {
@@ -28,8 +27,7 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
   // URL에 쿼리 파라미터 추가
   final url = selectedEmotion == null
       ? Uri.parse('${ApiConfig.baseUrl}/dialogue/home')
-      : Uri.parse(
-          '${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
+      : Uri.parse('${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
 
   final response = await http.get(url);
 
@@ -77,8 +75,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    final selectedNotifier =
-        ref.read(selectedEmotionProvider.notifier);
+    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
 
     if (selectedNotifier.state == emotionKey) {
       selectedNotifier.state = null;
@@ -171,40 +168,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
                 // 감정 이모티콘들 (Stack + Positioned)
-                Positioned(
-                    bottom: 15.h,
-                    child: _Imoge(
-                        imoKey: "smile",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
-                Positioned(
-                    top: 94.h,
-                    right: 25.w,
-                    child: _Imoge(
-                        imoKey: "crying",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
-                Positioned(
-                    bottom: 110.h,
-                    left: 15.w,
-                    child: _Imoge(
-                        imoKey: "shocked",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
-                Positioned(
-                    bottom: 110.h,
-                    right: 15.w,
-                    child: _Imoge(
-                        imoKey: "sleeping",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
-                Positioned(
-                    top: 94.h,
-                    left: 25.w,
-                    child: _Imoge(
-                        imoKey: "angry",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
+                Positioned(bottom: 15.h, child: _Imoge(imoKey: "smile", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap)),
+                Positioned(top: 94.h, right: 25.w, child: _Imoge(imoKey: "crying", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap)),
+                Positioned(bottom: 110.h, left: 15.w, child: _Imoge(imoKey: "shocked", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap)),
+                Positioned(bottom: 110.h, right: 15.w, child: _Imoge(imoKey: "sleeping", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap)),
+                Positioned(top: 94.h, left: 25.w, child: _Imoge(imoKey: "angry", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap)),
               ],
             ),
           ),
@@ -212,15 +180,13 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () =>
-            context.push('/chat', extra: selectedEmotion),
+        onTap: () => context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
             height: 40.h,
             margin: EdgeInsets.all(12.r),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -234,7 +200,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
-                Image.asset(AppIcons.send),
+                SvgPicture.asset(AppIcons.send),
               ],
             ),
           ),
@@ -250,10 +216,7 @@ class _Imoge extends StatelessWidget {
   final String? selectedEmotion;
   final void Function(String) onEmojiTap;
 
-  const _Imoge(
-      {required this.imoKey,
-      required this.selectedEmotion,
-      required this.onEmojiTap});
+  const _Imoge({required this.imoKey, required this.selectedEmotion, required this.onEmojiTap});
 
 // 으아아아아아아아!!! 이게 문제였음 하.. 경로다른거!!
   // String get imoAssetPath => "assets/images/emoticon/emo_3d_${imoKey}_02.png";
@@ -261,15 +224,13 @@ class _Imoge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(smile)를 보여줌.
-    final imagePath =
-        kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
+    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
     final isSelected = selectedEmotion == imoKey;
 
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
       child: isSelected
-          ? Image.asset(imagePath,
-              height: 80.h, width: 80.w, fit: BoxFit.cover)
+          ? Image.asset(imagePath, height: 80.h, width: 80.w, fit: BoxFit.cover)
           : ColorFiltered(
               colorFilter: const ColorFilter.matrix(<double>[
                 0.2126, 0.7152, 0.0722, 0, 0, // R
@@ -277,8 +238,7 @@ class _Imoge extends StatelessWidget {
                 0.2126, 0.7152, 0.0722, 0, 0, // B
                 0, 0, 0, 1, 0, // A
               ]),
-              child: Image.asset(imagePath,
-                  height: 60.h, width: 60.w, fit: BoxFit.cover),
+              child: Image.asset(imagePath, height: 60.h, width: 60.w, fit: BoxFit.cover),
             ),
     );
   }

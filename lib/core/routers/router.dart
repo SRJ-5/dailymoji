@@ -1,4 +1,4 @@
-import 'package:dailymoji/presentation/pages/character_setting/character_setting_page.dart';
+import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
 import 'package:dailymoji/presentation/pages/info/info_page.dart';
@@ -23,12 +23,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (context, state) => SplashPage()),
       GoRoute(path: '/login', builder: (context, state) => LoginPage()),
-      GoRoute(
-          path: '/onboarding1',
-          builder: (context, state) => OnboardingPart1Page()),
-      GoRoute(
-          path: '/onboarding2',
-          builder: (context, state) => OnboardingPart2Page()),
+      GoRoute(path: '/onboarding1', builder: (context, state) => OnboardingPart1Page()),
+      GoRoute(path: '/onboarding2', builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
         builder: (context, state) => HomePage(),
@@ -47,9 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => MyPage(),
         routes: [
           GoRoute(path: 'info', builder: (context, state) => InfoPage()),
-          GoRoute(
-              path: 'characterSetting',
-              builder: (context, state) => CharacterSettingPage()),
+          GoRoute(path: 'characterSetting', builder: (context, state) => CharacterSettingPage()),
         ],
       ),
       GoRoute(
