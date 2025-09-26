@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -232,7 +233,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
                 width: 240.w,
                 height: 360.h,
                 child: Image(
-                  image: AssetImage("assets/images/cado_profile.png"),
+                  image: AssetImage(AppImages.cadoProfile),
                   fit: BoxFit.cover,
                 ),
               ),
