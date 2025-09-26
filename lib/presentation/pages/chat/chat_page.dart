@@ -249,11 +249,11 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: Colors.white, // 하얀 네모 박스
+            color: AppColors.white, // 하얀 네모 박스
             borderRadius: BorderRadius.circular(20.r), // 라운드 처리
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: AppColors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               )
@@ -418,12 +418,12 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
               final buttonStyle = ElevatedButton.styleFrom(
                 backgroundColor: isPositiveAction ? AppColors.yellow700 : AppColors.green50,
                 foregroundColor: isPositiveAction ? AppColors.grey50 : AppColors.grey900,
-                padding: EdgeInsets.symmetric(vertical: 9.5.h),
+                padding: EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
                   side: BorderSide(color: AppColors.grey200, width: isPositiveAction ? 0 : 1), // 테두리
                 ),
-                textStyle: AppFontStyles.bodyMedium14,
+                textStyle: AppFontStyles.bodyRegular14,
               );
 
               return Padding(
@@ -483,11 +483,11 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                 margin: const EdgeInsets.only(bottom: 5),
                 padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(12.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: AppColors.black.withValues(alpha: 0.2),
                       offset: const Offset(0, 2),
                       blurRadius: 4,
                     ),
@@ -511,7 +511,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                 right: 40.w,
                 child: CustomPaint(
                   size: Size(34.w, 8.h),
-                  painter: TrianglePainter(Colors.white),
+                  painter: TrianglePainter(AppColors.white),
                 ),
               ),
             ],
@@ -703,7 +703,7 @@ class _DateSeparator extends StatelessWidget {
               )
             ],
           ),
-          child: Text(DateFormat('yyyy년 MM월 dd일').format(date), style: AppFontStyles.bodyMedium12.copyWith(color: AppColors.grey900)),
+          child: Text(DateFormat('yyyy년 MM월 dd일').format(date), style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900)),
         ),
       ),
     );
