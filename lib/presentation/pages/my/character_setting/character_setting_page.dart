@@ -47,52 +47,81 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
               SizedBox(height: 16.h),
               GestureDetector(
                 onTap: () async {
-                  final result = await showMenu<String>(
+                  final result = await showDialog<String>(
                     context: context,
-                    position: RelativeRect.fromLTRB(183.w, 263.h, 12.w, 0),
-                    color: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                      side: BorderSide(color: AppColors.grey100),
-                    ),
-                    items: CharacterPersonality.values.map((e) => e.label).map((e) {
-                      return PopupMenuItem<String>(
-                        padding: EdgeInsets.zero,
-                        value: e,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                          child: Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context, e);
-                                },
-                                child: SvgPicture.asset(
-                                  userState.userProfile!.characterPersonality! == e ? AppIcons.radioSelected : AppIcons.radioUnselected,
-                                  width: 16.r,
-                                  height: 16.r,
+                    barrierColor: Colors.transparent,
+                    builder: (context) {
+                      return Stack(
+                        children: [
+                          Positioned.fill(
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(color: Colors.transparent),
+                            ),
+                          ),
+                          Positioned(
+                            // left: 183.w,
+                            top: 216.h,
+                            right: 12.w,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 4.h),
+                                width: 182.w,
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(color: AppColors.grey100),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0xFF1D293D).withValues(alpha: 0.1),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: CharacterPersonality.values.map((e) {
+                                    final isSelected = userState.userProfile!.characterPersonality! == e.label;
+                                    return GestureDetector(
+                                      onTap: () => Navigator.pop(context, e.label),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          children: [
+                                            SvgPicture.asset(
+                                              isSelected ? AppIcons.radioSelected : AppIcons.radioUnselected,
+                                              width: 16.r,
+                                              height: 16.r,
+                                            ),
+                                            SizedBox(width: 8.w),
+                                            Text(
+                                              e.label,
+                                              style: isSelected
+                                                  ? AppFontStyles.bodySemiBold14.copyWith(
+                                                      color: AppColors.grey900,
+                                                    )
+                                                  : AppFontStyles.bodyRegular14.copyWith(
+                                                      color: AppColors.grey900,
+                                                    ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
                                 ),
                               ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                e,
-                                style: userState.userProfile!.characterPersonality! == e
-                                    ? AppFontStyles.bodySemiBold14.copyWith(
-                                        color: AppColors.grey900,
-                                      )
-                                    : AppFontStyles.bodyRegular14.copyWith(
-                                        color: AppColors.grey900,
-                                      ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       );
-                    }).toList(),
+                    },
                   );
+
                   if (result != null) {
-                    print(result);
                     ref.read(userViewModelProvider.notifier).updateCharacterPersonality(newCharacterPersonality: result);
                   }
                 },
@@ -125,10 +154,7 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                         height: 24.h,
                         child: SvgPicture.asset(
                           AppIcons.unfoldMore,
-                          colorFilter: ColorFilter.mode(
-                            AppColors.grey700,
-                            BlendMode.srcIn,
-                          ),
+                          colorFilter: ColorFilter.mode(AppColors.grey700, BlendMode.srcIn),
                         ),
                       ),
                     ],
