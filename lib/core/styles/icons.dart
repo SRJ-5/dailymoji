@@ -8,4 +8,5 @@ class AppIcons {
   static const String radioSelected = 'assets/icons/radio_selected.svg';
   static const String radioUnselected = 'assets/icons/radio_unselected.svg';
   static const String stroke = 'assets/icons/stroke.svg';
+  static const String unfoldMore = 'assets/icons/unfold_more.svg';
 }

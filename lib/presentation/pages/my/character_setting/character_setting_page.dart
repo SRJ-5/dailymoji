@@ -119,10 +119,17 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                         ),
                       ),
                       SizedBox(width: 4.w),
-                      Icon(
-                        Icons.unfold_more,
-                        color: AppColors.grey700,
-                        size: 24.sp,
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 4.h),
+                        width: 24.w,
+                        height: 24.h,
+                        child: SvgPicture.asset(
+                          AppIcons.unfoldMore,
+                          colorFilter: ColorFilter.mode(
+                            AppColors.grey700,
+                            BlendMode.srcIn,
+                          ),
+                        ),
                       ),
                     ],
                   ),
