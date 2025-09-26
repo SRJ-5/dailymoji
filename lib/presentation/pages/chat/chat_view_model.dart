@@ -395,8 +395,8 @@ class ChatViewModel extends Notifier<ChatState> {
         proposal: {
           "solution_id": proposalResponse['solution_id'],
           "options": [
-            {"label": "좋아, 해볼게", "action": "accept_solution"},
-            {"label": "아니, 그냥 말할래", "action": "decline_solution_and_talk"}
+            {"label": "좋아, 해볼게!", "action": "accept_solution"},
+            {"label": "아니, 더 대화할래", "action": "decline_solution_and_talk"}
           ]
         },
       );
