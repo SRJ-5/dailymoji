@@ -53,14 +53,13 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   bool _showControls = false;
   bool _isMuted = true;
 
-// RIN: 채팅페이지로 이동하기 직전에 세로로 먼저 고정하고 들어가게
+// RIN: 채팅페이지로 이동하기
   void _navigateToChatPage() {
-    // 이동하기 전에 화면 방향을 세로로 먼저 고정합니다.
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    // 그런 다음 채팅 페이지로 이동합니다.
+    // // 이동하기 전에 화면 방향을 세로로 먼저 고정합니다.
+    // SystemChrome.setPreferredOrientations([
+    //   DeviceOrientation.portraitUp,
+    //   DeviceOrientation.portraitDown,
+    // ]);
     context.go('/chat');
   }
 
@@ -129,7 +128,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     // 📐 화면을 좌우까지 '덮도록' 필요한 확대 배수 (BoxFit.cover 수동 구현)
     final widthAtScreenHeight = size.height * ar; // 세로 꽉 채웠을 때의 가로폭
     final coverScale = size.width / widthAtScreenHeight; // 좌우 남지 않게 만드는 배수
-    const extraZoom = 0.85; // 더 크게 자르고 싶으면 1.05~1.2
+    const extraZoom = 1; // 더 크게 자르고 싶으면 1.05~1.2
     final zoom = coverScale * extraZoom;
 
     return Scaffold(
