@@ -36,6 +36,8 @@ class _SelectAiPersonalityState
         Container(
           width: double.infinity,
           height: 94.h,
+          padding: EdgeInsets.symmetric(
+              horizontal: 4.w, vertical: 8.h),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -46,7 +48,7 @@ class _SelectAiPersonalityState
           ),
         ),
         SizedBox(
-          height: 24.r,
+          height: 32.r,
         ),
         Column(
           children: List.generate(

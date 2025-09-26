@@ -15,19 +15,25 @@ class NicknameEditCard extends ConsumerStatefulWidget {
   final bool isUser;
 
   @override
-  ConsumerState<NicknameEditCard> createState() => _NicknameEditCardState();
+  ConsumerState<NicknameEditCard> createState() =>
+      _NicknameEditCardState();
 }
 
-class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
+class _NicknameEditCardState
+    extends ConsumerState<NicknameEditCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding:
+          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
-        color: widget.isUser ? AppColors.green100 : AppColors.white,
+        color:
+            widget.isUser ? AppColors.green100 : AppColors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: widget.isUser ? AppColors.grey200 : AppColors.grey100,
+          color: widget.isUser
+              ? AppColors.grey200
+              : AppColors.grey100,
         ),
       ),
       child: Column(
@@ -52,7 +58,8 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                 SizedBox(width: 8.w),
                 GestureDetector(
                   onTap: () {
-                    _showEditNicknameDialog(context, widget.nickname);
+                    _showEditNicknameDialog(
+                        context, widget.nickname);
                   },
                   child: Icon(
                     Icons.edit,
@@ -68,15 +75,18 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
     );
   }
 
-  Future<void> _showEditNicknameDialog(BuildContext context, String nickname) async {
-    final TextEditingController controller = TextEditingController(text: nickname);
+  Future<void> _showEditNicknameDialog(
+      BuildContext context, String nickname) async {
+    final TextEditingController controller =
+        TextEditingController(text: nickname);
     int nicknameLength = controller.text.length;
 
     String? result = await showDialog(
       context: context,
       barrierDismissible: false, // 바깥 터치로 닫히지 않게
       builder: (context) {
-        return StatefulBuilder(builder: (context, setStateDialog) {
+        return StatefulBuilder(
+            builder: (context, setStateDialog) {
           final len = controller.text.length;
           final invalid = len < 2 || len > 10;
           return AlertDialog(
@@ -126,7 +136,9 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                 Text(
                   "2~10자만 사용 가능해요",
                   style: AppFontStyles.bodyRegular12.copyWith(
-                    color: invalid ? AppColors.orange500 : AppColors.grey700,
+                    color: invalid
+                        ? AppColors.orange500
+                        : AppColors.grey700,
                   ),
                 ),
                 SizedBox(height: 24.h),
@@ -138,10 +150,15 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                         Navigator.pop(context);
                       },
                       child: Container(
-                        padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                        padding: EdgeInsets.only(
+                            top: 8.h,
+                            bottom: 8.h,
+                            left: 16.w,
+                            right: 10.w),
                         child: Text(
                           "취소",
-                          style: AppFontStyles.bodyMedium14.copyWith(
+                          style: AppFontStyles.bodyMedium14
+                              .copyWith(
                             color: AppColors.grey700,
                           ),
                         ),
@@ -154,10 +171,15 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                         Navigator.pop(context, nickname);
                       },
                       child: Container(
-                        padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                        padding: EdgeInsets.only(
+                            top: 8.h,
+                            bottom: 8.h,
+                            left: 16.w,
+                            right: 10.w),
                         child: Text(
                           "완료",
-                          style: AppFontStyles.bodyMedium14.copyWith(
+                          style: AppFontStyles.bodyMedium14
+                              .copyWith(
                             color: AppColors.green600,
                           ),
                         ),
@@ -174,8 +196,12 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
 
     if (result != null && result.isNotEmpty) {
       widget.isUser
-          ? ref.read(userViewModelProvider.notifier).updateUserNickNM(newUserNickNM: result)
-          : ref.read(userViewModelProvider.notifier).updateCharacterNM(newCharacterNM: result);
+          ? ref
+              .read(userViewModelProvider.notifier)
+              .updateUserNickNM(newUserNickNM: result)
+          : ref
+              .read(userViewModelProvider.notifier)
+              .updateCharacterNM(newCharacterNM: result);
     }
   }
 }

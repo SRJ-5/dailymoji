@@ -47,6 +47,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
         Container(
           width: double.infinity,
           height: 94.h,
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -63,6 +64,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
           child: Container(
             width: double.infinity,
             height: 64.h,
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: TextField(
@@ -87,7 +89,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                 },
                 decoration: InputDecoration(
                     counterText: '',
-                    hintText: '별명을 입력해 주세요',
+                    hintText: '닉네임을 입력해 주세요',
                     hintStyle: AppFontStyles.bodyRegular16
                         .copyWith(color: AppColors.grey400),
                     suffixIcon: _textEditingController
@@ -109,7 +111,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                             },
                           ),
                     contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 16.h),
+                        horizontal: 12.w, vertical: 12.h),
                     filled: true,
                     fillColor: AppColors.green50,
                     border: OutlineInputBorder(
@@ -135,7 +137,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
             style: AppFontStyles.bodyRegular12.copyWith(
                 color: _isNameCheck
                     ? AppColors.grey700
-                    : AppColors.orange500)),
+                    : AppColors.noti900)),
         Text(
           '• 나중에 언제든지 변경할 수 있어요',
           style: AppFontStyles.bodyRegular12

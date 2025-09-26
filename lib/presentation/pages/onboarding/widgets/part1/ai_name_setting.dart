@@ -48,6 +48,8 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
         Container(
           width: double.infinity,
           height: 94.h,
+          padding: EdgeInsets.symmetric(
+              horizontal: 4.w, vertical: 8.h),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -64,6 +66,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           child: Container(
             width: double.infinity,
             height: 64.h,
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: TextField(
@@ -80,7 +83,6 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                       _isNameCheck = isValid;
                     }
                   });
-                  // TODO: ViewModel로 상태 관리 하여 저장
                   ref
                       .watch(userViewModelProvider.notifier)
                       .setAiName(check: isValid, aiName: value);
@@ -111,7 +113,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                             },
                           ),
                     contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 16.h),
+                        horizontal: 12.w, vertical: 12.h),
                     filled: true,
                     fillColor: AppColors.green50,
                     border: OutlineInputBorder(
@@ -137,7 +139,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
             style: AppFontStyles.bodyRegular12.copyWith(
                 color: _isNameCheck
                     ? AppColors.grey700
-                    : AppColors.orange500)),
+                    : AppColors.noti900)),
         Text(
           '• 나중에 언제든지 변경할 수 있어요',
           style: AppFontStyles.bodyRegular12
