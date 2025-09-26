@@ -26,6 +26,7 @@ class SelectBox extends StatelessWidget {
               : AppColors.green50,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
+              width: isSelected ? 2 : 1,
               color: isSelected
                   ? AppColors.green200
                   : AppColors.grey200)),
