@@ -15,25 +15,19 @@ class NicknameEditCard extends ConsumerStatefulWidget {
   final bool isUser;
 
   @override
-  ConsumerState<NicknameEditCard> createState() =>
-      _NicknameEditCardState();
+  ConsumerState<NicknameEditCard> createState() => _NicknameEditCardState();
 }
 
-class _NicknameEditCardState
-    extends ConsumerState<NicknameEditCard> {
+class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
-        color:
-            widget.isUser ? AppColors.green100 : AppColors.white,
+        color: widget.isUser ? AppColors.green100 : AppColors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: widget.isUser
-              ? AppColors.grey200
-              : AppColors.grey100,
+          color: widget.isUser ? AppColors.grey200 : AppColors.grey100,
         ),
       ),
       child: Column(
@@ -58,8 +52,7 @@ class _NicknameEditCardState
                 SizedBox(width: 8.w),
                 GestureDetector(
                   onTap: () {
-                    _showEditNicknameDialog(
-                        context, widget.nickname);
+                    _showEditNicknameDialog(context, widget.nickname, widget.isUser);
                   },
                   child: Icon(
                     Icons.edit,
@@ -75,18 +68,13 @@ class _NicknameEditCardState
     );
   }
 
-  Future<void> _showEditNicknameDialog(
-      BuildContext context, String nickname) async {
-    final TextEditingController controller =
-        TextEditingController(text: nickname);
-    int nicknameLength = controller.text.length;
+  Future<void> _showEditNicknameDialog(BuildContext context, String nickname, bool isUser) async {
+    final TextEditingController controller = TextEditingController(text: nickname);
 
     String? result = await showDialog(
       context: context,
-      barrierDismissible: false, // 바깥 터치로 닫히지 않게
       builder: (context) {
-        return StatefulBuilder(
-            builder: (context, setStateDialog) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
           final len = controller.text.length;
           final invalid = len < 2 || len > 10;
           return AlertDialog(
@@ -95,99 +83,104 @@ class _NicknameEditCardState
               borderRadius: BorderRadius.circular(16), // 둥근 모서리
             ),
             contentPadding: EdgeInsets.all(24.r),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "프로필 수정",
-                  style: AppFontStyles.heading3.copyWith(
-                    color: AppColors.grey900,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Divider(
-                  color: AppColors.grey100,
-                  height: 1.h,
-                ),
-                SizedBox(height: 12.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4.h),
-                  child: TextField(
-                    controller: controller,
-                    onChanged: (value) {
-                      setStateDialog(() {});
-                    },
-                    maxLines: 1,
-                    maxLength: 10,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: AppColors.green50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.grey200,
-                          width: 1.sp,
-                        ),
-                      ),
+            content: SizedBox(
+              width: 320.h,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isUser ? "닉네임 수정" : "캐릭터 이름 수정",
+                    style: AppFontStyles.heading3.copyWith(
+                      color: AppColors.grey900,
                     ),
                   ),
-                ),
-                Text(
-                  "2~10자만 사용 가능해요",
-                  style: AppFontStyles.bodyRegular12.copyWith(
-                    color: invalid
-                        ? AppColors.orange500
-                        : AppColors.grey700,
+                  SizedBox(height: 12.h),
+                  Divider(
+                    color: AppColors.grey100,
+                    height: 1.h,
                   ),
-                ),
-                SizedBox(height: 24.h),
-                Row(
-                  children: [
-                    Spacer(),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
+                  SizedBox(height: 12.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    child: TextField(
+                      controller: controller,
+                      onChanged: (value) {
+                        setStateDialog(() {});
                       },
-                      child: Container(
-                        padding: EdgeInsets.only(
-                            top: 8.h,
-                            bottom: 8.h,
-                            left: 16.w,
-                            right: 10.w),
-                        child: Text(
-                          "취소",
-                          style: AppFontStyles.bodyMedium14
-                              .copyWith(
-                            color: AppColors.grey700,
+                      maxLines: 1,
+                      maxLength: 10,
+                      decoration: InputDecoration(
+                        filled: true,
+                        counterText: "",
+                        fillColor: AppColors.green50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.grey200,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.grey200,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.green500,
+                            width: 2,
                           ),
                         ),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        if (invalid) return;
-                        final nickname = controller.text;
-                        Navigator.pop(context, nickname);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.only(
-                            top: 8.h,
-                            bottom: 8.h,
-                            left: 16.w,
-                            right: 10.w),
-                        child: Text(
-                          "완료",
-                          style: AppFontStyles.bodyMedium14
-                              .copyWith(
-                            color: AppColors.green600,
+                  ),
+                  Text(
+                    " • 2~10자만 사용 가능해요",
+                    style: AppFontStyles.bodyRegular12.copyWith(
+                      color: invalid ? AppColors.noti900 : AppColors.grey700,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  Row(
+                    children: [
+                      Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                          child: Text(
+                            "취소",
+                            style: AppFontStyles.bodyMedium14.copyWith(
+                              color: AppColors.grey700,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      GestureDetector(
+                        onTap: () {
+                          if (invalid) return;
+                          final nickname = controller.text;
+                          Navigator.pop(context, nickname);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
+                          child: Text(
+                            "완료",
+                            style: AppFontStyles.bodyMedium14.copyWith(
+                              color: AppColors.green600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         });
@@ -196,12 +189,8 @@ class _NicknameEditCardState
 
     if (result != null && result.isNotEmpty) {
       widget.isUser
-          ? ref
-              .read(userViewModelProvider.notifier)
-              .updateUserNickNM(newUserNickNM: result)
-          : ref
-              .read(userViewModelProvider.notifier)
-              .updateCharacterNM(newCharacterNM: result);
+          ? ref.read(userViewModelProvider.notifier).updateUserNickNM(newUserNickNM: result)
+          : ref.read(userViewModelProvider.notifier).updateCharacterNM(newCharacterNM: result);
     }
   }
 }

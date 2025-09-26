@@ -315,8 +315,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
       // 텍스트 메시지
       messageContent = Text(
         message.content,
-        maxLines: 10,
-        overflow: TextOverflow.ellipsis,
         style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
       );
     }
@@ -373,9 +371,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
             ),
             child: Text(
               message.content,
-              maxLines: 10,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
               style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
             ),
           ),
