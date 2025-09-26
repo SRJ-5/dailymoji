@@ -6,6 +6,7 @@ import 'package:dailymoji/core/constants/solution_scripts.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -420,6 +421,9 @@ class ChatViewModel extends Notifier<ChatState> {
     try {
       final msgs =
           await ref.read(loadMessagesUseCaseProvider).execute(userId: userId);
+      // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
+      msgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
       state = state.copyWith(messages: msgs, isLoading: false);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString(), isLoading: false);

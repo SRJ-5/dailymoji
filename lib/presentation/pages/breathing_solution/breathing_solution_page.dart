@@ -34,7 +34,8 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
     with SingleTickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
-  bool _showFinalHint = false;
+  // bool _showFinalHint = false;
+  bool _showFinalHint = true; // 개발용으로 일단 true!!!
 
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
@@ -46,7 +47,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
   void initState() {
     super.initState();
 //API 호출 없이, 위에서 만든 임시 맵에서 context를 바로 가져오기
-    final contextKey = solutionContexts['context'] ?? '그곳';
+    final contextKey = solutionContexts[widget.solutionId] ?? '그곳';
 
     _steps = [
       {"text": "코로 4초동안\n숨을 들이마시고", "duration": 4},
@@ -62,18 +63,27 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
     _blinkController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
-    )..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
+    ); //..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
 
     _blinkAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(_blinkController);
 
-    _startSequence();
+// ⭐⭐ 실제 로직을 실행할 때는 아래 주석을 해제하세요. ⭐⭐
+    // _showFinalHint = false; // 실제 릴리즈 시에는 false로 시작
+    _startSequence(); // 실제 릴리즈 시에는 이 함수 호출
+
+    // ⭐⭐ 개발 테스트를 위해 애니메이션을 즉시 시작합니다. ⭐⭐
+    if (_showFinalHint) {
+      _blinkController.repeat(reverse: true);
+    }
   }
 
   Future<void> _startSequence() async {
     for (int i = 0; i < _steps.length; i++) {
+      if (!mounted) return;
+
       setState(() {
         _step = i;
         _opacity = 0.0;
@@ -81,6 +91,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       });
 
       await Future.delayed(const Duration(milliseconds: 50));
+      if (!mounted) return;
 
       // Fade In
       setState(() => _opacity = 1.0);
@@ -90,6 +101,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       if (duration != null) {
         // 유지
         await Future.delayed(Duration(seconds: duration));
+        setState(() => _showFinalHint = true);
 
         // Fade Out
         setState(() => _opacity = 0.0);
@@ -97,6 +109,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       } else {
         // 마지막 단계 → 3초 기다렸다가 안내 문구 표시
         await Future.delayed(const Duration(seconds: 3));
+
         setState(() => _showFinalHint = true);
         break;
       }

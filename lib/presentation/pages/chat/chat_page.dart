@@ -7,6 +7,7 @@
 
 import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -67,17 +68,24 @@ class _ChatPageState extends ConsumerState<ChatPage>
     super.dispose();
   }
 
-  // void _scrollToBottom() {
-  //   if (_scrollController.hasClients) {
-  //     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       _scrollController.animateTo(
-  //         _scrollController.position.maxScrollExtent,
-  //         duration: const Duration(milliseconds: 300),
-  //         curve: Curves.easeOut,
-  //       );
-  //     });
-  //   }
-  // }
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      if (!_scrollController.hasClients) return;
+      // reverse: true 상태에서 맨 아래는 스크롤 위치 0.0을 의미합니다.
+      final targetPosition = 0.0;
+
+      // 위젯 렌더링이 완료된 직후에 스크롤해야 정확한 맨 아래 위치로 갈 수 있음
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            targetPosition,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
 
   void _toggleEmojiBar() {
     setState(() => showEmojiBar = !showEmojiBar);
@@ -102,10 +110,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
     final messages = chatState.messages.reversed.toList();
 
-    // ref.listen(chatViewModelProvider.select((state) => state.messages.length),
-    //     (_, __) {
-    //   _scrollToBottom();
-    // });
+    //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동
+    ref.listen(chatViewModelProvider.select((state) => state.messages.length),
+        (previous, next) {
+      if (next > (previous ?? 0) && !chatState.isLoading) {
+        _scrollToBottom();
+      }
+    });
 
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
@@ -154,26 +165,30 @@ class _ChatPageState extends ConsumerState<ChatPage>
                           reverse: true,
                           itemCount: messages.length,
                           itemBuilder: (context, index) {
-                            final message = messages[index];
-                            final messageKey = ValueKey(message.tempId);
+                            //  reverse된 리스트에서 올바른 메시지 가져오기
+                            final messages = chatState.messages;
+                            final reversedIndex = messages.length - 1 - index;
+                            final message = messages[reversedIndex];
 
                             // --- 날짜 구분선 표시 로직 ---
                             bool showDateSeparator = false;
-                            if (index == messages.length - 1) {
-                              // 마지막 메시지(가장 오래된 메시지)
+                            if (reversedIndex == 0) {
                               showDateSeparator = true;
                             } else {
-                              final prevMessage =
-                                  messages[index + 1]; // 시간 순서상 이전 메시지
-                              if (!isSameDay(
-                                  prevMessage.createdAt, message.createdAt)) {
+                              // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
+                              final prevMessageInTime =
+                                  chatState.messages[reversedIndex - 1];
+                              if (!isSameDay(prevMessageInTime.createdAt,
+                                  message.createdAt)) {
                                 showDateSeparator = true;
                               }
                             }
 
-                            final messageWidget =
-                                _buildMessageWidget(message, key: messageKey);
+                            final messageWidget = _buildMessageWidget(message,
+                                key: ValueKey(message.tempId));
 
+                            // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
+                            // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
                             if (showDateSeparator) {
                               return Column(
                                 children: [
@@ -395,6 +410,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Widget _solutionProposalMessage(Message message, {required Key key}) {
     final proposal = message.proposal!;
     final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
+    debugPrint("RIN: Rendering solution proposal text: ${message.content}");
 
     // 봇 메시지 위젯을 재사용하여 텍스트를 표시하고, 아래에 버튼을 추가합니다.
     return Column(
