@@ -8,8 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+//추가로 해야할 일
+//각 spot은 null일 수 있어야함.
+//그에 따라 그래프는 12일에 1, 14일에 10이 들어있고 중간값인 13일에 null이라면, 1부터 10까지가 이어지도록 그려야함
 
-// 최근 14일 날짜 리스트 생성
+// 차트가 왼쪽에서부터 생성되는 로직 구현 해야함
+
+// 최근 14일 날짜 리스트 생성 함수
 List<DateTime> generateLast14Days() {
   final today = DateTime.now();
   return List.generate(
@@ -18,10 +23,10 @@ List<DateTime> generateLast14Days() {
   );
 }
 
-// 날짜 리스트
+// 날짜 리스트 생성
 final last14Days = generateLast14Days();
 
-// 감정 데이터 (동적으로 spots 생성) //나중에 실제 데이터가 연동되면 삭제할 함수
+// 감정 데이터 (랜덤으로 spots 생성) // 나중에 실제 데이터가 연동되면 삭제할 함수
 List<FlSpot> generateRandomSpots(List<DateTime> days) {
   final random = Random();
   return List.generate(
@@ -30,14 +35,14 @@ List<FlSpot> generateRandomSpots(List<DateTime> days) {
   );
 }
 
-// 감정 데이터 맵 (랜덤 값 예시)
+// 감정 데이터 맵
 final emotionMap = {
   "종합 감정 점수": EmotionData(
     color: AppColors.totalScore,
     spots: generateRandomSpots(last14Days),
-    avg: 6,
-    max: 8,
-    min: 3,
+    avg: 6, // flspot의 모든 y값을 더해서 last14Days.length로 나눈 숫자
+    max: 8, // flspot의 모든 y값을 탐색후 가장 높은 숫자
+    min: 3, // flspot의 모든 y값을 탐색후 가장 낮은 숫자
     description: "종합적인 감정 흐름을 보여줍니다.",
   ),
   "불안/분노": EmotionData(
@@ -105,7 +110,6 @@ class EmotionData {
 // 필터 Provider (종합 감정 점수 제외 → 체크리스트는 5개만)
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
-    "종합 감정 점수": true,
     "불안/분노": false,
     "우울/무기력/번아웃": false,
     "ADHD": false,
@@ -130,7 +134,7 @@ class WeeklyReport extends ConsumerWidget {
     return Container(
       color: AppColors.yellow50,
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(12.r),
+        padding: EdgeInsets.symmetric(horizontal: 12.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -253,7 +257,8 @@ class WeeklyReport extends ConsumerWidget {
                                 }
                                 return Text(
                                   value.toInt().toString(),
-                                  style: const TextStyle(fontSize: 10),
+                                  style: AppFontStyles.bodyRegular12
+                                      .copyWith(color: AppColors.grey600),
                                 );
                               },
                             ),
@@ -276,7 +281,8 @@ class WeeklyReport extends ConsumerWidget {
                                 final date = last14Days[index];
                                 return Text(
                                   "${date.month}.${date.day}",
-                                  style: const TextStyle(fontSize: 10),
+                                  style: AppFontStyles.bodyRegular12
+                                      .copyWith(color: AppColors.grey600),
                                 );
                               },
                             ),
@@ -289,15 +295,26 @@ class WeeklyReport extends ConsumerWidget {
                         maxX: (last14Days.length - 1).toDouble(),
                         minY: 0,
                         maxY: 10,
-                        lineBarsData: selectedEmotions.map((key) {
-                          final data = emotionMap[key]!;
-                          return LineChartBarData(
-                            color: data.color,
+                        lineBarsData: [
+                          // ✅ 종합 감정 점수는 항상 추가
+                          LineChartBarData(
+                            color: emotionMap["종합 감정 점수"]!.color,
                             barWidth: 2,
                             dotData: FlDotData(show: false),
-                            spots: data.spots,
-                          );
-                        }).toList(),
+                            spots: emotionMap["종합 감정 점수"]!.spots,
+                          ),
+
+                          // ✅ 선택된 감정 라인들 추가
+                          ...selectedEmotions.map((key) {
+                            final data = emotionMap[key]!;
+                            return LineChartBarData(
+                              color: data.color,
+                              barWidth: 2,
+                              dotData: FlDotData(show: false),
+                              spots: data.spots,
+                            );
+                          }),
+                        ],
                       ),
                     ),
                   ),
@@ -335,91 +352,26 @@ class WeeklyReport extends ConsumerWidget {
               ),
             ),
 
+            // 경계선
             Container(
               padding: EdgeInsets.only(top: 23.h),
               height: 2,
               width: double.infinity,
               color: AppColors.grey100,
             ),
-
             // 기록 감정 부분
-            if (selectedEmotions.isEmpty) // 감정선택이 안됐을 때
-              Padding(
-                padding: EdgeInsets.only(top: 90.h),
-                child: Center(
-                  child: Text(
-                    "감정을 선택해주세요",
-                    style: AppFontStyles.bodyBold14.copyWith(
-                      color: AppColors.grey500,
-                    ),
-                  ),
-                ),
-              )
-            else // 감정 선택 됐을 때
-              ...selectedEmotions.map((key) {
-                final data = emotionMap[key]!;
-                return Container(
-                  padding: EdgeInsets.only(top: 16.h),
-                  child: Column(
-                    children: [
-                      Row(
-                        spacing: 4.r,
-                        children: [
-                          Container(
-                              width: 8.w,
-                              height: 16.h,
-                              decoration: BoxDecoration(
-                                color: data.color,
-                                borderRadius: BorderRadius.circular(2),
-                              )),
-                          Text(
-                            key,
-                            style: AppFontStyles.bodyBold16.copyWith(
-                              color: AppColors.grey900,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.h),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.green100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _ScoreBox(
-                                    label: "평균 감정 점수",
-                                    value: "${data.avg}점",
-                                    color: AppColors.green700),
-                                separator(),
-                                _ScoreBox(
-                                    label: "최고 감정 점수",
-                                    value: "${data.max}점",
-                                    color: AppColors.noti100),
-                                separator(),
-                                _ScoreBox(
-                                    label: "최저 감정 점수",
-                                    value: "${data.min}점",
-                                    color: AppColors.noti200),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(data.description,
-                                style: AppFontStyles.bodyRegular12_180
-                                    .copyWith(color: AppColors.grey900)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
+            Column(
+              children: [
+                // ✅ 종합 감정 점수는 항상 표시
+                _buildEmotionCard("종합 감정 점수", emotionMap["종합 감정 점수"]!),
+
+                // ✅ 선택된 감정이 있으면 그 카드들도 추가
+                ...selectedEmotions.map((key) {
+                  final data = emotionMap[key]!;
+                  return _buildEmotionCard(key, data);
+                }),
+              ],
+            ),
           ],
         ),
       ),
@@ -432,7 +384,7 @@ Widget separator() {
   return Container(
       width: 1,
       height: 35, // 선 높이
-      color: Color(0xFFD2D2D2));
+      color: AppColors.grey200);
 }
 
 // 점수 박스 위젯
@@ -459,4 +411,72 @@ class _ScoreBox extends StatelessWidget {
       ],
     );
   }
+}
+
+// 감정 점수 카드 만드는 함수
+Widget _buildEmotionCard(String key, EmotionData data) {
+  return Container(
+    padding: EdgeInsets.only(top: 16.h),
+    child: Column(
+      children: [
+        Row(
+          spacing: 4.r,
+          children: [
+            Container(
+              width: 8.w,
+              height: 16.h,
+              decoration: BoxDecoration(
+                color: data.color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text(
+              key,
+              style: AppFontStyles.bodyBold16.copyWith(
+                color: AppColors.grey900,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        Container(
+          padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
+          decoration: BoxDecoration(
+            color: AppColors.green100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _ScoreBox(
+                      label: "평균 감정 점수",
+                      value: "${data.avg}점",
+                      color: AppColors.green700),
+                  separator(),
+                  _ScoreBox(
+                      label: "최고 감정 점수",
+                      value: "${data.max}점",
+                      color: AppColors.noti100),
+                  separator(),
+                  _ScoreBox(
+                      label: "최저 감정 점수",
+                      value: "${data.min}점",
+                      color: AppColors.noti200),
+                ],
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                data.description,
+                style: AppFontStyles.bodyRegular12_180
+                    .copyWith(color: AppColors.grey900),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }

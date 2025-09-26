@@ -8,7 +8,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 // 현재 기분 상태 : 여기에 최고 점수의 감정상태를 관리하고
 // 12시가 넘어갈때 달력에 표시되는 로직으로 구현하면 될듯합니다
-// 현재로썬 아무대도 안쓰여서 다른식으로 만드실거면 삭제해도 무방합니다
+// 현재로썬 아무데도 안쓰여서 다른식으로 만드실거면 삭제해도 무방합니다
 final currentMoodProvider = StateProvider<String>((ref) {
   return "";
 });
