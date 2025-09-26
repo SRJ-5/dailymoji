@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/styles/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -27,12 +28,12 @@ class TopIndicator extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 4.w),
             child: Container(
               width: width.w,
-              height: 9.h,
+              height: 8.h,
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4.5.r),
                   color: isActive
-                      ? Color(0xff778654)
-                      : Color(0xffe8ebe0)),
+                      ? AppColors.green400
+                      : AppColors.green100),
             ),
           );
         }),
