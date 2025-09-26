@@ -137,7 +137,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
             style: AppFontStyles.bodyRegular12.copyWith(
                 color: _isNameCheck
                     ? AppColors.grey700
-                    : AppColors.orange500)),
+                    : AppColors.noti900)),
         Text(
           '• 나중에 언제든지 변경할 수 있어요',
           style: AppFontStyles.bodyRegular12
