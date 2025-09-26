@@ -83,7 +83,6 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                       _isNameCheck = isValid;
                     }
                   });
-                  // TODO: ViewModel로 상태 관리 하여 저장
                   ref
                       .watch(userViewModelProvider.notifier)
                       .setAiName(check: isValid, aiName: value);
@@ -114,7 +113,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                             },
                           ),
                     contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 16.h),
+                        horizontal: 12.w, vertical: 12.h),
                     filled: true,
                     fillColor: AppColors.green50,
                     border: OutlineInputBorder(

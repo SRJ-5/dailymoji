@@ -111,7 +111,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                             },
                           ),
                     contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 16.h),
+                        horizontal: 12.w, vertical: 12.h),
                     filled: true,
                     fillColor: AppColors.green50,
                     border: OutlineInputBorder(
