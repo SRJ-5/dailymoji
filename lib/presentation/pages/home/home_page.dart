@@ -6,6 +6,7 @@
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/emoji_assets.dart';
+import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
@@ -224,7 +225,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.grey200),
             ),
             child: Row(
               children: [

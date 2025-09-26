@@ -56,16 +56,14 @@ class _OnboardingPart1PageState
           title: stepIndex == totalSteps
               ? null
               : Text(
-                  stepIndex == 3
-                      ? 'Step 1. 나의 닉네임 설정'
-                      : 'Step 1. 캐릭터 설정',
+                  stepIndex == 2 ? '나의 닉네임 설정' : '캐릭터 설정',
                   style: AppFontStyles.bodyBold18
                       .copyWith(color: AppColors.grey900),
                 ),
           centerTitle: true,
         ),
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: Column(
             children: [
               stepIndex == totalSteps
