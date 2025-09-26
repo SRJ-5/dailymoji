@@ -25,8 +25,9 @@ bool isSameDay(DateTime date1, DateTime date2) {
 
 class ChatPage extends ConsumerStatefulWidget {
   final String? emotionFromHome;
+  final Map<String, dynamic>? navigationData;
 
-  const ChatPage({super.key, this.emotionFromHome});
+  const ChatPage({super.key, this.emotionFromHome, this.navigationData});
 
   @override
   ConsumerState<ChatPage> createState() => _ChatPageState();
@@ -54,9 +55,18 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(chatViewModelProvider.notifier)
-          .enterChatRoom(widget.emotionFromHome);
+      final navData = widget.navigationData;
+      if (navData != null && navData['from'] == 'solution_page') {
+        final reason = navData['reason'] as String? ?? 'video_ended'; // 기본값 설정
+        ref
+            .read(chatViewModelProvider.notifier)
+            .sendFollowUpMessageAfterSolution(reason: reason);
+      } else {
+        // 기존 로직: 홈에서 진입한 경우
+        ref
+            .read(chatViewModelProvider.notifier)
+            .enterChatRoom(widget.emotionFromHome);
+      }
     });
   }
 

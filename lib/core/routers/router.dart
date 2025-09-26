@@ -51,8 +51,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/chat',
         pageBuilder: (context, state) {
-          final emotion = state.extra as String?; // extra에서 이모지 데이터 받기
-          return PortraitPage(child: ChatPage(emotionFromHome: emotion));
+          // extra를 Object?로 받아 유연하게 처리
+          // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+          final extraData = state.extra as Object;
+          String? emotion;
+          Map<String, dynamic>? navData;
+
+          if (extraData is String) {
+            emotion = extraData;
+          } else if (extraData is Map<String, dynamic>) {
+            navData = extraData;
+          }
+
+          return PortraitPage(
+            child: ChatPage(
+              emotionFromHome: emotion,
+              navigationData: navData,
+            ),
+          );
         },
       ),
       GoRoute(

@@ -488,6 +488,42 @@ class ChatViewModel extends Notifier<ChatState> {
   // User Action Handlers
   // ---------------------------------------------------------------------------
 
+  /// 솔루션 완료 후 후속 질문 메시지 전송
+  Future<void> sendFollowUpMessageAfterSolution(
+      {required String reason}) async {
+    // 채팅방 진입 시 기존 메시지를 먼저 로드
+    if (state.messages.isEmpty) {
+      if (_userId == null) return;
+      await _loadTodayMessages(_userId!);
+    }
+
+// chat 페이지로 넘어가는 reason에 따라 다른 메시지를 선택
+    String content;
+    if (reason == 'user_closed') {
+      content = "대화를 더 해볼까요?";
+    } else {
+      // 'video_ended' 또는 기타 경우
+      content = "어때요? 좀 좋아진 것 같아요?😊";
+    }
+
+    final followUpMessage = Message(
+      userId: _userId!,
+      content: content,
+      sender: Sender.bot,
+      type: MessageType.normal,
+    );
+
+    // 이미 해당 메시지가 있는지 확인하여 중복 전송 방지
+    // 가장 마지막 메시지가 이 메시지와 동일하면 보내지 않음
+    if (state.messages.isNotEmpty &&
+        state.messages.last.content == followUpMessage.content &&
+        state.messages.last.sender == Sender.bot) {
+      return; // 중복이므로 보내지 않음
+    }
+
+    await _addBotMessageToChat(followUpMessage);
+  }
+
   /// 솔루션 제안에 대한 사용자 응답 처리
   Future<void> respondToSolution(String solutionId, String action) async {
     final currentUserId = _userId;

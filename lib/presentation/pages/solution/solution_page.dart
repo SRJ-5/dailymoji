@@ -52,15 +52,22 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   late final YoutubePlayerController _controller;
   bool _showControls = false;
   bool _isMuted = true;
+  bool _isNavigating = false;
 
 // RIN: 채팅페이지로 이동하기
-  void _navigateToChatPage() {
+// X 버튼을 눌러서 끄면: "대화를 하고 싶어?"
+// 영상이 끝나면: "어때? 좋아진 것 같아?"
+  void _navigateToChatPage({String reason = 'video_ended'}) {
+    if (_isNavigating) return;
+    _isNavigating = true;
     // // 이동하기 전에 화면 방향을 세로로 먼저 고정합니다.
     // SystemChrome.setPreferredOrientations([
     //   DeviceOrientation.portraitUp,
     //   DeviceOrientation.portraitDown,
     // ]);
-    context.go('/chat');
+
+    // extra에 어떤 이유로 페이지를 떠나는지 정보를 담아 보냅니다.
+    context.go('/chat', extra: {'from': 'solution_page', 'reason': reason});
   }
 
   @override
@@ -100,9 +107,11 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
 // 영상 종료 시 채팅 페이지로 돌아가는 리스너
     _controller.addListener(() {
+      if (_isNavigating) return; // 이미 이동 중이면 무시
+
       if (_controller.value.playerState == PlayerState.ended) {
         debugPrint("RIN: YouTube video ended. Navigating to chat page.");
-        _navigateToChatPage(); // 영상이 끝나면 채팅 페이지로 이동
+        _navigateToChatPage(reason: 'video_ended'); // 영상이 끝나면 채팅 페이지로 이동
       }
       // 플레이어 상태 리스너(음소거 상태를 동기화)
       // final mutedNow = _controller.value.isMuted;
@@ -186,7 +195,9 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                         size: 32.r,
                       ),
                       // onPressed: () => Navigator.of(context).pop(),
-                      onPressed: _navigateToChatPage, // Rin: gorouter 사용
+                      //RIN: X 버튼을 누르면 'user_closed' 신호를 extra로
+                      onPressed: () =>
+                          _navigateToChatPage(reason: 'user_closed'),
                     ),
                   ),
 
