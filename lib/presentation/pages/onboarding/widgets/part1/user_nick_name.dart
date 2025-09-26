@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -144,7 +145,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
         Align(
             alignment: Alignment.bottomRight,
             child: Image.asset(
-              'assets/images/cado_profile.png',
+              AppImages.cadoProfile,
               width: 120.w,
               height: 180.h,
             )),

@@ -3,6 +3,7 @@
 import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
@@ -152,8 +153,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               backgroundImage:
                   (characterImageUrl != null && characterImageUrl.isNotEmpty)
                       ? NetworkImage(characterImageUrl)
-                      : const AssetImage("assets/images/cado_face.png")
-                          as ImageProvider,
+                      : const AssetImage(AppImages.cadoFace) as ImageProvider,
             ),
             SizedBox(width: 12.r),
             Text(
