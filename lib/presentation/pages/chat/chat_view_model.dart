@@ -18,12 +18,14 @@ class ChatState {
   final bool isTyping;
   final String? errorMessage;
   final bool isLoading; // 로딩 상태 추가
+  final bool clearPendingEmoji; // RIN ♥ : UI의 이모지 상태를 초기화하기 위해 추가
 
   ChatState({
     this.messages = const [],
     this.isTyping = false,
     this.errorMessage,
     this.isLoading = true,
+    this.clearPendingEmoji = false,
   });
 
   ChatState copyWith({
@@ -31,12 +33,14 @@ class ChatState {
     bool? isTyping,
     String? errorMessage,
     bool? isLoading,
+    bool? clearPendingEmoji,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isTyping: isTyping ?? this.isTyping,
       errorMessage: errorMessage,
       isLoading: isLoading ?? this.isLoading,
+      clearPendingEmoji: clearPendingEmoji ?? this.clearPendingEmoji,
     );
   }
 }
@@ -103,7 +107,14 @@ class ChatViewModel extends Notifier<ChatState> {
 
       // 4. UI 업데이트 이후, 백그라운드에서 대화 시작 로직 실행
       await _startConversationWithEmoji(emojiMessage, emotionFromHome);
+      // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 ui에 초기화 신호 보내기(디폴트로 돌려놓기 위함)
+      state = state.copyWith(clearPendingEmoji: true);
     }
+  }
+
+// RIN ♥ : UI에서 초기화 신호를 확인한 후, 다시 false로 돌려놓는 함수
+  void consumeClearPendingEmojiSignal() {
+    state = state.copyWith(clearPendingEmoji: false);
   }
 
   // // ---------------------------------------------------------------------------

@@ -119,6 +119,19 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   Widget build(BuildContext context) {
+    // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 디폴트 이미지로 돌려놓기
+    ref.listen(chatViewModelProvider.select((value) => value.clearPendingEmoji),
+        (previous, next) {
+      if (next == true) {
+        setState(() {
+          currentSelectedEmojiKey = 'default';
+        });
+        ref
+            .read(chatViewModelProvider.notifier)
+            .consumeClearPendingEmojiSignal();
+      }
+    });
+
     final chatState = ref.watch(chatViewModelProvider);
     // 캐릭터 이름 연동
     final userState = ref.watch(userViewModelProvider);
@@ -478,8 +491,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Widget _buildEmojiBarAnimated() {
-    final emojiKeys = kEmojiAssetMap.keys.toList();
-    final emojiAssets = kEmojiAssetMap.values.toList();
+    // 애초에 디폴트 이미지는 여기서 안뜨게! (MVP)
+    final emojiKeys =
+        kEmojiAssetMap.keys.where((key) => key != 'default').toList();
+    final emojiAssets = emojiKeys.map((key) => kEmojiAssetMap[key]!).toList();
 
     // 0.0~0.25 구간: 배경 페이드인
     final bgOpacity = CurvedAnimation(
@@ -579,6 +594,12 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         ref
                             .read(chatViewModelProvider.notifier)
                             .sendEmojiAsMessage(selectedEmotionKey);
+
+                        // 이모지를 보낸 후, 즉시 'default'로 돌리기
+                        setState(() {
+                          currentSelectedEmojiKey = 'default';
+                          showEmojiBar = false;
+                        });
 
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },

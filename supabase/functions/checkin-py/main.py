@@ -26,10 +26,12 @@ from supabase import create_client, Client
 from llm_prompts import call_llm, TRIAGE_SYSTEM_PROMPT, ANALYSIS_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT
 from rule_based import rule_scoring
 from srj5_constants import (
-    CLUSTERS, DSM_BETA, ICON_TO_CLUSTER, META_WEIGHTS, ONBOARDING_MAPPING,
+    CLUSTERS, EMOJI_ONLY_SCORE_CAP, DSM_BETA, ICON_TO_CLUSTER, META_WEIGHTS, ONBOARDING_MAPPING,
+    FINAL_FUSION_WEIGHTS, FINAL_FUSION_WEIGHTS_NO_TEXT,
     W_LLM, W_RULE, SOLUTION_ID_LIBRARY, ANALYSIS_MESSAGE_LIBRARY, SOLUTION_PROPOSAL_SCRIPTS,
     SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, PCA_PROXY, SOLUTION_DETAILS_LIBRARY
 )
+
 
 try:
     from kiwipiepy import Kiwi
@@ -166,7 +168,8 @@ def calculate_baseline_scores(onboarding_scores: Optional[Dict[str, int]]) -> Di
     return baseline
 
 
-def meta_adjust(base_scores: dict, payload: AnalyzeRequest) -> dict:
+    # RIN ♥ : 이모지 alpha값을 직접 받도록 수정
+def meta_adjust(base_scores: dict, payload: AnalyzeRequest, alpha: float) -> dict:
     s = base_scores.copy()
 
     # RIN ♥ : 이모지 아이콘 점수 가중치 
@@ -180,11 +183,11 @@ def meta_adjust(base_scores: dict, payload: AnalyzeRequest) -> dict:
         if selected_cluster == "neutral": # ♥ 추가: 디폴트 이모지인 경우 감정 가중치 미적용
             return s
         
-        alpha = META_WEIGHTS.get("icon_alpha", 0.2) 
+
         for c in s.keys():
             prior = 1.0 if c == selected_cluster else 0.0
             s[c] = clip01((1.0 - alpha) * s[c] + alpha * prior)
-        return s           
+    return s     
 
 
 # def dsm_calibrate(scores: dict) -> dict:
@@ -326,12 +329,12 @@ async def analyze_emotion(payload: AnalyzeRequest):
     debug_log: Dict[str, Any] = {"input": payload.dict()}
     try:
         # RIN ♥ : save_analysis_to_supabase 호출 위치 변경하느라 주석 처리!
-        # DB 저장을 먼저 시도해서 session_id를 확보
-        session_id = await save_analysis_to_supabase(payload, 0, 0.5, {}, debug_log, {})
-        # DB 저장이 실패하면 임시 ID를 생성
-        if not session_id:
-            session_id = f"temp_{uuid.uuid4()}"
-            print(f"⚠️ WARNING: DB 저장 실패. 임시 세션 ID 발급: {session_id}")
+        # # DB 저장을 먼저 시도해서 session_id를 확보
+        # session_id = await save_analysis_to_supabase(payload, 0, 0.5, {}, debug_log, {})
+        # # DB 저장이 실패하면 임시 ID를 생성
+        # if not session_id:
+        #     session_id = f"temp_{uuid.uuid4()}"
+        #     print(f"⚠️ WARNING: DB 저장 실패. 임시 세션 ID 발급: {session_id}")
         
         # RIN ♥ : CASE 2 - 'icon'이 있고 'text'가 비어있을 때 (이모지 단독 입력)
         # --- UX Flow 1: EMOJI_ONLY -> 공감/질문으로 응답 (0924 슬랙논의 2번 로직)---
@@ -340,7 +343,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
         #  이모지에 따른 top_cluster 매핑 - 솔루션 제안을 위해 이모지 only도 클러스터 저장!
             top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low")
-            # RIN ♥ : 1) 디폴트 이모지는 분석하지 않음 
+            # RIN ♥ : 디폴트 이모지는 분석하지 않음 
             #  ui에서 막아놓긴 할건데, 혹시 모르니까 일단 구현 
             if top_cluster == "neutral": 
                 intervention = {
@@ -363,14 +366,36 @@ async def analyze_emotion(payload: AnalyzeRequest):
                     "profile": 0,
                     "intervention": intervention
                 }
+            pass
+            print("\n--- 🧐 EMOJI-ONLY ANALYSIS DEBUG 🧐 ---")
+
 
             #  이모지 단독도 "baseline + 아이콘 prior(가중 융합)"으로 스코어링
             #  - 기존: top_cluster=0.3 고정
             #  - 변경: baseline 계산 후 meta_adjust로 동일한 아이콘 보정 로직 적용
-            baseline_scores = calculate_baseline_scores(payload.onboarding or {})  # [ADDED]
-            final_scores = meta_adjust(baseline_scores, payload)                   # [ADDED]
-            g = g_score(final_scores)                                             # [ADDED]
-            profile = pick_profile(final_scores, None)   
+            baseline_scores = calculate_baseline_scores(payload.onboarding or {})  
+            print(f"❤️ Baseline Scores: {json.dumps({k: round(v, 4) for k, v in baseline_scores.items()}, indent=2)}")
+
+            icon_only_alpha = META_WEIGHTS.get("icon_only_alpha", 0.1)
+            final_scores = meta_adjust(baseline_scores, payload, icon_only_alpha)
+            print(f"❤️ Final Scores (after alpha={icon_only_alpha}): {json.dumps({k: round(v, 4) for k, v in final_scores.items()}, indent=2)}")
+
+            # 점수 상한선(Cap) 적용 로직 
+            # 온보딩+이모지 점수는 최대 0.5가 되도록 
+            capped_scores = final_scores.copy()
+            selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
+            if selected_cluster in capped_scores:
+                original_score = capped_scores[selected_cluster]
+                capped_scores[selected_cluster] = min(original_score, EMOJI_ONLY_SCORE_CAP)
+                print(f"❤️ Score Capping Applied for '{selected_cluster}': {original_score:.4f} -> {capped_scores[selected_cluster]:.4f}")
+
+
+            g = g_score(capped_scores)   
+            print(f"❤️ G-Score: {g:.2f}")
+                                      
+            profile = pick_profile(capped_scores, None)
+            print(f"❤️ Profile: {profile}")
+            print("-------------------------------------\n")   
 
             # Supabase에서 해당 이모지 키를 가진 스크립트들을 모두 가져옴
             response = await run_in_threadpool(
@@ -395,7 +420,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
                 payload, profile=profile, g=g,
                 intervention=intervention,
                 debug_log=debug_log,
-                final_scores=final_scores
+                final_scores=capped_scores
             )
 
             # return {"session_id": session_id, "intervention": intervention}
@@ -404,7 +429,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
             return {
                 "session_id": session_id,
-                "final_scores": final_scores,  
+                "final_scores": capped_scores,  
                 "g_score": g,
                 "profile": profile,
                 "intervention": intervention
@@ -469,8 +494,10 @@ async def analyze_emotion(payload: AnalyzeRequest):
         fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
         
         # 4-2. Meta Adjust(아이콘 보정 적용됨) 
-        # RIN ♥ : payload.icon이 있으면 meta_adjust에서 가중치 융합 적용 (텍스트+이모지 케이스)
-        adjusted_scores = meta_adjust(fused_scores, payload)
+        # RIN ♥ : CASE 3 - payload.icon이 있으면 meta_adjust에서 가중치 융합 적용 (텍스트+이모지 케이스)
+
+        icon_with_text_alpha = META_WEIGHTS.get("icon_with_text_alpha", 0.2)
+        adjusted_scores = meta_adjust(fused_scores, payload, icon_with_text_alpha)      
         debug_log["scores"] = {"llm_detail": text_if, "rule": rule_scores, "fused": fused_scores, "final": adjusted_scores}
         
         # 4-3. 최종 결과 생성 
@@ -480,7 +507,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
         
         # LLM으로부터 공감 메시지와 분석 메시지를 각각 가져옴
         empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
-        analysis_text = get_analysis_message(adjusted_scores, top_cluster)
+        analysis_text = get_analysis_message(adjusted_scores)
         
         
         # 4-4. Intervention 객체 생성 및 반환 

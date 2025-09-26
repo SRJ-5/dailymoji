@@ -5,9 +5,24 @@
 # 3. 온보딩 질문과 클러스터 가중치 매핑 수정 (사용자 정보 변경에 따라)
 
 CLUSTERS = ["neg_low", "neg_high", "adhd_high", "sleep", "positive"]
+EMOJI_ONLY_SCORE_CAP = 0.5
 
 # --- Scoring Weights & Parameters ---
 
+# ❤️ 텍스트 분석, 온보딩, 이모지를 각각 독립된 요소로 보고, Renormalization!!!!
+# e.g. 최종 점수 = (텍스트 * 0.6) + (온보딩 * 0.2) + (이모지 * 0.2)
+FINAL_FUSION_WEIGHTS = {
+    "text": 0.6,
+    "onboarding": 0.2,
+    "icon": 0.2
+}
+
+# ❤️ 텍스트가 없을 때 사용할 가중치 
+FINAL_FUSION_WEIGHTS_NO_TEXT = {
+    "onboarding": 0.8, 
+    "icon": 0.2
+}
+# ---
 DSM_WEIGHTS = {"neg_low": 0.90, "neg_high": 0.80, "adhd_high": 0.70, "sleep": 0.60, "positive": 1.00}
 DSM_BETA = {"neg_low": 0.15, "neg_high": 0.15, "adhd_high": 0.10, "sleep": 0.10, "positive": 0.10}
 
@@ -16,7 +31,9 @@ W_LLM = 0.4
 
 META_WEIGHTS = {
     # "icon": 0.30, # icon 가산점 --> 가중치로 할거라 alpha로 대체
-    "icon_alpha": 0.2, # ♥ 추가: 이모지 가중치 융합 시 사용할 alpha 값 (0.2는 조정 가능)
+    # ♥ 추가: icon_alpha를 아래 두 가지로 세분화함.
+    "icon_only_alpha": 0.1,    # 이모지만 눌렀을 때 적용될 가중치 (정보의 신뢰도 원칙)
+    "icon_with_text_alpha": 0.2, # 텍스트와 함께 있을 때 적용될 가중치
 
     # "intensity_self": 0.20, # 자기가 슬라이드 하도록 하려고 했었음
     # "time": 0.10, # 시간적 맥락 조절: 야간(수면 관련), 월요일 오전(우울/불안 ↑), 생체리듬 구간 등

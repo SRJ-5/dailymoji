@@ -26,3 +26,5 @@
 {"timestamp": "2025-09-26T18:33:55.302055", "session_id": "864c8c25-b77d-4b37-b65c-906c0577e4b9", "type": "propose", "solution_id": "neg_low_snow_01"}
 {"timestamp": "2025-09-26T18:34:47.181314", "session_id": "3c14ac5a-f7a4-4b54-a056-f6f3e4a102d2", "type": "propose", "solution_id": "neg_high_heartbeat_01"}
 {"timestamp": "2025-09-26T18:38:28.099365", "session_id": "b5ed61ec-78a9-46e0-9c0b-e69bcb57b301", "type": "propose", "solution_id": "neg_high_cityview_01"}
+{"timestamp": "2025-09-26T23:08:53.774054", "session_id": "c28c00e9-7def-45c2-b49f-9b934a9bf026", "type": "propose", "solution_id": "adhd_high_space_01"}
+{"timestamp": "2025-09-26T23:23:09.456425", "session_id": "f9ab7ab5-9ceb-4218-8eb0-efc6c1709b1c", "type": "propose", "solution_id": "neg_high_campfire_01"}
