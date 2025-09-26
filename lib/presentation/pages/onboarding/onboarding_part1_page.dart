@@ -65,7 +65,7 @@ class _OnboardingPart1PageState
           centerTitle: true,
         ),
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: Column(
             children: [
               stepIndex == totalSteps

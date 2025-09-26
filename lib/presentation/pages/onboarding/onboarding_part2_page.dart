@@ -15,7 +15,8 @@ class OnboardingPart2Page extends ConsumerStatefulWidget {
       _OnboardingPart2PageState();
 }
 
-class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
+class _OnboardingPart2PageState
+    extends ConsumerState<OnboardingPart2Page> {
   final personalities = [
     '지난 2주 동안, 기분이\n가라앉거나, 우울했거나,\n절망적이었나요?',
     '지난 2주 동안, 일에 흥미를 잃거나 즐거움을 느끼지 못했나요?',
@@ -50,13 +51,13 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
             ? null
             : Text(
                 '현재 ${state.userProfile!.userNickNm}의 감정 기록',
-                style:
-                    AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
+                style: AppFontStyles.bodyBold18
+                    .copyWith(color: AppColors.grey900),
               ),
         centerTitle: true,
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w).copyWith(bottom: 20.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: Column(
           children: [
             stepIndex == totalSteps
@@ -89,8 +90,9 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 52.h),
-                    backgroundColor:
-                        isNextEnabled ? AppColors.green400 : AppColors.grey200,
+                    backgroundColor: isNextEnabled
+                        ? AppColors.green400
+                        : AppColors.grey200,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -105,13 +107,15 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
                           } else if (stepIndex == totalSteps) {
                             // ViewModel의 state를 직접 넘기지 않고, ViewModel 내부 함수를 호출
                             ref
-                                .read(userViewModelProvider.notifier)
+                                .read(userViewModelProvider
+                                    .notifier)
                                 .fetchInsertUser();
                             context.go('/home');
                           }
                         }
                       : null,
-                  child: Text(stepIndex == totalSteps ? '시작하기' : '계속하기',
+                  child: Text(
+                      stepIndex == totalSteps ? '시작하기' : '계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
                             ? AppColors.grey900

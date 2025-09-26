@@ -47,6 +47,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
         Container(
           width: double.infinity,
           height: 94.h,
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -63,6 +64,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
           child: Container(
             width: double.infinity,
             height: 64.h,
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: TextField(
@@ -87,7 +89,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                 },
                 decoration: InputDecoration(
                     counterText: '',
-                    hintText: '별명을 입력해 주세요',
+                    hintText: '닉네임을 입력해 주세요',
                     hintStyle: AppFontStyles.bodyRegular16
                         .copyWith(color: AppColors.grey400),
                     suffixIcon: _textEditingController

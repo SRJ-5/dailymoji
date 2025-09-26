@@ -46,13 +46,11 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
           height: 180.h,
           child: Row(
             children: [
+              SizedBox(width: 2.w),
               Image.asset(
                 AppImages.cadoProfile,
                 width: 120.w,
                 height: 180.h,
-              ),
-              SizedBox(
-                width: 8.w,
               ),
               Container(
                 width: 206.17.w,

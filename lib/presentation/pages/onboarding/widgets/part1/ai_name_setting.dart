@@ -48,6 +48,8 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
         Container(
           width: double.infinity,
           height: 94.h,
+          padding: EdgeInsets.symmetric(
+              horizontal: 4.w, vertical: 8.h),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -64,6 +66,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           child: Container(
             width: double.infinity,
             height: 64.h,
+            padding: EdgeInsets.symmetric(vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: TextField(
