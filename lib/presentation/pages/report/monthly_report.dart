@@ -6,15 +6,11 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-const String angryImage = AppImages.angryEmoji;
-const String cryingImage = AppImages.cryingEmoji;
-const String shockedImage = AppImages.shockedEmoji;
-const String sleepingImage = AppImages.sleepingEmoji;
-const String smileImage = AppImages.smileEmoji;
-
-// 현재 기분 상태 (예시: Riverpod)
+// 현재 기분 상태 : 여기에 최고 점수의 감정상태를 관리하고
+// 12시가 넘어갈때 달력에 표시되는 로직으로 구현하면 될듯합니다
+// 현재로썬 아무대도 안쓰여서 다른식으로 만드실거면 삭제해도 무방합니다
 final currentMoodProvider = StateProvider<String>((ref) {
-  return "angry";
+  return "";
 });
 
 class MonthlyReport extends StatefulWidget {
@@ -28,14 +24,14 @@ class _MonthlyReportState extends State<MonthlyReport> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
-  // 날짜별 감정 아이콘 매핑 (예시)
+  // 날짜별 감정 데이터 (예시) // 나중엔 실제 데이터로 교체
   final Map<DateTime, Image> _emotions = {
-    DateTime.utc(2025, 9, 16): Image.asset(angryImage),
-    DateTime.utc(2025, 9, 1): Image.asset(cryingImage),
-    DateTime.utc(2025, 9, 4): Image.asset(shockedImage),
-    DateTime.utc(2025, 9, 5): Image.asset(sleepingImage),
-    DateTime.utc(2025, 9, 6): Image.asset(smileImage),
-    DateTime.utc(2025, 9, 22): Image.asset(angryImage),
+    DateTime.utc(2025, 9, 16): Image.asset(AppImages.angryEmoji),
+    DateTime.utc(2025, 9, 1): Image.asset(AppImages.cryingEmoji),
+    DateTime.utc(2025, 9, 4): Image.asset(AppImages.shockedEmoji),
+    DateTime.utc(2025, 9, 5): Image.asset(AppImages.sleepingEmoji),
+    DateTime.utc(2025, 9, 6): Image.asset(AppImages.smileEmoji),
+    DateTime.utc(2025, 9, 22): Image.asset(AppImages.angryEmoji),
   };
 
   @override
@@ -47,15 +43,16 @@ class _MonthlyReportState extends State<MonthlyReport> {
 
   @override
   Widget build(BuildContext context) {
+    final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: Column(
           children: [
-            // 📅 달력
+            // 달력
             TableCalendar(
-              daysOfWeekHeight: 40,
+              daysOfWeekHeight: 36.h,
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2035, 12, 31),
               focusedDay: _focusedDay,
@@ -69,12 +66,12 @@ class _MonthlyReportState extends State<MonthlyReport> {
                 });
               },
 
-              // 📌 헤더 스타일
+              // 헤더 스타일
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
                 titleTextFormatter: (date, locale) {
-                  // 원하는 형태로 변환
+                  // 타이틀 내용을 원하는 형태로 변환
                   return "${date.year}년 ${date.month}월";
                 },
                 titleTextStyle: AppFontStyles.bodyMedium14.copyWith(
@@ -86,32 +83,21 @@ class _MonthlyReportState extends State<MonthlyReport> {
                     const Icon(Icons.chevron_right, color: AppColors.grey900),
               ),
 
-              // 📌 달력 기본 스타일 (선택 색상은 제거)
+              // 달력 기본 스타일 (선택 색상은 제거)
               calendarStyle: const CalendarStyle(
-                outsideDaysVisible: false,
-                defaultTextStyle: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-                weekendTextStyle: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
+                outsideDaysVisible: true,
                 todayDecoration: BoxDecoration(
                   color: AppColors.orange600, // 오늘 날짜 강조
                   shape: BoxShape.circle,
                 ),
               ),
 
-              // 📌 날짜 커스텀 빌더
+              // 날짜 커스텀 빌더
               calendarBuilders: CalendarBuilders(
-                // 📌 요일 스타일
+                // 요일 스타일
                 dowBuilder: (context, day) {
-                  final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
                   return Center(
-                    child: Text(
-                        weekdays[
-                            day.weekday % 7], // ✅ DateTime.weekday는 월=1 … 일=7
+                    child: Text(weekdays[day.weekday % 7],
                         style: AppFontStyles.bodyMedium14
                             .copyWith(color: AppColors.grey900)),
                   );
@@ -176,7 +162,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "${_selectedDay!.year}년 ${_selectedDay!.month}월 ${_selectedDay!.day}일",
+                  "${_selectedDay!.month}월 ${_selectedDay!.day}일 ${weekdays[_selectedDay!.weekday]}요일",
                   style: AppFontStyles.bodyBold16
                       .copyWith(color: AppColors.grey900),
                 ),
@@ -206,33 +192,33 @@ class _MonthlyReportState extends State<MonthlyReport> {
                             .copyWith(color: AppColors.grey900)),
                     Align(
                       alignment: Alignment.bottomRight,
-                      child: Container(
-                        height: 40.h,
-                        width: 133.w,
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 16.w, vertical: 9.5.h),
-                        decoration: ShapeDecoration(
-                          color: AppColors.green400,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              '채팅 확인하기',
-                              style: TextStyle(
-                                color: Color(0xFF333333),
-                                fontSize: 14,
-                                fontFamily: 'Pretendard',
-                                fontWeight: FontWeight.w500,
-                                height: 1.50,
-                              ),
+                      child: GestureDetector(
+                        onTap: () {}, // _selectedDay를 가지고 채팅 페이지로 이동!!!
+                        child: Container(
+                          alignment: Alignment.center,
+                          height: 40.h,
+                          width: 133.w,
+                          padding: EdgeInsets.symmetric(vertical: 9.5.h)
+                              .copyWith(left: 16.w, right: 10.w),
+                          decoration: ShapeDecoration(
+                            color: AppColors.green400,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.arrow_forward),
-                          ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('채팅 확인하기',
+                                  style: AppFontStyles.bodyMedium14),
+                              SizedBox(width: 6.w),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: AppColors.grey900,
+                                size: 18.r,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     )
