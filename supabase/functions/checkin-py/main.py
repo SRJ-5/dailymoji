@@ -10,11 +10,13 @@ import re
 import traceback
 import random
 from typing import Optional, List, Dict, Any, Tuple
+import uuid
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from supabase import create_client, Client
 
@@ -24,7 +26,7 @@ from rule_based import rule_scoring
 from srj5_constants import (
     CLUSTERS, DSM_BETA, ICON_TO_CLUSTER, META_WEIGHTS, ONBOARDING_MAPPING,
     W_LLM, W_RULE, SOLUTION_ID_LIBRARY, ANALYSIS_MESSAGE_LIBRARY, SOLUTION_PROPOSAL_SCRIPTS,
-    SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, PCA_PROXY
+    SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, PCA_PROXY, SOLUTION_DETAILS_LIBRARY
 )
 
 try:
@@ -318,6 +320,13 @@ async def analyze_emotion(payload: AnalyzeRequest):
     text = (payload.text or "").strip()
     debug_log: Dict[str, Any] = {"input": payload.dict()}
     try:
+        # DB 저장을 먼저 시도해서 session_id를 확보
+        session_id = await save_analysis_to_supabase(payload, 0, 0.5, {}, debug_log, {})
+        # DB 저장이 실패하면 임시 ID를 생성
+        if not session_id:
+            session_id = f"temp_{uuid.uuid4()}"
+            print(f"⚠️ WARNING: DB 저장 실패. 임시 세션 ID 발급: {session_id}")
+        
         # --- UX Flow 1: EMOJI_ONLY -> 공감/질문으로 응답 (0924 슬랙논의 2번 로직)---
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
@@ -360,6 +369,9 @@ async def analyze_emotion(payload: AnalyzeRequest):
             )
 
             # return {"session_id": session_id, "intervention": intervention}
+            if session_id:
+                intervention['session_id'] = session_id
+
             return {
                 "session_id": session_id,
                 "final_scores": final_scores,  
@@ -440,7 +452,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
     
         
         
-        # 4-4. Intervention 객체 생성 및 반환 (API 응답 구조 수정함)
+        # 4-4. Intervention 객체 생성 및 반환 
         intervention = {
             "preset_id": PresetIds.SOLUTION_PROPOSAL,
             "empathy_text": empathy_text, # 공감 텍스트 추가
@@ -450,6 +462,10 @@ async def analyze_emotion(payload: AnalyzeRequest):
         
         session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, adjusted_scores)
         
+        if session_id:
+            intervention['session_id'] = session_id
+
+
         return {
             "session_id": session_id,
             "final_scores": adjusted_scores,
@@ -487,27 +503,60 @@ async def propose_solution(payload: SolutionRequest):
                 "solution_details": None
             }
         
-        # 3. Supabase에서 솔루션 상세 정보 조회
-        # 동기 함수를 비동기 컨텍스트에서 안전하게 실행
-        response = await run_in_threadpool(
-            supabase.table("solutions").select("text, url, startAt, endAt").eq("solution_id", solution_id).maybe_single().execute
-        )
-        solution_data = response.data
+        solution_data = None
 
+        
+        # 3. 일단 수퍼베이스 안되니까 나중에 올리고, 지금은 하드코딩된거로!
+        # 3-1. Supabase에서 먼저 조회 시도
+        if supabase:
+            try:
+                print(f"RIN: ✅ Supabase에서 솔루션 조회 시도: {solution_id}")
+                response = await run_in_threadpool(
+                    supabase.table("solutions").select("text, url, startAt, endAt").eq("solution_id", solution_id).maybe_single().execute
+                )
+                if response.data:
+                    solution_data = response.data
+                    print("RIN: ✅ Supabase에서 솔루션 조회 성공.")
+            except Exception as e:
+                print(f"RIN: ⚠️ Supabase 조회 중 에러 발생 (하드코딩 데이터로 대체): {e}")
+                # 에러가 발생해도 solution_data는 None으로 유지되어 아래 fallback 로직이 실행됨
+
+        # 3-2. Supabase 조회가 실패했거나 데이터가 없으면, 하드코딩된 데이터 사용
+        if not solution_data:
+            print(f"RIN: ⚠️ Supabase 데이터 없음. 하드코딩된 솔루션으로 대체: {solution_id}")
+            solution_data = SOLUTION_DETAILS_LIBRARY.get(solution_id)
 
         
         # 4. 최종 제안 텍스트 조합 및 로그 저장
         final_text = proposal_script + (solution_data.get('text') if solution_data and solution_data.get('text') else "")
-        # 로그 저장 역시 동기 함수이므로 run_in_threadpool 사용
-        await run_in_threadpool(
-            supabase.table("interventions_log").insert({"session_id": payload.session_id, "type": "propose", "solution_id": solution_id}).execute
-        )
-        
-        return {
-            "proposal_text": final_text, 
-            "solution_id": solution_id, 
-            "solution_details": solution_data
+        # interventions_log 테이블에 저장 시도, 실패 시 로컬 파일에 기록
+        log_entry = {
+            "timestamp": dt.datetime.now().isoformat(),
+            "session_id": payload.session_id,
+            "type": "propose",
+            "solution_id": solution_id
         }
+        
+        try:
+            # Supabase 클라이언트가 있고, 임시 ID가 아닐 때만 DB에 저장 시도
+            if supabase and not payload.session_id.startswith("temp_"):
+                print(f"RIN: ✅ Supabase에 솔루션 제안 로그 저장 시도...")
+                await run_in_threadpool(
+                    supabase.table("interventions_log").insert(log_entry).execute
+                )
+                print(f"RIN: ✅ Supabase에 로그 저장 성공.")
+            else:
+                # Supabase가 없거나 임시 ID인 경우 파일에 기록
+                raise Exception("Supabase client not available or temp session ID.")
+        except Exception as e:
+            # DB 저장에 실패하면 로컬 파일에 기록
+            print(f"RIN: ⚠️ Supabase 로그 저장 실패. 로컬 파일에 기록합니다. 이유: {e}")
+            with open("interventions_log.txt", "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_entry) + "\n")
+
+        
+        content = { "proposal_text": final_text, "solution_id": solution_id, "solution_details": solution_data }
+        return JSONResponse(content=content)    
   
     except Exception as e:
         tb = traceback.format_exc()
@@ -538,7 +587,7 @@ async def get_home_dialogue(emotion: Optional[str] = None):
         
         if not scripts:
             # 만약 DB에 해당 키의 대사가 없다면 비상용 기본 메시지 반환
-            fallback_script = "안녕!\n오늘 기분은 어때?"
+            fallback_script = "안녕! 오늘 기분은 어때?"
             return {"dialogue": fallback_script}
 
         # 조회된 대사 중 하나를 랜덤으로 선택하여 반환
@@ -547,3 +596,31 @@ async def get_home_dialogue(emotion: Optional[str] = None):
     except Exception as e:
         tb = traceback.format_exc()
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+    
+
+
+
+
+    #  -------------------------------------------------------------------
+    
+# ======================================================================
+# ===          하드코딩된거 쓸 때만!!!         ===
+# ======================================================================
+
+    # SolutionPage에서 영상을 로드하기 위한 새로운 API 엔드포인트
+@app.get("/solutions/{solution_id}")
+async def get_solution_details(solution_id: str):
+    """solution_id를 받아서 하드코딩된 솔루션 상세 정보를 반환합니다."""
+    print(f"RIN: ✅ 솔루션 상세 정보 요청 받음: {solution_id}")
+    
+    # srj5_constants.py에 있는 라이브러리에서 solution_id로 데이터를 찾습니다.
+    solution_data = SOLUTION_DETAILS_LIBRARY.get(solution_id)
+    
+    # 만약 데이터가 없다면 404 에러를 반환합니다.
+    if not solution_data:
+        print(f"RIN: ❌ 해당 솔루션을 찾을 수 없음: {solution_id}")
+        raise HTTPException(status_code=404, detail="Solution not found")
+    
+    # 데이터가 있다면 JSON 형태로 반환합니다.
+    print(f"RIN: ✅ 솔루션 정보 반환: {solution_data}")
+    return solution_data

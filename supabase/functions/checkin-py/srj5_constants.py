@@ -98,7 +98,7 @@ SOLUTION_PROPOSAL_SCRIPTS = {
     ],
     "sleep": ["수면 회로가 불안정할 때는 ", "깊이 잠들기 힘들 땐 ", "깨어있는 몸을 진정시키기 위해, "],
     "positive": [
-        "지금 좋은 감정을 더 크게 키워보면 좋아요. 🌸 ",
+        "지금 좋은 감정을 더 크게 키워보면 좋아요. ",
         "긍정적인 순간은 공간 기억과 함께 묶으면 더 오래갑니다. ",
         "좋은 기분은 "
     ]
@@ -130,5 +130,123 @@ ANALYSIS_MESSAGE_LIBRARY = {
         "high": "정말 좋은 일이 있었나 봐요! 얼굴에 웃음꽃이 피었어요. 😊",
         "mid": "기분이 좋아 보여요. 당신의 하루가 즐거움으로 가득했으면 좋겠어요.",
         "low": "마음이 편안해 보여요. 안정적인 하루를 보내고 있군요."
+    }
+}
+
+# 나중에 Supabase 테이블이 준비되면 이 부분은 삭제
+SOLUTION_DETAILS_LIBRARY = {
+    # 우울/무기력 (neg_low)
+    "neg_low_beach_01": {
+        "text": "지금은 속이 탁 트이는 바닷가로 잠시 자리를 옮겨볼까요?",
+        "url": "https://www.youtube.com/watch?v=n4Mdh3TEq_k", # &t=420 제거, startAt/endAt 필드로 제어
+        "startAt": 420,  # 7:00
+        "endAt": 540,     # 9:00
+        "context": "바닷가"
+    },
+    "neg_low_turtle_01": {
+        "text": "자유로이 헤엄치는 거북이를 따라가며, 깊은 바다 속으로 시선을 옮겨보세요.",
+        "url": "https://www.youtube.com/watch?v=9xQ6YlaYYHI", # &t=... 제거
+        "startAt": 0,
+        "endAt": 180,
+        "context": "바닷속"
+    },
+    "neg_low_snow_01": {
+        "text": "하얀 눈 내리는 밤길을 걸으면서 고요한 소리에 마음을 맡겨보세요. 뇌가 새로운 공간을 감지하면서 기분이 조금씩 환기돼요.",
+        "url": "https://www.youtube.com/watch?v=31RokLEvUhg",
+        "startAt": 1290,  # 21:30
+        "endAt": 1440,     # 24:00
+        "context": "설산"
+    },
+
+    # 불안/분노 (neg_high)
+    "neg_high_cityview_01": {
+        "text": "창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬어볼까요?",
+        "url": "https://www.youtube.com/watch?v=xg1gNlxto2M",
+        "startAt": 0,
+        "endAt": 120,
+        "context": "도시 야경"
+    },
+    "neg_high_campfire_01": {
+        "text": "강가의 모닥불처럼 감정을 흡수해줄 탁 트인 공간이 필요해요. 불빛이 물결에 흔들리듯, 한 호흡 한 호흡 긴장을 내려놓아보세요.",
+        "url": "https://www.youtube.com/watch?v=6nlEmH7eZLk",
+        "startAt": 20,
+        "endAt": 140,
+        "context": "모닥불"
+    },
+    "neg_high_heartbeat_01": {
+        "text": "물속이 제격이에요. 엄마 뱃속처럼 고요한 물속에서 심장소리에 집중하면, 뇌가 점차 안정된 리듬을 회복하게 돼요.",
+        "url": "https://www.youtube.com/watch?v=vuctJwSi2To", # &t=... 제거
+        "startAt": 8,
+        "endAt": 129,
+        "context": "고요한 물속"
+    },
+
+    # ADHD (adhd_high)
+    "adhd_high_space_01": {
+        "text": "우주 공간처럼 자극이 최소화된 환경이 효과적이에요. 숨을 고르며 별빛에 시선을 모아보세요.",
+        "url": "https://www.youtube.com/watch?v=qRitf7c3-nQ",
+        "startAt": 0,
+        "endAt": 120,
+        "context": "우주 공간"
+    },
+    "adhd_high_pomodoro_01": {
+        "text": "딱 5분만, 가장 쉬운 일부터 시작해볼까요? 작은 출발이 집중을 열어줄 거예요.",
+        "url": "https://www.youtube.com/watch?v=TA9SZawYm2k",
+        "startAt": 0,
+        "endAt": 120,
+        "context": "책상 앞"
+    },
+    "adhd_high_training_01": {
+        "text": "공의 움직임을 따라가보세요! 집중력이 켜졌습니다!",
+        "url": "https://www.youtube.com/watch?v=E7HOlJ_OhEo",
+        "startAt": 0,
+        "endAt": 120,
+        "context": "훈련 공간"
+    },
+
+    # 수면 (sleep)
+    "sleep_forest_01": {
+        "text": "잔잔한 숲 속에서 포근한 텐트 안에 누운 듯, 빗방울이 떨어지는 리듬에 맞춰 몸을 호흡해보세요.",
+        "url": "https://www.youtube.com/watch?v=IdTRKv2jLo4",
+        "startAt": 10,
+        "endAt": 130,
+        "context": "밤의 숲속"
+    },
+    "sleep_onsen_01": {
+        "text": "온천의 따뜻한 품에서 보글보글 물소리와 풀벌레 소리에 집중해보세요. 잠 못 이루던 마음도 편안해질거예요.",
+        "url": "https://www.youtube.com/watch?v=fz1f05GRSvA",
+        "startAt": 20,
+        "endAt": 140,
+        "context": "온천"
+    },
+    "sleep_plane_01": {
+        "text": "비행기에서 포근한 기내 좌석에 기대듯, 엔진 소리에 안정을 맡기고 천천히 숨을 쉬어보세요. 공간적 전환이 뇌의 각성을 낮춰줍니다.",
+        "url": "https://www.youtube.com/watch?v=LuMBRy_gly4", # &t=... 제거
+        "startAt": 3540,  # 59:00
+        "endAt": 3600,     # 1:00:00
+        "context": "비행기 안"
+    },
+
+    # 긍정 (positive)
+    "positive_forest_01": {
+        "text": "햇살 가득한 숲에 앉아 호흡하며 그 기분을 오래 저장해보세요.",
+        "url": "https://www.youtube.com/watch?v=su14Bo0-uMI", # &list=LL&index=4 제거
+        "startAt": 0,
+        "endAt": 120,
+        "context": "햇살 가득한 숲"
+    },
+    "positive_beach_01": {
+        "text": "푸른 하늘과 흰 구름 아래에 있는 상상을 해보세요.",
+        "url": "https://www.youtube.com/watch?v=M_Q3YNlWfyA",
+        "startAt": 0,
+        "endAt": 120,
+        "context": "푸른 해변"
+    },
+    "positive_cafe_01": {
+        "text": "재즈가 흐르는 카페와 같은 공간과 함께 할 때 뇌가 회복탄력성을 더 강하게 저장해요.",
+        "url": "https://www.youtube.com/watch?v=NJuSStkIZBg",
+        "startAt": 0,
+        "endAt": 120,
+        "context": "재즈 카페"
     }
 }

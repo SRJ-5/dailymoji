@@ -26,7 +26,9 @@ class SolutionRemoteDataSourceImpl implements SolutionRemoteDataSource {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+// 응답 본문을 UTF-8로 강제 디코딩!!
+      final decodedBody = utf8.decode(response.bodyBytes);
+      return jsonDecode(decodedBody) as Map<String, dynamic>;
     } else {
       throw Exception(
           "Failed to propose solution: ${response.statusCode} ${response.body}");
@@ -36,10 +38,17 @@ class SolutionRemoteDataSourceImpl implements SolutionRemoteDataSource {
   @override
   Future<Map<String, dynamic>> fetchSolutionById(String solutionId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/solutions/$solutionId');
-    final response = await client.get(url);
+    final response = await client.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      }, // 헤더에 charset=utf-8 명시
+    );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      // 이 함수도 UTF-8로 강제 디코딩
+      final decodedBody = utf8.decode(response.bodyBytes);
+      return jsonDecode(decodedBody) as Map<String, dynamic>;
     } else {
       throw Exception(
           "Failed to fetch solution: ${response.statusCode} ${response.body}");

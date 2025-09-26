@@ -6,5 +6,6 @@ final Map<String, String> kEmojiAssetMap = {
   "crying": "assets/images/emojis/crying.png",
   "shocked": "assets/images/emojis/shocked.png",
   "sleeping": "assets/images/emojis/sleeping.png",
-  "smile": "assets/images/emojis/smile.png"
+  "smile": "assets/images/emojis/smile.png",
+  "default": "assets/images/emojis/default_gray.png"
 };

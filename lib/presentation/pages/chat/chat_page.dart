@@ -67,17 +67,17 @@ class _ChatPageState extends ConsumerState<ChatPage>
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
-    }
-  }
+  // void _scrollToBottom() {
+  //   if (_scrollController.hasClients) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       _scrollController.animateTo(
+  //         _scrollController.position.maxScrollExtent,
+  //         duration: const Duration(milliseconds: 300),
+  //         curve: Curves.easeOut,
+  //       );
+  //     });
+  //   }
+  // }
 
   void _toggleEmojiBar() {
     setState(() => showEmojiBar = !showEmojiBar);
@@ -100,10 +100,12 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final characterName = userState.userProfile?.characterNm ?? "모지모지";
     final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
 
-    ref.listen(chatViewModelProvider.select((state) => state.messages.length),
-        (_, __) {
-      _scrollToBottom();
-    });
+    final messages = chatState.messages.reversed.toList();
+
+    // ref.listen(chatViewModelProvider.select((state) => state.messages.length),
+    //     (_, __) {
+    //   _scrollToBottom();
+    // });
 
     return Scaffold(
       backgroundColor: Color(0xFFFEFBF4),
@@ -149,17 +151,20 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
                           controller: _scrollController,
-                          itemCount: chatState.messages.length,
+                          reverse: true,
+                          itemCount: messages.length,
                           itemBuilder: (context, index) {
-                            final message = chatState.messages[index];
+                            final message = messages[index];
                             final messageKey = ValueKey(message.tempId);
 
-                            // --- 3번 요구사항: 날짜 구분선 표시 로직 ---
+                            // --- 날짜 구분선 표시 로직 ---
                             bool showDateSeparator = false;
-                            if (index == 0) {
+                            if (index == messages.length - 1) {
+                              // 마지막 메시지(가장 오래된 메시지)
                               showDateSeparator = true;
                             } else {
-                              final prevMessage = chatState.messages[index - 1];
+                              final prevMessage =
+                                  messages[index + 1]; // 시간 순서상 이전 메시지
                               if (!isSameDay(
                                   prevMessage.createdAt, message.createdAt)) {
                                 showDateSeparator = true;
@@ -172,8 +177,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             if (showDateSeparator) {
                               return Column(
                                 children: [
-                                  _DateSeparator(date: message.createdAt),
-                                  messageWidget,
+                                  messageWidget, // 메시지가 먼저 나오고
+                                  _DateSeparator(
+                                      date: message
+                                          .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
                                 ],
                               );
                             }
