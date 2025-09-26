@@ -92,7 +92,8 @@ class _MyPageState extends ConsumerState<MyPage> {
                   ...List.generate(
                     3,
                     (index) => () {
-                      context.go('/my/info');
+                      final title = ["공지사항", "언어 설정", "이용 약관"][index];
+                      context.go('/my/prepare/$title');
                     },
                   )
                 ],
@@ -103,10 +104,12 @@ class _MyPageState extends ConsumerState<MyPage> {
                 items: ["로그아웃", "회원 탈퇴"],
                 onTapList: [
                   ...List.generate(
-                      2,
-                      (index) => () {
-                            context.go('/my/info');
-                          })
+                    2,
+                    (index) => () {
+                      final title = ["로그아웃", "회원 탈퇴"][index];
+                      context.go('/my/prepare/$title');
+                    },
+                  )
                 ],
               ),
             ],
