@@ -68,6 +68,7 @@ class ChatViewModel extends Notifier<ChatState> {
   String? _pendingEmotionForAnalysis;
   String? _lastEmojiOnlyCluster; // RIN ♥ 이모지 전송 직후의 클러스터 저장
   String? _lastEmojiMessageId; // RIN ♥ 이모지 전송 직후의 메시지 ID 저장 (세션 업데이트용)
+  DateTime? _targetDate; // 현재 로드 중인 특정 날짜 (무한 스크롤 제어용)
 
   @override
   ChatState build() => ChatState();
@@ -77,7 +78,7 @@ class ChatViewModel extends Notifier<ChatState> {
   // ---------------------------------------------------------------------------
 
   // --- Rin: 채팅방 진입 시 초기화 로직 ---
-  Future<void> enterChatRoom(String? emotionFromHome) async {
+  Future<void> enterChatRoom(String? emotionFromHome, {DateTime? specificDate}) async {
     final currentUserId = _userId; // Getter를 통해 현재 ID 가져오기
     if (currentUserId == null) {
       print("RIN: 🚨 [ViewModel] ERROR: User ID is null. Cannot enter chat room.");
@@ -86,8 +87,8 @@ class ChatViewModel extends Notifier<ChatState> {
     }
     _subscribeToMessages(currentUserId);
 
-    // 1. 오늘 대화 기록 불러오기
-    await _loadTodayMessages(currentUserId);
+    // 1. 대화 기록 불러오기 (특정 날짜 또는 오늘)
+    await _loadMessages(currentUserId, targetDate: specificDate);
 
     // 홈에서 이모지를 선택하고 들어온 경우, 대화 흐름 시작
     if (emotionFromHome != null) {
@@ -477,20 +478,46 @@ class ChatViewModel extends Notifier<ChatState> {
   // Data & State Management Utilities
   // ---------------------------------------------------------------------------
 
-  // --- Rin: 오늘 대화 기록 불러오기 ---
-  Future<void> _loadTodayMessages(String userId) async {
+  // --- Rin: 특정 날짜 또는 오늘 대화 기록 불러오기 ---
+  Future<void> _loadMessages(String userId, {DateTime? targetDate}) async {
+    // private 변수에 targetDate 저장
+    _targetDate = targetDate;
     state = state.copyWith(isLoading: true);
     try {
+      // targetDate가 있으면 해당 날짜의 시작 시점부터, 없으면 전체 메시지
+      String? cursorIso;
+      if (_targetDate != null) {
+        // 해당 날짜의 다음 날 00:00:00을 커서로 설정 (그 이전 메시지들을 가져오기 위해)
+        final nextDay = DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day + 1);
+        cursorIso = nextDay.toIso8601String();
+      }
+
+      // 특정 날짜의 경우 모든 메시지를 로드하기 위해 limit을 크게 설정
+      final limit = _targetDate != null ? 1000 : _pageSize; // 특정 날짜면 최대 1000개까지
+
       final msgs = await ref.read(loadMessagesUseCaseProvider).execute(
             userId: userId,
-            limit: _pageSize,
+            limit: limit,
+            cursorIso: cursorIso,
           );
-      // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
-      msgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      // 페이지 사이즈 미만이면 더 이상 로드할 메시지가 없다고 가정
-      final hasMore = msgs.length >= _pageSize;
-      state = state.copyWith(messages: msgs, isLoading: false, hasMore: hasMore);
+      // 특정 날짜가 지정된 경우, 해당 날짜의 메시지만 필터링
+      List<Message> filteredMsgs = msgs;
+      if (_targetDate != null) {
+        final targetDateStart = DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day);
+        final targetDateEnd = DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day, 23, 59, 59);
+
+        filteredMsgs = msgs.where((msg) {
+          return msg.createdAt.isAfter(targetDateStart) && msg.createdAt.isBefore(targetDateEnd);
+        }).toList();
+      }
+
+      // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
+      filteredMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+      // 특정 날짜 모드에서는 무한 스크롤 비활성화, 일반 모드에서는 페이지 사이즈로 판단
+      final hasMore = _targetDate != null ? false : (msgs.length >= _pageSize);
+      state = state.copyWith(messages: filteredMsgs, isLoading: false, hasMore: hasMore);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString(), isLoading: false);
     }
@@ -499,6 +526,9 @@ class ChatViewModel extends Notifier<ChatState> {
   // --- 추가 메시지 로드 (무한 스크롤) ---
   Future<void> loadMoreMessages() async {
     if (state.isLoadingMore || !state.hasMore) return;
+
+    // 특정 날짜가 설정된 경우 무한 스크롤 비활성화
+    if (_targetDate != null) return;
 
     final currentUserId = _userId;
     if (currentUserId == null) return;
@@ -519,7 +549,7 @@ class ChatViewModel extends Notifier<ChatState> {
           );
 
       if (additionalMsgs.isNotEmpty) {
-        // 새로 가져온 메시지들을 정렬
+        // 새로 가져온 메시지들을 정렬 (특정 날짜 모드는 이미 early return으로 제외됨)
         additionalMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
         // 기존 메시지 앞에 새 메시지들을 추가
@@ -600,7 +630,7 @@ class ChatViewModel extends Notifier<ChatState> {
     // 채팅방 진입 시 기존 메시지를 먼저 로드
     if (state.messages.isEmpty) {
       if (_userId == null) return;
-      await _loadTodayMessages(_userId!);
+      await _loadMessages(_userId!);
     }
 
 // chat 페이지로 넘어가는 reason에 따라 다른 메시지를 선택
