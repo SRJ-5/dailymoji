@@ -211,7 +211,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/chat', extra: selectedEmotion),
+        onTap: () => context.go('/home/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
@@ -231,7 +231,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
-                Image.asset(AppIcons.send),
+                SvgPicture.asset(AppIcons.send),
               ],
             ),
           ),
@@ -257,8 +257,8 @@ class _Imoge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(smile)를 보여줌.
-    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['smile']!;
+    // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(default)를 보여줌.
+    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['default']!;
     final isSelected = selectedEmotion == imoKey;
 
     return GestureDetector(
