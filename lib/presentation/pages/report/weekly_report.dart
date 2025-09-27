@@ -13,9 +13,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// 지금 감정 데이터에서 null을 0으로 치환하는듯
-// 이거 수정해야함
-
 // ===== EmotionData (UI에서 사용하는 모델) =====
 class EmotionData {
   final Color color;
@@ -217,7 +214,6 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
 
                 // ===== 차트 =====
@@ -302,7 +298,6 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                       ),
                       const SizedBox(height: 8),
 
-                      // ===== 범례: 종합은 상시 노출 원하면 추가
                       // ===== 범례: 줄바꿈 지원 =====
                       SizedBox(
                         width: 300.w, // 원하는 최대 폭 (없애면 가로 전체)
