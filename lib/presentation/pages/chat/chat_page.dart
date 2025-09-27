@@ -58,9 +58,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // emotionFromHome이 있으면 그 이모지로, 없으면 'default'로 초기 상태 설정
     currentSelectedEmojiKey = widget.emotionFromHome ?? 'default';
-// emotionFromHome이 있으면 그 이모지로, 없으면 'smile'로 초기 상태 설정
-    selectedEmojiAsset =
-        kEmojiAssetMap[widget.emotionFromHome] ?? kEmojiAssetMap['smile']!;
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -138,7 +135,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final chatState = ref.watch(chatViewModelProvider);
     // 캐릭터 이름 연동
     final userState = ref.watch(userViewModelProvider);
-    final characterName = userState.userProfile?.characterNm ?? "모지모지";
+    final characterName = userState.userProfile?.characterNm ?? "모지";
     final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
 
 // 봇이 입력중일 때 사용자가 입력 못하게
@@ -650,8 +647,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final bool isSendButtonEnabled = !isBotTyping &&
         (_messageInputController.text.trim().isNotEmpty ||
             currentSelectedEmojiKey != 'default');
-    final bool isSendButtonEnabled =
-        !isBotTyping && _messageInputController.text.trim().isNotEmpty;
 
     return KeyboardVisibilityBuilder(builder: (context, isKeboardVisible) {
       return Container(
@@ -659,7 +654,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
         margin: EdgeInsets.only(bottom: isKeboardVisible ? 0 : 34.h),
         child: Container(
           decoration: BoxDecoration(
-            // // TODO: 봇이 입력중일때 채팅창 색 변화?
             // color: isBotTyping ? AppColors.grey100 : Colors.white,
             color: AppColors.white,
             borderRadius: BorderRadius.circular(12.r),
