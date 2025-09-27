@@ -1,17 +1,22 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
 import 'package:dailymoji/presentation/pages/report/monthly_report.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // MODIFIED: 불필요한 위젯(BottomBar) 제거 및 구조 단순화. StatelessWidget -> ConsumerWidget으로 변경 가능하지만, 여기선 필요 없음.
-class ReportPage extends StatelessWidget {
+class ReportPage extends ConsumerWidget {
   const ReportPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final UserProfile = ref.watch(userViewModelProvider);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
@@ -47,7 +52,8 @@ class ReportPage extends StatelessWidget {
             Expanded(
               child: TabBarView(children: [
                 MonthlyReport(),
-                WeeklyReport(), // MODIFIED: 위젯 이름 변경
+                WeeklyReport(
+                    userId: UserProfile.userProfile!.id!), // MODIFIED: 위젯 이름 변경
               ]),
             )
           ],
