@@ -224,10 +224,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                       date: message
                                           .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
                                   messageWidget, // 메시지가 먼저 나오고
-                                  _DateSeparator(
-                                      date: message
-                                          .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
-                                  messageWidget, // 메시지가 먼저 나오고
                                 ],
                               );
                             }
