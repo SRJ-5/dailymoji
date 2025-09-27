@@ -1,6 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
 import 'package:dailymoji/presentation/pages/report/monthly_report.dart';

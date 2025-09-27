@@ -4,6 +4,7 @@ import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 // 현재 기분 상태 : 여기에 최고 점수의 감정상태를 관리하고
@@ -12,6 +13,7 @@ import 'package:table_calendar/table_calendar.dart';
 final currentMoodProvider = StateProvider<String>((ref) {
   return "";
 });
+//
 
 class MonthlyReport extends StatefulWidget {
   const MonthlyReport({super.key});
@@ -193,7 +195,9 @@ class _MonthlyReportState extends State<MonthlyReport> {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: GestureDetector(
-                        onTap: () {}, // _selectedDay를 가지고 채팅 페이지로 이동!!!
+                        onTap: () {
+                          context.go("/report/chat", extra: _selectedDay);
+                        }, // _selectedDay를 가지고 채팅 페이지로 이동!!!
                         child: Container(
                           alignment: Alignment.center,
                           height: 40.h,

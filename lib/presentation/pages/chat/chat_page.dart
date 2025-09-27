@@ -25,8 +25,10 @@ bool isSameDay(DateTime date1, DateTime date2) {
 class ChatPage extends ConsumerStatefulWidget {
   final String? emotionFromHome;
   final Map<String, dynamic>? navigationData;
+  final DateTime? targetDate;
 
-  const ChatPage({super.key, this.emotionFromHome, this.navigationData});
+  const ChatPage(
+      {super.key, this.emotionFromHome, this.navigationData, this.targetDate});
 
   @override
   ConsumerState<ChatPage> createState() => _ChatPageState();
