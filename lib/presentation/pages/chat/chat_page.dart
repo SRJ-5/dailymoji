@@ -220,10 +220,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             if (showDateSeparator) {
                               return Column(
                                 children: [
-                                  messageWidget, // 메시지가 먼저 나오고
                                   _DateSeparator(
                                       date: message
                                           .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
+                                  messageWidget, // 메시지가 먼저 나오고
                                 ],
                               );
                             }
@@ -590,30 +590,29 @@ class _ChatPageState extends ConsumerState<ChatPage>
                           currentSelectedEmojiKey = selectedEmotionKey;
                           showEmojiBar = false; // 이모지 바 닫기
                         });
-                        // 선택된 이모지를 메시지로 전송
-                        ref
-                            .read(chatViewModelProvider.notifier)
-                            .sendEmojiAsMessage(selectedEmotionKey);
+                        // // 선택된 이모지를 메시지로 전송
+                        // ref
+                        //     .read(chatViewModelProvider.notifier)
+                        //     .sendEmojiAsMessage(selectedEmotionKey);
 
-                        // 이모지를 보낸 후, 즉시 'default'로 돌리기
-                        setState(() {
-                          currentSelectedEmojiKey = 'default';
-                          showEmojiBar = false;
-                        });
+                        // // 이모지를 보낸 후, 즉시 'default'로 돌리기
+                        // setState(() {
+                        //   currentSelectedEmojiKey = 'default';
+                        //   showEmojiBar = false;
+                        // });
 
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },
                       child: ColorFiltered(
-                        colorFilter:
-                            currentSelectedEmojiKey != emojiAssets[index]
-                                ? const ColorFilter.matrix(<double>[
-                                    0.2126, 0.7152, 0.0722, 0, 0, //R
-                                    0.2126, 0.7152, 0.0722, 0, 0, //G
-                                    0.2126, 0.7152, 0.0722, 0, 0, //B
-                                    0, 0, 0, 1, 0, //A
-                                  ])
-                                : const ColorFilter.mode(
-                                    Colors.transparent, BlendMode.multiply),
+                        colorFilter: currentSelectedEmojiKey != emojiKeys[index]
+                            ? const ColorFilter.matrix(<double>[
+                                0.2126, 0.7152, 0.0722, 0, 0, //R
+                                0.2126, 0.7152, 0.0722, 0, 0, //G
+                                0.2126, 0.7152, 0.0722, 0, 0, //B
+                                0, 0, 0, 1, 0, //A
+                              ])
+                            : const ColorFilter.mode(
+                                Colors.transparent, BlendMode.multiply),
                         child: Image.asset(
                           emojiAssets[index],
                           width: 34.w,
@@ -633,8 +632,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // 봇 입력중일 때 사용자 입력 불가 설정
   Widget _buildInputField({required bool isBotTyping}) {
-    final bool isSendButtonEnabled =
-        !isBotTyping && _messageInputController.text.trim().isNotEmpty;
+    final bool isSendButtonEnabled = !isBotTyping &&
+        (_messageInputController.text.trim().isNotEmpty ||
+            currentSelectedEmojiKey != 'default');
 
     return Container(
       margin: EdgeInsets.only(bottom: 46.h),
