@@ -591,7 +591,13 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                         final selectedEmotionKey = emojiKeys[index];
 
                         setState(() {
-                          currentSelectedEmojiKey = selectedEmotionKey;
+                          if (currentSelectedEmojiKey == selectedEmotionKey) {
+                            //
+                            print("선택된 이모지 다시 누름");
+                            currentSelectedEmojiKey = "default";
+                          } else {
+                            currentSelectedEmojiKey = selectedEmotionKey;
+                          }
                           showEmojiBar = false; // 이모지 바 닫기
                         });
                         // // 선택된 이모지를 메시지로 전송
@@ -605,7 +611,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                         //   showEmojiBar = false;
                         // });
                         // 선택된 이모지를 메시지로 전송
-                        ref.read(chatViewModelProvider.notifier).sendEmojiAsMessage(selectedEmotionKey);
+                        // ref.read(chatViewModelProvider.notifier).sendEmojiAsMessage(selectedEmotionKey);
 
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },

@@ -58,6 +58,9 @@ class ChatViewModel extends Notifier<ChatState> {
   // State & Dependencies
   // ---------------------------------------------------------------------------
 
+  // 페이지네이션 상수
+  static const int _pageSize = 50;
+
   // UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
   String? get _userId => ref.read(userViewModelProvider).userProfile?.id ?? "aac8fb90-8678-466c-9eee-f8e1607de4f8";
 
@@ -195,16 +198,7 @@ class ChatViewModel extends Notifier<ChatState> {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 1. 텍스트 메시지 먼저 전송
-    final textMessage = Message(
-      userId: currentUserId,
-      content: text,
-      sender: Sender.user,
-      type: MessageType.normal,
-    );
-    final savedTextMessage = await _addUserMessageToChat(textMessage);
-
-    // 2. 이모지 메시지 전송 (지연 없이 바로)
+    // 1. 이모지 메시지 전송 (지연 없이 바로)
     final emojiMessage = Message(
       userId: currentUserId,
       sender: Sender.user,
@@ -212,6 +206,15 @@ class ChatViewModel extends Notifier<ChatState> {
       imageAssetPath: kEmojiAssetMap[emotionKey],
     );
     final savedEmojiMessage = await _addUserMessageToChat(emojiMessage);
+
+    // 2. 텍스트 메시지 먼저 전송
+    final textMessage = Message(
+      userId: currentUserId,
+      content: text,
+      sender: Sender.user,
+      type: MessageType.normal,
+    );
+    final savedTextMessage = await _addUserMessageToChat(textMessage);
 
     // 3. 백엔드에 텍스트와 이모지 가중치를 붙여 풀 파이프라인으로 분석 요청
     await _analyzeAndRespond(
@@ -478,12 +481,15 @@ class ChatViewModel extends Notifier<ChatState> {
   Future<void> _loadTodayMessages(String userId) async {
     state = state.copyWith(isLoading: true);
     try {
-      final msgs = await ref.read(loadMessagesUseCaseProvider).execute(userId: userId);
+      final msgs = await ref.read(loadMessagesUseCaseProvider).execute(
+            userId: userId,
+            limit: _pageSize,
+          );
       // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
       msgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      // 50개 미만이면 더 이상 로드할 메시지가 없다고 가정
-      final hasMore = msgs.length >= 50;
+      // 페이지 사이즈 미만이면 더 이상 로드할 메시지가 없다고 가정
+      final hasMore = msgs.length >= _pageSize;
       state = state.copyWith(messages: msgs, isLoading: false, hasMore: hasMore);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString(), isLoading: false);
@@ -508,6 +514,7 @@ class ChatViewModel extends Notifier<ChatState> {
     try {
       final additionalMsgs = await ref.read(loadMessagesUseCaseProvider).execute(
             userId: currentUserId,
+            limit: _pageSize,
             cursorIso: cursorIso,
           );
 
@@ -518,8 +525,8 @@ class ChatViewModel extends Notifier<ChatState> {
         // 기존 메시지 앞에 새 메시지들을 추가
         final updatedMessages = [...additionalMsgs, ...state.messages];
 
-        // 50개 미만이면 더 이상 로드할 메시지가 없다고 가정
-        final hasMore = additionalMsgs.length >= 50;
+        // 페이지 사이즈 미만이면 더 이상 로드할 메시지가 없다고 가정
+        final hasMore = additionalMsgs.length >= _pageSize;
 
         state = state.copyWith(
           messages: updatedMessages,
