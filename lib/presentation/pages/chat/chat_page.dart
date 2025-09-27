@@ -42,6 +42,24 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
     setState(() {});
   }
 
+  // 무한 스크롤 리스너
+  void _scrollListener() {
+    if (_scrollController.hasClients) {
+      final chatState = ref.read(chatViewModelProvider);
+      
+      // reverse: true 상태에서 맨 위로 스크롤했을 때 (maxScrollExtent에 가까워졌을 때)
+      // 그리고 현재 로딩 중이 아니고, 더 불러올 메시지가 있을 때만 실행
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+          !chatState.isLoadingMore &&
+          chatState.hasMore &&
+          !chatState.isLoading) {
+        
+        // 추가 메시지 로드
+        ref.read(chatViewModelProvider.notifier).loadMoreMessages();
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +70,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
 // 봇입력중일때 사용자입력못하게
     _messageInputController.addListener(_onInputChanged);
+
+// 무한 스크롤 리스너 추가
+    _scrollController.addListener(_scrollListener);
 
 // emotionFromHome이 있으면 그 이모지로, 없으면 'smile'로 초기 상태 설정
     selectedEmojiAsset = kEmojiAssetMap[widget.emotionFromHome] ?? kEmojiAssetMap['smile']!;
@@ -72,6 +93,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
   @override
   void dispose() {
     _messageInputController.removeListener(_onInputChanged);
+    _scrollController.removeListener(_scrollListener);
     _messageInputController.dispose();
     _scrollController.dispose();
     _emojiCtrl.dispose();
@@ -123,9 +145,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
     final messages = chatState.messages.reversed.toList();
 
-    //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동
+    //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동 (무한 스크롤 로딩 중이 아닐 때만)
     ref.listen(chatViewModelProvider.select((state) => state.messages.length), (previous, next) {
-      if (next > (previous ?? 0) && !chatState.isLoading) {
+      if (next > (previous ?? 0) && !chatState.isLoading && !chatState.isLoadingMore) {
         _scrollToBottom();
       }
     });
@@ -168,12 +190,25 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                       : ListView.builder(
                           controller: _scrollController,
                           reverse: true,
-                          itemCount: messages.length,
+                          itemCount: messages.length + (chatState.isLoadingMore ? 1 : 0),
                           itemBuilder: (context, index) {
+                            // 로딩 인디케이터 표시 (reverse: true 상태에서 맨 위에 표시됨)
+                            if (chatState.isLoadingMore && index == messages.length) {
+                              return Container(
+                                padding: EdgeInsets.all(16.h),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                              );
+                            }
                             //  reverse된 리스트에서 올바른 메시지 가져오기
-                            final messages = chatState.messages;
-                            final reversedIndex = messages.length - 1 - index;
-                            final message = messages[reversedIndex];
+                            final allMessages = chatState.messages;
+                            final reversedIndex = allMessages.length - 1 - index;
+                            final message = allMessages[reversedIndex];
 
                             // --- 날짜 구분선 표시 로직 ---
                             bool showDateSeparator = false;
@@ -181,7 +216,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                               showDateSeparator = true;
                             } else {
                               // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
-                              final prevMessageInTime = chatState.messages[reversedIndex - 1];
+                              final prevMessageInTime = allMessages[reversedIndex - 1];
                               if (!isSameDay(prevMessageInTime.createdAt, message.createdAt)) {
                                 showDateSeparator = true;
                               }

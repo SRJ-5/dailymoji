@@ -18,7 +18,7 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     var query = client.from("messages").select().eq("user_id", userId);
 
     if (cursorIso != null) {
-      query = query.gt("created_at", cursorIso);
+      query = query.lt("created_at", cursorIso);
     }
 
     // 최신 메시지 50개를 가져오기 위해 먼저 최신 순으로 정렬해서 limit 적용
