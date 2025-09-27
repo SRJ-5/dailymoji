@@ -35,7 +35,9 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     }
 
     // 3) 그 다음에 정렬/리밋
-    final result = await base.order("created_at", ascending: true).limit(limit);
+    // RIN: 'ascending: true'였던... 바보.. 'ascending: false'로 변경하여 최신 메시지부터 가져오도록 수정함
+    final result =
+        await base.order("created_at", ascending: false).limit(limit);
 
     final rows = (result as List).cast<Map<String, dynamic>>();
     return rows.map((m) => MessageDto.fromJson(m)).toList();
