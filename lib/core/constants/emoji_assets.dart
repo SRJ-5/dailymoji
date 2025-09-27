@@ -8,5 +8,6 @@ final Map<String, String> kEmojiAssetMap = {
   "crying": AppImages.cryingEmoji,
   "shocked": AppImages.shockedEmoji,
   "sleeping": AppImages.sleepingEmoji,
-  "smile": AppImages.smileEmoji
+  "smile": AppImages.smileEmoji,
+  "default": AppImages.defaultEmoji,
 };
