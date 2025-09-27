@@ -26,8 +26,7 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: Text("솔루션을 불러오는 데 실패했습니다: $err",
-              style: const TextStyle(color: AppColors.white)),
+          child: Text("솔루션을 불러오는 데 실패했습니다: $err", style: const TextStyle(color: AppColors.white)),
         ),
       ),
       data: (solution) {
@@ -67,7 +66,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     // ]);
 
     // extra에 어떤 이유로 페이지를 떠나는지 정보를 담아 보냅니다.
-    context.go('/chat', extra: {'from': 'solution_page', 'reason': reason});
+    context.go('/home/chat', extra: {'from': 'solution_page', 'reason': reason});
   }
 
   @override
@@ -160,9 +159,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     child: AspectRatio(
                       aspectRatio: ar, // 플레이어 캔버스 비율 유지
                       // child: _InnerPlayer(), // 실제 플레이어
-                      child: _InnerPlayer(
-                          controller:
-                              _controller), // Rin: _InnerPlayer에 controller를 직접 전달
+                      child: _InnerPlayer(controller: _controller), // Rin: _InnerPlayer에 controller를 직접 전달
                     ),
                   ),
                 ),
@@ -196,8 +193,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                       ),
                       // onPressed: () => Navigator.of(context).pop(),
                       //RIN: X 버튼을 누르면 'user_closed' 신호를 extra로
-                      onPressed: () =>
-                          _navigateToChatPage(reason: 'user_closed'),
+                      onPressed: () => _navigateToChatPage(reason: 'user_closed'),
                     ),
                   ),
 
@@ -228,9 +224,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                       iconSize: 64.r,
                       color: AppColors.white,
                       icon: Icon(
-                        _controller.value.isPlaying
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_fill,
+                        _controller.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
                       ),
                       onPressed: () {
                         if (_controller.value.isPlaying) {
