@@ -84,8 +84,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         final reason = navData['reason'] as String? ?? 'video_ended'; // 기본값 설정
         ref.read(chatViewModelProvider.notifier).sendFollowUpMessageAfterSolution(reason: reason);
       } else {
-        // 기존 로직: 홈에서 진입한 경우
-        ref.read(chatViewModelProvider.notifier).enterChatRoom(widget.emotionFromHome);
+        // 기존 로직: 홈에서 진입한 경우 또는 리포트에서 특정 날짜로 진입한 경우
+        ref.read(chatViewModelProvider.notifier).enterChatRoom(widget.emotionFromHome, specificDate: widget.targetDate);
       }
     });
   }
