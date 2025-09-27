@@ -1,43 +1,27 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-//⭐️⭐️백엔드의 context 정보를 임시로 Dart 맵에 만들었음
-// 이 페이지에서만 사용할 임시 데이터입니다!!
-const Map<String, String> solutionContexts = {
-  "neg_low_beach_01": "바닷가",
-  "neg_low_turtle_01": "바닷속",
-  "neg_low_snow_01": "설산",
-  "neg_high_cityview_01": "도시 야경",
-  "neg_high_campfire_01": "모닥불",
-  "neg_high_heartbeat_01": "고요한 물속",
-  "adhd_high_space_01": "우주 공간",
-  "adhd_high_pomodoro_01": "책상 앞",
-  "adhd_high_training_01": "훈련 공간",
-  "sleep_forest_01": "밤의 숲속",
-  "sleep_onsen_01": "온천",
-  "sleep_plane_01": "비행기 안",
-  "positive_forest_01": "햇살 가득한 숲",
-  "positive_beach_01": "푸른 해변",
-  "positive_cafe_01": "재즈 카페",
-};
-
-class BreathingSolutionPage extends StatefulWidget {
+class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String solutionId;
 
-  const BreathingSolutionPage({super.key, required this.solutionId});
+  const BreathingSolutionPage(
+      {super.key, required this.solutionId});
 
   @override
-  State<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
+  ConsumerState<BreathingSolutionPage> createState() =>
+      _BreathingSolutionPageState();
 }
 
-class _BreathingSolutionPageState extends State<BreathingSolutionPage>
+class _BreathingSolutionPageState
+    extends ConsumerState<BreathingSolutionPage>
 // RIN: 수정된 부분: SingleTickerProviderStateMixin -> TickerProviderStateMixin 애니메이션 여러개 허용
     with
         TickerProviderStateMixin {
@@ -60,8 +44,10 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
   @override
   void initState() {
     super.initState();
-//API 호출 없이, 위에서 만든 임시 맵에서 context를 바로 가져오기
-    final contextKey = solutionContexts[widget.solutionId] ?? '그곳';
+
+    final solutionContext = ref
+        .read(solutionContextViewModelProvider.notifier)
+        .getSolutionContext(widget.solutionId);
 
     _steps = [
       {
@@ -90,7 +76,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       },
       {
         "title": null,
-        "text": "잘 했어요!\n이제 $contextKey에 가서도\n호흡을 이어가 보세요",
+        "text": "잘 했어요!\n이제 $solutionContext에 가서도\n호흡을 이어가 보세요",
         "font": AppFontStyles.heading2,
         "duration": 2,
       },
@@ -110,7 +96,8 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
     // RIN: 타이머 추가
     _timerController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1), // duration은 나중에 동적으로 변경됩니다.
+      duration: const Duration(
+          seconds: 1), // duration은 나중에 동적으로 변경됩니다.
     );
 
     _timerController.addListener(() {
@@ -118,7 +105,8 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
       final duration = _steps[_step]["duration"];
       if (duration != null) {
         // 애니메이션 진행률(0.0~1.0)에 따라 초를 계산 (ceil로 올림처리하여 1부터 시작)
-        final newSeconds = (_timerController.value * duration).ceil();
+        final newSeconds =
+            (_timerController.value * duration).ceil();
         if (_timerSeconds != newSeconds) {
           setState(() {
             _timerSeconds = newSeconds;
@@ -210,13 +198,14 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
                       if (_steps[_step]["title"] != null)
                         Text(
                           _steps[_step]["title"],
-                          style: AppFontStyles.heading2
-                              .copyWith(color: AppColors.grey100),
+                          style: AppFontStyles.heading2.copyWith(
+                              color: AppColors.grey100),
                           textAlign: TextAlign.center,
                         ),
                       Text(
                         _steps[_step]["text"],
-                        style: (_steps[_step]["font"] as TextStyle)
+                        style: (_steps[_step]["font"]
+                                as TextStyle)
                             .copyWith(color: AppColors.grey100),
                         textAlign: TextAlign.center,
                       ),
@@ -329,19 +318,23 @@ class TimerPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
             text: '$seconds',
-            style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
+            style: AppFontStyles.heading2
+                .copyWith(color: AppColors.white)),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
       textPainter.paint(
         canvas,
-        center - Offset(textPainter.width / 2, textPainter.height / 2),
+        center -
+            Offset(
+                textPainter.width / 2, textPainter.height / 2),
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant TimerPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.seconds != seconds;
+    return oldDelegate.progress != progress ||
+        oldDelegate.seconds != seconds;
   }
 }
