@@ -99,7 +99,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
     // 깜빡임 애니메이션 컨트롤러
     _blinkController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
 
     _blinkAnimation = Tween<double>(
@@ -203,7 +203,7 @@ class _BreathingSolutionPageState extends State<BreathingSolutionPage>
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: AnimatedOpacity(
                   opacity: _opacity,
-                  duration: const Duration(seconds: 1),
+                  duration: const Duration(milliseconds: 300),
                   // RIN: 문구 수정
                   child: Column(
                     children: [

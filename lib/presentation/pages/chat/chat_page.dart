@@ -17,7 +17,9 @@ import 'package:intl/intl.dart';
 
 //(구분선추가) 날짜 비교를 위한 Helper 함수
 bool isSameDay(DateTime date1, DateTime date2) {
-  return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
+  return date1.year == date2.year &&
+      date1.month == date2.month &&
+      date1.day == date2.day;
 }
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -30,9 +32,10 @@ class ChatPage extends ConsumerStatefulWidget {
   ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderStateMixin {
+class _ChatPageState extends ConsumerState<ChatPage>
+    with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
-  late String selectedEmojiAsset;
+  late String currentSelectedEmojiKey;
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
@@ -53,18 +56,22 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 // 봇입력중일때 사용자입력못하게
     _messageInputController.addListener(_onInputChanged);
 
-// emotionFromHome이 있으면 그 이모지로, 없으면 'smile'로 초기 상태 설정
-    selectedEmojiAsset = kEmojiAssetMap[widget.emotionFromHome] ?? kEmojiAssetMap['smile']!;
+// emotionFromHome이 있으면 그 이모지로, 없으면 'default'로 초기 상태 설정
+    currentSelectedEmojiKey = widget.emotionFromHome ?? 'default';
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final navData = widget.navigationData;
       if (navData != null && navData['from'] == 'solution_page') {
         final reason = navData['reason'] as String? ?? 'video_ended'; // 기본값 설정
-        ref.read(chatViewModelProvider.notifier).sendFollowUpMessageAfterSolution(reason: reason);
+        ref
+            .read(chatViewModelProvider.notifier)
+            .sendFollowUpMessageAfterSolution(reason: reason);
       } else {
         // 기존 로직: 홈에서 진입한 경우
-        ref.read(chatViewModelProvider.notifier).enterChatRoom(widget.emotionFromHome);
+        ref
+            .read(chatViewModelProvider.notifier)
+            .enterChatRoom(widget.emotionFromHome);
       }
     });
   }
@@ -112,10 +119,23 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 디폴트 이미지로 돌려놓기
+    ref.listen(chatViewModelProvider.select((value) => value.clearPendingEmoji),
+        (previous, next) {
+      if (next == true) {
+        setState(() {
+          currentSelectedEmojiKey = 'default';
+        });
+        ref
+            .read(chatViewModelProvider.notifier)
+            .consumeClearPendingEmojiSignal();
+      }
+    });
+
     final chatState = ref.watch(chatViewModelProvider);
     // 캐릭터 이름 연동
     final userState = ref.watch(userViewModelProvider);
-    final characterName = userState.userProfile?.characterNm ?? "모지모지";
+    final characterName = userState.userProfile?.characterNm ?? "모지";
     final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
 
 // 봇이 입력중일 때 사용자가 입력 못하게
@@ -124,7 +144,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
     final messages = chatState.messages.reversed.toList();
 
     //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동
-    ref.listen(chatViewModelProvider.select((state) => state.messages.length), (previous, next) {
+    ref.listen(chatViewModelProvider.select((state) => state.messages.length),
+        (previous, next) {
       if (next > (previous ?? 0) && !chatState.isLoading) {
         _scrollToBottom();
       }
@@ -142,14 +163,16 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
           children: [
             CircleAvatar(
               radius: 16.r,
-              backgroundImage: (characterImageUrl != null && characterImageUrl.isNotEmpty)
-                  ? NetworkImage(characterImageUrl)
-                  : const AssetImage(AppImages.cadoFace) as ImageProvider,
+              backgroundImage:
+                  (characterImageUrl != null && characterImageUrl.isNotEmpty)
+                      ? NetworkImage(characterImageUrl)
+                      : const AssetImage(AppImages.cadoFace) as ImageProvider,
             ),
             SizedBox(width: 12.r),
             Text(
               characterName,
-              style: AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
+              style:
+                  AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
             ),
           ],
         ),
@@ -181,20 +204,25 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                               showDateSeparator = true;
                             } else {
                               // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
-                              final prevMessageInTime = chatState.messages[reversedIndex - 1];
-                              if (!isSameDay(prevMessageInTime.createdAt, message.createdAt)) {
+                              final prevMessageInTime =
+                                  chatState.messages[reversedIndex - 1];
+                              if (!isSameDay(prevMessageInTime.createdAt,
+                                  message.createdAt)) {
                                 showDateSeparator = true;
                               }
                             }
 
-                            final messageWidget = _buildMessageWidget(message, key: ValueKey(message.tempId));
+                            final messageWidget = _buildMessageWidget(message,
+                                key: ValueKey(message.tempId));
 
                             // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
                             // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
                             if (showDateSeparator) {
                               return Column(
                                 children: [
-                                  _DateSeparator(date: message.createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
+                                  _DateSeparator(
+                                      date: message
+                                          .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
                                   messageWidget, // 메시지가 먼저 나오고
                                 ],
                               );
@@ -299,7 +327,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
 // branching: 메시지 타입이 'image'이고 이미지 경로가 있으면 Image 위젯을, 아니면 Text 위젯을 표시
     if (message.type == MessageType.image && message.imageAssetPath != null) {
-      print("RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
+      print(
+          "RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
 
       // 동그랗게 만들기! (--> 그래야 하얀 박스안에 들어가지 않음)
       messageContent = ClipRRect(
@@ -328,15 +357,20 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         children: [
           Text(
             _formattedNow(message.createdAt),
-            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
+            style:
+                AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
           ),
           SizedBox(width: 4.w),
           Container(
-            padding: message.type == MessageType.image ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: message.type == MessageType.image
+                ? EdgeInsets.zero
+                : EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
 
             constraints: BoxConstraints(maxWidth: 292.w), // 말풍선 가로 길이 최대
             decoration: BoxDecoration(
-              color: message.type == MessageType.image ? Colors.transparent : AppColors.green200,
+              color: message.type == MessageType.image
+                  ? Colors.transparent
+                  : AppColors.green200,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 bottomRight: Radius.circular(12.r),
@@ -371,13 +405,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
             ),
             child: Text(
               message.content,
-              style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.bodyRegular14
+                  .copyWith(color: AppColors.grey900),
             ),
           ),
           SizedBox(width: 4.w),
           Text(
             _formattedNow(message.createdAt),
-            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
+            style:
+                AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
           ),
         ],
       ),
@@ -411,12 +447,17 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
               final double buttonWidth = isPositiveAction ? 104.w : 128.w;
 
               final buttonStyle = ElevatedButton.styleFrom(
-                backgroundColor: isPositiveAction ? AppColors.yellow700 : AppColors.green50,
-                foregroundColor: isPositiveAction ? AppColors.grey50 : AppColors.grey900,
-                padding: EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+                backgroundColor:
+                    isPositiveAction ? AppColors.yellow700 : AppColors.green50,
+                foregroundColor:
+                    isPositiveAction ? AppColors.grey50 : AppColors.grey900,
+                padding:
+                    EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
-                  side: BorderSide(color: AppColors.grey200, width: isPositiveAction ? 0 : 1), // 테두리
+                  side: BorderSide(
+                      color: AppColors.grey200,
+                      width: isPositiveAction ? 0 : 1), // 테두리
                 ),
                 textStyle: AppFontStyles.bodyRegular14,
               );
@@ -431,7 +472,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                     style: buttonStyle,
                     onPressed: () {
                       // 각 답변에 맞는 action
-                      ref.read(chatViewModelProvider.notifier).respondToSolution(
+                      ref
+                          .read(chatViewModelProvider.notifier)
+                          .respondToSolution(
                             proposal['solution_id'] as String,
                             action,
                           );
@@ -452,8 +495,10 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
   }
 
   Widget _buildEmojiBarAnimated() {
-    final emojiKeys = kEmojiAssetMap.keys.toList();
-    final emojiAssets = kEmojiAssetMap.values.toList();
+    // 애초에 디폴트 이미지는 여기서 안뜨게! (MVP)
+    final emojiKeys =
+        kEmojiAssetMap.keys.where((key) => key != 'default').toList();
+    final emojiAssets = emojiKeys.map((key) => kEmojiAssetMap[key]!).toList();
 
     // 0.0~0.25 구간: 배경 페이드인
     final bgOpacity = CurvedAnimation(
@@ -546,23 +591,36 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                         final selectedEmotionKey = emojiKeys[index];
 
                         setState(() {
-                          selectedEmojiAsset = emojiAssets[index];
+                          currentSelectedEmojiKey = selectedEmotionKey;
                           showEmojiBar = false; // 이모지 바 닫기
                         });
+                        // // 선택된 이모지를 메시지로 전송
+                        // ref
+                        //     .read(chatViewModelProvider.notifier)
+                        //     .sendEmojiAsMessage(selectedEmotionKey);
+
+                        // // 이모지를 보낸 후, 즉시 'default'로 돌리기
+                        // setState(() {
+                        //   currentSelectedEmojiKey = 'default';
+                        //   showEmojiBar = false;
+                        // });
                         // 선택된 이모지를 메시지로 전송
-                        ref.read(chatViewModelProvider.notifier).sendEmojiAsMessage(selectedEmotionKey);
+                        ref
+                            .read(chatViewModelProvider.notifier)
+                            .sendEmojiAsMessage(selectedEmotionKey);
 
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },
                       child: ColorFiltered(
-                        colorFilter: selectedEmojiAsset != emojiAssets[index]
+                        colorFilter: currentSelectedEmojiKey != emojiKeys[index]
                             ? const ColorFilter.matrix(<double>[
                                 0.2126, 0.7152, 0.0722, 0, 0, //R
                                 0.2126, 0.7152, 0.0722, 0, 0, //G
                                 0.2126, 0.7152, 0.0722, 0, 0, //B
                                 0, 0, 0, 1, 0, //A
                               ])
-                            : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                            : const ColorFilter.mode(
+                                Colors.transparent, BlendMode.multiply),
                         child: Image.asset(
                           emojiAssets[index],
                           width: 34.w,
@@ -582,7 +640,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
 // 봇 입력중일 때 사용자 입력 불가 설정
   Widget _buildInputField({required bool isBotTyping}) {
-    final bool isSendButtonEnabled = !isBotTyping && _messageInputController.text.trim().isNotEmpty;
+    final bool isSendButtonEnabled = !isBotTyping &&
+        (_messageInputController.text.trim().isNotEmpty ||
+            currentSelectedEmojiKey != 'default');
 
     return KeyboardVisibilityBuilder(builder: (context, isKeboardVisible) {
       return Container(
@@ -590,7 +650,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         margin: EdgeInsets.only(bottom: isKeboardVisible ? 0 : 34.h),
         child: Container(
           decoration: BoxDecoration(
-            // // TODO: 봇이 입력중일때 채팅창 색 변화?
             // color: isBotTyping ? AppColors.grey100 : Colors.white,
             color: AppColors.white,
             borderRadius: BorderRadius.circular(12.r),
@@ -614,11 +673,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     counterText: "", // 글자 수 카운터 숨기기
-                    hintText: isBotTyping ? "" : "무엇이든 입력하세요", // TODO: 입력 못하게 멘트를 넣어야하나..?
-                    hintStyle: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
+                    hintText: isBotTyping
+                        ? ""
+                        : "무엇이든 입력하세요", // TODO: 입력 못하게 멘트를 넣어야하나..?
+                    hintStyle: AppFontStyles.bodyRegular14
+                        .copyWith(color: AppColors.grey600),
                     fillColor: Colors.transparent, // 컨테이너 색상을 따르도록 투명화
                     filled: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.5.h),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.5.h),
                     border: InputBorder.none,
                     // 비활성화 상태일 때 밑줄 제거
                     disabledBorder: InputBorder.none,
@@ -631,9 +694,10 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                 child: GestureDetector(
                   onTap: _toggleEmojiBar,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                     child: Image.asset(
-                      selectedEmojiAsset,
+                      kEmojiAssetMap[currentSelectedEmojiKey]!,
                       width: 24.w,
                       height: 24.h,
                     ),
@@ -646,16 +710,31 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                     ? () {
                         final chatVm = ref.read(chatViewModelProvider.notifier);
                         final text = _messageInputController.text.trim();
-                        final selectedEmotionKey = kEmojiAssetMap.entries
-                            .firstWhere((entry) => entry.value == selectedEmojiAsset, orElse: () => kEmojiAssetMap.entries.first)
-                            .key;
+                        // RIN ♥ 텍스트만, 이모지만, 텍스트+이모지 케이스 분리
+                        if (text.isNotEmpty &&
+                            currentSelectedEmojiKey != 'default') {
+                          // 케이스 3: 텍스트 + 이모지 같이 입력
+                          chatVm.sendTextAndEmojiAsMessages(
+                              text, currentSelectedEmojiKey);
+                        } else if (text.isNotEmpty) {
+                          // 케이스 1: 텍스트만 입력
+                          chatVm.sendMessage(text, null);
+                        } else if (currentSelectedEmojiKey != 'default') {
+                          // 케이스 2: 이모지만 입력
+                          // 디폴트 이미지면 아예 안보내지게!!
+                          chatVm.sendEmojiAsMessage(currentSelectedEmojiKey);
+                        }
 
-                        chatVm.sendMessage(text, selectedEmotionKey);
                         _messageInputController.clear();
+                        setState(() {
+                          currentSelectedEmojiKey =
+                              'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
+                        });
                       }
                     : null,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.h, vertical: 13.33.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.h, vertical: 13.33.h),
                   width: 40.67.w,
                   height: 40.h,
                   child: SvgPicture.asset(
@@ -698,7 +777,9 @@ class _DateSeparator extends StatelessWidget {
               )
             ],
           ),
-          child: Text(DateFormat('yyyy년 MM월 dd일').format(date), style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900)),
+          child: Text(DateFormat('yyyy년 MM월 dd일').format(date),
+              style: AppFontStyles.bodyRegular12
+                  .copyWith(color: AppColors.grey900)),
         ),
       ),
     );

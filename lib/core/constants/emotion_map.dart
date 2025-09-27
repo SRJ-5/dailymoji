@@ -4,4 +4,5 @@ const Map<String, String> kEmotionKeyToDisplay = {
   'shocked': 'ADHD/집중력저하',
   'sleeping': '불면/피로',
   'smile': '평온/회복',
+  'default': '기본',
 };
