@@ -1,5 +1,7 @@
 # main.py
 # 이거 엔드포인트 분석/솔루션 두개로 나눈버전!!
+# 0926 로직 변경: 케이스 1-텍스트만 입력 / 케이스2-이모지만 입력 / 케이스 3-텍스트+이모지 같이 입력
+
 
 from __future__ import annotations
 
@@ -24,10 +26,11 @@ from supabase import create_client, Client
 from llm_prompts import call_llm, TRIAGE_SYSTEM_PROMPT, ANALYSIS_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT
 from rule_based import rule_scoring
 from srj5_constants import (
-    CLUSTERS, DSM_BETA, ICON_TO_CLUSTER, META_WEIGHTS, ONBOARDING_MAPPING,
-    W_LLM, W_RULE, SOLUTION_ID_LIBRARY, ANALYSIS_MESSAGE_LIBRARY, SOLUTION_PROPOSAL_SCRIPTS,
-    SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, PCA_PROXY, SOLUTION_DETAILS_LIBRARY
+    CLUSTERS, EMOJI_ONLY_SCORE_CAP, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
+    FINAL_FUSION_WEIGHTS, FINAL_FUSION_WEIGHTS_NO_TEXT,
+    W_LLM, W_RULE, SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS,
 )
+
 
 try:
     from kiwipiepy import Kiwi
@@ -138,13 +141,6 @@ def is_safety_text(text: str, llm_json: Optional[dict], debug_log: dict) -> Tupl
 # --- Helper 함수들 ---
 def clip01(x: float) -> float: return max(0.0, min(1.0, float(x)))
 
-# def _is_night(ts: Optional[str]) -> bool:
-#     try:
-#         if not ts: return False
-#         hour = dt.datetime.fromisoformat(ts.replace("Z", "+00:00")).hour
-#         return hour >= 22 or hour < 7
-#     except Exception: return False
-
 def g_score(final_scores: dict) -> float:
     w = {"neg_high": 1.0, "neg_low": 0.9, "sleep": 0.7, "adhd_high": 0.6, "positive": -0.3}
     g = sum(final_scores.get(k, 0.0) * w.get(k, 0.0) for k in CLUSTERS)
@@ -164,28 +160,6 @@ def calculate_baseline_scores(onboarding_scores: Optional[Dict[str, int]]) -> Di
     return baseline
 
 
-def meta_adjust(base_scores: dict, payload: AnalyzeRequest) -> dict:
-    s = base_scores.copy()
-
-    # 이모지 아이콘 점수 가중치 
-    if payload.icon:
-        # [CHANGED] 아이콘 보정 방식을 "가산" → "가중치 융합"으로 변경
-        #  - 기존: s[selected] += META_WEIGHTS["icon"]
-        #  - 변경: s = (1 - alpha) * s + alpha * prior(icon-onehot)
-        
-        selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
-        # alpha는 META_WEIGHTS에 없으면 0.2로 (가중치 크기)
-        alpha = META_WEIGHTS.get("icon_alpha", 0.2) 
-        for c in s.keys():
-            prior = 1.0 if c == selected_cluster else 0.0
-            s[c] = clip01((1.0 - alpha) * s[c] + alpha * prior)
-        return s           
-
-
-# def dsm_calibrate(scores: dict) -> dict:
-#     # 현재는 survey 데이터가 없으므로 비활성화
-#     return scores
-
 def pick_profile(final_scores: dict, llm: dict | None) -> int: # surveys 파라미터 제거
     if (llm or {}).get("intent", {}).get("self_harm") in {"possible", "likely"}: return 1
     if max(final_scores.get("neg_low", 0), final_scores.get("neg_high", 0)) > 0.85: return 1
@@ -194,18 +168,8 @@ def pick_profile(final_scores: dict, llm: dict | None) -> int: # surveys 파라�
     if max(final_scores.values()) > 0.30: return 3
     return 0
 
-# def pca_proxy(final_scores: dict) -> dict:
-#     pc1 = sum(final_scores.get(k, 0.0) * w for k, w in PCA_PROXY["pc1"].items())
-#     pc2 = sum(final_scores.get(k, 0.0) * w for k, w in PCA_PROXY["pc2"].items())
-#     return {"pc1": round(max(-1.0, min(1.0, pc1)), 3), "pc2": round(clip01((pc2 + 1.0) / 2.0), 3)}
-
-# def generate_friendly_reply(text: str) -> str:
-#     llm_response = call_llm(system_prompt=FRIENDLY_SYSTEM_PROMPT, user_content=text, openai_key=OPENAI_KEY, model="gpt-4o-mini", temperature=0.7, expect_json=False)
-#     return str(llm_response).strip()
-
-
 # 수치를 주기보다는, 심각도 3단계에 따라 메시지 해석해주는게 달라짐(수치형x, 대화형o)
-def get_analysis_message(scores: dict) -> str:
+async def get_analysis_message(scores: dict) -> str:
     if not scores: return "당신의 마음을 더 들여다보고 있어요."
     top_cluster = max(scores, key=scores.get)
     score_val = scores[top_cluster]
@@ -214,34 +178,25 @@ def get_analysis_message(scores: dict) -> str:
     if score_val > 0.7: level = "high"
     elif score_val > 0.4: level = "mid"
     
-    return ANALYSIS_MESSAGE_LIBRARY.get(top_cluster, {}).get(level, "오늘 당신의 마음은 특별한 색을 띠고 있네요.")
-
-
-# def get_solution_proposal(top_cluster: str) -> Dict[str, Any]:
-#     # 1. 멘트 라이브러리에서 랜덤으로 멘트 하나 선택
-#     proposal_script = random.choice(SOLUTION_PROPOSAL_SCRIPTS.get(top_cluster, [""]))
-#     # 2. 솔루션 ID 라이브러리에서 랜덤으로 ID 하나 선택
-#     solution_id = random.choice(SOLUTION_ID_LIBRARY.get(top_cluster, [None]))
+    try:
+        if supabase:
+            response = await run_in_threadpool(
+                supabase.table("analysis_message")
+                .select("message")
+                .eq("cluster", top_cluster)
+                .eq("level", level)
+                .execute
+            )
+            if response.data:
+                selected_item = random.choice(response.data)
+                if selected_item.get("message"):
+                    return selected_item["message"]
+    except Exception as e:
+        print(f"RIN: analysis_message DB 조회 실패: {e}")
     
-#     if not solution_id:
-#         return {"proposal_text": "지금은 제안해드릴만한 특별한 활동이 없네요. 대신, 편안하게 대화를 이어갈까요?", "solution_id": None, "solution_data": None}
-
-#     solution_data = None
-#     if supabase and solution_id:
-#         try:
-#             # TODO: 나중에 비동기방식으로 호출하기
-#             response = supabase.table("solutions").select("*").eq("solution_id", solution_id).maybe_single().execute()
-#             solution_data = response.data
-#         except Exception as e:
-#             print(f"Supabase solution fetch error: {e}")
-
-#     final_text = proposal_script
-#     if solution_data and solution_data.get('text'):
-#         final_text += solution_data.get('text')
-        
-#     return {"proposal_text": final_text, "solution_id": solution_id, "solution_data": solution_data}
-
-
+    # DB 조회에 실패하거나 결과가 없을 경우 사용할 비상용 메시지
+    return "오늘 당신의 마음은 특별한 색을 띠고 있네요."
+    
 async def save_analysis_to_supabase(
         payload: AnalyzeRequest, profile: int, g: float,
         intervention: dict, debug_log: dict,
@@ -261,8 +216,6 @@ async def save_analysis_to_supabase(
             await run_in_threadpool(
                 supabase.table("user_profiles").insert({"id": user_id, "user_nick_nm": "New User"}).execute
             )
-
-
 
         session_row = {
             "user_id": payload.user_id,
@@ -320,28 +273,77 @@ async def analyze_emotion(payload: AnalyzeRequest):
     text = (payload.text or "").strip()
     debug_log: Dict[str, Any] = {"input": payload.dict()}
     try:
-        # DB 저장을 먼저 시도해서 session_id를 확보
-        session_id = await save_analysis_to_supabase(payload, 0, 0.5, {}, debug_log, {})
-        # DB 저장이 실패하면 임시 ID를 생성
-        if not session_id:
-            session_id = f"temp_{uuid.uuid4()}"
-            print(f"⚠️ WARNING: DB 저장 실패. 임시 세션 ID 발급: {session_id}")
-        
-        # --- UX Flow 1: EMOJI_ONLY -> 공감/질문으로 응답 (0924 슬랙논의 2번 로직)---
+        # RIN 🌸 CASE 2 - 이모지만 입력된 경우
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
+            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low")
 
-        #  이모지에 따른 top_cluster 매핑 - 솔루션 제안을 위해 이모지 only도 클러스터 저장!
-            top_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low") 
+            if top_cluster == "neutral": 
+            # RIN ♥ : 디폴트 이모지는 분석하지 않음 
+            #  ui에서 막아놓긴 할건데, 혹시 모르니까 일단 구현 
+                intervention = {
+                    "preset_id": PresetIds.EMOJI_REACTION, 
+                    "text": "오늘은 기분이 어떠신가요?",
+                    "top_cluster": "neutral"
+                }
+                session_id = await save_analysis_to_supabase(
+                    payload, profile=0, g=0.5,
+                    intervention=intervention,
+                    debug_log=debug_log,
+                    final_scores={}
+                )
+                if session_id:
+                    intervention['session_id'] = session_id
+                return {
+                    "session_id": session_id,
+                    "final_scores": {},  
+                    "g_score": 0.5,
+                    "profile": 0,
+                    "intervention": intervention
+                }
+            pass
+            print("\n--- 🧐 EMOJI-ONLY ANALYSIS DEBUG 🧐 ---")
 
-            # [CHANGED] 이모지 단독도 "baseline + 아이콘 prior(가중 융합)"으로 스코어링
-            #  - 기존: top_cluster=0.3 고정
-            #  - 변경: baseline 계산 후 meta_adjust로 동일한 아이콘 보정 로직 적용
-            baseline_scores = calculate_baseline_scores(payload.onboarding or {})  # [ADDED]
-            final_scores = meta_adjust(baseline_scores, payload)                   # [ADDED]
-            g = g_score(final_scores)                                             # [ADDED]
-            profile = pick_profile(final_scores, None)   
 
+            # 1. 온보딩 점수 계산
+            onboarding_scores = calculate_baseline_scores(payload.onboarding or {})  
+            print(f"Onboarding Scores: {json.dumps({k: round(v, 4) for k, v in onboarding_scores.items()}, indent=2)}")
+
+            # 2. 이모지 점수 생성
+            icon_prior = {c: 0.0 for c in CLUSTERS}
+            selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
+            if selected_cluster in icon_prior:
+                icon_prior[selected_cluster] = 1.0
+
+            # 3. 온보딩 0.2 + 이모지 0.8 가중치를 사용하여 1차 융합
+            w = FINAL_FUSION_WEIGHTS_NO_TEXT
+            final_scores = {c: clip01(
+                onboarding_scores.get(c, 0.0) * w['onboarding'] +
+                icon_prior.get(c, 0.0) * w['icon']
+            ) for c in CLUSTERS}
+            print(f"Final Scores (after alpha={icon_prior}): {json.dumps({k: round(v, 4) for k, v in final_scores.items()}, indent=2)}")
+
+            # 4. 점수 상한선(Cap) 적용 로직 
+            # 온보딩+이모지 점수는 최대 0.5가 되도록 
+            capped_scores = final_scores.copy()
+            if selected_cluster in capped_scores:
+                # original_score 변수를 capped_scores에서 가져오도록 수정하여 NameError 해결
+                original_score = capped_scores[selected_cluster]
+                capped_scores[selected_cluster] = min(original_score, EMOJI_ONLY_SCORE_CAP)
+            
+                print(f"Score Capping Applied for '{selected_cluster}': {original_score:.4f} -> {capped_scores[selected_cluster]:.4f}") # 🌸 print문 이 블록 안으로 이동
+
+            # 5. 최종 점수(g_score)
+            g = g_score(capped_scores)   
+            profile = pick_profile(capped_scores, None)
+
+
+            print(f"Final Scores (after capping): {json.dumps({k: round(v, 4) for k, v in capped_scores.items()}, indent=2)}") # 🌸 로그 메시지 수정
+            print(f"G-Score: {g:.2f}")
+            print(f"Profile: {profile}")
+            print("------❤️-------------❤️-----------❤️-------\n")   
+
+            # --- EMOJI_ONLY - DB 저장 및 반환 로직---
             # Supabase에서 해당 이모지 키를 가진 스크립트들을 모두 가져옴
             response = await run_in_threadpool(
                 supabase.table("reaction_scripts").select("script").eq("emotion_key", payload.icon.lower()).execute
@@ -350,38 +352,38 @@ async def analyze_emotion(payload: AnalyzeRequest):
             scripts = [row['script'] for row in response.data]
             
             # 만약 스크립트가 있다면 그 중 하나를 랜덤으로 선택, 없다면 기본 메시지 사용
-            reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신지 알려주세요."
+            reaction_text = random.choice(scripts) if scripts else "지금 기분이 어떠신가요?"
 
             intervention = {
                 "preset_id": PresetIds.EMOJI_REACTION, 
-                "text": reaction_text,
+                "empathy_text": reaction_text,
                 "top_cluster": top_cluster # 솔루션 제안을 위해 클러스터 정보 전달
             }
 
-            # session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
-            
-            # [CHANGED] g_score/score 저장을 baseline+prior 기반으로 저장
+            # g_score/score 저장을 baseline+prior 기반으로 저장
             session_id = await save_analysis_to_supabase(
                 payload, profile=profile, g=g,
                 intervention=intervention,
                 debug_log=debug_log,
-                final_scores=final_scores
+                final_scores=capped_scores
             )
 
-            # return {"session_id": session_id, "intervention": intervention}
             if session_id:
                 intervention['session_id'] = session_id
 
             return {
                 "session_id": session_id,
-                "final_scores": final_scores,  
-                "g_score": 0.3,
-                "profile": 0,
+                "final_scores": capped_scores,  
+                "g_score": g,
+                "profile": profile,
                 "intervention": intervention
             }
+        pass
 
-        # --- 텍스트 입력 케이스 ---
 
+        # --- 텍스트가 포함된 모든 경우 ---
+
+    # <<<<<<<     안전장치    >>>>>>>>
         # --- 파이프라인 1: 1차 안전 장치 (LLM 없이) ---
         is_safe, safety_scores = is_safety_text(text, None, debug_log)
         if is_safe:
@@ -391,9 +393,11 @@ async def analyze_emotion(payload: AnalyzeRequest):
             intervention = {"preset_id": PresetIds.SAFETY_CRISIS_MODAL, "analysis_text": "많이 힘드시군요. 지금 도움이 필요할 수 있어요.", "solution_id": f"{top_cluster}_crisis_01", "cluster": top_cluster}
             session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, safety_scores)
             return {"session_id": session_id, "intervention": intervention}
+        pass
 
         # --- 파이프라인 2: Triage (친구 모드 / 분석 모드 분기) ---
         rule_scores, _, _ = rule_scoring(text)
+        # 텍스트가 짧고 (15자 미만) 룰 스코어가 낮을 때만 칭긔칭긔 모드 진입
         if max(rule_scores.values() or [0.0]) < 0.3 and len(text) < 15:
             debug_log["mode"] = "FRIENDLY"
             friendly_text = await call_llm(FRIENDLY_SYSTEM_PROMPT, text, OPENAI_KEY, expect_json=False)
@@ -404,14 +408,22 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
         # --- 파이프라인 3: 분석 모드 ---
         debug_log["mode"] = "ANALYSIS"
+
+        # 3-1. 온보딩 점수(Baseline) 계산
+        onboarding_scores = calculate_baseline_scores(payload.onboarding or {})
+        
+        # 3-2. 텍스트 분석 점수(fused_scores) 계산 (LLM, Rule-based 포함)
+        rule_scores, _, _ = rule_scoring(text)
         llm_payload = payload.dict()
-        llm_payload["baseline_scores"] = calculate_baseline_scores(payload.onboarding or {})
+        llm_payload["baseline_scores"] = onboarding_scores
         llm_json = await call_llm(ANALYSIS_SYSTEM_PROMPT, json.dumps(llm_payload, ensure_ascii=False), OPENAI_KEY)
         debug_log["llm"] = llm_json
         
-        # --- 파이프라인 3.5: 2차 안전 장치 (LLM 결과 기반) ---
+        # --- 파이프라인 3.5: 2차 안전 장치 (LLM 결과 기반) - 점수 계산 전 실행 ---
         is_safe_llm, crisis_scores_llm = is_safety_text(text, llm_json, debug_log)
         if is_safe_llm:
+            print(f"🚨 2차 안전 장치 발동: '{text}'")
+            # 안전 모드 발동 시에는 위기 점수를 그대로 사용하고 DB에 저장
             profile, g = 1, g_score(crisis_scores_llm)
             top_cluster = "neg_low"
             intervention = {
@@ -420,13 +432,24 @@ async def analyze_emotion(payload: AnalyzeRequest):
                 "solution_id": f"{top_cluster}_crisis_01",
                 "cluster": top_cluster
             }
-            session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores_llm)
-            return {"session_id": session_id, "intervention": intervention}
-
+            # 이 경우, 실제 계산된 점수가 아닌 위기 점수(crisis_scores_llm)를 저장
+            session_id = await save_analysis_to_supabase(
+                payload, profile=profile, g=g, intervention=intervention,
+                debug_log=debug_log, final_scores=crisis_scores_llm
+            )
+            # 🌸 반환값도 위기 점수 기준으로 생성
+            return {
+                "session_id": session_id,
+                "final_scores": crisis_scores_llm,
+                "g_score": g,
+                "profile": profile,
+                "intervention": intervention
+            }
 
         # === 안전장치 모두 통과 시 ===
         # --- 파이프라인 4: 전체 스코어링 로직 ---
-        # 4-1. Fusion 
+        # 4-1. 텍스트 분석 점수(fused_scores) 계산 
+        rule_scores, _, _ = rule_scoring(text)
         text_if = {c: 0.0 for c in CLUSTERS}
         if llm_json and not llm_json.get("error"):
             I, F = llm_json.get("intensity", {}), llm_json.get("frequency", {})
@@ -437,30 +460,69 @@ async def analyze_emotion(payload: AnalyzeRequest):
         
         fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
         
-        # 4-2. Meta Adjust(아이콘 보정 적용됨) 
-        adjusted_scores = meta_adjust(fused_scores, payload)
-        debug_log["scores"] = {"llm_detail": text_if, "rule": rule_scores, "fused": fused_scores, "final": adjusted_scores}
+        # 4-2. 이모지 점수(icon_prior) 생성
+        icon_prior = {c: 0.0 for c in CLUSTERS}
+        has_icon = payload.icon and ICON_TO_CLUSTER.get(payload.icon.lower()) != "neutral"
+        if has_icon:
+            selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
+            icon_prior[selected_cluster] = 1.0        
+
         
-        # 4-3. 최종 결과 생성 
+        # --- 가중치 재조정 로직 ---
+
+        # 4-3. FINAL_FUSION_WEIGHTS를 사용하여 최종 점수 융합 (가중치 재조정 포함)
+        w = FINAL_FUSION_WEIGHTS
+
+        if not has_icon:
+        # RIN 🌸 CASE 1: 텍스트만 입력 시 (icon 없음) -> icon 가중치를 text와 onboarding에 비례 배분
+            w_text = w['text'] + w['icon'] * (w['text'] / (w['text'] + w['onboarding']))
+            w_onboarding = w['onboarding'] + w['icon'] * (w['onboarding'] / (w['text'] + w['onboarding']))
+            w_icon = 0.0
+        else:
+        # RIN 🌸 CASE 3: 텍스트 + 이모지 입력 시 -> 모든 가중치 그대로 사용
+            w_text, w_onboarding, w_icon = w['text'], w['onboarding'], w['icon']
+
+        adjusted_scores = {c: clip01(
+            fused_scores.get(c, 0.0) * w_text +
+            onboarding_scores.get(c, 0.0) * w_onboarding +
+            icon_prior.get(c, 0.0) * w_icon
+        ) for c in CLUSTERS}
+
+        debug_log["scores"] = {
+            "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
+            "1_onboarding_scores": onboarding_scores,
+            "2_text_fused_scores": fused_scores,
+            "3_icon_prior": icon_prior,
+            "4_final_adjusted_scores": adjusted_scores
+        }
+        
+        # 5. 최종 결과 생성
         g = g_score(adjusted_scores)
         profile = pick_profile(adjusted_scores, llm_json)
         top_cluster = max(adjusted_scores, key=adjusted_scores.get, default="neg_low")
         
+        debug_log["scores"] = {
+            "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
+            "final_adjusted_scores": adjusted_scores
+        }
+
         # LLM으로부터 공감 메시지와 분석 메시지를 각각 가져옴
         empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
-        analysis_text = get_analysis_message(adjusted_scores)
-    
+        analysis_text = await get_analysis_message(adjusted_scores)
         
         
         # 4-4. Intervention 객체 생성 및 반환 
         intervention = {
             "preset_id": PresetIds.SOLUTION_PROPOSAL,
-            "empathy_text": empathy_text, # 공감 텍스트 추가
+            "empathy_text": empathy_text, 
             "analysis_text": analysis_text,
             "top_cluster": top_cluster
         }
         
-        session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, adjusted_scores)
+        session_id = await save_analysis_to_supabase(
+            payload, profile=profile, g=g, intervention=intervention,
+            debug_log=debug_log, final_scores=adjusted_scores
+        )
         
         if session_id:
             intervention['session_id'] = session_id
@@ -491,10 +553,36 @@ async def propose_solution(payload: SolutionRequest):
         raise HTTPException(status_code=500, detail="Supabase client not initialized")
         
     try:
+        top_cluster = payload.top_cluster
+
         # 1. 제안 멘트와 솔루션 ID를 랜덤으로 선택
-        proposal_script = random.choice(SOLUTION_PROPOSAL_SCRIPTS.get(payload.top_cluster, [""]))
-        solution_id = random.choice(SOLUTION_ID_LIBRARY.get(payload.top_cluster, [None]))
+
+        # proposal_scripts 테이블에서 랜덤으로 제안 멘트 가져오기
+        proposal_scripts_response = await run_in_threadpool(
+            supabase.table("proposal_scripts").select("script").eq("cluster", top_cluster).execute
+        )
+        available_scripts = [item['script'] for item in proposal_scripts_response.data]
+        if not available_scripts:
+            # 비상용 멘트
+            proposal_script = "이런 활동은 어떠세요?"
+        else:
+            proposal_script = random.choice(available_scripts)        
+            
+            
+        # solutions 테이블에서 해당 클러스터의 솔루션 ID 목록 가져오기
+        solutions_response = await run_in_threadpool(
+            supabase.table("solutions").select("solution_id").eq("cluster", top_cluster).execute
+        )
+        available_solution_ids = [item['solution_id'] for item in solutions_response.data]
         
+        if not available_solution_ids:
+            return {
+                "proposal_text": "지금은 제안해드릴만한 특별한 활동이 없네요. 대신, 편안하게 대화를 이어갈까요?", 
+                "solution_id": None,
+            }        
+        # 가져온 ID 목록 중 하나를 랜덤으로 선택
+        solution_id = random.choice(available_solution_ids)
+
         # 2. 솔루션 ID가 없는 경우에 대한 예외 처리 
         if not solution_id:
             return {
@@ -505,33 +593,23 @@ async def propose_solution(payload: SolutionRequest):
         
         solution_data = None
 
+        # 선택된 ID로 solutions 테이블에서 상세 정보 가져오기
+        solution_details_response = await run_in_threadpool(
+            supabase.table("solutions").select("text, url, start_at, end_at, context").eq("solution_id", solution_id).single().execute
+        )
+        solution_data = solution_details_response.data
         
-        # 3. 일단 수퍼베이스 안되니까 나중에 올리고, 지금은 하드코딩된거로!
-        # 3-1. Supabase에서 먼저 조회 시도
-        if supabase:
-            try:
-                print(f"RIN: ✅ Supabase에서 솔루션 조회 시도: {solution_id}")
-                response = await run_in_threadpool(
-                    supabase.table("solutions").select("text, url, startAt, endAt").eq("solution_id", solution_id).maybe_single().execute
-                )
-                if response.data:
-                    solution_data = response.data
-                    print("RIN: ✅ Supabase에서 솔루션 조회 성공.")
-            except Exception as e:
-                print(f"RIN: ⚠️ Supabase 조회 중 에러 발생 (하드코딩 데이터로 대체): {e}")
-                # 에러가 발생해도 solution_data는 None으로 유지되어 아래 fallback 로직이 실행됨
+        # 5. 최종 제안 텍스트를 조합합니다.
+        final_text = proposal_script
+        if solution_data and solution_data.get('text'):
+            final_text += " " + solution_data.get('text')
 
-        # 3-2. Supabase 조회가 실패했거나 데이터가 없으면, 하드코딩된 데이터 사용
-        if not solution_data:
-            print(f"RIN: ⚠️ Supabase 데이터 없음. 하드코딩된 솔루션으로 대체: {solution_id}")
-            solution_data = SOLUTION_DETAILS_LIBRARY.get(solution_id)
 
-        
         # 4. 최종 제안 텍스트 조합 및 로그 저장
         final_text = proposal_script + (solution_data.get('text') if solution_data and solution_data.get('text') else "")
         # interventions_log 테이블에 저장 시도, 실패 시 로컬 파일에 기록
         log_entry = {
-            "timestamp": dt.datetime.now().isoformat(),
+            "created_at": dt.datetime.now().isoformat(),
             "session_id": payload.session_id,
             "type": "propose",
             "solution_id": solution_id
@@ -540,6 +618,7 @@ async def propose_solution(payload: SolutionRequest):
         try:
             # Supabase 클라이언트가 있고, 임시 ID가 아닐 때만 DB에 저장 시도
             if supabase and not payload.session_id.startswith("temp_"):
+                # 3. Supabase에 로그 삽입
                 print(f"RIN: ✅ Supabase에 솔루션 제안 로그 저장 시도...")
                 await run_in_threadpool(
                     supabase.table("interventions_log").insert(log_entry).execute
@@ -607,20 +686,41 @@ async def get_home_dialogue(emotion: Optional[str] = None):
 # ===          하드코딩된거 쓸 때만!!!         ===
 # ======================================================================
 
-    # SolutionPage에서 영상을 로드하기 위한 새로운 API 엔드포인트
+    # SolutionPage에서 영상 로드
+    # 하드코딩된 SOLUTION_DETAILS_LIBRARY를 DB 조회로 대체했음!!
 @app.get("/solutions/{solution_id}")
 async def get_solution_details(solution_id: str):
-    """solution_id를 받아서 하드코딩된 솔루션 상세 정보를 반환합니다."""
     print(f"RIN: ✅ 솔루션 상세 정보 요청 받음: {solution_id}")
     
-    # srj5_constants.py에 있는 라이브러리에서 solution_id로 데이터를 찾습니다.
-    solution_data = SOLUTION_DETAILS_LIBRARY.get(solution_id)
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase client not initialized")
     
-    # 만약 데이터가 없다면 404 에러를 반환합니다.
-    if not solution_data:
-        print(f"RIN: ❌ 해당 솔루션을 찾을 수 없음: {solution_id}")
+    try:
+        # solutions 테이블에서 필요한 데이터를 조회
+        response = await run_in_threadpool(
+            supabase.table("solutions")
+            .select("url, start_at, end_at")
+            .eq("solution_id", solution_id)
+            .single()
+            .execute
+        )
+        
+        solution_data = response.data
+        
+        if not solution_data:
+            raise HTTPException(status_code=404, detail="Solution not found")
+
+        # 유튜브 불러올때 startAt, endAt (camelCase)를 기대하므로 키를 변환해줌
+        # supabase는 snake_case로 저장해야 한다고 함.
+        response_data = {
+            'url': solution_data.get('url'),
+            'startAt': solution_data.get('start_at'),
+            'endAt': solution_data.get('end_at')
+        }
+        
+        print(f"RIN: ✅ 솔루션 정보 반환: {response_data}")
+        return response_data
+        
+    except Exception as e:
+        print(f"RIN: ❌ 해당 솔루션을 찾을 수 없음: {solution_id}, 에러: {e}")
         raise HTTPException(status_code=404, detail="Solution not found")
-    
-    # 데이터가 있다면 JSON 형태로 반환합니다.
-    print(f"RIN: ✅ 솔루션 정보 반환: {solution_data}")
-    return solution_data

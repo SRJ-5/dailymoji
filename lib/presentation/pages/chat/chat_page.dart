@@ -32,7 +32,7 @@ class ChatPage extends ConsumerStatefulWidget {
 
 class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
-  late String selectedEmojiAsset;
+  late String currentSelectedEmojiKey;
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
@@ -46,14 +46,13 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
   void _scrollListener() {
     if (_scrollController.hasClients) {
       final chatState = ref.read(chatViewModelProvider);
-      
+
       // reverse: true 상태에서 맨 위로 스크롤했을 때 (maxScrollExtent에 가까워졌을 때)
       // 그리고 현재 로딩 중이 아니고, 더 불러올 메시지가 있을 때만 실행
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
           !chatState.isLoadingMore &&
           chatState.hasMore &&
           !chatState.isLoading) {
-        
         // 추가 메시지 로드
         ref.read(chatViewModelProvider.notifier).loadMoreMessages();
       }
@@ -74,8 +73,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 // 무한 스크롤 리스너 추가
     _scrollController.addListener(_scrollListener);
 
-// emotionFromHome이 있으면 그 이모지로, 없으면 'smile'로 초기 상태 설정
-    selectedEmojiAsset = kEmojiAssetMap[widget.emotionFromHome] ?? kEmojiAssetMap['smile']!;
+// emotionFromHome이 있으면 그 이모지로, 없으면 'default'로 초기 상태 설정
+    currentSelectedEmojiKey = widget.emotionFromHome ?? 'default';
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -134,10 +133,20 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 디폴트 이미지로 돌려놓기
+    ref.listen(chatViewModelProvider.select((value) => value.clearPendingEmoji), (previous, next) {
+      if (next == true) {
+        setState(() {
+          currentSelectedEmojiKey = 'default';
+        });
+        ref.read(chatViewModelProvider.notifier).consumeClearPendingEmojiSignal();
+      }
+    });
+
     final chatState = ref.watch(chatViewModelProvider);
     // 캐릭터 이름 연동
     final userState = ref.watch(userViewModelProvider);
-    final characterName = userState.userProfile?.characterNm ?? "모지모지";
+    final characterName = userState.userProfile?.characterNm ?? "모지";
     final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
 
 // 봇이 입력중일 때 사용자가 입력 못하게
@@ -487,8 +496,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
   }
 
   Widget _buildEmojiBarAnimated() {
-    final emojiKeys = kEmojiAssetMap.keys.toList();
-    final emojiAssets = kEmojiAssetMap.values.toList();
+    // 애초에 디폴트 이미지는 여기서 안뜨게! (MVP)
+    final emojiKeys = kEmojiAssetMap.keys.where((key) => key != 'default').toList();
+    final emojiAssets = emojiKeys.map((key) => kEmojiAssetMap[key]!).toList();
 
     // 0.0~0.25 구간: 배경 페이드인
     final bgOpacity = CurvedAnimation(
@@ -581,16 +591,26 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                         final selectedEmotionKey = emojiKeys[index];
 
                         setState(() {
-                          selectedEmojiAsset = emojiAssets[index];
+                          currentSelectedEmojiKey = selectedEmotionKey;
                           showEmojiBar = false; // 이모지 바 닫기
                         });
+                        // // 선택된 이모지를 메시지로 전송
+                        // ref
+                        //     .read(chatViewModelProvider.notifier)
+                        //     .sendEmojiAsMessage(selectedEmotionKey);
+
+                        // // 이모지를 보낸 후, 즉시 'default'로 돌리기
+                        // setState(() {
+                        //   currentSelectedEmojiKey = 'default';
+                        //   showEmojiBar = false;
+                        // });
                         // 선택된 이모지를 메시지로 전송
                         ref.read(chatViewModelProvider.notifier).sendEmojiAsMessage(selectedEmotionKey);
 
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },
                       child: ColorFiltered(
-                        colorFilter: selectedEmojiAsset != emojiAssets[index]
+                        colorFilter: currentSelectedEmojiKey != emojiKeys[index]
                             ? const ColorFilter.matrix(<double>[
                                 0.2126, 0.7152, 0.0722, 0, 0, //R
                                 0.2126, 0.7152, 0.0722, 0, 0, //G
@@ -617,7 +637,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
 
 // 봇 입력중일 때 사용자 입력 불가 설정
   Widget _buildInputField({required bool isBotTyping}) {
-    final bool isSendButtonEnabled = !isBotTyping && _messageInputController.text.trim().isNotEmpty;
+    final bool isSendButtonEnabled = !isBotTyping && (_messageInputController.text.trim().isNotEmpty || currentSelectedEmojiKey != 'default');
 
     return KeyboardVisibilityBuilder(builder: (context, isKeboardVisible) {
       return Container(
@@ -625,7 +645,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
         margin: EdgeInsets.only(bottom: isKeboardVisible ? 0 : 34.h),
         child: Container(
           decoration: BoxDecoration(
-            // // TODO: 봇이 입력중일때 채팅창 색 변화?
             // color: isBotTyping ? AppColors.grey100 : Colors.white,
             color: AppColors.white,
             borderRadius: BorderRadius.circular(12.r),
@@ -668,7 +687,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                     child: Image.asset(
-                      selectedEmojiAsset,
+                      kEmojiAssetMap[currentSelectedEmojiKey]!,
                       width: 24.w,
                       height: 24.h,
                     ),
@@ -681,12 +700,23 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
                     ? () {
                         final chatVm = ref.read(chatViewModelProvider.notifier);
                         final text = _messageInputController.text.trim();
-                        final selectedEmotionKey = kEmojiAssetMap.entries
-                            .firstWhere((entry) => entry.value == selectedEmojiAsset, orElse: () => kEmojiAssetMap.entries.first)
-                            .key;
+                        // RIN ♥ 텍스트만, 이모지만, 텍스트+이모지 케이스 분리
+                        if (text.isNotEmpty && currentSelectedEmojiKey != 'default') {
+                          // 케이스 3: 텍스트 + 이모지 같이 입력
+                          chatVm.sendTextAndEmojiAsMessages(text, currentSelectedEmojiKey);
+                        } else if (text.isNotEmpty) {
+                          // 케이스 1: 텍스트만 입력
+                          chatVm.sendMessage(text, null);
+                        } else if (currentSelectedEmojiKey != 'default') {
+                          // 케이스 2: 이모지만 입력
+                          // 디폴트 이미지면 아예 안보내지게!!
+                          chatVm.sendEmojiAsMessage(currentSelectedEmojiKey);
+                        }
 
-                        chatVm.sendMessage(text, selectedEmotionKey);
                         _messageInputController.clear();
+                        setState(() {
+                          currentSelectedEmojiKey = 'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
+                        });
                       }
                     : null,
                 child: Container(
