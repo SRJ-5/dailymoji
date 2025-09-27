@@ -138,7 +138,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               clipBehavior: Clip.none,
               children: [
                 Image.asset(
-                  AppImages.cadoWalk, // 중앙 캐릭터 이미지
+                  AppImages.cadoProfile, // 중앙 캐릭터 이미지
                   height: 240.h,
                   width: 160.w,
                 ),
