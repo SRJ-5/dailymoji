@@ -6,16 +6,7 @@ class SolutionContextViewModel
     extends Notifier<SolutionContext> {
   @override
   build() {
-    return SolutionContext(
-        id: '',
-        createdAt: null,
-        cluster: '',
-        solutionId: '',
-        text: '',
-        url: '',
-        startAt: null,
-        endAt: null,
-        context: '');
+    return SolutionContext();
   }
 
   Future<String> getSolutionContext(String solutionId) async {

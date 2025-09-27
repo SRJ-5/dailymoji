@@ -9,15 +9,15 @@ class SolutionContext {
   final int? endAt;
   final String? context;
   SolutionContext({
-    required this.id,
-    required this.createdAt,
-    required this.cluster,
-    required this.solutionId,
-    required this.text,
-    required this.url,
-    required this.startAt,
-    required this.endAt,
-    required this.context,
+    this.id,
+    this.createdAt,
+    this.cluster,
+    this.solutionId,
+    this.text,
+    this.url,
+    this.startAt,
+    this.endAt,
+    this.context,
   });
 
   SolutionContext.fromJson(Map<String, dynamic> map)

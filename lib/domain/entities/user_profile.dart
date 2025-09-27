@@ -8,13 +8,13 @@ class UserProfile {
   final Map<String, dynamic>? onboardingScores;
 
   UserProfile({
-    required this.id,
-    required this.createdAt,
-    required this.userNickNm,
-    required this.aiCharacter,
-    required this.characterNm,
-    required this.characterPersonality,
-    required this.onboardingScores,
+    this.id,
+    this.createdAt,
+    this.userNickNm,
+    this.aiCharacter,
+    this.characterNm,
+    this.characterPersonality,
+    this.onboardingScores,
   });
 
   UserProfile copyWith({

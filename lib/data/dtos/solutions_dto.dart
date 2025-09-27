@@ -11,15 +11,15 @@ class SolutionsDto {
   final int? endAt;
   final String? context;
   SolutionsDto({
-    required this.id,
-    required this.createdAt,
-    required this.cluster,
-    required this.solutionId,
-    required this.text,
-    required this.url,
-    required this.startAt,
-    required this.endAt,
-    required this.context,
+    this.id,
+    this.createdAt,
+    this.cluster,
+    this.solutionId,
+    this.text,
+    this.url,
+    this.startAt,
+    this.endAt,
+    this.context,
   });
 
   SolutionsDto.fromJson(Map<String, dynamic> map)
