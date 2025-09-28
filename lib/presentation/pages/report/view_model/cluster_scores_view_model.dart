@@ -1,7 +1,7 @@
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
-import 'package:dailymoji/domain/use_cases/get_today_cluster_scores_use_case.dart';
+import 'package:dailymoji/domain/use_cases/cluster_use_case/get_today_cluster_scores_use_case.dart';
 import 'package:dailymoji/domain/models/cluster_stats_models.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/providers/today_cluster_scores_provider.dart';

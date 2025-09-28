@@ -1,6 +1,6 @@
 import 'package:dailymoji/data/data_sources/cluster_scores_data_source_impl.dart';
 import 'package:dailymoji/domain/models/cluster_stats_models.dart';
-import 'package:dailymoji/domain/use_cases/get_today_cluster_scores_use_case.dart';
+import 'package:dailymoji/domain/use_cases/cluster_use_case/get_today_cluster_scores_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
 import 'package:dailymoji/data/repositories/cluster_scores_repository_impl.dart';

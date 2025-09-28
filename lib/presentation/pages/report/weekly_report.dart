@@ -1,7 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
-import 'package:dailymoji/presentation/pages/report/cluster_scores_view_model.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/data/gscore_service.dart'
     as gs; // ★ alias
 

@@ -50,7 +50,7 @@ class ReportPage extends ConsumerWidget {
             ),
             Expanded(
               child: TabBarView(children: [
-                MonthlyReport(),
+                MonthlyReport(userId: UserProfile.userProfile!.id!),
                 WeeklyReport(
                     userId: UserProfile.userProfile!.id!), // MODIFIED: 위젯 이름 변경
               ]),
