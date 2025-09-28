@@ -10,4 +10,10 @@ abstract interface class ClusterScoresDataSource {
     required DateTime startInclusive,
     required DateTime endExclusive,
   });
+
+  Future<List<ClusterScoreDto>> fetchByUserAndMonth({
+    required String userId,
+    required int year,
+    required int month,
+  });
 }

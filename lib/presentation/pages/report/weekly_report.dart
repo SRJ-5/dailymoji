@@ -1,7 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
-import 'package:dailymoji/presentation/pages/report/cluster_scores_view_model.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/data/gscore_service.dart'
     as gs; // ★ alias
 
@@ -276,7 +276,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                               if (mergedMap["종합 감정 점수"] != null)
                                 LineChartBarData(
                                   color: mergedMap["종합 감정 점수"]!.color,
-                                  barWidth: 3, // 보기 쉽게 3
+                                  barWidth: 2,
                                   dotData:
                                       FlDotData(show: false), // 보기 쉽게 점 보이기
                                   spots: mergedMap["종합 감정 점수"]!.spots,
