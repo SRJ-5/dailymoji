@@ -12,16 +12,13 @@ import 'package:go_router/go_router.dart';
 class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String solutionId;
 
-  const BreathingSolutionPage(
-      {super.key, required this.solutionId});
+  const BreathingSolutionPage({super.key, required this.solutionId});
 
   @override
-  ConsumerState<BreathingSolutionPage> createState() =>
-      _BreathingSolutionPageState();
+  ConsumerState<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
 }
 
-class _BreathingSolutionPageState
-    extends ConsumerState<BreathingSolutionPage>
+class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 // RIN: 수정된 부분: SingleTickerProviderStateMixin -> TickerProviderStateMixin 애니메이션 여러개 허용
     with
         TickerProviderStateMixin {
@@ -39,16 +36,13 @@ class _BreathingSolutionPageState
   Timer? _secondTimer; // 1초마다 숫자를 업데이트할 Timer 변수 추가
 
   // RIN: 마지막 멘트 컨텍스트 추가
-  late final List<Map<String, dynamic>> _steps;
+  List<Map<String, dynamic>> _steps = [];
 
   @override
   void initState() {
     super.initState();
 
-    final solutionContext = ref
-        .read(solutionContextViewModelProvider.notifier)
-        .getSolutionContext(widget.solutionId);
-
+    // 1. 기본값으로 즉시 초기화 (late error 방지)
     _steps = [
       {
         "title": null,
@@ -76,11 +70,14 @@ class _BreathingSolutionPageState
       },
       {
         "title": null,
-        "text": "잘 했어요!\n이제 $solutionContext에 가서도\n호흡을 이어가 보세요",
+        "text": "잘 했어요!\n이제 일상에 가서도\n호흡을 이어가 보세요",
         "font": AppFontStyles.heading2,
         "duration": 2,
       },
     ];
+
+    // 2. 비동기로 실제 데이터 가져와서 업데이트
+    _loadSolutionContext();
 
     // 깜빡임 애니메이션 컨트롤러
     _blinkController = AnimationController(
@@ -96,8 +93,7 @@ class _BreathingSolutionPageState
     // RIN: 타이머 추가
     _timerController = AnimationController(
       vsync: this,
-      duration: const Duration(
-          seconds: 1), // duration은 나중에 동적으로 변경됩니다.
+      duration: const Duration(seconds: 1), // duration은 나중에 동적으로 변경됩니다.
     );
 
     _timerController.addListener(() {
@@ -105,8 +101,7 @@ class _BreathingSolutionPageState
       final duration = _steps[_step]["duration"];
       if (duration != null) {
         // 애니메이션 진행률(0.0~1.0)에 따라 초를 계산 (ceil로 올림처리하여 1부터 시작)
-        final newSeconds =
-            (_timerController.value * duration).ceil();
+        final newSeconds = (_timerController.value * duration).ceil();
         if (_timerSeconds != newSeconds) {
           setState(() {
             _timerSeconds = newSeconds;
@@ -116,6 +111,23 @@ class _BreathingSolutionPageState
     });
 
     _startSequence();
+  }
+
+  // 솔루션 컨텍스트를 비동기로 가져와서 _steps를 업데이트
+  Future<void> _loadSolutionContext() async {
+    try {
+      final solutionContext = await ref.read(solutionContextViewModelProvider.notifier).getSolutionContext(widget.solutionId);
+
+      if (mounted) {
+        setState(() {
+          // _steps의 마지막 항목을 실제 데이터로 업데이트
+          _steps[4]["text"] = "잘 했어요!\n이제 $solutionContext에 가서도\n호흡을 이어가 보세요";
+        });
+      }
+    } catch (e) {
+      print("Error loading solution context: $e");
+      // 에러 시 기본값("일상") 유지
+    }
   }
 
 // RIN: _startSequence 함수 로직 전체 수정
@@ -198,15 +210,12 @@ class _BreathingSolutionPageState
                       if (_steps[_step]["title"] != null)
                         Text(
                           _steps[_step]["title"],
-                          style: AppFontStyles.heading2.copyWith(
-                              color: AppColors.grey100),
+                          style: AppFontStyles.heading2.copyWith(color: AppColors.grey100),
                           textAlign: TextAlign.center,
                         ),
                       Text(
                         _steps[_step]["text"],
-                        style: (_steps[_step]["font"]
-                                as TextStyle)
-                            .copyWith(color: AppColors.grey100),
+                        style: (_steps[_step]["font"] as TextStyle).copyWith(color: AppColors.grey100),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -234,9 +243,7 @@ class _BreathingSolutionPageState
               child: AnimatedBuilder(
                 animation: _timerController,
                 builder: (context, child) {
-                  bool isTimerHidden = _step == 0 ||
-                      _step >= _steps.length - 1 ||
-                      _opacity == 0.0;
+                  bool isTimerHidden = _step == 0 || _step >= _steps.length - 1 || _opacity == 0.0;
                   if (isTimerHidden) {
                     return const SizedBox.shrink();
                   }
@@ -259,8 +266,7 @@ class _BreathingSolutionPageState
                   opacity: _blinkAnimation,
                   child: Text(
                     "화면을 탭해서 다음으로 넘어가세요",
-                    style: AppFontStyles.bodyMedium18
-                        .copyWith(color: AppColors.grey400),
+                    style: AppFontStyles.bodyMedium18.copyWith(color: AppColors.grey400),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -316,25 +322,19 @@ class TimerPainter extends CustomPainter {
     // 가운데 숫자 (heading2, white)
     if (seconds > 0) {
       final textPainter = TextPainter(
-        text: TextSpan(
-            text: '$seconds',
-            style: AppFontStyles.heading2
-                .copyWith(color: AppColors.white)),
+        text: TextSpan(text: '$seconds', style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
       textPainter.paint(
         canvas,
-        center -
-            Offset(
-                textPainter.width / 2, textPainter.height / 2),
+        center - Offset(textPainter.width / 2, textPainter.height / 2),
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant TimerPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.seconds != seconds;
+    return oldDelegate.progress != progress || oldDelegate.seconds != seconds;
   }
 }

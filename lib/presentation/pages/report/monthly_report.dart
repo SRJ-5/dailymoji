@@ -1,8 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
-import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
-    show MonthParams, dailyMaxByMonthProvider;
+import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart' show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
