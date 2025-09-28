@@ -90,9 +90,9 @@ class _OnboardingPart1PageState
         bottomNavigationBar: SafeArea(
           child: SizedBox(
             width: 100.w,
-            height: 100.h,
+            height: 84.h,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
               child: Column(
                 children: [
                   ElevatedButton(
