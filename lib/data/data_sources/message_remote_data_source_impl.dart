@@ -15,41 +15,27 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     int limit = 50,
     String? cursorIso, // created_at 커서(ISO8601 문자열)
   }) async {
-    // 오늘 00:00 ~ 내일 00:00 (로컬 기준) → UTC ISO
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    final startIso = startOfDay.toUtc().toIso8601String();
-    final endIso = endOfDay.toUtc().toIso8601String();
-
-    var base = client
-        .from("messages")
-        .select()
-        .eq("user_id", userId)
-        .gte("created_at", startIso)
-        .lt("created_at", endIso);
+    var query = client.from("messages").select().eq("user_id", userId);
 
     if (cursorIso != null) {
-      base = base.gt("created_at", cursorIso);
+      query = query.lt("created_at", cursorIso);
     }
 
-    // 3) 그 다음에 정렬/리밋
-    // RIN: 'ascending: true'였던... 바보.. 'ascending: false'로 변경하여 최신 메시지부터 가져오도록 수정함
-    final result =
-        await base.order("created_at", ascending: false).limit(limit);
+    // 최신 메시지 50개를 가져오기 위해 먼저 최신 순으로 정렬해서 limit 적용
+    final result = await query.order("created_at", ascending: false).limit(limit);
 
     final rows = (result as List).cast<Map<String, dynamic>>();
-    return rows.map((m) => MessageDto.fromJson(m)).toList();
+    final messages = rows.map((m) => MessageDto.fromJson(m)).toList();
+
+    // 오래된 순으로 다시 정렬해서 반환(지금은 chatViewModel에서 오래된 순으로 받는걸로 알고있음)
+    messages.sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+
+    return messages;
   }
 
   @override
   Future<MessageDto> insertMessage(MessageDto messageDto) async {
-    final response = await client
-        .from("messages")
-        .insert(messageDto.toJson())
-        .select()
-        .single();
+    final response = await client.from("messages").insert(messageDto.toJson()).select().single();
 
     return MessageDto.fromJson(response);
   }
@@ -83,8 +69,6 @@ class MessageRemoteDataSourceImpl implements MessageRemoteDataSource {
     required String messageId,
     required String sessionId,
   }) async {
-    await client
-        .from("messages")
-        .update({'session_id': sessionId}).eq('id', messageId);
+    await client.from("messages").update({'session_id': sessionId}).eq('id', messageId);
   }
 }
