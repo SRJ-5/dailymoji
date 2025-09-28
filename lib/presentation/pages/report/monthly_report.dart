@@ -79,10 +79,8 @@ class _MonthlyReportState extends State<MonthlyReport> {
                 titleTextStyle: AppFontStyles.bodyMedium14.copyWith(
                   color: AppColors.grey900,
                 ),
-                leftChevronIcon:
-                    const Icon(Icons.chevron_left, color: AppColors.grey900),
-                rightChevronIcon:
-                    const Icon(Icons.chevron_right, color: AppColors.grey900),
+                leftChevronIcon: const Icon(Icons.chevron_left, color: AppColors.grey900),
+                rightChevronIcon: const Icon(Icons.chevron_right, color: AppColors.grey900),
               ),
 
               // 달력 기본 스타일 (선택 색상은 제거)
@@ -99,16 +97,13 @@ class _MonthlyReportState extends State<MonthlyReport> {
                 // 요일 스타일
                 dowBuilder: (context, day) {
                   return Center(
-                    child: Text(weekdays[day.weekday % 7],
-                        style: AppFontStyles.bodyMedium14
-                            .copyWith(color: AppColors.grey900)),
+                    child: Text(weekdays[day.weekday % 7], style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900)),
                   );
                 },
                 defaultBuilder: (context, day, focusedDay) {
                   if (_emotions.containsKey(day)) {
                     return Center(
-                      child: SizedBox(
-                          height: 28.h, width: 28.w, child: _emotions[day]),
+                      child: SizedBox(height: 28.h, width: 28.w, child: _emotions[day]),
                     );
                   }
                   return SizedBox(
@@ -130,8 +125,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
                     ),
                     child: Text(
                       '${day.day}',
-                      style: AppFontStyles.bodySemiBold14
-                          .copyWith(color: AppColors.grey50),
+                      style: AppFontStyles.bodySemiBold14.copyWith(color: AppColors.grey50),
                     ),
                   );
                 },
@@ -149,8 +143,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
                         ? _emotions[day]
                         : Text(
                             '${day.day}',
-                            style: AppFontStyles.bodySemiBold14
-                                .copyWith(color: AppColors.orange600),
+                            style: AppFontStyles.bodySemiBold14.copyWith(color: AppColors.orange600),
                           ),
                   );
                 },
@@ -165,8 +158,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "${_selectedDay!.month}월 ${_selectedDay!.day}일 ${weekdays[_selectedDay!.weekday]}요일",
-                  style: AppFontStyles.bodyBold16
-                      .copyWith(color: AppColors.grey900),
+                  style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
                 ),
               ),
 
@@ -176,34 +168,28 @@ class _MonthlyReportState extends State<MonthlyReport> {
             if (_selectedDay != null)
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                    color: AppColors.green100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green200)),
+                decoration:
+                    BoxDecoration(color: AppColors.green100, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.green200)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("이날 기록된 감정을 요약했어요",
-                        style: AppFontStyles.bodyBold14
-                            .copyWith(color: AppColors.green700)),
+                    Text("이날 기록된 감정을 요약했어요", style: AppFontStyles.bodyBold14.copyWith(color: AppColors.green700)),
                     SizedBox(height: 6.h),
                     Text(
                         "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
                         "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
-                        style: AppFontStyles.bodyRegular12_180
-                            .copyWith(color: AppColors.grey900)),
+                        style: AppFontStyles.bodyRegular12_180.copyWith(color: AppColors.grey900)),
                     Align(
                       alignment: Alignment.bottomRight,
                       child: GestureDetector(
                         onTap: () {
-                          context.go("/report/chat", extra: _selectedDay);
+                          context.push("/chat", extra: _selectedDay);
                         }, // _selectedDay를 가지고 채팅 페이지로 이동!!!
                         child: Container(
                           alignment: Alignment.center,
                           height: 40.h,
                           width: 133.w,
-                          padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                              .copyWith(left: 16.w, right: 10.w),
+                          padding: EdgeInsets.symmetric(vertical: 9.5.h).copyWith(left: 16.w, right: 10.w),
                           decoration: ShapeDecoration(
                             color: AppColors.green400,
                             shape: RoundedRectangleBorder(
@@ -213,8 +199,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('채팅 확인하기',
-                                  style: AppFontStyles.bodyMedium14),
+                              Text('채팅 확인하기', style: AppFontStyles.bodyMedium14),
                               SizedBox(width: 6.w),
                               Icon(
                                 Icons.arrow_forward,

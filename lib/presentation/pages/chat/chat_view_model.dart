@@ -387,7 +387,7 @@ class ChatViewModel extends Notifier<ChatState> {
             proposal: {
               "solution_id": solutionId,
               "options": [
-                {"label": "도움받기", "action": "accept_solution"},
+                {"label": "도움받기", "action": "preparing"},
                 {"label": "괜찮아요", "action": "decline_solution_and_talk"}
               ]
             },
@@ -670,7 +670,12 @@ class ChatViewModel extends Notifier<ChatState> {
     }
 
     if (action == "accept_solution") {
-      navigatorkey.currentContext?.go('/breathing/$solutionId');
+      navigatorkey.currentContext?.push('/breathing/$solutionId');
+    }
+
+    if (action == "preparing") {
+      String title = "도움받기";
+      navigatorkey.currentContext?.push('/prepare/$title');
     }
   }
 
