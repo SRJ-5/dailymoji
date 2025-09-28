@@ -138,7 +138,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               clipBehavior: Clip.none,
               children: [
                 Image.asset(
-                  AppImages.cadoWalk, // 중앙 캐릭터 이미지
+                  AppImages.cadoProfile, // 중앙 캐릭터 이미지
                   height: 240.h,
                   width: 160.w,
                 ),
@@ -211,7 +211,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/home/chat', extra: selectedEmotion),
+        onTap: () => context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(

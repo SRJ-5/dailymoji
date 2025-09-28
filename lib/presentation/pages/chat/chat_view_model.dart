@@ -17,7 +17,9 @@ class ChatState {
   final List<Message> messages;
   final bool isTyping;
   final String? errorMessage;
-  final bool isLoading; // 로딩 상태 추가
+  final bool isLoading; // 초기 로딩 상태
+  final bool isLoadingMore; // 추가 메시지 로딩 상태
+  final bool hasMore; // 더 불러올 메시지가 있는지
   final bool clearPendingEmoji; // RIN ♥ : UI의 이모지 상태를 초기화하기 위해 추가
 
   ChatState({
@@ -25,6 +27,8 @@ class ChatState {
     this.isTyping = false,
     this.errorMessage,
     this.isLoading = true,
+    this.isLoadingMore = false,
+    this.hasMore = true,
     this.clearPendingEmoji = false,
   });
 
@@ -33,6 +37,8 @@ class ChatState {
     bool? isTyping,
     String? errorMessage,
     bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMore,
     bool? clearPendingEmoji,
   }) {
     return ChatState(
@@ -40,6 +46,8 @@ class ChatState {
       isTyping: isTyping ?? this.isTyping,
       errorMessage: errorMessage,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
       clearPendingEmoji: clearPendingEmoji ?? this.clearPendingEmoji,
     );
   }
@@ -50,6 +58,9 @@ class ChatViewModel extends Notifier<ChatState> {
   // State & Dependencies
   // ---------------------------------------------------------------------------
 
+  // 페이지네이션 상수
+  static const int _pageSize = 50;
+
   // UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
   String? get _userId =>
       ref.read(userViewModelProvider).userProfile?.id ??
@@ -59,6 +70,7 @@ class ChatViewModel extends Notifier<ChatState> {
   String? _pendingEmotionForAnalysis;
   String? _lastEmojiOnlyCluster; // RIN ♥ 이모지 전송 직후의 클러스터 저장
   String? _lastEmojiMessageId; // RIN ♥ 이모지 전송 직후의 메시지 ID 저장 (세션 업데이트용)
+  DateTime? _targetDate; // 현재 로드 중인 특정 날짜 (무한 스크롤 제어용)
 
   @override
   ChatState build() => ChatState();
@@ -68,7 +80,8 @@ class ChatViewModel extends Notifier<ChatState> {
   // ---------------------------------------------------------------------------
 
   // --- Rin: 채팅방 진입 시 초기화 로직 ---
-  Future<void> enterChatRoom(String? emotionFromHome) async {
+  Future<void> enterChatRoom(String? emotionFromHome,
+      {DateTime? specificDate}) async {
     final currentUserId = _userId; // Getter를 통해 현재 ID 가져오기
     if (currentUserId == null) {
       print(
@@ -78,8 +91,8 @@ class ChatViewModel extends Notifier<ChatState> {
     }
     _subscribeToMessages(currentUserId);
 
-    // 1. 오늘 대화 기록 불러오기
-    await _loadTodayMessages(currentUserId);
+    // 1. 대화 기록 불러오기 (특정 날짜 또는 오늘)
+    await _loadMessages(currentUserId, targetDate: specificDate);
 
     // 홈에서 이모지를 선택하고 들어온 경우, 대화 흐름 시작
     if (emotionFromHome != null) {
@@ -195,16 +208,7 @@ class ChatViewModel extends Notifier<ChatState> {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 1. 텍스트 메시지 먼저 전송
-    final textMessage = Message(
-      userId: currentUserId,
-      content: text,
-      sender: Sender.user,
-      type: MessageType.normal,
-    );
-    final savedTextMessage = await _addUserMessageToChat(textMessage);
-
-    // 2. 이모지 메시지 전송 (지연 없이 바로)
+    // 1. 이모지 메시지 전송 (지연 없이 바로)
     final emojiMessage = Message(
       userId: currentUserId,
       sender: Sender.user,
@@ -212,6 +216,15 @@ class ChatViewModel extends Notifier<ChatState> {
       imageAssetPath: kEmojiAssetMap[emotionKey],
     );
     final savedEmojiMessage = await _addUserMessageToChat(emojiMessage);
+
+    // 2. 텍스트 메시지 먼저 전송
+    final textMessage = Message(
+      userId: currentUserId,
+      content: text,
+      sender: Sender.user,
+      type: MessageType.normal,
+    );
+    final savedTextMessage = await _addUserMessageToChat(textMessage);
 
     // 3. 백엔드에 텍스트와 이모지 가중치를 붙여 풀 파이프라인으로 분석 요청
     await _analyzeAndRespond(
@@ -405,9 +418,8 @@ class ChatViewModel extends Notifier<ChatState> {
             type: MessageType.solutionProposal,
             proposal: {
               "solution_id": solutionId,
-              "is_safety_mode": true,
               "options": [
-                {"label": "도움받기", "action": "accept_solution"},
+                {"label": "도움받기", "action": "preparing"},
                 {"label": "괜찮아요", "action": "decline_solution_and_talk"}
               ]
             },
@@ -484,7 +496,6 @@ class ChatViewModel extends Notifier<ChatState> {
         type: MessageType.solutionProposal,
         proposal: {
           "solution_id": proposalResponse['solution_id'],
-          "is_safety_mode": false,
           "options": [
             {"label": "좋아, 해볼게!", "action": "accept_solution"},
             {"label": "아니, 더 대화할래", "action": "decline_solution_and_talk"}
@@ -506,18 +517,104 @@ class ChatViewModel extends Notifier<ChatState> {
   // Data & State Management Utilities
   // ---------------------------------------------------------------------------
 
-  // --- Rin: 오늘 대화 기록 불러오기 ---
-  Future<void> _loadTodayMessages(String userId) async {
+  // --- Rin: 특정 날짜 또는 오늘 대화 기록 불러오기 ---
+  Future<void> _loadMessages(String userId, {DateTime? targetDate}) async {
+    // private 변수에 targetDate 저장
+    _targetDate = targetDate;
     state = state.copyWith(isLoading: true);
     try {
-      final msgs =
-          await ref.read(loadMessagesUseCaseProvider).execute(userId: userId);
-      // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
-      msgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      // targetDate가 있으면 해당 날짜의 시작 시점부터, 없으면 전체 메시지
+      String? cursorIso;
+      if (_targetDate != null) {
+        // 해당 날짜의 다음 날 00:00:00을 커서로 설정 (그 이전 메시지들을 가져오기 위해)
+        final nextDay = DateTime(
+            _targetDate!.year, _targetDate!.month, _targetDate!.day + 1);
+        cursorIso = nextDay.toIso8601String();
+      }
 
-      state = state.copyWith(messages: msgs, isLoading: false);
+      // 특정 날짜의 경우 모든 메시지를 로드하기 위해 limit을 크게 설정
+      final limit = _targetDate != null ? 1000 : _pageSize; // 특정 날짜면 최대 1000개까지
+
+      final msgs = await ref.read(loadMessagesUseCaseProvider).execute(
+            userId: userId,
+            limit: limit,
+            cursorIso: cursorIso,
+          );
+
+      // 특정 날짜가 지정된 경우, 해당 날짜의 메시지만 필터링
+      List<Message> filteredMsgs = msgs;
+      if (_targetDate != null) {
+        final targetDateStart =
+            DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day);
+        final targetDateEnd = DateTime(_targetDate!.year, _targetDate!.month,
+            _targetDate!.day, 23, 59, 59);
+
+        filteredMsgs = msgs.where((msg) {
+          return msg.createdAt.isAfter(targetDateStart) &&
+              msg.createdAt.isBefore(targetDateEnd);
+        }).toList();
+      }
+
+      // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
+      filteredMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+      // 특정 날짜 모드에서는 무한 스크롤 비활성화, 일반 모드에서는 페이지 사이즈로 판단
+      final hasMore = _targetDate != null ? false : (msgs.length >= _pageSize);
+      state = state.copyWith(
+          messages: filteredMsgs, isLoading: false, hasMore: hasMore);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString(), isLoading: false);
+    }
+  }
+
+  // --- 추가 메시지 로드 (무한 스크롤) ---
+  Future<void> loadMoreMessages() async {
+    if (state.isLoadingMore || !state.hasMore) return;
+
+    // 특정 날짜가 설정된 경우 무한 스크롤 비활성화
+    if (_targetDate != null) return;
+
+    final currentUserId = _userId;
+    if (currentUserId == null) return;
+
+    // 가장 오래된 메시지의 timestamp를 cursor로 사용
+    if (state.messages.isEmpty) return;
+
+    final oldestMessage = state.messages.first;
+    final cursorIso = oldestMessage.createdAt.toIso8601String();
+
+    state = state.copyWith(isLoadingMore: true);
+
+    try {
+      final additionalMsgs =
+          await ref.read(loadMessagesUseCaseProvider).execute(
+                userId: currentUserId,
+                limit: _pageSize,
+                cursorIso: cursorIso,
+              );
+
+      if (additionalMsgs.isNotEmpty) {
+        // 새로 가져온 메시지들을 정렬 (특정 날짜 모드는 이미 early return으로 제외됨)
+        additionalMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+        // 기존 메시지 앞에 새 메시지들을 추가
+        final updatedMessages = [...additionalMsgs, ...state.messages];
+
+        // 페이지 사이즈 미만이면 더 이상 로드할 메시지가 없다고 가정
+        final hasMore = additionalMsgs.length >= _pageSize;
+
+        state = state.copyWith(
+          messages: updatedMessages,
+          isLoadingMore: false,
+          hasMore: hasMore,
+        );
+      } else {
+        // 더 이상 메시지가 없음
+        state = state.copyWith(isLoadingMore: false, hasMore: false);
+      }
+    } catch (e) {
+      state = state.copyWith(
+          isLoadingMore: false, errorMessage: "추가 메시지를 불러오는데 실패했어요.");
     }
   }
 
@@ -585,7 +682,7 @@ class ChatViewModel extends Notifier<ChatState> {
     // 채팅방 진입 시 기존 메시지를 먼저 로드
     if (state.messages.isEmpty) {
       if (_userId == null) return;
-      await _loadTodayMessages(_userId!);
+      await _loadMessages(_userId!);
     }
 
 // chat 페이지로 넘어가는 reason에 따라 다른 메시지를 선택
@@ -616,8 +713,7 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   /// 솔루션 제안에 대한 사용자 응답 처리
-  Future<void> respondToSolution(String solutionId, String action,
-      {bool isSafetyMode = false}) async {
+  Future<void> respondToSolution(String solutionId, String action) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -631,13 +727,14 @@ class ChatViewModel extends Notifier<ChatState> {
     }
 
     if (action == "accept_solution") {
-      if (isSafetyMode) {
-        // 🚨 안전 모드일 경우: 준비 중 페이지로 이동
-        navigatorkey.currentContext?.push('/my/prepare/상담센터 안내');
-      } else {
-        // 일반 솔루션일 경우: 기존 솔루션 페이지로 이동
-        navigatorkey.currentContext?.go('/breathing/$solutionId');
-      }
+      navigatorkey.currentContext?.push('/breathing/$solutionId');
+    }
+
+    if (action == "preparing") {
+      String title = "상담센터 연결";
+      navigatorkey.currentContext?.push('/prepare/$title');
+    } else {
+      navigatorkey.currentContext?.push('/breathing/$solutionId');
     }
   }
 
