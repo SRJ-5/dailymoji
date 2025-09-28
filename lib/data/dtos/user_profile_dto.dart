@@ -11,13 +11,13 @@ class UserProfileDto {
   final Map<String, dynamic>? onboardingScores;
 
   UserProfileDto({
-    required this.id,
-    required this.createdAt,
-    required this.userNickNm,
-    required this.aiCharacter,
-    required this.characterNm,
-    required this.characterPersonality,
-    required this.onboardingScores,
+    this.id,
+    this.createdAt,
+    this.userNickNm,
+    this.aiCharacter,
+    this.characterNm,
+    this.characterPersonality,
+    this.onboardingScores,
   });
 
   UserProfileDto.fromJson(Map<String, dynamic> map)
@@ -65,8 +65,10 @@ class UserProfileDto {
         userNickNm: userNickNm ?? this.userNickNm,
         aiCharacter: aiCharacter ?? this.aiCharacter,
         characterNm: characterNm ?? this.characterNm,
-        characterPersonality: characterPersonality ?? this.characterPersonality,
-        onboardingScores: onboardingScores ?? this.onboardingScores);
+        characterPersonality:
+            characterPersonality ?? this.characterPersonality,
+        onboardingScores:
+            onboardingScores ?? this.onboardingScores);
   }
 
   UserProfile toEntity() {
@@ -87,7 +89,8 @@ class UserProfileDto {
           userNickNm: surveyResponse.userNickNm,
           aiCharacter: surveyResponse.aiCharacter,
           characterNm: surveyResponse.characterNm,
-          characterPersonality: surveyResponse.characterPersonality,
+          characterPersonality:
+              surveyResponse.characterPersonality,
           onboardingScores: surveyResponse.onboardingScores,
         );
 }
