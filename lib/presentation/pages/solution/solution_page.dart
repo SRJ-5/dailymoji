@@ -159,7 +159,20 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     child: AspectRatio(
                       aspectRatio: ar, // 플레이어 캔버스 비율 유지
                       // child: _InnerPlayer(), // 실제 플레이어
-                      child: _InnerPlayer(controller: _controller), // Rin: _InnerPlayer에 controller를 직접 전달
+                      child: _InnerPlayer(
+                        controller: _controller,
+                        onReady: () {
+                          // 플레이어 준비 완료 후 자동으로 음소거 해제
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            if (mounted) {
+                              _controller.unMute();
+                              setState(() {
+                                _isMuted = false;
+                              });
+                            }
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -167,11 +180,20 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             ),
           ),
 
-          // ✋ 탭으로 오버레이 표시/숨김 토글
+          // ✋ 탭으로 오버레이 표시/숨김 토글 + 첫 터치 시 음소거 해제
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _showControls = !_showControls),
+              onTap: () {
+                // 첫 터치 시 음소거 해제 (자동재생 정책 우회)
+                if (_isMuted) {
+                  _controller.unMute();
+                  setState(() {
+                    _isMuted = false;
+                  });
+                }
+                setState(() => _showControls = !_showControls);
+              },
               child: const SizedBox(),
             ),
           ),
@@ -247,19 +269,17 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
 // YoutubePlayer 위젯을 분리해 두면 Transform/Clip 위에 올리기 편함
 class _InnerPlayer extends StatelessWidget {
-// Rin: _InnerPlayer가 controller를 받도록 수정
   final YoutubePlayerController controller;
-  const _InnerPlayer({required this.controller});
+  final VoidCallback? onReady;
+
+  const _InnerPlayer({required this.controller, this.onReady});
 
   @override
   Widget build(BuildContext context) {
-    // final state = context.findAncestorStateOfType<_SolutionPageState>()!;
     return YoutubePlayer(
-      // controller: state._controller,
       controller: controller,
       showVideoProgressIndicator: false,
-      // progressColors: ProgressBarColors(...), // 필요시
-      // onReady: () {},
+      onReady: onReady, // 플레이어 준비 완료 콜백
     );
   }
 }

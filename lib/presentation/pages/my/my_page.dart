@@ -79,7 +79,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                   ...List.generate(
                     1,
                     (index) => () {
-                      context.go('/my/characterSetting');
+                      context.push('/characterSetting');
                     },
                   )
                 ],
@@ -93,7 +93,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                     3,
                     (index) => () {
                       final title = ["공지사항", "언어 설정", "이용 약관"][index];
-                      context.go('/my/prepare/$title');
+                      context.push('/prepare/$title');
                     },
                   )
                 ],
@@ -107,7 +107,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                     2,
                     (index) => () {
                       final title = ["로그아웃", "회원 탈퇴"][index];
-                      context.go('/my/prepare/$title');
+                      context.push('/prepare/$title');
                     },
                   )
                 ],

@@ -1,8 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
-import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
-    show MonthParams, dailyMaxByMonthProvider;
+import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart' show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -98,15 +97,12 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextFormatter: (date, locale) =>
-                    "${date.year}년 ${date.month}월",
+                titleTextFormatter: (date, locale) => "${date.year}년 ${date.month}월",
                 titleTextStyle: AppFontStyles.bodyMedium14.copyWith(
                   color: AppColors.grey900,
                 ),
-                leftChevronIcon:
-                    const Icon(Icons.chevron_left, color: AppColors.grey900),
-                rightChevronIcon:
-                    const Icon(Icons.chevron_right, color: AppColors.grey900),
+                leftChevronIcon: const Icon(Icons.chevron_left, color: AppColors.grey900),
+                rightChevronIcon: const Icon(Icons.chevron_right, color: AppColors.grey900),
               ),
 
               // 기본 스타일
@@ -125,8 +121,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   return Center(
                     child: Text(
                       weekdays[day.weekday % 7],
-                      style: AppFontStyles.bodyMedium14
-                          .copyWith(color: AppColors.grey900),
+                      style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900),
                     ),
                   );
                 },
@@ -135,8 +130,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 defaultBuilder: (context, day, focusedDay) {
                   final path = emojiByDay[day.day]; // ← 뷰모델의 이모지 맵 사용!
                   if (path != null) {
-                    return Center(
-                        child: Image.asset(path, width: 28, height: 28));
+                    return Center(child: Image.asset(path, width: 28, height: 28));
                   }
                   return SizedBox(
                     width: 40.w,
@@ -157,8 +151,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                     ),
                     child: Text(
                       '${day.day}',
-                      style: AppFontStyles.bodySemiBold14
-                          .copyWith(color: AppColors.grey50),
+                      style: AppFontStyles.bodySemiBold14.copyWith(color: AppColors.grey50),
                     ),
                   );
                 },
@@ -179,8 +172,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                         ? Image.asset(path)
                         : Text(
                             '${day.day}',
-                            style: AppFontStyles.bodySemiBold14
-                                .copyWith(color: AppColors.orange600),
+                            style: AppFontStyles.bodySemiBold14.copyWith(color: AppColors.orange600),
                           ),
                   );
                 },
@@ -205,8 +197,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 child: Text(
                   "${_selectedDay!.month}월 ${_selectedDay!.day}일 "
                   "${weekdays[_selectedDay!.weekday % 7]}요일",
-                  style: AppFontStyles.bodyBold16
-                      .copyWith(color: AppColors.grey900),
+                  style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
                 ),
               ),
 
@@ -224,28 +215,26 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("이날 기록된 감정을 요약했어요",
-                        style: AppFontStyles.bodyBold14
-                            .copyWith(color: AppColors.green700)),
+                    Text("이날 기록된 감정을 요약했어요", style: AppFontStyles.bodyBold14.copyWith(color: AppColors.green700)),
                     SizedBox(height: 6.h),
                     Text(
                       "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
                       "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
-                      style: AppFontStyles.bodyRegular12_180
-                          .copyWith(color: AppColors.grey900),
+                      style: AppFontStyles.bodyRegular12_180.copyWith(color: AppColors.grey900),
+
                     ),
                     Align(
                       alignment: Alignment.bottomRight,
                       child: GestureDetector(
                         onTap: () {
-                          context.go("/report/chat", extra: _selectedDay);
+                          context.push("/chat", extra: _selectedDay);
+
                         },
                         child: Container(
                           alignment: Alignment.center,
                           height: 40.h,
                           width: 133.w,
-                          padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                              .copyWith(left: 16.w, right: 10.w),
+                          padding: EdgeInsets.symmetric(vertical: 9.5.h).copyWith(left: 16.w, right: 10.w),
                           decoration: ShapeDecoration(
                             color: AppColors.green400,
                             shape: RoundedRectangleBorder(
@@ -255,11 +244,10 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('채팅 확인하기',
-                                  style: AppFontStyles.bodyMedium14),
+                              Text('채팅 확인하기', style: AppFontStyles.bodyMedium14),
                               SizedBox(width: 6.w),
-                              Icon(Icons.arrow_forward,
-                                  color: AppColors.grey900, size: 18.r),
+                              Icon(Icons.arrow_forward, color: AppColors.grey900, size: 18.r),
+
                             ],
                           ),
                         ),
