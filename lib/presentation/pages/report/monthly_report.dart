@@ -286,7 +286,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
         return AppImages.sleepingEmoji;
       case 'positive':
       default:
-        return "";
+        return AppImages.smileEmoji;
     }
   }
 }
