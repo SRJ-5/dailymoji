@@ -14,16 +14,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ===== EmotionData (UI에서 사용하는 모델) =====
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-// ===== EmotionData (UI에서 사용하는 모델) =====
 class EmotionData {
   final Color color;
   final List<FlSpot> spots;
   final String description;
-  final double avg;
-  final double max;
-  final double min;
   final double avg;
   final double max;
   final double min;
@@ -38,7 +32,6 @@ class EmotionData {
   });
 }
 
-// ===== 체크박스: 종합 감정 점수는 제외(항상 노출) =====
 // ===== 체크박스: 종합 감정 점수는 제외(항상 노출) =====
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
@@ -77,33 +70,6 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
       description: "종합 감정 점수 입니다.",
     );
   }
-class WeeklyReport extends ConsumerStatefulWidget {
-  final String userId;
-  const WeeklyReport({super.key, required this.userId});
-
-  @override
-  ConsumerState<WeeklyReport> createState() => _WeeklyReportState();
-}
-
-class _WeeklyReportState extends ConsumerState<WeeklyReport> {
-  Future<gs.GScoreEmotionResult>? _gFuture; // ★ alias 타입
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(clusterScoresViewModelProvider.notifier)
-          .load14DayChart(widget.userId);
-    });
-
-    final svc = gs.GScoreService(Supabase.instance.client);
-    _gFuture = svc.fetch14DaysAsEmotionData(
-      userId: widget.userId,
-      color: AppColors.totalScore,
-      description: "종합 감정 점수 입니다.",
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,149 +118,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
             .where((e) => e.value && mergedMap.containsKey(e.key))
             .map((e) => e.key)
             .toList();
-  Widget build(BuildContext context) {
-    final state = ref.watch(clusterScoresViewModelProvider);
-    if (state.isLoading)
-      return const Center(child: CircularProgressIndicator());
-    if (state.error != null) return Center(child: Text('에러: ${state.error}'));
 
-    // 기존 5개 감정 + 날짜
-    final baseDays = state.days;
-    final baseMap = state.emotionMap;
-
-    return FutureBuilder<gs.GScoreEmotionResult>(
-      // ★ alias 타입
-      future: _gFuture,
-      builder: (context, snap) {
-        // 1) 서비스 EmotionData -> UI EmotionData 로 복사해서 병합
-        final Map<String, EmotionData> mergedMap = {
-          ...baseMap,
-          if (snap.hasData && snap.data?.emotion != null) ...{
-            "종합 감정 점수": EmotionData(
-              color: snap.data!.emotion!.color,
-              spots: snap.data!.emotion!.spots,
-              description: snap.data!.emotion!.description,
-              avg: snap.data!.emotion!.avg,
-              max: snap.data!.emotion!.max,
-              min: snap.data!.emotion!.min,
-            )
-          }
-        };
-
-        // 2) 디버그(임시) — 실제로 값이 들어왔는지 바로 확인
-        //    빌드 중 1~2회만 찍히면 정상
-        // ignore: avoid_print
-        print(
-            '[gscore] hasData=${snap.hasData} emotion=${snap.data?.emotion != null}');
-        // ignore: avoid_print
-        print('[gscore] days=${baseDays.length}');
-        // ignore: avoid_print
-        print(
-            '[gscore] lineYs=${mergedMap["종합 감정 점수"]?.spots.map((e) => e.y).toList()}');
-
-        // 3) 필터(오버레이용) — 종합은 항상 별도로 그릴 거라 제외
-        final filters = ref.watch(filterProvider);
-        final selectedEmotions = filters.entries
-            .where((e) => e.value && mergedMap.containsKey(e.key))
-            .map((e) => e.key)
-            .toList();
-
-        return Container(
-          color: AppColors.yellow50,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 12.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Stack(
-                  children: [
-                    SizedBox(
-                      height: 64.h,
-                      child: Center(
-                        child: Text(
-                          "나의 2주간 감정 상태",
-                          style: AppFontStyles.bodyMedium14.copyWith(
-                            color: AppColors.grey900,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: SizedBox(
-                        height: 64.h,
-                        width: 64.w,
-                        child: PopupMenuButton<String>(
-                          color: AppColors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          icon: SvgPicture.asset(
-                            AppIcons.stroke,
-                            height: 18.h,
-                            width: 18.w,
-                          ),
-                          itemBuilder: (context) {
-                            return [
-                              PopupMenuItem<String>(
-                                child: Consumer(
-                                  builder: (context, ref, _) {
-                                    final filters = ref.watch(filterProvider);
-                                    return Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: filters.keys.map((key) {
-                                        return InkWell(
-                                          onTap: () {
-                                            ref
-                                                .read(filterProvider.notifier)
-                                                .state = {
-                                              ...filters,
-                                              key: !(filters[key] ?? false),
-                                            };
-                                          },
-                                          child: Row(
-                                            children: [
-                                              Checkbox(
-                                                value: filters[key] ?? false,
-                                                activeColor: AppColors.green400,
-                                                checkColor: AppColors.white,
-                                                onChanged: (value) {
-                                                  ref
-                                                      .read(filterProvider
-                                                          .notifier)
-                                                      .state = {
-                                                    ...filters,
-                                                    key: value ?? false,
-                                                  };
-                                                },
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                key,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight:
-                                                      filters[key] == true
-                                                          ? FontWeight.bold
-                                                          : FontWeight.normal,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList(),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ];
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
         return Container(
           color: AppColors.yellow50,
           child: SingleChildScrollView(
@@ -494,186 +318,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     ],
                   ),
                 ),
-                      // ===== 범례: 줄바꿈 지원 =====
-                      SizedBox(
-                        width: 300.w, // 원하는 최대 폭 (없애면 가로 전체)
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8.r, // 칩 간 가로 간격
-                          runSpacing: 6.r, // 줄바꿈 시 세로 간격
-                          children: [
-                            if (mergedMap["종합 감정 점수"] != null)
-                              _legendChip(
-                                  "종합 감정 점수", mergedMap["종합 감정 점수"]!.color),
-                            ...selectedEmotions.map(
-                              (key) => _legendChip(key, mergedMap[key]!.color),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ),
 
-                // ===== 구분선 / 카드 (기존 그대로, 단 mergedMap 사용) =====
-                Container(
-                  padding: EdgeInsets.only(top: 23.h),
-                  height: 2,
-                  width: double.infinity,
-                  color: AppColors.grey100,
-                ),
-                Column(
-                  children: [
-                    if (mergedMap["종합 감정 점수"] != null)
-                      _buildEmotionCard("종합 감정 점수", mergedMap["종합 감정 점수"]!),
-                    ...selectedEmotions
-                        .map((key) => _buildEmotionCard(key, mergedMap[key]!)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ===== 카드 유틸 =====
-Widget separator() {
-  return Container(width: 1, height: 35, color: AppColors.grey200);
-}
-
-class _ScoreBox extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  const _ScoreBox(
-      {required this.label, required this.value, required this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
-        SizedBox(height: 2.h),
-        Text(value,
-            style:
-                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
-      ],
-    );
-  }
-}
-
-double _avgFromSpots(List<FlSpot> spots) {
-  if (spots.isEmpty) return 0.0;
-  final ys = spots.map((s) => s.y).where((y) => y.isFinite).toList();
-  if (ys.isEmpty) return 0.0;
-  final sum = ys.fold<double>(0.0, (a, b) => a + b);
-  return double.parse((sum / ys.length).toStringAsFixed(1));
-}
-
-double _minFromSpots(List<FlSpot> spots) {
-  if (spots.isEmpty) return 0.0;
-  final ys = spots.map((s) => s.y).where((y) => y.isFinite).toList();
-  if (ys.isEmpty) return 0.0;
-  final m = ys.reduce((a, b) => a < b ? a : b);
-  return double.parse(m.toStringAsFixed(1));
-}
-
-double _maxFromSpots(List<FlSpot> spots) {
-  if (spots.isEmpty) return 0.0;
-  final ys = spots.map((s) => s.y).where((y) => y.isFinite).toList();
-  if (ys.isEmpty) return 0.0;
-  final m = ys.reduce((a, b) => a > b ? a : b);
-  return double.parse(m.toStringAsFixed(1));
-}
-
-Widget _buildEmotionCard(String key, EmotionData data) {
-  final avg14 = _avgFromSpots(data.spots);
-  final max14 = _maxFromSpots(data.spots);
-  final min14 = _minFromSpots(data.spots);
-
-  return Container(
-    padding: EdgeInsets.only(top: 16.h),
-    child: Column(
-      children: [
-        Row(
-          spacing: 4.r,
-          children: [
-            Container(
-              width: 8.w,
-              height: 16.h,
-              decoration: BoxDecoration(
-                color: data.color,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Text(
-              key,
-              style:
-                  AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
-            ),
-          ],
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
-          decoration: BoxDecoration(
-            color: AppColors.green100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _ScoreBox(
-                      label: "평균 감정 점수",
-                      value: "${avg14.toStringAsFixed(1)}점",
-                      color: AppColors.green700),
-                  separator(),
-                  _ScoreBox(
-                      label: "최고 감정 점수",
-                      value: "${max14.toStringAsFixed(1)}점",
-                      color: AppColors.noti100),
-                  separator(),
-                  _ScoreBox(
-                      label: "최저 감정 점수",
-                      value: "${min14.toStringAsFixed(1)}점",
-                      color: AppColors.noti200),
-                ],
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                data.description,
-                style: AppFontStyles.bodyRegular12_180
-                    .copyWith(color: AppColors.grey900),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _legendChip(String label, Color color) {
-  return Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        width: 8,
-        height: 4,
-        decoration: ShapeDecoration(
-          color: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-        ),
-      ),
-      const SizedBox(width: 4),
-      Text(label, style: const TextStyle(fontSize: 12)),
-    ],
-  );
                 // ===== 구분선 / 카드 (기존 그대로, 단 mergedMap 사용) =====
                 Container(
                   padding: EdgeInsets.only(top: 23.h),
