@@ -221,12 +221,14 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                       "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
                       "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
                       style: AppFontStyles.bodyRegular12_180.copyWith(color: AppColors.grey900),
+
                     ),
                     Align(
                       alignment: Alignment.bottomRight,
                       child: GestureDetector(
                         onTap: () {
                           context.push("/chat", extra: _selectedDay);
+
                         },
                         child: Container(
                           alignment: Alignment.center,
@@ -245,6 +247,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                               Text('채팅 확인하기', style: AppFontStyles.bodyMedium14),
                               SizedBox(width: 6.w),
                               Icon(Icons.arrow_forward, color: AppColors.grey900, size: 18.r),
+
                             ],
                           ),
                         ),
