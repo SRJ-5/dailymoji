@@ -471,12 +471,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
                   child: ElevatedButton(
                     style: buttonStyle,
                     onPressed: () {
+                      final isSafety =
+                          proposal['is_safety_mode'] as bool? ?? false;
+
                       // 각 답변에 맞는 action
                       ref
                           .read(chatViewModelProvider.notifier)
                           .respondToSolution(
                             proposal['solution_id'] as String,
                             action,
+                            isSafetyMode: isSafety,
                           );
                     },
                     child: Text(

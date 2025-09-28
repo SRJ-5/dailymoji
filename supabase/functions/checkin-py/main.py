@@ -139,6 +139,13 @@ def is_safety_text(text: str, llm_json: Optional[dict], debug_log: dict) -> Tupl
 
 
 # --- Helper 함수들 ---
+# <<< DEBUG LOG: 보기 편한 로그 출력을 위한 헬퍼 함수 추가
+def _format_scores_for_print(scores: dict) -> str:
+    """점수 딕셔너리를 소수점 2자리까지 예쁘게 출력하기 위한 함수"""
+    if not isinstance(scores, dict):
+        return str(scores)
+    return json.dumps({k: round(v, 2) if isinstance(v, float) else v for k, v in scores.items()}, indent=2)
+
 def clip01(x: float) -> float: return max(0.0, min(1.0, float(x)))
 
 def g_score(final_scores: dict) -> float:
@@ -307,7 +314,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
             # 1. 온보딩 점수 계산
             onboarding_scores = calculate_baseline_scores(payload.onboarding or {})  
-            print(f"Onboarding Scores: {json.dumps({k: round(v, 4) for k, v in onboarding_scores.items()}, indent=2)}")
+            print(f"Onboarding Scores: {_format_scores_for_print(onboarding_scores)}")
 
             # 2. 이모지 점수 생성
             icon_prior = {c: 0.0 for c in CLUSTERS}
@@ -321,7 +328,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
                 onboarding_scores.get(c, 0.0) * w['onboarding'] +
                 icon_prior.get(c, 0.0) * w['icon']
             ) for c in CLUSTERS}
-            print(f"Final Scores (after alpha={icon_prior}): {json.dumps({k: round(v, 4) for k, v in final_scores.items()}, indent=2)}")
+            print(f"Final Scores (after fusion): {_format_scores_for_print(final_scores)}")
 
             # 4. 점수 상한선(Cap) 적용 로직 
             # 온보딩+이모지 점수는 최대 0.5가 되도록 
@@ -331,14 +338,14 @@ async def analyze_emotion(payload: AnalyzeRequest):
                 original_score = capped_scores[selected_cluster]
                 capped_scores[selected_cluster] = min(original_score, EMOJI_ONLY_SCORE_CAP)
             
-                print(f"Score Capping Applied for '{selected_cluster}': {original_score:.4f} -> {capped_scores[selected_cluster]:.4f}") # 🌸 print문 이 블록 안으로 이동
+                print(f"Score Capping Applied for '{selected_cluster}': {original_score:.4f} -> {capped_scores[selected_cluster]:.4f}")
 
             # 5. 최종 점수(g_score)
             g = g_score(capped_scores)   
             profile = pick_profile(capped_scores, None)
 
 
-            print(f"Final Scores (after capping): {json.dumps({k: round(v, 4) for k, v in capped_scores.items()}, indent=2)}") # 🌸 로그 메시지 수정
+            print(f"Final Scores (after capping): {_format_scores_for_print(capped_scores)}")
             print(f"G-Score: {g:.2f}")
             print(f"Profile: {profile}")
             print("------❤️-------------❤️-----------❤️-------\n")   
@@ -400,6 +407,10 @@ async def analyze_emotion(payload: AnalyzeRequest):
         # 텍스트가 짧고 (15자 미만) 룰 스코어가 낮을 때만 칭긔칭긔 모드 진입
         if max(rule_scores.values() or [0.0]) < 0.3 and len(text) < 15:
             debug_log["mode"] = "FRIENDLY"
+            print(f"\n--- 👋 FRIENDLY MODE DEBUG ---")
+            print(f"Input text: '{text}' (low score & short text)")
+            print("------❤️-------------❤️-----------❤️-------\n")
+           
             friendly_text = await call_llm(FRIENDLY_SYSTEM_PROMPT, text, OPENAI_KEY, expect_json=False)
             intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": friendly_text}
             # 친근한 대화도 세션을 남길 수 있음 (스코어는 비어있음)
@@ -408,10 +419,12 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
         # --- 파이프라인 3: 분석 모드 ---
         debug_log["mode"] = "ANALYSIS"
+        print("\n--- 🧐 TEXT ANALYSIS DEBUG 🧐 ---")
 
         # 3-1. 온보딩 점수(Baseline) 계산
         onboarding_scores = calculate_baseline_scores(payload.onboarding or {})
-        
+        print(f"1. Onboarding Scores:\n{_format_scores_for_print(onboarding_scores)}")
+
         # 3-2. 텍스트 분석 점수(fused_scores) 계산 (LLM, Rule-based 포함)
         rule_scores, _, _ = rule_scoring(text)
         llm_payload = payload.dict()
@@ -459,13 +472,17 @@ async def analyze_emotion(payload: AnalyzeRequest):
                 text_if[c] = clip01(0.6 * In + 0.4 * Fn + 0.1 * rule_scores.get(c, 0.0))
         
         fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
-        
+        print(f"2a. Rule-Based Scores:\n{_format_scores_for_print(rule_scores)}")
+        print(f"2b. LLM-based Scores (I/F fusion):\n{_format_scores_for_print(text_if)}")
+        print(f"2c. Fused Text Scores (Rule + LLM):\n{_format_scores_for_print(fused_scores)}")
+
         # 4-2. 이모지 점수(icon_prior) 생성
         icon_prior = {c: 0.0 for c in CLUSTERS}
         has_icon = payload.icon and ICON_TO_CLUSTER.get(payload.icon.lower()) != "neutral"
         if has_icon:
             selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
             icon_prior[selected_cluster] = 1.0        
+        print(f"3. Icon Prior Scores:\n{_format_scores_for_print(icon_prior)}")
 
         
         # --- 가중치 재조정 로직 ---
@@ -482,11 +499,15 @@ async def analyze_emotion(payload: AnalyzeRequest):
         # RIN 🌸 CASE 3: 텍스트 + 이모지 입력 시 -> 모든 가중치 그대로 사용
             w_text, w_onboarding, w_icon = w['text'], w['onboarding'], w['icon']
 
+        weights_used = {"text": w_text, "onboarding": w_onboarding, "icon": w_icon}
+        print(f"4. Final Fusion Weights:\n{_format_scores_for_print(weights_used)}")
+
         adjusted_scores = {c: clip01(
             fused_scores.get(c, 0.0) * w_text +
             onboarding_scores.get(c, 0.0) * w_onboarding +
             icon_prior.get(c, 0.0) * w_icon
         ) for c in CLUSTERS}
+        print(f"5. Final Adjusted Scores (after fusion):\n{_format_scores_for_print(adjusted_scores)}")
 
         debug_log["scores"] = {
             "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
@@ -501,6 +522,11 @@ async def analyze_emotion(payload: AnalyzeRequest):
         profile = pick_profile(adjusted_scores, llm_json)
         top_cluster = max(adjusted_scores, key=adjusted_scores.get, default="neg_low")
         
+        print(f"G-Score: {g:.2f}")
+        print(f"Profile: {profile}")
+        print("------❤️-------------❤️-----------❤️-------\n")
+
+
         debug_log["scores"] = {
             "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
             "final_adjusted_scores": adjusted_scores

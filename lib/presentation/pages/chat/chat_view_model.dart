@@ -405,6 +405,7 @@ class ChatViewModel extends Notifier<ChatState> {
             type: MessageType.solutionProposal,
             proposal: {
               "solution_id": solutionId,
+              "is_safety_mode": true,
               "options": [
                 {"label": "도움받기", "action": "accept_solution"},
                 {"label": "괜찮아요", "action": "decline_solution_and_talk"}
@@ -483,6 +484,7 @@ class ChatViewModel extends Notifier<ChatState> {
         type: MessageType.solutionProposal,
         proposal: {
           "solution_id": proposalResponse['solution_id'],
+          "is_safety_mode": false,
           "options": [
             {"label": "좋아, 해볼게!", "action": "accept_solution"},
             {"label": "아니, 더 대화할래", "action": "decline_solution_and_talk"}
@@ -614,7 +616,8 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   /// 솔루션 제안에 대한 사용자 응답 처리
-  Future<void> respondToSolution(String solutionId, String action) async {
+  Future<void> respondToSolution(String solutionId, String action,
+      {bool isSafetyMode = false}) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -628,7 +631,13 @@ class ChatViewModel extends Notifier<ChatState> {
     }
 
     if (action == "accept_solution") {
-      navigatorkey.currentContext?.go('/breathing/$solutionId');
+      if (isSafetyMode) {
+        // 🚨 안전 모드일 경우: 준비 중 페이지로 이동
+        navigatorkey.currentContext?.push('/my/prepare/상담센터 안내');
+      } else {
+        // 일반 솔루션일 경우: 기존 솔루션 페이지로 이동
+        navigatorkey.currentContext?.go('/breathing/$solutionId');
+      }
     }
   }
 
