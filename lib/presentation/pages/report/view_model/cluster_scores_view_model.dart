@@ -106,7 +106,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   double _avgScaledOpt(List<double?> v) {
     final vals = [
       for (final e in v)
-        if (e != null) e!
+        if (e != null) e
     ];
     if (vals.isEmpty) return 0.0;
     final avg = vals.reduce((a, b) => a + b) / vals.length;
@@ -116,7 +116,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   double _minScaledOpt(List<double?> v) {
     final vals = [
       for (final e in v)
-        if (e != null) e!
+        if (e != null) e
     ];
     if (vals.isEmpty) return 0.0;
     return scaleToTen(vals.reduce((a, b) => a < b ? a : b));
@@ -125,7 +125,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   double _maxScaledOpt(List<double?> v) {
     final vals = [
       for (final e in v)
-        if (e != null) e!
+        if (e != null) e
     ];
     if (vals.isEmpty) return 0.0;
     return scaleToTen(vals.reduce((a, b) => a > b ? a : b));
@@ -159,7 +159,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(nhAvg), // 기간 전체 평균
         min: _minScaledOpt(nhMin), // 기간 내 최저
         max: _maxScaledOpt(nhMax), // 기간 내 최고
-        description: "스트레스 지수가 연속 3일간 상승했어요. 잠깐 호흡하면서 리셋해요.",
+        description:
+            "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠. 하지만 모든 걸 혼자 짊어질 필요는 없습니다. 잠시 내려놓고 숨을 고르며 작은 쉼을 허락하세요. 당신은 이미 충분히 잘해내고 있어요.",
       ),
       "우울/무기력/번아웃": EmotionData(
         color: AppColors.negLow,
@@ -167,7 +168,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(nlAvg),
         min: _minScaledOpt(nlMin),
         max: _maxScaledOpt(nlMax),
-        description: "지쳤다는 신호가 보여요. 잠시 쉬어가세요.",
+        description:
+            "지쳤다는 신호가 보여요. 완벽하지 않아도 괜찮습니다. 잠시 멈춰서 쉬어가는 것 또한 중요한 과정이에요. 자신을 위한 작은 여유를 챙겨 보세요.",
       ),
       "평온/회복": EmotionData(
         color: AppColors.positive,
@@ -175,7 +177,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(posAvg),
         min: _minScaledOpt(posMin),
         max: _maxScaledOpt(posMax),
-        description: "안정적인 감정 상태가 유지되고 있어요.",
+        description:
+            "평온함을 느끼고 있다면, 그건 당신이 잘 버텨온 증거예요. 회복의 순간은 스스로에게 주는 가장 큰 선물이에요. 이 시간을 충분히 누리며 마음 깊이 새겨두세요. 앞으로 걸어갈 힘이 되어줄 거예요.",
       ),
       "불면/과다수면": EmotionData(
         color: AppColors.sleep,
@@ -183,7 +186,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(slAvg),
         min: _minScaledOpt(slMin),
         max: _maxScaledOpt(slMax),
-        description: "수면 패턴을 점검해볼까요?",
+        description:
+            "잠이 오지 않거나, 반대로 너무 많이 잘 때도 있어요. 그건 몸과 마음이 회복을 필요로 한다는 신호일 뿐이에요. 억지로 조절하려 하지 말고, 오늘은 있는 그대로를 받아들여 주세요. 조금씩 균형은 찾아올 거예요.",
       ),
       "ADHD": EmotionData(
         color: AppColors.adhd,
@@ -191,7 +195,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(adAvg),
         min: _minScaledOpt(adMin),
         max: _maxScaledOpt(adMax),
-        description: "집중 리듬을 일정하게 잡아봐요.",
+        description:
+            "집중이 흩어지고 마음이 산만할 때가 있죠. 완벽하지 않아도 괜찮습니다. 오늘은 작은 일 하나만 해내도 충분히 잘한 거예요. 자신을 탓하지 말고, 천천히 걸어가도 된다는 걸 기억하세요.",
       ),
     };
   }

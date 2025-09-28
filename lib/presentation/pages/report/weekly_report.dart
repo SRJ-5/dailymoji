@@ -67,7 +67,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
     _gFuture = svc.fetch14DaysAsEmotionData(
       userId: widget.userId,
       color: AppColors.totalScore,
-      description: "종합 감정 점수 입니다.",
+      description:
+          "종합 감정 점수는 최근의 감정을 모아 보여주는 지표예요. 완벽히 좋은 점수일 필요는 없고, 그때그때의 마음을 솔직히 드러낸 기록이면 충분합니다. 수치보다 중요한 건, 당신이 꾸준히 스스로를 돌아보고 있다는 사실이에요.",
     );
   }
 

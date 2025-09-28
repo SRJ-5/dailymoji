@@ -1,3 +1,5 @@
+// weekly report 에서 차트그릴때 쓸 Gscore 뽑아오는 Dto
+
 class SessionDto {
   final DateTime? createdAt;
   final String? userId;
