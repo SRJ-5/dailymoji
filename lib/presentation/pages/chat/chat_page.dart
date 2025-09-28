@@ -162,106 +162,113 @@ class _ChatPageState extends ConsumerState<ChatPage> with SingleTickerProviderSt
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.yellow50,
-      appBar: AppBar(
-        automaticallyImplyLeading: true, // backbutton
+    return GestureDetector(
+      // 키보드가 올라와 있을 때 바깥 영역 터치 시 키보드 내리기
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
         backgroundColor: AppColors.yellow50,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min, // 중앙 정렬을 위해 추가
+        appBar: AppBar(
+          automaticallyImplyLeading: true, // backbutton
+          backgroundColor: AppColors.yellow50,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min, // 중앙 정렬을 위해 추가
 
-          children: [
-            CircleAvatar(
-              radius: 16.r,
-              backgroundImage: (characterImageUrl != null && characterImageUrl.isNotEmpty)
-                  ? NetworkImage(characterImageUrl)
-                  : const AssetImage(AppImages.cadoFace) as ImageProvider,
-            ),
-            SizedBox(width: 12.r),
-            Text(
-              characterName,
-              style: AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
-            ),
-          ],
-        ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
-            child: Column(
-              children: [
-                Expanded(
-                  child: chatState.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView.builder(
-                          controller: _scrollController,
-                          reverse: true,
-                          itemCount: messages.length + (chatState.isLoadingMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            // 로딩 인디케이터 표시 (reverse: true 상태에서 맨 위에 표시됨)
-                            if (chatState.isLoadingMore && index == messages.length) {
-                              return Container(
-                                padding: EdgeInsets.all(16.h),
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                ),
-                              );
-                            }
-                            //  reverse된 리스트에서 올바른 메시지 가져오기
-                            final allMessages = chatState.messages;
-                            final reversedIndex = allMessages.length - 1 - index;
-                            final message = allMessages[reversedIndex];
-
-                            // --- 날짜 구분선 표시 로직 ---
-                            bool showDateSeparator = false;
-                            if (reversedIndex == 0) {
-                              showDateSeparator = true;
-                            } else {
-                              // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
-                              final prevMessageInTime = allMessages[reversedIndex - 1];
-                              if (!isSameDay(prevMessageInTime.createdAt, message.createdAt)) {
-                                showDateSeparator = true;
-                              }
-                            }
-
-                            final messageWidget = _buildMessageWidget(message, key: ValueKey(message.tempId));
-
-                            // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
-                            // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
-                            if (showDateSeparator) {
-                              return Column(
-                                children: [
-                                  _DateSeparator(date: message.createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
-                                  messageWidget, // 메시지가 먼저 나오고
-                                ],
-                              );
-                            }
-                            return messageWidget;
-                          },
-                        ),
-                ),
-                _buildInputField(isBotTyping: isBotTyping),
-              ],
-            ),
+            children: [
+              CircleAvatar(
+                radius: 16.r,
+                backgroundImage: (characterImageUrl != null && characterImageUrl.isNotEmpty)
+                    ? NetworkImage(characterImageUrl)
+                    : const AssetImage(AppImages.cadoFace) as ImageProvider,
+              ),
+              SizedBox(width: 12.r),
+              Text(
+                characterName,
+                style: AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
+              ),
+            ],
           ),
-          if (showEmojiBar)
-            Positioned(
-              bottom: 99.h,
-              right: 12.w,
-              child: Material(
-                color: Colors.transparent,
-                child: _buildEmojiBarAnimated(),
+          centerTitle: true,
+        ),
+        body: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: chatState.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            itemCount: messages.length + (chatState.isLoadingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              // 로딩 인디케이터 표시 (reverse: true 상태에서 맨 위에 표시됨)
+                              if (chatState.isLoadingMore && index == messages.length) {
+                                return Container(
+                                  padding: EdgeInsets.all(16.h),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                );
+                              }
+                              //  reverse된 리스트에서 올바른 메시지 가져오기
+                              final allMessages = chatState.messages;
+                              final reversedIndex = allMessages.length - 1 - index;
+                              final message = allMessages[reversedIndex];
+
+                              // --- 날짜 구분선 표시 로직 ---
+                              bool showDateSeparator = false;
+                              if (reversedIndex == 0) {
+                                showDateSeparator = true;
+                              } else {
+                                // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
+                                final prevMessageInTime = allMessages[reversedIndex - 1];
+                                if (!isSameDay(prevMessageInTime.createdAt, message.createdAt)) {
+                                  showDateSeparator = true;
+                                }
+                              }
+
+                              final messageWidget = _buildMessageWidget(message, key: ValueKey(message.tempId));
+
+                              // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
+                              // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
+                              if (showDateSeparator) {
+                                return Column(
+                                  children: [
+                                    _DateSeparator(date: message.createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
+                                    messageWidget, // 메시지가 먼저 나오고
+                                  ],
+                                );
+                              }
+                              return messageWidget;
+                            },
+                          ),
+                  ),
+                  if (widget.targetDate == null) _buildInputField(isBotTyping: isBotTyping),
+                ],
               ),
             ),
-        ],
+            if (showEmojiBar)
+              Positioned(
+                bottom: 99.h,
+                right: 12.w,
+                child: Material(
+                  color: Colors.transparent,
+                  child: _buildEmojiBarAnimated(),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
