@@ -494,7 +494,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
               final String label = option['label'] as String;
 
               // 좋아요, 싫어요 버튼 스타일 다르게
-              final bool isPositiveAction = action == 'accept_solution';
+              final bool isPositiveAction =
+                  action == 'accept_solution' || action == 'preparing';
               final double buttonWidth = isPositiveAction ? 104.w : 128.w;
 
               final buttonStyle = ElevatedButton.styleFrom(
@@ -522,16 +523,12 @@ class _ChatPageState extends ConsumerState<ChatPage>
                   child: ElevatedButton(
                     style: buttonStyle,
                     onPressed: () {
-                      final isSafety =
-                          proposal['is_safety_mode'] as bool? ?? false;
-
                       // 각 답변에 맞는 action
                       ref
                           .read(chatViewModelProvider.notifier)
                           .respondToSolution(
                             proposal['solution_id'] as String,
                             action,
-                            isSafetyMode: isSafety,
                           );
                     },
                     child: Text(

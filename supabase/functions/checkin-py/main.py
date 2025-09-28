@@ -28,7 +28,8 @@ from rule_based import rule_scoring
 from srj5_constants import (
     CLUSTERS, EMOJI_ONLY_SCORE_CAP, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
     FINAL_FUSION_WEIGHTS, FINAL_FUSION_WEIGHTS_NO_TEXT,
-    W_LLM, W_RULE, SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS,
+    W_LLM, W_RULE, 
+    SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, SAFETY_REGEX, SAFETY_FIGURATIVE
 )
 
 
@@ -95,8 +96,6 @@ class PresetIds:
 # ======================================================================
 
 # --- 안전 장치 로직 ---
-SAFETY_REGEX = [r"죽고\s*싶", r"살고\s*싶지", r"살기\s*싫", r"자살", r"뛰어\s*내리", r"투신", r"목을\s*매달", r"목숨(?:을)?\s*끊", r"생을\s*마감", r"죽어버리", r"끝내버리"]
-SAFETY_FIGURATIVE = [r"죽을\s*만큼", r"죽겠다\s*ㅋ", r"개\s*맛있"]
 
 def _find_regex_matches(text: str, patterns: List[str]) -> List[str]:
     return [m.group(0) for pat in patterns for m in re.finditer(pat, text, flags=re.IGNORECASE)]
