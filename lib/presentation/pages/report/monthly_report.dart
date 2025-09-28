@@ -264,7 +264,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                           ),
                         ),
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
