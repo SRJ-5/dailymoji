@@ -462,9 +462,11 @@ async def analyze_emotion(payload: AnalyzeRequest):
             print(f"Input text: '{text}' (low score & short text)")
             print("------❤️-------------❤️-----------❤️-------\n")
            
+
             # 🤩 RIN: 친구 모드에서도 캐릭터 성향을 반영한 프롬프트 사용하기
             system_prompt = get_system_prompt(mode='FRIENDLY', personality=payload.character_personality, user_nick_nm=user_nick_nm, character_nm=character_nm)
             friendly_text = await call_llm(system_prompt, text, OPENAI_KEY, expect_json=False)
+
             intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": friendly_text}
             # 친근한 대화도 세션을 남길 수 있음 (스코어는 비어있음)
             session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
