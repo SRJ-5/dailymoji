@@ -378,8 +378,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // branching: 메시지 타입이 'image'이고 이미지 경로가 있으면 Image 위젯을, 아니면 Text 위젯을 표시
     if (message.type == MessageType.image && message.imageAssetPath != null) {
-      print(
-          "RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
+
+      // print(
+      //     "RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
+
 
       // 동그랗게 만들기! (--> 그래야 하얀 박스안에 들어가지 않음)
       messageContent = ClipRRect(
@@ -474,7 +476,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   Widget _solutionProposalMessage(Message message, {required Key key}) {
     final proposal = message.proposal!;
     final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
-    debugPrint("RIN: Rendering solution proposal text: ${message.content}");
+    // debugPrint("RIN: Rendering solution proposal text: ${message.content}");
 
     // 상황 결정 버튼 UI 전체 수정
     return Column(

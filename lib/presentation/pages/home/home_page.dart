@@ -9,6 +9,8 @@ import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,19 +27,42 @@ final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 final homeDialogueProvider = FutureProvider<String>((ref) async {
   final selectedEmotion = ref.watch(selectedEmotionProvider);
 
-  // URL에 쿼리 파라미터 추가
-  final url = selectedEmotion == null
-      ? Uri.parse('${ApiConfig.baseUrl}/dialogue/home')
-      : Uri.parse(
-          '${ApiConfig.baseUrl}/dialogue/home?emotion=$selectedEmotion');
+// 🤩 RIN: userViewModelProvider를 통해 현재 사용자 프로필 정보를 가져옵니다.
+  final userProfile = ref.watch(userViewModelProvider).userProfile;
+  final personality = userProfile?.characterPersonality;
+  // 🤩 RIN: Supabase DB에 저장된 dbValue('prob_solver' 등)를 사용해야 합니다.
+  final personalityDbValue = CharacterPersonality.values
+      .firstWhere(
+        (e) => e.label == personality,
+        orElse: () => CharacterPersonality.probSolver, // 기본값
+      )
+      .dbValue;
+  final userNickNm = userProfile?.userNickNm;
 
-  final response = await http.get(url);
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(utf8.decode(response.bodyBytes));
-    return data['dialogue'] as String;
-  } else {
-    // 에러 발생 시 기본 텍스트 반환
+  // 🤩 RIN: 기본 URL에 쿼리 파라미터 추가 로직 분기함
+  final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/home');
+  final queryParameters = {
+    if (selectedEmotion != null) 'emotion': selectedEmotion,
+    // 🤩 RIN: personality와 user_nick_nm을 쿼리 파라미터로 추가
+    if (personalityDbValue != null) 'personality': personalityDbValue,
+    if (userNickNm != null) 'user_nick_nm': userNickNm,
+  };
+
+  final finalUri = uri.replace(queryParameters: queryParameters);
+
+  try {
+    final response = await http.get(finalUri);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data['dialogue'] as String;
+    } else {
+      // 에러 발생 시 기본 텍스트 반환
+      return "안녕!\n오늘 기분은 어때?";
+    }
+  } catch (e) {
+    print("Error fetching home dialogue: $e");
     return "안녕!\n오늘 기분은 어때?";
   }
 });
@@ -211,7 +236,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.push('/chat', extra: selectedEmotion),
+        onTap: () => context.push('/home/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
