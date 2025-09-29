@@ -1,5 +1,3 @@
-// 0924 변경: 채팅방 상태 오류 및 분석 누락 해결 (EMOJI ONLY)
-// 0926 로직 변경: 케이스 1-텍스트만 입력 / 케이스2-이모지만 입력 / 케이스 3-텍스트+이모지 같이 입력
 import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/constants/emotion_map.dart';
 import 'package:dailymoji/core/constants/presets.dart';
@@ -12,6 +10,7 @@ import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 
 class ChatState {
   final List<Message> messages;
@@ -54,19 +53,19 @@ class ChatState {
 }
 
 class ChatViewModel extends Notifier<ChatState> {
-  // ---------------------------------------------------------------------------
-  // State & Dependencies
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// State & Dependencies
+// ---------------------------------------------------------------------------
 
-  // 페이지네이션 상수
+// 페이지네이션 상수
   static const int _pageSize = 50;
 
-  // UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
+// UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
   String? get _userId =>
       ref.read(userViewModelProvider).userProfile?.id ??
       "ffc9c57c-b744-4924-a3e7-65781ecf6ab3";
 
-  //사용자의 텍스트 답변을 기다리는 이모지 상태
+//사용자의 텍스트 답변을 기다리는 이모지 상태
   String? _pendingEmotionForAnalysis;
   String? _lastEmojiOnlyCluster; // RIN ♥ 이모지 전송 직후의 클러스터 저장
   String? _lastEmojiMessageId; // RIN ♥ 이모지 전송 직후의 메시지 ID 저장 (세션 업데이트용)
@@ -76,10 +75,10 @@ class ChatViewModel extends Notifier<ChatState> {
   ChatState build() => ChatState();
 
 // ---------------------------------------------------------------------------
-  // Core Methods
-  // ---------------------------------------------------------------------------
+// Core Methods
+// ---------------------------------------------------------------------------
 
-  // --- Rin: 채팅방 진입 시 초기화 로직 ---
+// --- Rin: 채팅방 진입 시 초기화 로직 ---
   Future<void> enterChatRoom(String? emotionFromHome,
       {DateTime? specificDate}) async {
     final currentUserId = _userId; // Getter를 통해 현재 ID 가져오기
@@ -91,36 +90,36 @@ class ChatViewModel extends Notifier<ChatState> {
     }
     _subscribeToMessages(currentUserId);
 
-    // 1. 대화 기록 불러오기 (특정 날짜 또는 오늘)
+// 1. 대화 기록 불러오기 (특정 날짜 또는 오늘)
     await _loadMessages(currentUserId, targetDate: specificDate);
 
-    // 홈에서 이모지를 선택하고 들어온 경우, 대화 흐름 시작
+// 홈에서 이모지를 선택하고 들어온 경우, 대화 흐름 시작
     if (emotionFromHome != null) {
-      // 1. UI에 표시할 메시지 객체들을 먼저 생성
+// 1. UI에 표시할 메시지 객체들을 먼저 생성
       final emojiMessage = Message(
         userId: currentUserId,
         sender: Sender.user,
         type: MessageType.image,
         imageAssetPath: kEmojiAssetMap[emotionFromHome],
       );
-      // // 2. 시스템 메시지 객체 생성
-      // final displayEmotion =
-      //     kEmotionKeyToDisplay[emotionFromHome] ?? emotionFromHome;
-      // final systemMessage = Message(
-      //   userId: currentUserId,
-      //   sender: Sender.bot,
-      //   type: MessageType.system,
-      //   content: "$displayEmotion 상태에 맞춰 대화를 진행할게요.",
-      // );
+// // 2. 시스템 메시지 객체 생성
+// final displayEmotion =
+// kEmotionKeyToDisplay[emotionFromHome] ?? emotionFromHome;
+// final systemMessage = Message(
+// userId: currentUserId,
+// sender: Sender.bot,
+// type: MessageType.system,
+// content: "$displayEmotion 상태에 맞춰 대화를 진행할게요.",
+// );
 // // 3. 이모지와 시스템 메시지를 한 번에 UI에 업데이트 (동시 표시)
-//       state = state
-//           .copyWith(messages: [...state.messages, emojiMessage, systemMessage]);
+// state = state
+// .copyWith(messages: [...state.messages, emojiMessage, systemMessage]);
 
       state = state.copyWith(messages: [...state.messages, emojiMessage]);
 
-      // 4. UI 업데이트 이후, 백그라운드에서 대화 시작 로직 실행
+// 4. UI 업데이트 이후, 백그라운드에서 대화 시작 로직 실행
       await _startConversationWithEmoji(emojiMessage, emotionFromHome);
-      // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 ui에 초기화 신호 보내기(디폴트로 돌려놓기 위함)
+// RIN ♥ : 홈에서 온 이모지 처리가 끝나면 ui에 초기화 신호 보내기(디폴트로 돌려놓기 위함)
       state = state.copyWith(clearPendingEmoji: true);
     }
   }
@@ -130,13 +129,13 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(clearPendingEmoji: false);
   }
 
-  // // ---------------------------------------------------------------------------
-  // // 메시지 로드 & 구독
-  // // ---------------------------------------------------------------------------
+// // ---------------------------------------------------------------------------
+// // 메시지 로드 & 구독
+// // ---------------------------------------------------------------------------
 
   /// 사용자 텍스트 메시지 전송
   Future<void> sendMessage(String content, String? selectedEmotionKey) async {
-    // ♥ 변경: String? emotion으로 변경
+// ♥ 변경: String? emotion으로 변경
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -152,19 +151,19 @@ class ChatViewModel extends Notifier<ChatState> {
     final emotionForAnalysis = _pendingEmotionForAnalysis ??
         selectedEmotionKey; // ♥ 변경: selectedEmotionKey 사용
 
-    // 대기 중인 이모지를 사용했으므로, 이제 상태를 초기화
+// 대기 중인 이모지를 사용했으므로, 이제 상태를 초기화
     if (_pendingEmotionForAnalysis != null) {
       _pendingEmotionForAnalysis = null;
     }
 
-    // RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
-    // 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
+// RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
+// 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
     EmotionalRecord? emotionalRecordFromEmojiOnly;
     if (_lastEmojiOnlyCluster != null &&
         _lastEmojiMessageId != null &&
         emotionForAnalysis != null) {
-      // 백엔드에 _pendingEmotionForAnalysis (이모지)와 텍스트를 함께 전달하여 풀파이프라인 분석 요청
-      // 이모지+텍스트 가중치를 붙여 최종 점수로 저장
+// 백엔드에 _pendingEmotionForAnalysis (이모지)와 텍스트를 함께 전달하여 풀파이프라인 분석 요청
+// 이모지+텍스트 가중치를 붙여 최종 점수로 저장
       emotionalRecordFromEmojiOnly = await _analyzeAndRespond(
         userMessage: savedMessage,
         textForAnalysis: message.content,
@@ -172,11 +171,11 @@ class ChatViewModel extends Notifier<ChatState> {
         updateSessionIdForMessageId:
             _lastEmojiMessageId, // 이전 이모지 메시지 ID로 세션 업데이트
       );
-      // 이모지-텍스트 연계 분석이 완료되면 상태 초기화
+// 이모지-텍스트 연계 분석이 완료되면 상태 초기화
       _lastEmojiOnlyCluster = null;
       _lastEmojiMessageId = null;
     } else {
-      // 백엔드에 종합 분석 요청
+// 백엔드에 종합 분석 요청
       await _analyzeAndRespond(
         userMessage: savedMessage,
         textForAnalysis: message.content,
@@ -197,8 +196,8 @@ class ChatViewModel extends Notifier<ChatState> {
       imageAssetPath: kEmojiAssetMap[emotion],
     );
 
-    // 백그라운드에서 대화 시작 로직 실행
-    // (UI에는 이미 추가했으므로, 이 함수는 DB 저장 및 봇 질문 로직만 담당)
+// 백그라운드에서 대화 시작 로직 실행
+// (UI에는 이미 추가했으므로, 이 함수는 DB 저장 및 봇 질문 로직만 담당)
     await _startConversationWithEmoji(emojiMessage, emotion);
   }
 
@@ -208,7 +207,7 @@ class ChatViewModel extends Notifier<ChatState> {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 1. 이모지 메시지 전송 (지연 없이 바로)
+// 1. 이모지 메시지 전송 (지연 없이 바로)
     final emojiMessage = Message(
       userId: currentUserId,
       sender: Sender.user,
@@ -217,7 +216,7 @@ class ChatViewModel extends Notifier<ChatState> {
     );
     final savedEmojiMessage = await _addUserMessageToChat(emojiMessage);
 
-    // 2. 텍스트 메시지 먼저 전송
+// 2. 텍스트 메시지 먼저 전송
     final textMessage = Message(
       userId: currentUserId,
       content: text,
@@ -226,7 +225,7 @@ class ChatViewModel extends Notifier<ChatState> {
     );
     final savedTextMessage = await _addUserMessageToChat(textMessage);
 
-    // 3. 백엔드에 텍스트와 이모지 가중치를 붙여 풀 파이프라인으로 분석 요청
+// 3. 백엔드에 텍스트와 이모지 가중치를 붙여 풀 파이프라인으로 분석 요청
     await _analyzeAndRespond(
       userMessage: savedTextMessage, // 텍스트 메시지에 세션 ID 연결
       textForAnalysis: text,
@@ -244,7 +243,7 @@ class ChatViewModel extends Notifier<ChatState> {
   /// UI에 메시지를 중복으로 추가하지 않도록 조심하기!!
   Future<void> _startConversationWithEmoji(
       Message emojiMessage, String emotion) async {
-    // Optimistic UI: UI에 메시지가 이미 있는지 확인하여 중복 추가 방지
+// Optimistic UI: UI에 메시지가 이미 있는지 확인하여 중복 추가 방지
     final isAlreadyInState =
         state.messages.any((m) => m.tempId == emojiMessage.tempId);
 
@@ -252,12 +251,12 @@ class ChatViewModel extends Notifier<ChatState> {
     Message savedEmojiMsg;
 
     if (isAlreadyInState) {
-      // DB에만 저장하고 UI는 건드리지 않음
+// DB에만 저장하고 UI는 건드리지 않음
       final saved =
           await ref.read(sendMessageUseCaseProvider).execute(emojiMessage);
       savedEmojiMsg = saved;
     } else {
-      // 만약 UI에 없다면 추가 (안전장치)
+// 만약 UI에 없다면 추가 (안전장치)
       final saved = await _addUserMessageToChat(
           emojiMessage); // _addUserMessageToChat은 Message를 반환
       savedEmojiMsg = saved;
@@ -265,27 +264,29 @@ class ChatViewModel extends Notifier<ChatState> {
 
     _pendingEmotionForAnalysis = emotion; // 텍스트 입력 대기중인 이모지 설정
     final currentUserId = _userId!;
+    final userProfile = ref.read(userViewModelProvider).userProfile;
 
     try {
-      //리액션 스크립트로 질문/공감 멘트
-      // - 서버 /analyze(text="") 퀵세이브 → sessionId + 대사(text) 동시 수신
+//리액션 스크립트로 질문/공감 멘트
+// - 서버 /analyze(text="") 퀵세이브 → sessionId + 대사(text) 동시 수신
       final emojiRepo = ref.read(emojiReactionRepositoryProvider);
       final EmotionalRecord emotionalRecord =
           await emojiRepo.getReactionWithSession(
-        // EmotionalRecord 타입으로 받기
+// EmotionalRecord 타입으로 받기
         userId: currentUserId,
         emotion: emotion,
-        onboarding:
-            ref.read(userViewModelProvider).userProfile?.onboardingScores ?? {},
+        onboarding: userProfile?.onboardingScores ?? {},
+// 🤩 RIN: 캐릭터 성향 넘기기
+        characterPersonality: userProfile?.characterPersonality,
       );
 
-      // 이모지 전송 직후의 클러스터와 메시지 ID 저장
+// 이모지 전송 직후의 클러스터와 메시지 ID 저장
       _lastEmojiOnlyCluster = emotionalRecord.topCluster;
       _lastEmojiMessageId = savedEmojiMsg.id;
 
-      // 세션 연결
+// 세션 연결
       if (emotionalRecord.sessionId != null && savedEmojiMsg.id != null) {
-        //emotionalRecord.sessionId 사용
+//emotionalRecord.sessionId 사용
         await ref.read(updateMessageSessionIdUseCaseProvider).execute(
               messageId: savedEmojiMsg.id!,
               sessionId:
@@ -293,7 +294,7 @@ class ChatViewModel extends Notifier<ChatState> {
             );
       }
 
-      // 받은 대사 보여지기
+// 받은 대사 보여지기
       final questionMessage = Message(
         userId: currentUserId,
         sender: Sender.bot,
@@ -302,7 +303,7 @@ class ChatViewModel extends Notifier<ChatState> {
       );
       await _addBotMessageToChat(questionMessage);
     } catch (e) {
-      //fallback
+//fallback
       print("RIN: 🚨 Failed to fetch reaction script: $e");
       final fallbackMessage = Message(
           userId: currentUserId,
@@ -312,8 +313,8 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-  // 백엔드에 감정 분석 및 솔루션 제안 요청
-  // RIN ♥ : EmotionalRecord? 타입 반환, updateSessionIdForMessageId 파라미터 추가
+// 백엔드에 감정 분석 및 솔루션 제안 요청
+// RIN ♥ : EmotionalRecord? 타입 반환, updateSessionIdForMessageId 파라미터 추가
   Future<EmotionalRecord?> _analyzeAndRespond({
     required Message userMessage,
     required String textForAnalysis,
@@ -324,9 +325,10 @@ class ChatViewModel extends Notifier<ChatState> {
     if (currentUserId == null) return null;
 
     final userState = ref.read(userViewModelProvider);
+    final userProfile = userState.userProfile;
     final characterName = userState.userProfile?.characterNm ?? "모지";
 
-    // "입력 중..." 메시지 표시
+// "입력 중..." 메시지 표시
     final analyzingMessage = Message(
         userId: currentUserId,
         content: "$characterName이(가) 입력하고 있어요...",
@@ -336,28 +338,29 @@ class ChatViewModel extends Notifier<ChatState> {
         isTyping: true, messages: [...state.messages, analyzingMessage]);
 
     try {
-      // /analyze 앤드포인트 연결
+// /analyze 앤드포인트 연결
       final emotionalRecord =
           await ref.read(analyzeEmotionUseCaseProvider).execute(
                 userId: currentUserId,
                 text: textForAnalysis,
                 emotion: emotion,
                 onboarding: userState.userProfile?.onboardingScores ?? {},
+                characterPersonality: userProfile?.characterPersonality,
               );
 
-      // "입력 중..." 메시지 제거
+// "입력 중..." 메시지 제거
       state = state.copyWith(
           messages: state.messages
               .where((m) => m.type != MessageType.analysis)
               .toList());
 
       final sessionId = emotionalRecord.sessionId;
-      // intervention은 항상 Map 형태
+// intervention은 항상 Map 형태
       final intervention = emotionalRecord.intervention;
       final presetId = intervention['preset_id'] as String?;
 
       switch (presetId) {
-        // Rin: 칭긔칭긔모드
+// Rin: 칭긔칭긔모드
         case PresetIds.friendlyReply:
           final botMessage = Message(
             userId: currentUserId,
@@ -367,15 +370,15 @@ class ChatViewModel extends Notifier<ChatState> {
           await _addBotMessageToChat(botMessage);
           break; // 여기서 대화 흐름이 한번 끝남
 
-        // 솔루션 제안 모드
+// 솔루션 제안 모드
         case PresetIds.solutionProposal:
-          // intervention 맵에서 직접 데이터 추출 (안전성)
-          // `as String?`을 사용하여, 혹시 키가 없더라도 null로 처리되어 앱이 멈추지 않도록
+// intervention 맵에서 직접 데이터 추출 (안전성)
+// `as String?`을 사용하여, 혹시 키가 없더라도 null로 처리되어 앱이 멈추지 않도록
           final empathyText = intervention['empathy_text'] as String?;
           final analysisText = intervention['analysis_text'] as String?;
           final topCluster = intervention['top_cluster'] as String?;
 
-          // 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
+// 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
           if (empathyText != null) {
             final empathyMessage = Message(
               userId: currentUserId,
@@ -386,7 +389,7 @@ class ChatViewModel extends Notifier<ChatState> {
             await Future.delayed(const Duration(milliseconds: 1000));
           }
 
-          // 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
+// 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
           if (analysisText != null) {
             final analysisMessage = Message(
                 userId: currentUserId,
@@ -395,13 +398,13 @@ class ChatViewModel extends Notifier<ChatState> {
             await _addBotMessageToChat(analysisMessage);
             await Future.delayed(const Duration(milliseconds: 1200));
           }
-          // 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
+// 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
           if (sessionId != null && topCluster != null) {
             await _proposeSolution(sessionId, topCluster, currentUserId);
           }
           break;
 
-        // 안전 위기 모드
+// 안전 위기 모드
         case PresetIds.safetyCrisisModal:
         case PresetIds.safetyCrisisSelfHarm:
         case PresetIds.safetyCrisisAngerAnxiety:
@@ -427,7 +430,7 @@ class ChatViewModel extends Notifier<ChatState> {
           await _addBotMessageToChat(botMessage);
           break;
 
-        // RIN ♥ : 이모지 단독 입력 시의 응답 처리 (백엔드에서 EMOJI_REACTION presetId로 옴)
+// RIN ♥ : 이모지 단독 입력 시의 응답 처리 (백엔드에서 EMOJI_REACTION presetId로 옴)
         case PresetIds.emojiReaction:
           final reactionText = intervention['empathy_text'] as String?;
           if (reactionText != null) {
@@ -449,14 +452,14 @@ class ChatViewModel extends Notifier<ChatState> {
           await _addBotMessageToChat(errorMessage);
       }
 
-      // 세션 ID 업데이트
+// 세션 ID 업데이트
       if (sessionId != null && userMessage.id != null) {
         await ref.read(updateMessageSessionIdUseCaseProvider).execute(
               messageId: userMessage.id!,
               sessionId: sessionId,
             );
       }
-      // RIN ♥ : 이모지-텍스트 연계 분석 시 이전 이모지 메시지에도 세션 ID 업데이트
+// RIN ♥ : 이모지-텍스트 연계 분석 시 이전 이모지 메시지에도 세션 ID 업데이트
       if (sessionId != null && updateSessionIdForMessageId != null) {
         await ref.read(updateMessageSessionIdUseCaseProvider).execute(
               messageId: updateSessionIdForMessageId,
@@ -513,26 +516,26 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Data & State Management Utilities
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Data & State Management Utilities
+// ---------------------------------------------------------------------------
 
-  // --- Rin: 특정 날짜 또는 오늘 대화 기록 불러오기 ---
+// --- Rin: 특정 날짜 또는 오늘 대화 기록 불러오기 ---
   Future<void> _loadMessages(String userId, {DateTime? targetDate}) async {
-    // private 변수에 targetDate 저장
+// private 변수에 targetDate 저장
     _targetDate = targetDate;
     state = state.copyWith(isLoading: true);
     try {
-      // targetDate가 있으면 해당 날짜의 시작 시점부터, 없으면 전체 메시지
+// targetDate가 있으면 해당 날짜의 시작 시점부터, 없으면 전체 메시지
       String? cursorIso;
       if (_targetDate != null) {
-        // 해당 날짜의 다음 날 00:00:00을 커서로 설정 (그 이전 메시지들을 가져오기 위해)
+// 해당 날짜의 다음 날 00:00:00을 커서로 설정 (그 이전 메시지들을 가져오기 위해)
         final nextDay = DateTime(
             _targetDate!.year, _targetDate!.month, _targetDate!.day + 1);
         cursorIso = nextDay.toIso8601String();
       }
 
-      // 특정 날짜의 경우 모든 메시지를 로드하기 위해 limit을 크게 설정
+// 특정 날짜의 경우 모든 메시지를 로드하기 위해 limit을 크게 설정
       final limit = _targetDate != null ? 1000 : _pageSize; // 특정 날짜면 최대 1000개까지
 
       final msgs = await ref.read(loadMessagesUseCaseProvider).execute(
@@ -541,7 +544,7 @@ class ChatViewModel extends Notifier<ChatState> {
             cursorIso: cursorIso,
           );
 
-      // 특정 날짜가 지정된 경우, 해당 날짜의 메시지만 필터링
+// 특정 날짜가 지정된 경우, 해당 날짜의 메시지만 필터링
       List<Message> filteredMsgs = msgs;
       if (_targetDate != null) {
         final targetDateStart =
@@ -555,10 +558,10 @@ class ChatViewModel extends Notifier<ChatState> {
         }).toList();
       }
 
-      // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
+// DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
       filteredMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      // 특정 날짜 모드에서는 무한 스크롤 비활성화, 일반 모드에서는 페이지 사이즈로 판단
+// 특정 날짜 모드에서는 무한 스크롤 비활성화, 일반 모드에서는 페이지 사이즈로 판단
       final hasMore = _targetDate != null ? false : (msgs.length >= _pageSize);
       state = state.copyWith(
           messages: filteredMsgs, isLoading: false, hasMore: hasMore);
@@ -567,17 +570,17 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-  // --- 추가 메시지 로드 (무한 스크롤) ---
+// --- 추가 메시지 로드 (무한 스크롤) ---
   Future<void> loadMoreMessages() async {
     if (state.isLoadingMore || !state.hasMore) return;
 
-    // 특정 날짜가 설정된 경우 무한 스크롤 비활성화
+// 특정 날짜가 설정된 경우 무한 스크롤 비활성화
     if (_targetDate != null) return;
 
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 가장 오래된 메시지의 timestamp를 cursor로 사용
+// 가장 오래된 메시지의 timestamp를 cursor로 사용
     if (state.messages.isEmpty) return;
 
     final oldestMessage = state.messages.first;
@@ -594,13 +597,13 @@ class ChatViewModel extends Notifier<ChatState> {
               );
 
       if (additionalMsgs.isNotEmpty) {
-        // 새로 가져온 메시지들을 정렬 (특정 날짜 모드는 이미 early return으로 제외됨)
+// 새로 가져온 메시지들을 정렬 (특정 날짜 모드는 이미 early return으로 제외됨)
         additionalMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-        // 기존 메시지 앞에 새 메시지들을 추가
+// 기존 메시지 앞에 새 메시지들을 추가
         final updatedMessages = [...additionalMsgs, ...state.messages];
 
-        // 페이지 사이즈 미만이면 더 이상 로드할 메시지가 없다고 가정
+// 페이지 사이즈 미만이면 더 이상 로드할 메시지가 없다고 가정
         final hasMore = additionalMsgs.length >= _pageSize;
 
         state = state.copyWith(
@@ -609,7 +612,7 @@ class ChatViewModel extends Notifier<ChatState> {
           hasMore: hasMore,
         );
       } else {
-        // 더 이상 메시지가 없음
+// 더 이상 메시지가 없음
         state = state.copyWith(isLoadingMore: false, hasMore: false);
       }
     } catch (e) {
@@ -634,15 +637,15 @@ class ChatViewModel extends Notifier<ChatState> {
 
   /// UI에 사용자 메시지 추가 및 DB 저장 (Optimistic UI)
   Future<Message> _addUserMessageToChat(Message message) async {
-    // 1. UI에 즉시 메시지 추가
+// 1. UI에 즉시 메시지 추가
     state = state.copyWith(messages: [...state.messages, message]);
 
     try {
-      // 2. DB에 메시지 저장
+// 2. DB에 메시지 저장
       final savedMessageFromDB =
           await ref.read(sendMessageUseCaseProvider).execute(message);
 
-      // 3. UI의 임시 메시지를 DB 정보가 포함된 완전한 메시지로 교체
+// 3. UI의 임시 메시지를 DB 정보가 포함된 완전한 메시지로 교체
       final completeMessage = savedMessageFromDB.copyWith(
         imageAssetPath: message.imageAssetPath,
         tempId: message.tempId,
@@ -657,7 +660,7 @@ class ChatViewModel extends Notifier<ChatState> {
       }
       return completeMessage;
     } catch (e) {
-      // 에러 발생 시, 낙관적으로 추가했던 메시지를 다시 제거
+// 에러 발생 시, 낙관적으로 추가했던 메시지를 다시 제거
       state = state.copyWith(
           messages:
               state.messages.where((m) => m.tempId != message.tempId).toList());
@@ -672,14 +675,14 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(messages: [...state.messages, savedBotMessage]);
   }
 
-  // ---------------------------------------------------------------------------
-  // User Action Handlers
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// User Action Handlers
+// ---------------------------------------------------------------------------
 
   /// 솔루션 완료 후 후속 질문 메시지 전송
   Future<void> sendFollowUpMessageAfterSolution(
       {required String reason}) async {
-    // 채팅방 진입 시 기존 메시지를 먼저 로드
+// 채팅방 진입 시 기존 메시지를 먼저 로드
     if (state.messages.isEmpty) {
       if (_userId == null) return;
       await _loadMessages(_userId!);
@@ -690,7 +693,7 @@ class ChatViewModel extends Notifier<ChatState> {
     if (reason == 'user_closed') {
       content = "대화를 더 해볼까요?";
     } else {
-      // 'video_ended' 또는 기타 경우
+// 'video_ended' 또는 기타 경우
       content = "어때요? 좀 좋아진 것 같아요?😊";
     }
 
@@ -701,8 +704,8 @@ class ChatViewModel extends Notifier<ChatState> {
       type: MessageType.normal,
     );
 
-    // 이미 해당 메시지가 있는지 확인하여 중복 전송 방지
-    // 가장 마지막 메시지가 이 메시지와 동일하면 보내지 않음
+// 이미 해당 메시지가 있는지 확인하여 중복 전송 방지
+// 가장 마지막 메시지가 이 메시지와 동일하면 보내지 않음
     if (state.messages.isNotEmpty &&
         state.messages.last.content == followUpMessage.content &&
         state.messages.last.sender == Sender.bot) {

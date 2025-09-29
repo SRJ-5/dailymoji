@@ -10,6 +10,7 @@ abstract class EmojiReactionRepository {
     required String userId,
     required String emotion,
     Map<String, dynamic>? onboarding,
+    String? characterPersonality,
   });
 }
 
@@ -24,6 +25,7 @@ class EmojiReactionRepositoryImpl implements EmojiReactionRepository {
     required String userId,
     required String emotion,
     Map<String, dynamic>? onboarding,
+    String? characterPersonality,
   }) async {
     final r = await _analyze.execute(
       userId: userId,
