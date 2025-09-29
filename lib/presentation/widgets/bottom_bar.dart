@@ -25,7 +25,7 @@ class BottomBar extends ConsumerWidget {
         highlightColor: Colors.transparent,
       ),
       child: Container(
-        height: 90.h,
+        height: 100.h,
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(

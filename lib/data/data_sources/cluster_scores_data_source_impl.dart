@@ -49,6 +49,38 @@ class ClusterScoresDataSourceImpl implements ClusterScoresDataSource {
 
     return (res as List).map((e) => ClusterScoreDto.fromJson(e)).toList();
   }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 1) 특정 연도/월의 "해당 사용자" 데이터만
+  // ───────────────────────────────────────────────────────────────────────────
+  @override
+  Future<List<ClusterScoreDto>> fetchByUserAndMonth({
+    required String userId,
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final startOfMonthLocal = DateTime(year, month, 1);
+      final startOfNextMonthLocal = (month == 12)
+          ? DateTime(year + 1, 1, 1)
+          : DateTime(year, month + 1, 1);
+
+      final startIso = startOfMonthLocal.toUtc().toIso8601String();
+      final endIso = startOfNextMonthLocal.toUtc().toIso8601String();
+
+      final res = await client
+          .from('cluster_scores')
+          .select() // 슬림 페이로드 권장
+          .eq('user_id', userId)
+          .gte('created_at', startIso)
+          .lt('created_at', endIso)
+          .order('created_at', ascending: true);
+
+      return (res as List).map((e) => ClusterScoreDto.fromJson(e)).toList();
+    } catch (e) {
+      throw Exception('fetchByUserAndMonth error: $e');
+    }
+  }
 }
 
 // import 'package:dailymoji/data/dtos/cluster_scores.dart';

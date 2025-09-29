@@ -47,6 +47,24 @@ class _ChatPageState extends ConsumerState<ChatPage>
     setState(() {});
   }
 
+  // 무한 스크롤 리스너
+  void _scrollListener() {
+    if (_scrollController.hasClients) {
+      final chatState = ref.read(chatViewModelProvider);
+
+      // reverse: true 상태에서 맨 위로 스크롤했을 때 (maxScrollExtent에 가까워졌을 때)
+      // 그리고 현재 로딩 중이 아니고, 더 불러올 메시지가 있을 때만 실행
+      if (_scrollController.position.pixels >=
+              _scrollController.position.maxScrollExtent - 200 &&
+          !chatState.isLoadingMore &&
+          chatState.hasMore &&
+          !chatState.isLoading) {
+        // 추가 메시지 로드
+        ref.read(chatViewModelProvider.notifier).loadMoreMessages();
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +75,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // 봇입력중일때 사용자입력못하게
     _messageInputController.addListener(_onInputChanged);
+
+// 무한 스크롤 리스너 추가
+    _scrollController.addListener(_scrollListener);
 
 // emotionFromHome이 있으면 그 이모지로, 없으면 'default'로 초기 상태 설정
     currentSelectedEmojiKey = widget.emotionFromHome ?? 'default';
@@ -70,10 +91,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
             .read(chatViewModelProvider.notifier)
             .sendFollowUpMessageAfterSolution(reason: reason);
       } else {
-        // 기존 로직: 홈에서 진입한 경우
-        ref
-            .read(chatViewModelProvider.notifier)
-            .enterChatRoom(widget.emotionFromHome);
+        // 기존 로직: 홈에서 진입한 경우 또는 리포트에서 특정 날짜로 진입한 경우
+        ref.read(chatViewModelProvider.notifier).enterChatRoom(
+            widget.emotionFromHome,
+            specificDate: widget.targetDate);
       }
     });
   }
@@ -81,6 +102,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   @override
   void dispose() {
     _messageInputController.removeListener(_onInputChanged);
+    _scrollController.removeListener(_scrollListener);
     _messageInputController.dispose();
     _scrollController.dispose();
     _emojiCtrl.dispose();
@@ -145,108 +167,135 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
     final messages = chatState.messages.reversed.toList();
 
-    //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동
+    //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동 (무한 스크롤 로딩 중이 아닐 때만)
     ref.listen(chatViewModelProvider.select((state) => state.messages.length),
         (previous, next) {
-      if (next > (previous ?? 0) && !chatState.isLoading) {
+      if (next > (previous ?? 0) &&
+          !chatState.isLoading &&
+          !chatState.isLoadingMore) {
         _scrollToBottom();
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.yellow50,
-      appBar: AppBar(
-        automaticallyImplyLeading: true, // backbutton
+    return GestureDetector(
+      // 키보드가 올라와 있을 때 바깥 영역 터치 시 키보드 내리기
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
         backgroundColor: AppColors.yellow50,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min, // 중앙 정렬을 위해 추가
+        appBar: AppBar(
+          automaticallyImplyLeading: true, // backbutton
+          backgroundColor: AppColors.yellow50,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min, // 중앙 정렬을 위해 추가
 
-          children: [
-            CircleAvatar(
-              radius: 16.r,
-              backgroundImage:
-                  (characterImageUrl != null && characterImageUrl.isNotEmpty)
-                      ? NetworkImage(characterImageUrl)
-                      : const AssetImage(AppImages.cadoFace) as ImageProvider,
-            ),
-            SizedBox(width: 12.r),
-            Text(
-              characterName,
-              style:
-                  AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
-            ),
-          ],
-        ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
-            child: Column(
-              children: [
-                Expanded(
-                  child: chatState.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView.builder(
-                          controller: _scrollController,
-                          reverse: true,
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            //  reverse된 리스트에서 올바른 메시지 가져오기
-                            final messages = chatState.messages;
-                            final reversedIndex = messages.length - 1 - index;
-                            final message = messages[reversedIndex];
-
-                            // --- 날짜 구분선 표시 로직 ---
-                            bool showDateSeparator = false;
-                            if (reversedIndex == 0) {
-                              showDateSeparator = true;
-                            } else {
-                              // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
-                              final prevMessageInTime =
-                                  chatState.messages[reversedIndex - 1];
-                              if (!isSameDay(prevMessageInTime.createdAt,
-                                  message.createdAt)) {
-                                showDateSeparator = true;
-                              }
-                            }
-
-                            final messageWidget = _buildMessageWidget(message,
-                                key: ValueKey(message.tempId));
-
-                            // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
-                            // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
-                            if (showDateSeparator) {
-                              return Column(
-                                children: [
-                                  _DateSeparator(
-                                      date: message
-                                          .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
-                                  messageWidget, // 메시지가 먼저 나오고
-                                ],
-                              );
-                            }
-                            return messageWidget;
-                          },
-                        ),
-                ),
-                _buildInputField(isBotTyping: isBotTyping),
-              ],
-            ),
+            children: [
+              CircleAvatar(
+                radius: 16.r,
+                backgroundImage:
+                    (characterImageUrl != null && characterImageUrl.isNotEmpty)
+                        ? NetworkImage(characterImageUrl)
+                        : const AssetImage(AppImages.cadoFace) as ImageProvider,
+              ),
+              SizedBox(width: 12.r),
+              Text(
+                characterName,
+                style:
+                    AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
+              ),
+            ],
           ),
-          if (showEmojiBar)
-            Positioned(
-              bottom: 99.h,
-              right: 12.w,
-              child: Material(
-                color: Colors.transparent,
-                child: _buildEmojiBarAnimated(),
+          centerTitle: true,
+        ),
+        body: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(horizontal: 12.w),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: chatState.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            itemCount: messages.length +
+                                (chatState.isLoadingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              // 로딩 인디케이터 표시 (reverse: true 상태에서 맨 위에 표시됨)
+                              if (chatState.isLoadingMore &&
+                                  index == messages.length) {
+                                return Container(
+                                  padding: EdgeInsets.all(16.h),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    ),
+                                  ),
+                                );
+                              }
+                              //  reverse된 리스트에서 올바른 메시지 가져오기
+                              final allMessages = chatState.messages;
+                              final reversedIndex =
+                                  allMessages.length - 1 - index;
+                              final message = allMessages[reversedIndex];
+
+                              // --- 날짜 구분선 표시 로직 ---
+                              bool showDateSeparator = false;
+                              if (reversedIndex == 0) {
+                                showDateSeparator = true;
+                              } else {
+                                // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
+                                final prevMessageInTime =
+                                    allMessages[reversedIndex - 1];
+                                if (!isSameDay(prevMessageInTime.createdAt,
+                                    message.createdAt)) {
+                                  showDateSeparator = true;
+                                }
+                              }
+
+                              final messageWidget = _buildMessageWidget(message,
+                                  key: ValueKey(message.tempId));
+
+                              // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
+                              // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
+                              if (showDateSeparator) {
+                                return Column(
+                                  children: [
+                                    _DateSeparator(
+                                        date: message
+                                            .createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
+                                    messageWidget, // 메시지가 먼저 나오고
+                                  ],
+                                );
+                              }
+                              return messageWidget;
+                            },
+                          ),
+                  ),
+                  if (widget.targetDate == null)
+                    _buildInputField(isBotTyping: isBotTyping),
+                ],
               ),
             ),
-        ],
+            if (showEmojiBar)
+              Positioned(
+                bottom: 99.h,
+                right: 12.w,
+                child: Material(
+                  color: Colors.transparent,
+                  child: _buildEmojiBarAnimated(),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -445,7 +494,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
               final String label = option['label'] as String;
 
               // 좋아요, 싫어요 버튼 스타일 다르게
-              final bool isPositiveAction = action == 'accept_solution';
+              final bool isPositiveAction =
+                  action == 'accept_solution' || action == 'preparing';
               final double buttonWidth = isPositiveAction ? 104.w : 128.w;
 
               final buttonStyle = ElevatedButton.styleFrom(
@@ -593,7 +643,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         final selectedEmotionKey = emojiKeys[index];
 
                         setState(() {
-                          currentSelectedEmojiKey = selectedEmotionKey;
+                          if (currentSelectedEmojiKey == selectedEmotionKey) {
+                            //
+                            print("선택된 이모지 다시 누름");
+                            currentSelectedEmojiKey = "default";
+                          } else {
+                            currentSelectedEmojiKey = selectedEmotionKey;
+                          }
                           showEmojiBar = false; // 이모지 바 닫기
                         });
                         // // 선택된 이모지를 메시지로 전송
@@ -607,9 +663,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         //   showEmojiBar = false;
                         // });
                         // 선택된 이모지를 메시지로 전송
-                        ref
-                            .read(chatViewModelProvider.notifier)
-                            .sendEmojiAsMessage(selectedEmotionKey);
+                        // ref.read(chatViewModelProvider.notifier).sendEmojiAsMessage(selectedEmotionKey);
 
                         _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                       },

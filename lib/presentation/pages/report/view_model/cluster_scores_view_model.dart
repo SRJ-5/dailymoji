@@ -1,7 +1,7 @@
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
-import 'package:dailymoji/domain/use_cases/get_today_cluster_scores_use_case.dart';
+import 'package:dailymoji/domain/use_cases/cluster_use_case/get_today_cluster_scores_use_case.dart';
 import 'package:dailymoji/domain/models/cluster_stats_models.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/providers/today_cluster_scores_provider.dart';
@@ -85,27 +85,51 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   // 0~1 → 0~10 (소수 1자리 반올림, 0~10 클램프)
   double scaleToTen(num v) {
     final scaled = v * 10;
-    final oneDecimal = (scaled * 10).round() / 10.0; // 버림이면 .floor()
-    if (oneDecimal < 0) return 0.0;
-    if (oneDecimal > 10) return 10.0;
-    return oneDecimal;
+    final one = (scaled * 10).round() / 10.0; // 소수1자리
+    return one.clamp(0.0, 10.0);
   }
 
   List<double> scaleList(Iterable<num> values) =>
       values.map(scaleToTen).toList();
 
-  List<FlSpot> _toSpotsScaled(List<double> ys) {
-    final s = scaleList(ys);
-    return List.generate(s.length, (i) => FlSpot(i.toDouble(), s[i]));
+  List<FlSpot> _toSpotsConnected(List<double?> ys) {
+    final spots = <FlSpot>[];
+    for (var i = 0; i < ys.length; i++) {
+      final v = ys[i];
+      if (v == null) continue; // ★ 포인트 자체를 만들지 않음 → 앞뒤가 연결됨
+      spots.add(FlSpot(i.toDouble(), scaleToTen(v)));
+    }
+    return spots;
   }
 
 // 기간 통계(평균/최저/최고)도 스케일링
-  double _avgScaled(List<double> v) =>
-      scaleToTen(v.isEmpty ? 0 : v.reduce((a, b) => a + b) / v.length);
-  double _minScaled(List<double> v) =>
-      scaleToTen(v.isEmpty ? 0 : v.reduce((a, b) => a < b ? a : b));
-  double _maxScaled(List<double> v) =>
-      scaleToTen(v.isEmpty ? 0 : v.reduce((a, b) => a > b ? a : b));
+  double _avgScaledOpt(List<double?> v) {
+    final vals = [
+      for (final e in v)
+        if (e != null) e
+    ];
+    if (vals.isEmpty) return 0.0;
+    final avg = vals.reduce((a, b) => a + b) / vals.length;
+    return scaleToTen(avg);
+  }
+
+  double _minScaledOpt(List<double?> v) {
+    final vals = [
+      for (final e in v)
+        if (e != null) e
+    ];
+    if (vals.isEmpty) return 0.0;
+    return scaleToTen(vals.reduce((a, b) => a < b ? a : b));
+  }
+
+  double _maxScaledOpt(List<double?> v) {
+    final vals = [
+      for (final e in v)
+        if (e != null) e
+    ];
+    if (vals.isEmpty) return 0.0;
+    return scaleToTen(vals.reduce((a, b) => a > b ? a : b));
+  }
 
   Map<String, EmotionData> _buildEmotionMap(FourteenDayAgg agg) {
     final nhAvg = agg.series[ClusterType.negHigh]![Metric.avg]!;
@@ -131,43 +155,48 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     return {
       "불안/분노": EmotionData(
         color: AppColors.negHigh,
-        spots: _toSpotsScaled(nhAvg), // 보통 평균 시퀀스로 라인 차트
-        avg: _avgScaled(nhAvg), // 기간 전체 평균
-        min: _minScaled(nhMin), // 기간 내 최저
-        max: _maxScaled(nhMax), // 기간 내 최고
-        description: "스트레스 지수가 연속 3일간 상승했어요. 잠깐 호흡하면서 리셋해요.",
+        spots: _toSpotsConnected(nhAvg), // 보통 평균 시퀀스로 라인 차트
+        avg: _avgScaledOpt(nhAvg), // 기간 전체 평균
+        min: _minScaledOpt(nhMin), // 기간 내 최저
+        max: _maxScaledOpt(nhMax), // 기간 내 최고
+        description:
+            "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠. 하지만 모든 걸 혼자 짊어질 필요는 없습니다. 잠시 내려놓고 숨을 고르며 작은 쉼을 허락하세요. 당신은 이미 충분히 잘해내고 있어요.",
       ),
       "우울/무기력/번아웃": EmotionData(
         color: AppColors.negLow,
-        spots: _toSpotsScaled(nlAvg),
-        avg: _avgScaled(nlAvg),
-        min: _minScaled(nlMin),
-        max: _maxScaled(nlMax),
-        description: "지쳤다는 신호가 보여요. 잠시 쉬어가세요.",
+        spots: _toSpotsConnected(nlAvg),
+        avg: _avgScaledOpt(nlAvg),
+        min: _minScaledOpt(nlMin),
+        max: _maxScaledOpt(nlMax),
+        description:
+            "지쳤다는 신호가 보여요. 완벽하지 않아도 괜찮습니다. 잠시 멈춰서 쉬어가는 것 또한 중요한 과정이에요. 자신을 위한 작은 여유를 챙겨 보세요.",
       ),
       "평온/회복": EmotionData(
         color: AppColors.positive,
-        spots: _toSpotsScaled(posAvg),
-        avg: _avgScaled(posAvg),
-        min: _minScaled(posMin),
-        max: _maxScaled(posMax),
-        description: "안정적인 감정 상태가 유지되고 있어요.",
+        spots: _toSpotsConnected(posAvg),
+        avg: _avgScaledOpt(posAvg),
+        min: _minScaledOpt(posMin),
+        max: _maxScaledOpt(posMax),
+        description:
+            "평온함을 느끼고 있다면, 그건 당신이 잘 버텨온 증거예요. 회복의 순간은 스스로에게 주는 가장 큰 선물이에요. 이 시간을 충분히 누리며 마음 깊이 새겨두세요. 앞으로 걸어갈 힘이 되어줄 거예요.",
       ),
       "불면/과다수면": EmotionData(
         color: AppColors.sleep,
-        spots: _toSpotsScaled(slAvg),
-        avg: _avgScaled(slAvg),
-        min: _minScaled(slMin),
-        max: _maxScaled(slMax),
-        description: "수면 패턴을 점검해볼까요?",
+        spots: _toSpotsConnected(slAvg),
+        avg: _avgScaledOpt(slAvg),
+        min: _minScaledOpt(slMin),
+        max: _maxScaledOpt(slMax),
+        description:
+            "잠이 오지 않거나, 반대로 너무 많이 잘 때도 있어요. 그건 몸과 마음이 회복을 필요로 한다는 신호일 뿐이에요. 억지로 조절하려 하지 말고, 오늘은 있는 그대로를 받아들여 주세요. 조금씩 균형은 찾아올 거예요.",
       ),
       "ADHD": EmotionData(
         color: AppColors.adhd,
-        spots: _toSpotsScaled(adAvg),
-        avg: _avgScaled(adAvg),
-        min: _minScaled(adMin),
-        max: _maxScaled(adMax),
-        description: "집중 리듬을 일정하게 잡아봐요.",
+        spots: _toSpotsConnected(adAvg),
+        avg: _avgScaledOpt(adAvg),
+        min: _minScaledOpt(adMin),
+        max: _maxScaledOpt(adMax),
+        description:
+            "집중이 흩어지고 마음이 산만할 때가 있죠. 완벽하지 않아도 괜찮습니다. 오늘은 작은 일 하나만 해내도 충분히 잘한 거예요. 자신을 탓하지 말고, 천천히 걸어가도 된다는 걸 기억하세요.",
       ),
     };
   }
