@@ -13,6 +13,7 @@ import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -38,7 +39,6 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
       )
       .dbValue;
   final userNickNm = userProfile?.userNickNm;
-
 
   // 🤩 RIN: 기본 URL에 쿼리 파라미터 추가 로직 분기함
   final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/home');
@@ -117,6 +117,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     Future.microtask(() {
       ref.invalidate(homeDialogueProvider);
     });
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
 
   @override

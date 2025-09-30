@@ -26,7 +26,8 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: Text("솔루션을 불러오는 데 실패했습니다: $err", style: const TextStyle(color: AppColors.white)),
+          child: Text("솔루션을 불러오는 데 실패했습니다: $err",
+              style: const TextStyle(color: AppColors.white)),
         ),
       ),
       data: (solution) {
@@ -66,13 +67,14 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     // ]);
 
     // extra에 어떤 이유로 페이지를 떠나는지 정보를 담아 보냅니다.
-    context.go('/home/chat', extra: {'from': 'solution_page', 'reason': reason});
+    context
+        .go('/home/chat', extra: {'from': 'solution_page', 'reason': reason});
   }
 
   @override
   void initState() {
     super.initState();
-    // ✅ 가로 고정 + 몰입형 UI
+    // 가로 고정 + 몰입형 UI
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -215,7 +217,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                       ),
                       // onPressed: () => Navigator.of(context).pop(),
                       //RIN: X 버튼을 누르면 'user_closed' 신호를 extra로
-                      onPressed: () => _navigateToChatPage(reason: 'user_closed'),
+                      onPressed: () =>
+                          _navigateToChatPage(reason: 'user_closed'),
                     ),
                   ),
 
@@ -246,7 +249,9 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                       iconSize: 64.r,
                       color: AppColors.white,
                       icon: Icon(
-                        _controller.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                        _controller.value.isPlaying
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_fill,
                       ),
                       onPressed: () {
                         if (_controller.value.isPlaying) {

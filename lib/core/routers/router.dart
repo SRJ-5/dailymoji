@@ -11,7 +11,6 @@ import 'package:dailymoji/presentation/pages/breathing_solution/breathing_soluti
 import 'package:dailymoji/presentation/pages/onboarding/onboarding_part1_page.dart';
 import 'package:dailymoji/presentation/pages/onboarding/onboarding_part2_page.dart';
 import 'package:dailymoji/presentation/pages/splash/splash_page.dart';
-import 'package:dailymoji/presentation/widgets/portrait_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,11 +32,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
+        builder: (context, state) => HomePage(),
         routes: [
           GoRoute(
             path: '/chat',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final extraData = state.extra as Object?;
               Map<String, dynamic>? navData;
 
@@ -45,10 +44,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                 navData = extraData;
               }
 
-              return PortraitPage(
-                child: ChatPage(
-                  navigationData: navData,
-                ),
+              return ChatPage(
+                navigationData: navData,
               );
             },
           ),
@@ -57,12 +54,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ChatPage 라우트를 분리하여 extra를 받을 수 있도록 함
       GoRoute(
           path: '/report',
-          pageBuilder: (context, state) =>
-              const PortraitPage(child: ReportPage()),
+          builder: (context, state) => ReportPage(),
           routes: [
             GoRoute(
               path: '/chat',
-              pageBuilder: (context, state) {
+              builder: (context, state) {
                 // extra를 Object?로 받아 유연하게 처리
                 // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
                 final extraData = state.extra as Object?;
@@ -78,24 +74,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                   targetDate = extraData;
                 }
 
-                return PortraitPage(
-                  child: ChatPage(
-                    emotionFromHome: emotion,
-                    navigationData: navData,
-                    targetDate: targetDate,
-                  ),
+                return ChatPage(
+                  emotionFromHome: emotion,
+                  navigationData: navData,
+                  targetDate: targetDate,
                 );
               },
             ),
           ]),
       GoRoute(
         path: '/my',
-        pageBuilder: (context, state) => PortraitPage(child: MyPage()),
+        builder: (context, state) => MyPage(),
       ),
       GoRoute(
         path: '/privacyPolicy',
-        pageBuilder: (context, state) =>
-            PortraitPage(child: PrivacyPolicyPage()),
+        builder: (context, state) => PrivacyPolicyPage(),
       ),
       GoRoute(
           path: '/prepare/:title',
@@ -108,10 +101,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => CharacterSettingPage()),
       GoRoute(
         path: '/breathing/:solutionId',
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
-          return PortraitPage(
-              child: BreathingSolutionPage(solutionId: solutionId));
+          return BreathingSolutionPage(solutionId: solutionId);
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.
