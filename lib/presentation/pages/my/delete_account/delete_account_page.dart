@@ -14,6 +14,29 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   final TextEditingController _textEditingController =
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  int _selectedNum = -1;
+
+  final reasons = [
+    '더 이상 앱을 사용하지 않아요',
+    '원하는 기능이 없어요',
+    '사용이 불편했어요',
+    '직접 입력'
+  ];
+
+  void onSelectReason(int index) {
+    setState(() {
+      _selectedNum = index;
+
+      if (_selectedNum == 3) {
+        // 직접 입력이면 TextField 포커스
+        FocusScope.of(context).requestFocus(_focusNode);
+      } else {
+        // 다른 항목이면 입력 초기화 & 포커스 해제
+        _textEditingController.clear();
+        _focusNode.unfocus();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -28,6 +51,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       child: Scaffold(
         backgroundColor: AppColors.yellow50,
         appBar: AppBar(
+          scrolledUnderElevation: 0,
           backgroundColor: AppColors.yellow50,
           title: Text(
             '회원 탈퇴',
@@ -37,9 +61,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           centerTitle: true,
         ),
         body: Padding(
-          padding: EdgeInsets.symmetric(
-                  horizontal: 12.w, vertical: 16.h)
-              .copyWith(top: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: SingleChildScrollView(
             child: Column(
               children: [
@@ -48,6 +70,9 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(
+                        height: 16.h,
+                      ),
                       Text(
                         '떠나신다니 아쉬워요 🥲',
                         style: AppFontStyles.bodyBold16
@@ -97,10 +122,37 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                         height: 144.h,
                         child: Column(
                           children: [
-                            ReasonBox(text: '더 이상 앱을 사용하지 않아요'),
-                            ReasonBox(text: '원하는 기능이 없어요'),
-                            ReasonBox(text: '사용이 불편했어요'),
-                            ReasonBox(text: '직접 입력'),
+                            ...List.generate(
+                              reasons.length,
+                              (index) {
+                                final isSelected = index ==
+                                    _selectedNum; // 여기서 직접 계산
+                                return GestureDetector(
+                                  onTap: () =>
+                                      onSelectReason(index),
+                                  child: ReasonBox(
+                                    text: reasons[index],
+                                    isSelected: isSelected,
+                                  ),
+                                );
+                              },
+                            ),
+                            // ReasonBox(
+                            //   text: '더 이상 앱을 사용하지 않아요',
+                            //   isSelected: _isSelected,
+                            // ),
+                            // ReasonBox(
+                            //   text: '원하는 기능이 없어요',
+                            //   isSelected: _isSelected,
+                            // ),
+                            // ReasonBox(
+                            //   text: '사용이 불편했어요',
+                            //   isSelected: _isSelected,
+                            // ),
+                            // ReasonBox(
+                            //   text: '직접 입력',
+                            //   isSelected: _isSelected,
+                            // ),
                           ],
                         ),
                       ),
@@ -109,6 +161,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                           height: 48.h,
                           child: TextField(
                             focusNode: _focusNode,
+                            enabled: _selectedNum == 3,
                             controller: _textEditingController,
                             style: AppFontStyles.bodyRegular16
                                 .copyWith(
@@ -160,19 +213,43 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     ],
                   ),
                 ),
-                ElevatedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return ConfirmDialog(
-                            isDeleteAccount: true,
-                          );
-                        },
-                      );
-                    },
-                    child: Text('탈퇴하기'))
               ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 8.h,
+              left: 12.w,
+              right: 12.w,
+              bottom: MediaQuery.of(context).viewInsets.bottom >
+                      0
+                  ? MediaQuery.of(context).viewInsets.bottom +
+                      8.h
+                  : 32.h,
+            ),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 52.h),
+                backgroundColor: AppColors.green400,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return ConfirmDialog(isDeleteAccount: true);
+                  },
+                );
+              },
+              child: Text(
+                '탈퇴하기',
+                style: AppFontStyles.bodyMedium16
+                    .copyWith(color: AppColors.grey900),
+              ),
             ),
           ),
         ),
@@ -182,8 +259,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
 }
 
 class ReasonBox extends StatelessWidget {
+  final bool isSelected;
   final String text;
-  const ReasonBox({super.key, required this.text});
+  const ReasonBox(
+      {super.key, required this.text, required this.isSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -193,13 +272,26 @@ class ReasonBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 16.h,
-            height: 16.h,
-            decoration: BoxDecoration(
-                color: AppColors.grey50,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.grey200)),
-          ),
+              width: 16.h,
+              height: 16.h,
+              decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: isSelected
+                          ? AppColors.green400
+                          : AppColors.grey200)),
+              child: isSelected
+                  ? Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 4.h,
+                          backgroundColor: AppColors.green400,
+                        )
+                      ],
+                    )
+                  : SizedBox.shrink()),
           SizedBox(width: 8.w),
           Text(
             text,
