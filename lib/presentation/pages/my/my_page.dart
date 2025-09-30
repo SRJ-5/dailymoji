@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/my/widgets/confirm_dialog.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/edit_nickname_card.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
@@ -102,7 +103,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                           // index == 3
                           //   ? '/privacyPolicy'
                           //   :
-                          '/prepare/$title');
+                          '/info/$title');
                     },
                   )
                 ],
@@ -116,7 +117,18 @@ class _MyPageState extends ConsumerState<MyPage> {
                     2,
                     (index) => () {
                       final title = ["로그아웃", "회원 탈퇴"][index];
-                      context.push('/prepare/$title');
+                      switch (title) {
+                        case "로그아웃":
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return ConfirmDialog();
+                            },
+                          );
+                        case "회원 탈퇴":
+                        default:
+                          context.push('/prepare/$title');
+                      }
                     },
                   )
                 ],

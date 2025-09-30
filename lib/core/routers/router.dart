@@ -97,16 +97,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) =>
             PortraitPage(child: MyPage()),
       ),
+      // TODO: 아래에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
       // GoRoute(
       //   path: '/privacyPolicy',
       //   pageBuilder: (context, state) =>
       //       PortraitPage(child: PrivacyPolicyPage()),
       // ),
       GoRoute(
-          path: '/prepare/:title',
+          // TODO: prepare 경로 다른 이름을 수정해야 할듯 webView라든가?
+          // 일단 info로 경로 이름 수정
+          path: '/info/:title',
           builder: (context, state) {
             final title = state.pathParameters["title"] ?? "";
-            print(title);
             switch (title) {
               case "언어 설정":
                 return PreparingPage(title);
@@ -117,11 +119,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               default:
                 return PreparingPage("준비중");
             }
+            // TODO: 위에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
             // if (title == "공지사항") {
             //   return PreparingPage(title);
             // } else if
             // return PrivacyPolicyPage();
           }),
+      // TODO: 준비중 페이지는 따로 빼놓음
+      GoRoute(
+        path: '/prepare/:title',
+        builder: (context, state) {
+          final title = state.pathParameters["title"] ?? "";
+          return PreparingPage(title);
+        },
+      ),
       GoRoute(
           path: '/characterSetting',
           builder: (context, state) => CharacterSettingPage()),
