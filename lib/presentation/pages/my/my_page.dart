@@ -87,13 +87,15 @@ class _MyPageState extends ConsumerState<MyPage> {
               SizedBox(height: 16.h),
               _buildSection(
                 title: "정보",
-                items: ["공지사항", "언어 설정", "이용 약관"],
+                items: ["공지사항", "언어 설정", "이용 약관", "개인정보 처리방침"],
                 onTapList: [
                   ...List.generate(
-                    3,
+                    4,
                     (index) => () {
-                      final title = ["공지사항", "언어 설정", "이용 약관"][index];
-                      context.push('/prepare/$title');
+                      final title =
+                          ["공지사항", "언어 설정", "이용 약관", "개인정보 처리방침"][index];
+                      context.push(
+                          index == 3 ? '/privacyPolicy' : '/prepare/$title');
                     },
                   )
                 ],

@@ -69,7 +69,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12.w),
+        padding: EdgeInsets.symmetric(horizontal: 12.w).copyWith(bottom: 8.h),
         child: SingleChildScrollView(
           child: Column(
             children: [
@@ -215,7 +215,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
               const SizedBox(height: 12),
 
               // 감정 요약 카드 (현재는 더미, 나중에 선택일 기반 상세 연결)
-              if (_selectedDay!.day == 20)
+              if (_selectedDay != null)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -226,228 +226,13 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("이 날 불면/과수면 점수가 80점이네요.",
+                      Text("이날 기록된 감정을 요약했어요",
                           style: AppFontStyles.bodyBold14
                               .copyWith(color: AppColors.green700)),
                       SizedBox(height: 6.h),
                       Text(
-                        "밤이 길게만 느껴져서 지치셨군요. 괜찮아요, 잠이 오지 않는다고 해서 당신의 하루가 가치 없는 건 아니에요. 창밖의 고요한 밤도 당신을 위로하는 한 부분일 뿐이죠. 잠들지 못하는 시간조차, 결국은 회복을 향한 과정이라는 걸 기억해 주세요.",
-                        style: AppFontStyles.bodyRegular12_180
-                            .copyWith(color: AppColors.grey900),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            context.go("/report/chat", extra: _selectedDay);
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: 40.h,
-                            width: 133.w,
-                            padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                .copyWith(left: 16.w, right: 10.w),
-                            decoration: ShapeDecoration(
-                              color: AppColors.green400,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('채팅 확인하기',
-                                    style: AppFontStyles.bodyMedium14),
-                                SizedBox(width: 6.w),
-                                Icon(Icons.arrow_forward,
-                                    color: AppColors.grey900, size: 18.r),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              if (_selectedDay!.day == 22)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.green100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("이 날 평온/회복 점수가 80점이네요.",
-                          style: AppFontStyles.bodyBold14
-                              .copyWith(color: AppColors.green700)),
-                      SizedBox(height: 6.h),
-                      Text(
-                        "행복한 일로 가득한 하루였네요! 그 긍정의 에너지는 스스로를 지탱할 뿐 아니라 주변에도 따뜻하게 전해집니다. 오늘의 이 기분을 오래 간직하세요. 그것만으로도 이미 삶을 아름답게 물들이고 있어요.",
-                        style: AppFontStyles.bodyRegular12_180
-                            .copyWith(color: AppColors.grey900),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            context.go("/report/chat", extra: _selectedDay);
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: 40.h,
-                            width: 133.w,
-                            padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                .copyWith(left: 16.w, right: 10.w),
-                            decoration: ShapeDecoration(
-                              color: AppColors.green400,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('채팅 확인하기',
-                                    style: AppFontStyles.bodyMedium14),
-                                SizedBox(width: 6.w),
-                                Icon(Icons.arrow_forward,
-                                    color: AppColors.grey900, size: 18.r),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              if (_selectedDay!.day == 24)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.green100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("이 날 불안/분노 점수가 53점이네요.",
-                          style: AppFontStyles.bodyBold14
-                              .copyWith(color: AppColors.green700)),
-                      SizedBox(height: 6.h),
-                      Text(
-                        "마음에 작은 불씨처럼 화가 남아 있군요. 괜찮습니다, 그 감정은 당신이 소중한 것을 지키고 싶다는 신호일지도 몰라요. 잠시 호흡을 고르며 스스로를 다독여 보세요. 화가 차분히 가라앉을 공간을 내어주는 것만으로도 충분히 잘하고 있는 거예요.",
-                        style: AppFontStyles.bodyRegular12_180
-                            .copyWith(color: AppColors.grey900),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            context.go("/report/chat", extra: _selectedDay);
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: 40.h,
-                            width: 133.w,
-                            padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                .copyWith(left: 16.w, right: 10.w),
-                            decoration: ShapeDecoration(
-                              color: AppColors.green400,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('채팅 확인하기',
-                                    style: AppFontStyles.bodyMedium14),
-                                SizedBox(width: 6.w),
-                                Icon(Icons.arrow_forward,
-                                    color: AppColors.grey900, size: 18.r),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              if (_selectedDay!.day == 26)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.green100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("이 날 불안/분노 점수가 72점이네요.",
-                          style: AppFontStyles.bodyBold14
-                              .copyWith(color: AppColors.green700)),
-                      SizedBox(height: 6.h),
-                      Text(
-                        "마음이 쉽게 달아오르고 화가 치밀어 오를 때가 있죠. 그 감정은 억누르기보다 알아차리는 것에서부터 풀려나기 시작합니다. 깊게 숨을 내쉬고, 잠시 거리를 두어보세요. 당신의 분노는 결코 당신의 전부가 아니며, 잠시 머물다 지나가는 구름 같은 존재일 뿐이에요.",
-                        style: AppFontStyles.bodyRegular12_180
-                            .copyWith(color: AppColors.grey900),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            context.go("/report/chat", extra: _selectedDay);
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: 40.h,
-                            width: 133.w,
-                            padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                .copyWith(left: 16.w, right: 10.w),
-                            decoration: ShapeDecoration(
-                              color: AppColors.green400,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('채팅 확인하기',
-                                    style: AppFontStyles.bodyMedium14),
-                                SizedBox(width: 6.w),
-                                Icon(Icons.arrow_forward,
-                                    color: AppColors.grey900, size: 18.r),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              if (_selectedDay!.day == 28)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.green100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("이 날 우울/무기력/번아웃 점수가 60점이네요.",
-                          style: AppFontStyles.bodyBold14
-                              .copyWith(color: AppColors.green700)),
-                      SizedBox(height: 6.h),
-                      Text(
-                        "요즘 마음이 지치고 아무 힘도 나지 않죠. 하지만 그건 당신이 약해서가 아니라, 그만큼 오래 애써왔다는 증거예요. 잠시 멈추어도 괜찮습니다. 지금은 스스로에게 회복의 시간을 선물하세요. 당신의 속도대로 다시 걸어가면 돼요.",
+                        "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
+                        "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
                         style: AppFontStyles.bodyRegular12_180
                             .copyWith(color: AppColors.grey900),
                       ),
