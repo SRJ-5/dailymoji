@@ -124,7 +124,11 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   @override
   void dispose() {
     _controller.dispose();
-    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    // 돌려놓은 화면 UI 다시 원상복구
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }

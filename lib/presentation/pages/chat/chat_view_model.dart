@@ -60,7 +60,6 @@ class ChatViewModel extends Notifier<ChatState> {
 // 페이지네이션 상수
   static const int _pageSize = 50;
 
-
 // UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
 
   String? get _userId =>
@@ -79,7 +78,6 @@ class ChatViewModel extends Notifier<ChatState> {
 // ---------------------------------------------------------------------------
 // Core Methods
 // ---------------------------------------------------------------------------
-
 
 // --- Rin: 채팅방 진입 시 초기화 로직 ---
 
@@ -166,7 +164,6 @@ class ChatViewModel extends Notifier<ChatState> {
     if (_lastEmojiOnlyCluster != null &&
         _lastEmojiMessageId != null &&
         emotionForAnalysis != null) {
-
 // 백엔드에 _pendingEmotionForAnalysis (이모지)와 텍스트를 함께 전달하여 풀파이프라인 분석 요청
 // 이모지+텍스트 가중치를 붙여 최종 점수로 저장
 
@@ -249,7 +246,6 @@ class ChatViewModel extends Notifier<ChatState> {
   /// UI에 메시지를 중복으로 추가하지 않도록 조심하기!!
   Future<void> _startConversationWithEmoji(
       Message emojiMessage, String emotion) async {
-
 // Optimistic UI: UI에 메시지가 이미 있는지 확인하여 중복 추가 방지
 
     final isAlreadyInState =
@@ -259,14 +255,12 @@ class ChatViewModel extends Notifier<ChatState> {
     Message savedEmojiMsg;
 
     if (isAlreadyInState) {
-
 // DB에만 저장하고 UI는 건드리지 않음
 
       final saved =
           await ref.read(sendMessageUseCaseProvider).execute(emojiMessage);
       savedEmojiMsg = saved;
     } else {
-
 // 만약 UI에 없다면 추가 (안전장치)
 
       final saved = await _addUserMessageToChat(
@@ -284,14 +278,12 @@ class ChatViewModel extends Notifier<ChatState> {
       final emojiRepo = ref.read(emojiReactionRepositoryProvider);
       final EmotionalRecord emotionalRecord =
           await emojiRepo.getReactionWithSession(
-
 // EmotionalRecord 타입으로 받기
         userId: currentUserId,
         emotion: emotion,
         onboarding: userProfile?.onboardingScores ?? {},
 // 🤩 RIN: 캐릭터 성향 넘기기
         characterPersonality: userProfile?.characterPersonality,
-
       );
 
 // 이모지 전송 직후의 클러스터와 메시지 ID 저장
@@ -342,7 +334,6 @@ class ChatViewModel extends Notifier<ChatState> {
     final userProfile = userState.userProfile;
     final characterName = userState.userProfile?.characterNm ?? "모지";
 
-
 // "입력 중..." 메시지 표시
 
     final analyzingMessage = Message(
@@ -354,7 +345,6 @@ class ChatViewModel extends Notifier<ChatState> {
         isTyping: true, messages: [...state.messages, analyzingMessage]);
 
     try {
-
 // /analyze 앤드포인트 연결
 
       final emotionalRecord =
@@ -363,7 +353,6 @@ class ChatViewModel extends Notifier<ChatState> {
                 text: textForAnalysis,
                 emotion: emotion,
                 onboarding: userState.userProfile?.onboardingScores ?? {},
-
                 characterPersonality: userProfile?.characterPersonality,
               );
 
@@ -549,7 +538,6 @@ class ChatViewModel extends Notifier<ChatState> {
 // targetDate가 있으면 해당 날짜의 시작 시점부터, 없으면 전체 메시지
       String? cursorIso;
       if (_targetDate != null) {
-
 // 해당 날짜의 다음 날 00:00:00을 커서로 설정 (그 이전 메시지들을 가져오기 위해)
 
         final nextDay = DateTime(
@@ -663,7 +651,6 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(messages: [...state.messages, message]);
 
     try {
-
 // 2. DB에 메시지 저장
 
       final savedMessageFromDB =
@@ -684,7 +671,6 @@ class ChatViewModel extends Notifier<ChatState> {
       }
       return completeMessage;
     } catch (e) {
-
 // 에러 발생 시, 낙관적으로 추가했던 메시지를 다시 제거
 
       state = state.copyWith(
@@ -708,7 +694,6 @@ class ChatViewModel extends Notifier<ChatState> {
   /// 솔루션 완료 후 후속 질문 메시지 전송
   Future<void> sendFollowUpMessageAfterSolution(
       {required String reason}) async {
-
 // 채팅방 진입 시 기존 메시지를 먼저 로드
 
     if (state.messages.isEmpty) {
@@ -758,6 +743,7 @@ class ChatViewModel extends Notifier<ChatState> {
       return;
     }
 
+    // 페이지 두개뜨는 오류 해결
     if (action == "accept_solution") {
       navigatorkey.currentContext?.push('/breathing/$solutionId');
     }
@@ -765,8 +751,6 @@ class ChatViewModel extends Notifier<ChatState> {
     if (action == "preparing") {
       String title = "상담센터 연결";
       navigatorkey.currentContext?.push('/prepare/$title');
-    } else {
-      navigatorkey.currentContext?.push('/breathing/$solutionId');
     }
   }
 
