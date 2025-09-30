@@ -92,10 +92,17 @@ class _MyPageState extends ConsumerState<MyPage> {
                   ...List.generate(
                     4,
                     (index) => () {
-                      final title =
-                          ["공지사항", "언어 설정", "이용 약관", "개인정보 처리방침"][index];
+                      final title = [
+                        "공지사항",
+                        "언어 설정",
+                        "이용 약관",
+                        "개인정보 처리방침"
+                      ][index];
                       context.push(
-                          index == 3 ? '/privacyPolicy' : '/prepare/$title');
+                          // index == 3
+                          //   ? '/privacyPolicy'
+                          //   :
+                          '/prepare/$title');
                     },
                   )
                 ],
@@ -130,7 +137,8 @@ class _MyPageState extends ConsumerState<MyPage> {
     Widget? widget,
   }) {
     return Container(
-      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding:
+          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12.r),

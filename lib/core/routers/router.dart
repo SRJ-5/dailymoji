@@ -23,8 +23,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     navigatorKey: navigatorkey,
     routes: [
-      GoRoute(path: '/', builder: (context, state) => SplashPage()),
-      GoRoute(path: '/login', builder: (context, state) => LoginPage()),
+      GoRoute(
+          path: '/', builder: (context, state) => SplashPage()),
+      GoRoute(
+          path: '/login',
+          builder: (context, state) => LoginPage()),
       GoRoute(
           path: '/onboarding1',
           builder: (context, state) => OnboardingPart1Page()),
@@ -33,7 +36,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
+        pageBuilder: (context, state) =>
+            const PortraitPage(child: HomePage()),
         routes: [
           GoRoute(
             path: '/chat',
@@ -90,18 +94,33 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]),
       GoRoute(
         path: '/my',
-        pageBuilder: (context, state) => PortraitPage(child: MyPage()),
-      ),
-      GoRoute(
-        path: '/privacyPolicy',
         pageBuilder: (context, state) =>
-            PortraitPage(child: PrivacyPolicyPage()),
+            PortraitPage(child: MyPage()),
       ),
+      // GoRoute(
+      //   path: '/privacyPolicy',
+      //   pageBuilder: (context, state) =>
+      //       PortraitPage(child: PrivacyPolicyPage()),
+      // ),
       GoRoute(
           path: '/prepare/:title',
           builder: (context, state) {
             final title = state.pathParameters["title"] ?? "";
-            return PreparingPage(title);
+            print(title);
+            switch (title) {
+              case "언어 설정":
+                return PreparingPage(title);
+              case "공지사항":
+              case "이용 약관":
+              case "개인정보 처리방침":
+                return PrivacyPolicyPage();
+              default:
+                return PreparingPage("준비중");
+            }
+            // if (title == "공지사항") {
+            //   return PreparingPage(title);
+            // } else if
+            // return PrivacyPolicyPage();
           }),
       GoRoute(
           path: '/characterSetting',
@@ -111,7 +130,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
           return PortraitPage(
-              child: BreathingSolutionPage(solutionId: solutionId));
+              child:
+                  BreathingSolutionPage(solutionId: solutionId));
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.
