@@ -47,6 +47,7 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: AppColors.white,

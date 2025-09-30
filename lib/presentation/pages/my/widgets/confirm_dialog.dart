@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 void resetAppState(WidgetRef ref) {
   ref.invalidate(selectedEmotionProvider);
@@ -41,6 +40,7 @@ void resetAppState(WidgetRef ref) {
   ref.invalidate(clusterScoresViewModelProvider);
   ref.invalidate(chatViewModelProvider);
   ref.invalidate(solutionContextViewModelProvider);
+  ref.invalidate(userViewModelProvider);
   // 필요한 provider들 전부 여기에 나열
 }
 
@@ -50,34 +50,11 @@ class ConfirmDialog extends ConsumerWidget {
     super.key,
     required this.isDeleteAccount,
   });
-  final supbase = Supabase.instance.client;
-
-  void logOut() async {
-    print("확인");
-
-    // 실제 로그아웃 처리
-    await supbase.auth.signOut();
-    final user = Supabase
-        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
-    print("아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
-  }
-
-  void deleteAccount(String userId) async {
-    print("확인");
-
-    // 실제 로그아웃 처리
-    await supbase
-        .from('user_profiles')
-        .delete()
-        .eq('id', userId);
-    await supbase.auth.signOut();
-    final user = Supabase
-        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
-    print("아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final userProfileVM =
+        ref.read(userViewModelProvider.notifier);
     // 배경 터치는 닫기, 다이얼로그 영역은 차단
     return GestureDetector(
       onTap: () => context.pop(), // 배경 터치시 다이얼로그 닫기
@@ -142,14 +119,10 @@ class ConfirmDialog extends ConsumerWidget {
                           if (isDeleteAccount) {
                             // 계정 삭제
                             print('계정 탈퇴!!!!!');
-                            final userId = ref
-                                .read(userViewModelProvider)
-                                .userProfile!
-                                .id!;
-                            deleteAccount(userId);
+                            userProfileVM.deleteAccount();
                           } else {
                             print('로그아웃!!!!');
-                            logOut();
+                            userProfileVM.logOut();
                           }
                           print('상태태태태 초기화');
                           resetAppState(ref);
