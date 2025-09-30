@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/my/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -158,7 +159,19 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                           ))
                     ],
                   ),
-                )
+                ),
+                ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return ConfirmDialog(
+                            isDeleteAccount: true,
+                          );
+                        },
+                      );
+                    },
+                    child: Text('탈퇴하기'))
               ],
             ),
           ),

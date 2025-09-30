@@ -3,6 +3,7 @@ import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
@@ -44,9 +45,36 @@ void resetAppState(WidgetRef ref) {
 }
 
 class ConfirmDialog extends ConsumerWidget {
-  const ConfirmDialog({
+  final bool isDeleteAccount;
+  ConfirmDialog({
     super.key,
+    required this.isDeleteAccount,
   });
+  final supbase = Supabase.instance.client;
+
+  void logOut() async {
+    print("확인");
+
+    // 실제 로그아웃 처리
+    await supbase.auth.signOut();
+    final user = Supabase
+        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
+    print("아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
+  }
+
+  void deleteAccount(String userId) async {
+    print("확인");
+
+    // 실제 로그아웃 처리
+    await supbase
+        .from('user_profiles')
+        .delete()
+        .eq('id', userId);
+    await supbase.auth.signOut();
+    final user = Supabase
+        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
+    print("아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -73,7 +101,9 @@ class ConfirmDialog extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    "로그아웃 하시겠어요?",
+                    isDeleteAccount
+                        ? "정말 탈퇴하시겠어요?"
+                        : "로그아웃 하시겠어요?",
                     style: AppFontStyles.heading3
                         .copyWith(color: AppColors.grey900),
                   ),
@@ -108,19 +138,20 @@ class ConfirmDialog extends ConsumerWidget {
                       ),
                       SizedBox(width: 12.w),
                       GestureDetector(
-                        onTap: () async {
-                          print("확인");
-
-                          // 실제 로그아웃 처리
-                          await Supabase.instance.client.auth
-                              .signOut();
-                          final user = Supabase
-                              .instance
-                              .client
-                              .auth
-                              .currentUser; // 로그아웃 확인 // 잘됨!
-                          print(
-                              "아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
+                        onTap: () {
+                          if (isDeleteAccount) {
+                            // 계정 삭제
+                            print('계정 탈퇴!!!!!');
+                            final userId = ref
+                                .read(userViewModelProvider)
+                                .userProfile!
+                                .id!;
+                            deleteAccount(userId);
+                          } else {
+                            print('로그아웃!!!!');
+                            logOut();
+                          }
+                          print('상태태태태 초기화');
                           resetAppState(ref);
                           // 화면 이동 (GoRouter 사용시)
                           context.go('/login');
@@ -129,7 +160,9 @@ class ConfirmDialog extends ConsumerWidget {
                           width: 120.w,
                           height: 48.h,
                           decoration: BoxDecoration(
-                            color: AppColors.green400,
+                            color: isDeleteAccount
+                                ? AppColors.noti900
+                                : AppColors.green400,
                             borderRadius:
                                 BorderRadius.circular(12.r),
                           ),
@@ -138,7 +171,9 @@ class ConfirmDialog extends ConsumerWidget {
                               '확인',
                               style: AppFontStyles.bodyMedium16
                                   .copyWith(
-                                      color: AppColors.grey900),
+                                      color: isDeleteAccount
+                                          ? AppColors.grey50
+                                          : AppColors.grey900),
                             ),
                           ),
                         ),

@@ -122,7 +122,9 @@ class _MyPageState extends ConsumerState<MyPage> {
                           showDialog(
                             context: context,
                             builder: (context) {
-                              return ConfirmDialog();
+                              return ConfirmDialog(
+                                isDeleteAccount: false,
+                              );
                             },
                           );
                         case "회원 탈퇴":
