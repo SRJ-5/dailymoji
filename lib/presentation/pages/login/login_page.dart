@@ -47,7 +47,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _goToInfoWebView(String title) async {
-    await context.push('/prepare/$title');
+    await context.push('/info/$title');
     if (mounted) {
       setState(() {});
     }
