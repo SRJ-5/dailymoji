@@ -12,12 +12,14 @@ class AnalyzeEmotionUseCase {
     required String text,
     String? emotion,
     Map<String, dynamic>? onboarding,
+    String? characterPersonality,
   }) {
     return repository.analyzeEmotion(
       userId: userId,
       text: text,
       emotion: emotion,
       onboarding: onboarding,
+      characterPersonality: characterPersonality,
     );
   }
 }
