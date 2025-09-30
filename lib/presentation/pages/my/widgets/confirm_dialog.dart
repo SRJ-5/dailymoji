@@ -1,21 +1,23 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-class ConfirmDialog extends StatelessWidget {
+class ConfirmDialog extends ConsumerWidget {
   const ConfirmDialog({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // 배경 터치는 닫기, 다이얼로그 영역은 차단
     return GestureDetector(
       onTap: () => context.pop(), // 배경 터치시 다이얼로그 닫기
       child: Material(
-        color: AppColors.black.withValues(alpha: 0.35), // 배경 오버레이
+        color:
+            AppColors.black.withValues(alpha: 0.35), // 배경 오버레이
         child: Center(
           child: GestureDetector(
             // 다이얼로그 컨테이너 터치시 이벤트 차단 (배경 터치 이벤트가 전파되지 않음)
@@ -23,7 +25,8 @@ class ConfirmDialog extends StatelessWidget {
             child: Container(
               width: 320.w, // 디자인 요구사항 그대로
               height: 186.h,
-              padding: EdgeInsets.symmetric(horizontal: 34.w).copyWith(bottom: 24.h, top: 48.h),
+              padding: EdgeInsets.symmetric(horizontal: 34.w)
+                  .copyWith(bottom: 24.h, top: 48.h),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(12.r),
@@ -33,7 +36,8 @@ class ConfirmDialog extends StatelessWidget {
                 children: [
                   Text(
                     "로그아웃 하시겠어요?",
-                    style: AppFontStyles.heading3.copyWith(color: AppColors.grey900),
+                    style: AppFontStyles.heading3
+                        .copyWith(color: AppColors.grey900),
                   ),
                   SizedBox(height: 36.h),
                   Row(
@@ -48,13 +52,18 @@ class ConfirmDialog extends StatelessWidget {
                           height: 48.h,
                           decoration: BoxDecoration(
                             color: AppColors.green50,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(width: 1, color: AppColors.grey200),
+                            borderRadius:
+                                BorderRadius.circular(12.r),
+                            border: Border.all(
+                                width: 1,
+                                color: AppColors.grey200),
                           ),
                           child: Center(
                             child: Text(
                               '취소',
-                              style: AppFontStyles.bodyMedium16.copyWith(color: AppColors.grey900),
+                              style: AppFontStyles.bodyMedium16
+                                  .copyWith(
+                                      color: AppColors.grey900),
                             ),
                           ),
                         ),
@@ -64,6 +73,7 @@ class ConfirmDialog extends StatelessWidget {
                         onTap: () {
                           print("확인");
                           // TODO: 로그아웃 로직 추가
+
                           context.pop();
                         },
                         child: Container(
@@ -71,12 +81,15 @@ class ConfirmDialog extends StatelessWidget {
                           height: 48.h,
                           decoration: BoxDecoration(
                             color: AppColors.green400,
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius:
+                                BorderRadius.circular(12.r),
                           ),
                           child: Center(
                             child: Text(
                               '확인',
-                              style: AppFontStyles.bodyMedium16.copyWith(color: AppColors.grey900),
+                              style: AppFontStyles.bodyMedium16
+                                  .copyWith(
+                                      color: AppColors.grey900),
                             ),
                           ),
                         ),

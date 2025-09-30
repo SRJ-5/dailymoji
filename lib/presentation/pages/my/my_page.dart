@@ -127,7 +127,7 @@ class _MyPageState extends ConsumerState<MyPage> {
                           );
                         case "회원 탈퇴":
                         default:
-                          context.push('/prepare/$title');
+                          context.push('/deleteAccount');
                       }
                     },
                   )
