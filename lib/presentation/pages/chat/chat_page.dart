@@ -428,6 +428,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       // print(
       //     "RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
 
+
       // 동그랗게 만들기! (--> 그래야 하얀 박스안에 들어가지 않음)
       messageContent = ClipRRect(
         borderRadius: BorderRadius.circular(50.r),
