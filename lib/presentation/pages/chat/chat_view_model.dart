@@ -730,6 +730,7 @@ class ChatViewModel extends Notifier<ChatState> {
       return;
     }
 
+    // 페이지 두개뜨는 오류 해결
     if (action == "accept_solution") {
       navigatorkey.currentContext?.push('/breathing/$solutionId');
     }
@@ -737,8 +738,6 @@ class ChatViewModel extends Notifier<ChatState> {
     if (action == "preparing") {
       String title = "상담센터 연결";
       navigatorkey.currentContext?.push('/prepare/$title');
-    } else {
-      navigatorkey.currentContext?.push('/breathing/$solutionId');
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
+import 'package:dailymoji/presentation/pages/my/privacy_policy/privacy_policy_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -90,6 +91,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/my',
         pageBuilder: (context, state) => PortraitPage(child: MyPage()),
+      ),
+      GoRoute(
+        path: '/privacyPolicy',
+        pageBuilder: (context, state) =>
+            PortraitPage(child: PrivacyPolicyPage()),
       ),
       GoRoute(
           path: '/prepare/:title',
