@@ -2,6 +2,7 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -33,14 +34,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       } else if (mounted) {
         // TODO: 로그인 실패 처리 디자인하기!!
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text("로그인에 실패했습니다. 다시 시도해주세요.")));
+            const SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요.")));
       }
     } catch (e) {
       // 예외 처리
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("오류가 발생했습니다: ${e.toString()}")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("오류가 발생했습니다: ${e.toString()}")));
       }
     }
   }
@@ -107,8 +107,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               SizedBox(width: 24.w),
                               GestureDetector(
                                 onTap: () => _handleLogin(ref
-                                    .read(userViewModelProvider
-                                        .notifier)
+                                    .read(userViewModelProvider.notifier)
                                     .appleLogin()),
                                 child: CircleAvatar(
                                   radius: 30.r,
@@ -132,16 +131,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: <TextSpan>[
                       TextSpan(
                         text: '이용약관',
-                        style: AppFontStyles
-                            .underlinedNoticeRelgular10
+                        style: AppFontStyles.underlinedNoticeRelgular10
                             .copyWith(color: AppColors.grey500),
                       ),
                       TextSpan(text: '과 '),
                       TextSpan(
                         text: '개인정보 처리방침',
-                        style: AppFontStyles
-                            .underlinedNoticeRelgular10
+                        style: AppFontStyles.underlinedNoticeRelgular10
                             .copyWith(color: AppColors.grey500),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            context.push('/privacyPolicy');
+                          },
                       ),
                       TextSpan(text: '에 동의하게 됩니다.'),
                     ],

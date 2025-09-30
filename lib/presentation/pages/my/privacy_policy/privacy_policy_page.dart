@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/styles/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -25,7 +26,11 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("개인정보 처리방침")),
+      appBar: AppBar(
+        title: const Text("개인정보 처리방침"),
+        backgroundColor: AppColors.white,
+        centerTitle: true,
+      ),
       body: WebViewWidget(controller: _controller),
     );
   }
