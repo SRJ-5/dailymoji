@@ -115,19 +115,19 @@ class ConfirmDialog extends ConsumerWidget {
                       ),
                       SizedBox(width: 12.w),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           if (isDeleteAccount) {
                             // 계정 삭제
                             print('계정 탈퇴!!!!!');
-                            userProfileVM.deleteAccount();
+                            await userProfileVM.deleteAccount();
                           } else {
                             print('로그아웃!!!!');
-                            userProfileVM.logOut();
+                            await userProfileVM.logOut();
                           }
                           print('상태태태태 초기화');
+                          context.go('/login');
                           resetAppState(ref);
                           // 화면 이동 (GoRouter 사용시)
-                          context.go('/login');
                         },
                         child: Container(
                           width: 120.w,

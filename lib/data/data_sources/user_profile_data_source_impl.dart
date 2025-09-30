@@ -150,7 +150,7 @@ class UserProfileDataSourceImpl
   @override
   Future<void> logOut() async {
     print("확인");
-    await google.signOut;
+    await google.signOut();
     // 실제 로그아웃 처리
     await supabase.auth.signOut();
     final user = Supabase
@@ -161,7 +161,7 @@ class UserProfileDataSourceImpl
   @override
   Future<void> deleteAccount(String userId) async {
     print("확인");
-    await google.signOut;
+    await google.signOut();
     // 실제 로그아웃 처리
     await supabase
         .from('user_profiles')
