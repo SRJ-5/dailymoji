@@ -15,7 +15,8 @@ class BreathingSolutionPage extends ConsumerStatefulWidget {
   const BreathingSolutionPage({super.key, required this.solutionId});
 
   @override
-  ConsumerState<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
+  ConsumerState<BreathingSolutionPage> createState() =>
+      _BreathingSolutionPageState();
 }
 
 class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
@@ -116,7 +117,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
   // 솔루션 컨텍스트를 비동기로 가져와서 _steps를 업데이트
   Future<void> _loadSolutionContext() async {
     try {
-      final solutionContext = await ref.read(solutionContextViewModelProvider.notifier).getSolutionContext(widget.solutionId);
+      final solutionContext = await ref
+          .read(solutionContextViewModelProvider.notifier)
+          .getSolutionContext(widget.solutionId);
 
       if (mounted) {
         setState(() {
@@ -186,7 +189,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
         if (_showFinalHint) {
-          context.go('/solution/${widget.solutionId}');
+          context.pushReplacement('/solution/${widget.solutionId}');
         }
       },
       child: Scaffold(
@@ -210,12 +213,14 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                       if (_steps[_step]["title"] != null)
                         Text(
                           _steps[_step]["title"],
-                          style: AppFontStyles.heading2.copyWith(color: AppColors.grey100),
+                          style: AppFontStyles.heading2
+                              .copyWith(color: AppColors.grey100),
                           textAlign: TextAlign.center,
                         ),
                       Text(
                         _steps[_step]["text"],
-                        style: (_steps[_step]["font"] as TextStyle).copyWith(color: AppColors.grey100),
+                        style: (_steps[_step]["font"] as TextStyle)
+                            .copyWith(color: AppColors.grey100),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -243,7 +248,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               child: AnimatedBuilder(
                 animation: _timerController,
                 builder: (context, child) {
-                  bool isTimerHidden = _step == 0 || _step >= _steps.length - 1 || _opacity == 0.0;
+                  bool isTimerHidden = _step == 0 ||
+                      _step >= _steps.length - 1 ||
+                      _opacity == 0.0;
                   if (isTimerHidden) {
                     return const SizedBox.shrink();
                   }
@@ -266,7 +273,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                   opacity: _blinkAnimation,
                   child: Text(
                     "화면을 탭해서 다음으로 넘어가세요",
-                    style: AppFontStyles.bodyMedium18.copyWith(color: AppColors.grey400),
+                    style: AppFontStyles.bodyMedium18
+                        .copyWith(color: AppColors.grey400),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -322,7 +330,9 @@ class TimerPainter extends CustomPainter {
     // 가운데 숫자 (heading2, white)
     if (seconds > 0) {
       final textPainter = TextPainter(
-        text: TextSpan(text: '$seconds', style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
+        text: TextSpan(
+            text: '$seconds',
+            style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
