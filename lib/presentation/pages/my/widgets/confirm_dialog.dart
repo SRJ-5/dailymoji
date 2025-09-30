@@ -1,9 +1,47 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
+import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
+import 'package:dailymoji/presentation/pages/home/home_page.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
+import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
+import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart';
+import 'package:dailymoji/presentation/providers/solution_context_providers.dart';
+import 'package:dailymoji/presentation/providers/today_cluster_scores_provider.dart';
+import 'package:dailymoji/presentation/providers/user_providers.dart';
+import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void resetAppState(WidgetRef ref) {
+  ref.invalidate(selectedEmotionProvider);
+  ref.invalidate(filterProvider);
+  ref.invalidate(bottomNavIndexProvider);
+  ref.invalidate(appleLoginUseCaseProvider);
+  ref.invalidate(insertUserProfileUseCaseProvider);
+  ref.invalidate(getUserProfileUseCaseProvider);
+  ref.invalidate(updateUserNickNameUseCaseProvider);
+  ref.invalidate(updateCharacterNameUseCaseProvider);
+  ref.invalidate(updateCharacterPersonalityUseCaseProvider);
+  ref.invalidate(clusterScoresDataSourceProvider);
+  ref.invalidate(clusterScoresRepositoryProvider);
+  ref.invalidate(getTodayClusterScoresUseCaseProvider);
+  ref.invalidate(todayClusterScoresProvider);
+  ref.invalidate(get14DayClusterStatsUseCaseProvider);
+  ref.invalidate(fourteenDayAggProvider);
+  ref.invalidate(getSolutionContextUseCaseProvider);
+  ref.invalidate(getMonthClusterScoresUseCaseProvider);
+  ref.invalidate(dailyMaxByMonthProvider);
+  ref.invalidate(clusterMonthViewModelProvider);
+  ref.invalidate(clusterScoresViewModelProvider);
+  ref.invalidate(chatViewModelProvider);
+  ref.invalidate(solutionContextViewModelProvider);
+  // 필요한 provider들 전부 여기에 나열
+}
 
 class ConfirmDialog extends ConsumerWidget {
   const ConfirmDialog({
@@ -70,11 +108,22 @@ class ConfirmDialog extends ConsumerWidget {
                       ),
                       SizedBox(width: 12.w),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           print("확인");
-                          // TODO: 로그아웃 로직 추가
 
-                          context.pop();
+                          // 실제 로그아웃 처리
+                          await Supabase.instance.client.auth
+                              .signOut();
+                          final user = Supabase
+                              .instance
+                              .client
+                              .auth
+                              .currentUser; // 로그아웃 확인 // 잘됨!
+                          print(
+                              "아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
+                          resetAppState(ref);
+                          // 화면 이동 (GoRouter 사용시)
+                          context.go('/login');
                         },
                         child: Container(
                           width: 120.w,
