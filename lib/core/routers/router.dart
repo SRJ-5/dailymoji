@@ -1,7 +1,7 @@
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
-import 'package:dailymoji/presentation/pages/my/privacy_policy/privacy_policy_page.dart';
+import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -20,7 +20,7 @@ final navigatorkey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     navigatorKey: navigatorkey,
     routes: [
       GoRoute(
@@ -113,7 +113,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               case "공지사항":
               case "이용 약관":
               case "개인정보 처리방침":
-                return PrivacyPolicyPage();
+                return InfoWebViewPage(title: title);
               default:
                 return PreparingPage("준비중");
             }
