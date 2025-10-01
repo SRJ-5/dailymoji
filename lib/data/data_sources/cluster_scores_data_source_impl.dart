@@ -33,6 +33,7 @@ class ClusterScoresDataSourceImpl implements ClusterScoresDataSource {
     }
   }
 
+  // 2주데이터 가져오기
   @override
   Future<List<ClusterScoreDto>> fetchByUserAndRange({
     required String userId,

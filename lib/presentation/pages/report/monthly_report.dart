@@ -2,7 +2,6 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
-import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
 import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
     show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
@@ -87,21 +86,11 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
       }
     }
 
-    // "오늘의" vs "n월 n일의" 라벨
-    String dayLabel = "이날의";
-    if (_selectedDay != null) {
-      final now = DateTime.now();
-      final sd = _selectedDay!;
-      final isToday =
-          now.year == sd.year && now.month == sd.month && now.day == sd.day;
-      dayLabel = isToday ? "오늘의" : "${sd.month}월 ${sd.day}일의";
-    }
-
     // 요약 카드 제목 문구
     final summaryTitle = (selectedRow == null)
         ? "이 날은 기록된 감정이 없어요!"
-        : "이 날의 ${clusterLabel(selectedRow!.cluster)} "
-            "점수는 ${displayScore100(selectedRow!.score)}점 이에요.";
+        : "이 날의 ${clusterLabel(selectedRow.cluster)}이 "
+            "${displayScore100(selectedRow.score)}점으로 가장 강렬 했어요.";
 
     // final params = MonthParams(
     //   userId: widget.userId,
@@ -303,65 +292,35 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                             .copyWith(color: AppColors.grey900),
                       ),
                       Align(
-                          alignment: Alignment.bottomRight,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: Size(133, 40),
-                              backgroundColor: AppColors.grey50,
-                              side:
-                                  BorderSide(color: AppColors.grey200), // 테두리 색
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(12), // 모서리 둥글게
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                  .copyWith(left: 16.w, right: 10.w),
+                        alignment: Alignment.bottomRight,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: Size(133, 40),
+                            backgroundColor: AppColors.grey50,
+                            side: BorderSide(color: AppColors.grey200), // 테두리 색
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(12), // 모서리 둥글게
                             ),
-                            onPressed: () {
-                              context.go("/report/chat", extra: _selectedDay);
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('채팅 확인하기',
-                                    style: AppFontStyles.bodyMedium14
-                                        .copyWith(color: AppColors.grey900)),
-                                SizedBox(width: 6.w),
-                                Icon(Icons.arrow_forward,
-                                    color: AppColors.grey900, size: 18.r),
-                              ],
-                            ),
-                          )
-
-                          // GestureDetector(
-                          //   onTap: () {
-                          //     context.go("/report/chat", extra: _selectedDay);
-                          //   },
-                          //   child: Container(
-                          //     alignment: Alignment.center,
-                          //     height: 40.h,
-                          //     width: 133.w,
-                          //     padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                          //         .copyWith(left: 16.w, right: 10.w),
-                          //     decoration: ShapeDecoration(
-                          //       color: AppColors.green400,
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(10),
-                          //       ),
-                          //     ),
-                          //     child: Row(
-                          //       mainAxisSize: MainAxisSize.min,
-                          //       children: [
-                          //         Text('채팅 확인하기',
-                          //             style: AppFontStyles.bodyMedium14),
-                          //         SizedBox(width: 6.w),
-                          //         Icon(Icons.arrow_forward,
-                          //             color: AppColors.grey900, size: 18.r),
-                          //       ],
-                          //     ),
-                          //   ),
-                          // ),
-                          )
+                            padding: EdgeInsets.symmetric(vertical: 9.5.h)
+                                .copyWith(left: 16.w, right: 10.w),
+                          ),
+                          onPressed: () {
+                            context.go("/report/chat", extra: _selectedDay);
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('채팅 확인하기',
+                                  style: AppFontStyles.bodyMedium14
+                                      .copyWith(color: AppColors.grey900)),
+                              SizedBox(width: 6.w),
+                              Icon(Icons.arrow_forward,
+                                  color: AppColors.grey900, size: 18.r),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
