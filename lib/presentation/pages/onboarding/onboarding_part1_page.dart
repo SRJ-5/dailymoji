@@ -88,46 +88,45 @@ class _OnboardingPart1PageState
           ),
         ),
         bottomNavigationBar: SafeArea(
-          child: SizedBox(
-            width: double.infinity,
-            height: 84.h,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 52.h),
-                      backgroundColor: isNextEnabled
-                          ? AppColors.green400
-                          : AppColors.grey200,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(12.r),
-                      ),
-                    ),
-                    onPressed: isNextEnabled
-                        ? () {
-                            if (stepIndex < totalSteps) {
-                              setState(() {
-                                // isNextEnabled = false;
-                                stepIndex++;
-                              });
-                            } else if (stepIndex == totalSteps) {
-                              context.go('/onboarding2');
-                            }
-                          }
-                        : null,
-                    child: Text('계속하기',
-                        style:
-                            AppFontStyles.bodyMedium16.copyWith(
-                          color: isNextEnabled
-                              ? AppColors.grey900
-                              : AppColors.grey500,
-                        )),
-                  )
-                ],
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 8.h,
+              left: 12.w,
+              right: 12.w,
+              bottom: MediaQuery.of(context).viewInsets.bottom >
+                      0
+                  ? MediaQuery.of(context).viewInsets.bottom +
+                      8.h
+                  : 32.h,
+            ),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 52.h),
+                backgroundColor: isNextEnabled
+                    ? AppColors.green400
+                    : AppColors.grey200,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
               ),
+              onPressed: isNextEnabled
+                  ? () {
+                      if (stepIndex < totalSteps) {
+                        setState(() {
+                          // isNextEnabled = false;
+                          stepIndex++;
+                        });
+                      } else if (stepIndex == totalSteps) {
+                        context.go('/onboarding2');
+                      }
+                    }
+                  : null,
+              child: Text('계속하기',
+                  style: AppFontStyles.bodyMedium16.copyWith(
+                    color: isNextEnabled
+                        ? AppColors.grey900
+                        : AppColors.grey500,
+                  )),
             ),
           ),
         ),

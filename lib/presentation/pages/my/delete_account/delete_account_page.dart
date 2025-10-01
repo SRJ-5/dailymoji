@@ -137,22 +137,6 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                                 );
                               },
                             ),
-                            // ReasonBox(
-                            //   text: '더 이상 앱을 사용하지 않아요',
-                            //   isSelected: _isSelected,
-                            // ),
-                            // ReasonBox(
-                            //   text: '원하는 기능이 없어요',
-                            //   isSelected: _isSelected,
-                            // ),
-                            // ReasonBox(
-                            //   text: '사용이 불편했어요',
-                            //   isSelected: _isSelected,
-                            // ),
-                            // ReasonBox(
-                            //   text: '직접 입력',
-                            //   isSelected: _isSelected,
-                            // ),
                           ],
                         ),
                       ),
