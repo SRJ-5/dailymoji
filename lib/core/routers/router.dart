@@ -35,41 +35,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
-        routes: [
-          GoRoute(
-            path: '/chat',
-            pageBuilder: (context, state) {
-              final extraData = state.extra as Object?;
-              Map<String, dynamic>? navData;
-
-              if (extraData is Map<String, dynamic>) {
-                navData = extraData;
-              }
-
-              return PortraitPage(
-                child: ChatPage(
-                  navigationData: navData,
-                ),
-              );
-            },
-          ),
-        ],
       ),
-      // ChatPage 라우트를 분리하여 extra를 받을 수 있도록 함
       GoRoute(
-          path: '/report',
-          pageBuilder: (context, state) =>
-              const PortraitPage(child: ReportPage()),
-          routes: [
-            GoRoute(
-              path: '/chat',
-              pageBuilder: (context, state) {
-                // extra를 Object?로 받아 유연하게 처리
-                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
-                final extraData = state.extra as Object?;
-                String? emotion;
-                Map<String, dynamic>? navData;
-                DateTime? targetDate;
+        path: '/chat',
+        pageBuilder: (context, state) {
+          // extra를 Object?로 받아 유연하게 처리
+          // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+          final extraData = state.extra as Object?;
+          String? emotion;
+          Map<String, dynamic>? navData;
+          DateTime? targetDate;
 
           if (extraData is String) {
             emotion = extraData;
