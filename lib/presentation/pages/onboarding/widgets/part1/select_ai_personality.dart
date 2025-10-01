@@ -28,9 +28,11 @@ class _SelectAiPersonalityState
     _selectedIndex = ref.read(userViewModelProvider).step11;
   }
 
-  final _personalities = OnboardingCharacterPersonality.values
-      .map((e) => e.label)
+  final _personalitiesOnboarding = CharacterPersonality.values
+      .map((e) => e.onboardingLabel)
       .toList();
+  final _personalitiesMy =
+      CharacterPersonality.values.map((e) => e.label).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +63,7 @@ class _SelectAiPersonalityState
           ),
           Column(
             children: List.generate(
-              _personalities.length,
+              _personalitiesOnboarding.length,
               (index) {
                 final isSelected = _selectedIndex == index;
                 return Column(
@@ -80,12 +82,13 @@ class _SelectAiPersonalityState
                               .setAiPersonality(
                                   selectNum: _selectedIndex,
                                   aiPersonality:
-                                      _personalities[index]);
+                                      _personalitiesMy[index]);
                         },
                         child: SelectBox(
                             isSelected: isSelected,
-                            text: _personalities[index])),
-                    _personalities.length - 1 == index
+                            text: _personalitiesOnboarding[
+                                index])),
+                    _personalitiesOnboarding.length - 1 == index
                         ? SizedBox.shrink()
                         : SizedBox(
                             height: 8.h,
