@@ -1,6 +1,9 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/domain/entities/cluster_score.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
 import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
     show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
@@ -25,6 +28,26 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
+  /// 클러스터 코드를 한국어 라벨로 변환
+  String clusterLabel(String code) {
+    switch (code) {
+      case 'neg_high':
+        return '불안/분노';
+      case 'neg_low':
+        return '우울/무기력/번아웃';
+      case 'sleep':
+        return '불규칙 수면';
+      case 'ADHD':
+        return '산만/집중력저하';
+      case 'positive':
+      default:
+        return '평온/회복';
+    }
+  }
+
+  /// 점수를 100배 후 정수 반환 (반올림)
+  int displayScore100(double score) => (score * 100).round();
+
   @override
   void initState() {
     super.initState();
@@ -39,25 +62,58 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
     // ── 여기서 구독(ref.watch)
     final asyncRows = ref.watch(dailyMaxByMonthProvider(key));
+    final vm = ref.watch(clusterScoresViewModelProvider);
 
 // rows → (일 → 에셋경로) 매핑
+    final rows = asyncRows.asData?.value; // List<ClusterScore>? (data 상태일 때만 값)
     final emojiByDay = <int, String>{};
-    asyncRows.whenData((rows) {
+    if (rows != null) {
       for (final r in rows) {
         final d = r.createdAt.toLocal().day;
         emojiByDay[d] = clusterToAssetPath(r.cluster);
       }
-    });
+    }
 
-    // // ── 여기서 현재 달 파라미터를 만든다.
+    // 선택된 날짜의 ClusterScore 찾기
+    ClusterScore? selectedRow;
+    if (rows != null && _selectedDay != null) {
+      final sd = _selectedDay!;
+      for (final r in rows) {
+        final local = r.createdAt.toLocal();
+        if (local.year == sd.year &&
+            local.month == sd.month &&
+            local.day == sd.day) {
+          selectedRow = r;
+          break;
+        }
+      }
+    }
+
+// "오늘의" vs "n월 n일의" 라벨
+    String dayLabel = "이날의";
+    if (_selectedDay != null) {
+      final now = DateTime.now();
+      final sd = _selectedDay!;
+      final isToday =
+          now.year == sd.year && now.month == sd.month && now.day == sd.day;
+      dayLabel = isToday ? "오늘의" : "${sd.month}월 ${sd.day}일의";
+    }
+
+// ✅ 요약 카드 제목 문구
+    final summaryTitle = (selectedRow == null)
+        ? "이 날은 기록된 감정이 없어요!"
+        : "이 날의 ${clusterLabel(selectedRow!.cluster)} "
+            "점수는 ${displayScore100(selectedRow!.score)}점 이에요.";
+
     // final params = MonthParams(
     //   userId: widget.userId,
     //   year: _focusedDay.year,
     //   month: _focusedDay.month,
     // );
 
-    // // 뷰모델 구독: 상태(AsyncValue<ClusterMonthState>) + notifier
-    // final vmState = ref.watch(clusterMonthViewModelProvider(params));
+    // 뷰모델 구독: 상태(AsyncValue<ClusterMonthState>) + notifier
+    // final vmState =
+    //     ref.watch(clusterMonthViewModelProvider(params)).asData?.value;
     // final vm = ref.read(clusterMonthViewModelProvider(params).notifier);
 
     // // 상태가 data일 때만 이모지 맵을 꺼내 쓰고, 아니면 빈 맵
@@ -226,7 +282,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("이날 기록된 감정을 요약했어요",
+                      Text(summaryTitle,
                           style: AppFontStyles.bodyBold14
                               .copyWith(color: AppColors.green700)),
                       SizedBox(height: 6.h),

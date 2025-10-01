@@ -39,7 +39,6 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
       .dbValue;
   final userNickNm = userProfile?.userNickNm;
 
-
   // 🤩 RIN: 기본 URL에 쿼리 파라미터 추가 로직 분기함
   final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/home');
   final queryParameters = {

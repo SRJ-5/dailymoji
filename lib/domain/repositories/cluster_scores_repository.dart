@@ -11,6 +11,7 @@ abstract interface class ClusterScoresRepository {
     required DateTime endExclusive,
   });
 
+  /// 모지 달력 1달치 데이터 로드
   Future<List<ClusterScore>> fetchByUserAndMonth({
     required String userId,
     required int year,

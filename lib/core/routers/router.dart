@@ -24,11 +24,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     navigatorKey: navigatorkey,
     routes: [
-      GoRoute(
-          path: '/', builder: (context, state) => SplashPage()),
-      GoRoute(
-          path: '/login',
-          builder: (context, state) => LoginPage()),
+      GoRoute(path: '/', builder: (context, state) => SplashPage()),
+      GoRoute(path: '/login', builder: (context, state) => LoginPage()),
       GoRoute(
           path: '/onboarding1',
           builder: (context, state) => OnboardingPart1Page()),
@@ -37,8 +34,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) =>
-            const PortraitPage(child: HomePage()),
+        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
         routes: [
           GoRoute(
             path: '/chat',
@@ -95,8 +91,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]),
       GoRoute(
         path: '/my',
-        pageBuilder: (context, state) =>
-            PortraitPage(child: MyPage()),
+        pageBuilder: (context, state) => PortraitPage(child: MyPage()),
       ),
       // TODO: 아래에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
       // GoRoute(
@@ -148,8 +143,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
           return PortraitPage(
-              child:
-                  BreathingSolutionPage(solutionId: solutionId));
+              child: BreathingSolutionPage(solutionId: solutionId));
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.

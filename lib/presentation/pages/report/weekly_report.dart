@@ -15,6 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ===== EmotionData (UI에서 사용하는 모델) =====
 class EmotionData {
+  final String cluster;
   final Color color;
   final List<FlSpot> spots;
   final String description;
@@ -23,6 +24,7 @@ class EmotionData {
   final double min;
 
   EmotionData({
+    required this.cluster,
     required this.color,
     required this.spots,
     required this.description,
@@ -36,8 +38,8 @@ class EmotionData {
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
     "불안/분노": false,
-    "우울/무기력/번아웃": false,
-    "ADHD": false,
+    "우울/무기력": false,
+    "산만/집중력저하": false,
     "불면/과다수면": false,
     "평온/회복": false,
   };
@@ -94,6 +96,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
           ...baseMap,
           if (snap.hasData && snap.data?.emotion != null) ...{
             "종합 감정 점수": EmotionData(
+              cluster: "종합 감정 점수",
               color: snap.data!.emotion!.color,
               spots: snap.data!.emotion!.spots,
               description: snap.data!.emotion!.description,
