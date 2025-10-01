@@ -1,5 +1,6 @@
 class AppImages {
   // images
+  static const String homeImage = 'assets/images/home_image.png';
   static const String splashImage = 'assets/images/splash_image.png';
   static const String preparingImage = 'assets/images/preparing_image.png';
   static const String bubbleRightUnder3D =
