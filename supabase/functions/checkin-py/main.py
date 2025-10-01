@@ -804,6 +804,62 @@ async def get_home_dialogue(
     return {"dialogue": dialogue_text}
     
 # ======================================================================
+# ===  솔루션 완료 후 후속 질문을 위한 엔드포인트   ===
+# ======================================================================
+@app.get("/dialogue/solution-followup")
+async def get_solution_followup_dialogue(
+    reason: str, # 'user_closed' 또는 'video_ended'
+    personality: Optional[str] = None, 
+    user_nick_nm: Optional[str] = "친구",
+    language_code: Optional[str] = 'ko'
+):
+    """솔루션이 끝난 후의 상황(reason)과 캐릭터 성향에 맞는 후속 질문을 반환합니다."""
+    
+    # 이유(reason)에 따라 DB에서 조회할 mention_type을 결정합니다.
+    if reason == 'user_closed':
+        mention_type = "followup_user_closed"
+    else: # 'video_ended' 또는 기타
+        mention_type = "followup_video_ended"
+
+    # get_mention_from_db 헬퍼 함수를 사용하여 멘트를 가져옵니다.
+    dialogue_text = await get_mention_from_db(
+        mention_type=mention_type,
+        personality=personality,
+        language_code=language_code,
+        cluster="common", 
+        default_message="어때요? 좀 좋아진 것 같아요?😊",
+        format_kwargs={"user_nick_nm": user_nick_nm}
+    )
+    
+    return {"dialogue": dialogue_text}
+
+
+# ======================================================================
+# ===  솔루션 완료 후 후속 질문을 위한 엔드포인트   ===
+# ======================================================================
+
+# 솔루션 제안을 거절했을 때의 멘트를 성향별로 주기 위해 추가
+@app.get("/dialogue/decline-solution")
+async def get_decline_solution_dialogue(
+    personality: Optional[str] = None, 
+    user_nick_nm: Optional[str] = "친구",
+    language_code: Optional[str] = 'ko'
+):
+    """솔루션 제안을 거절하고 대화를 이어가고 싶어할 때의 반응 멘트를 반환합니다."""
+    
+    dialogue_text = await get_mention_from_db(
+        mention_type="decline_solution",
+        personality=personality,
+        language_code=language_code,
+        cluster="common",
+        default_message="알겠습니다. 그럼요. 저에게 편안하게 털어놓으세요. 귀 기울여 듣고 있을게요.",
+        format_kwargs={"user_nick_nm": user_nick_nm}
+    )
+    
+    return {"dialogue": dialogue_text}
+
+
+# ======================================================================
 # ===          솔루션 영상 엔드포인트         ===
 # ======================================================================
 
