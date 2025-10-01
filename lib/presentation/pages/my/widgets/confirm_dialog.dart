@@ -17,6 +17,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// 상태들 전부 리셋
 void resetAppState(WidgetRef ref) {
   ref.invalidate(selectedEmotionProvider);
   ref.invalidate(filterProvider);
@@ -105,16 +106,21 @@ class ConfirmDialog extends ConsumerWidget {
                       SizedBox(width: 12.w),
                       GestureDetector(
                         onTap: () async {
-                          print("확인");
+                          // TODO:로그아웃 후 로그인 시 자동로그인 말고 수동로그인이 되게 구현해야함
+                          // 지피티 말로는 세션이 초기화되면 재로그인을 해야한다고 하는데
+                          // currentUser가 null이여도 여전히 안되는 상황
+                          // 그래서 앱 내에서 캐시를 초기화하는 기능을 넣어봐야할듯
 
                           // 실제 로그아웃 처리
                           await Supabase.instance.client.auth.signOut();
-                          final user = Supabase.instance.client.auth
-                              .currentUser; // 로그아웃 확인 // 잘됨!
-                          print(
-                              "아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
+                          // 로그아웃 확인 // 잘됨!
+                          final user =
+                              Supabase.instance.client.auth.currentUser;
+                          // 로그아웃 전: User 객체 / 로그아웃 후: null
+                          print("아아아아아아$user");
+                          // 상태 리셋
                           resetAppState(ref);
-                          // 화면 이동 (GoRouter 사용시)
+                          // 화면 이동
                           context.go('/login');
                         },
                         child: Container(
