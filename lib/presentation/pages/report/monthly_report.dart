@@ -240,7 +240,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                         alignment: Alignment.bottomRight,
                         child: GestureDetector(
                           onTap: () {
-                            context.go("/report/chat", extra: _selectedDay);
+                            context.push("/chat", extra: _selectedDay);
                           },
                           child: Container(
                             alignment: Alignment.center,

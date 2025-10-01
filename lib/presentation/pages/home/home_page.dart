@@ -39,7 +39,6 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
       .dbValue;
   final userNickNm = userProfile?.userNickNm;
 
-
   // 🤩 RIN: 기본 URL에 쿼리 파라미터 추가 로직 분기함
   final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/home');
   final queryParameters = {
@@ -145,6 +144,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Color(0xFFFEFBF4),
+        centerTitle: false,
         title: Image.asset(
           AppImages.dailymojiLogoBlack, // DailyMoji 로고 이미지 경로
           height: 30,
@@ -236,7 +236,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.push('/home/chat', extra: selectedEmotion),
+        onTap: () => context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(

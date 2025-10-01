@@ -106,7 +106,7 @@
     
 #     if triggered:
 #         # 안전 장치가 발동하면, neg_low 점수를 극단적으로 높여 위기 상황임을 명시
-#         return True, {"neg_low": 0.95, "neg_high": 0.0, "adhd_high": 0.0, "sleep": 0.0, "positive": 0.0}
+#         return True, {"neg_low": 0.95, "neg_high": 0.0, "adhd": 0.0, "sleep": 0.0, "positive": 0.0}
     
 #     return False, {}
 
@@ -122,7 +122,7 @@
 #     except Exception: return False
 
 # def g_score(final_scores: dict) -> float:
-#     w = {"neg_high": 1.0, "neg_low": 0.9, "sleep": 0.7, "adhd_high": 0.6, "positive": -0.3}
+#     w = {"neg_high": 1.0, "neg_low": 0.9, "sleep": 0.7, "adhd": 0.6, "positive": -0.3}
 #     g = sum(final_scores.get(k, 0.0) * w.get(k, 0.0) for k in CLUSTERS)
 #     return round(clip01((g + 1.0) / 2.0), 3)
 
@@ -155,7 +155,7 @@
 #         icon_to_cluster = {
 #             "angry": "neg_high",
 #             "crying": "neg_low",
-#             "shocked": "adhd_high",
+#             "shocked": "adhd",
 #             "sleeping": "sleep",
 #             "smile": "positive",
 #         }
@@ -269,7 +269,7 @@
             
 #             final_scores = {c: baseline_scores.get(c, 0.0) * 0.3 for c in CLUSTERS}
 #             emoji_cluster_map = {
-#                 "angry": "neg_high", "crying": "neg_low", "shocked": "adhd_high",
+#                 "angry": "neg_high", "crying": "neg_low", "shocked": "adhd",
 #                 "sleeping": "sleep", "smile": "positive"
 #             }
 #             emoji_cluster = emoji_cluster_map.get(payload.icon)

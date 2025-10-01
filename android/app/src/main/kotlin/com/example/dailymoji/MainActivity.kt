@@ -1,4 +1,4 @@
-package com.example.dailymoji
+package com.srj5.dailymoji
 
 import io.flutter.embedding.android.FlutterActivity
 
