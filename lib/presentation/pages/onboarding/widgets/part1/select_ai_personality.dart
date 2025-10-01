@@ -20,80 +20,94 @@ class SelectAiPersonality extends ConsumerStatefulWidget {
 
 class _SelectAiPersonalityState
     extends ConsumerState<SelectAiPersonality> {
-  int _selectedIndex = -1;
+  late int _selectedIndex;
 
-  final _personalities =
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = ref.read(userViewModelProvider).step11;
+  }
+
+  final _personalitiesOnboarding = CharacterPersonality.values
+      .map((e) => e.onboardingLabel)
+      .toList();
+  final _personalitiesMy =
       CharacterPersonality.values.map((e) => e.label).toList();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          height: 24.r,
-        ),
-        Container(
-          width: double.infinity,
-          height: 94.h,
-          padding: EdgeInsets.symmetric(
-              horizontal: 4.w, vertical: 8.h),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '캐릭터의 성격을\n골라볼까요?',
-              style: AppFontStyles.heading2
-                  .copyWith(color: AppColors.grey900),
+    return SizedBox(
+      height: 566.h,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 24.r,
+          ),
+          Container(
+            width: double.infinity,
+            height: 94.h,
+            padding: EdgeInsets.symmetric(
+                horizontal: 4.w, vertical: 8.h),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '캐릭터의 성격을\n골라볼까요?',
+                style: AppFontStyles.heading2
+                    .copyWith(color: AppColors.grey900),
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 32.r,
-        ),
-        Column(
-          children: List.generate(
-            _personalities.length,
-            (index) {
-              final isSelected = _selectedIndex == index;
-              return Column(
-                children: [
-                  GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex =
-                              (_selectedIndex == index)
-                                  ? -1
-                                  : index;
-                        });
-                        ref
-                            .read(userViewModelProvider.notifier)
-                            .setAiPersonality(
-                                check: _selectedIndex != -1,
-                                aiPersonality:
-                                    _personalities[index]);
-                      },
-                      child: SelectBox(
-                          isSelected: isSelected,
-                          text: _personalities[index])),
-                  _personalities.length - 1 == index
-                      ? SizedBox.shrink()
-                      : SizedBox(
-                          height: 8.h,
-                        )
-                ],
-              );
-            },
+          SizedBox(
+            height: 32.r,
           ),
-        ),
-        Spacer(),
-        Align(
-            alignment: Alignment.bottomRight,
-            child: Image.asset(
-              AppImages.cadoProfile,
-              width: 120.w,
-              height: 180.h,
-            )),
-      ],
+          Column(
+            children: List.generate(
+              _personalitiesOnboarding.length,
+              (index) {
+                final isSelected = _selectedIndex == index;
+                return Column(
+                  children: [
+                    GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex =
+                                (_selectedIndex == index)
+                                    ? -1
+                                    : index;
+                          });
+                          ref
+                              .read(
+                                  userViewModelProvider.notifier)
+                              .setAiPersonality(
+                                  selectNum: _selectedIndex,
+                                  aiPersonality:
+                                      _personalitiesMy[index]);
+                        },
+                        child: SelectBox(
+                            isSelected: isSelected,
+                            text: _personalitiesOnboarding[
+                                index])),
+                    _personalitiesOnboarding.length - 1 == index
+                        ? SizedBox.shrink()
+                        : SizedBox(
+                            height: 8.h,
+                          )
+                  ],
+                );
+              },
+            ),
+          ),
+          Spacer(),
+          Align(
+              alignment: Alignment.bottomRight,
+              child: Image.asset(
+                AppImages.cadoProfile,
+                width: 120.w,
+                height: 180.h,
+              )),
+        ],
+      ),
     );
   }
 }
