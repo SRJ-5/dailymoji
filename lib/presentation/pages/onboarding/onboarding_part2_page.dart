@@ -34,7 +34,8 @@ class _OnboardingPart2PageState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(userViewModelProvider);
-    final isNextEnabled = state.step2Answers[stepIndex];
+    final isNextEnabled =
+        state.step2Answers[stepIndex] == -1 ? false : true;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
@@ -91,7 +92,7 @@ class _OnboardingPart2PageState
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 52.h),
                     backgroundColor: isNextEnabled
-                        ? AppColors.green400
+                        ? AppColors.green500
                         : AppColors.grey200,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
@@ -118,7 +119,7 @@ class _OnboardingPart2PageState
                       stepIndex == totalSteps ? '시작하기' : '계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
-                            ? AppColors.grey900
+                            ? AppColors.grey50
                             : AppColors.grey500,
                       )),
                 )

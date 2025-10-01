@@ -56,10 +56,10 @@ class AppColors {
   // Report Noti
   static const Color noti100 = Color(0xFFD65052);
   static const Color noti200 = Color(0xFF4F84D4);
-  static const Color noti900 = Color(0xFFD65052);
+  static const Color noti900 = Color(0xFFD60000);
 
   // Report Chart
-  static const Color totalScore = Color(0xFF778654);
+  static const Color totalScore = Color(0xFFA4A4A4);
   static const Color negHigh = Color(0xFFFF9A46);
   static const Color negLow = Color(0xFF18A0FB);
   static const Color sleep = Color(0xFF55D288);

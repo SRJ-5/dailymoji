@@ -4,39 +4,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UserState {
   final UserProfile? userProfile;
-  final bool step11;
+  final int step11;
   final bool step12;
   final bool step13;
-  final bool step14;
-  final List<bool> step2Answers;
+  final List<int> step2Answers;
 
   UserState({
     required this.userProfile,
-    this.step11 = true,
+    this.step11 = -1,
     this.step12 = false,
     this.step13 = false,
-    this.step14 = false,
-    List<bool>? step2Answers,
+    List<int>? step2Answers,
   }) : step2Answers = step2Answers ??
             List.generate(
               10,
-              (index) => index == 9 ? true : false,
+              (index) => index == 9 ? 0 : -1,
             );
 
   UserState copyWith({
     UserProfile? userProfile,
-    bool? step11,
+    int? step11,
     bool? step12,
     bool? step13,
-    bool? step14,
-    List<bool>? step2Answers,
+    List<int>? step2Answers,
   }) {
     return UserState(
       userProfile: userProfile ?? this.userProfile,
       step11: step11 ?? this.step11,
       step12: step12 ?? this.step12,
       step13: step13 ?? this.step13,
-      step14: step14 ?? this.step14,
       step2Answers: step2Answers ?? List.from(this.step2Answers),
     );
   }
@@ -105,15 +101,15 @@ class UserViewModel extends Notifier<UserState> {
 
   void setAiName({required bool check, required String aiName}) {
     state = state.copyWith(
-        step13: check,
+        step12: check,
         userProfile:
             state.userProfile?.copyWith(characterNm: aiName));
   }
 
   void setAiPersonality(
-      {required bool check, required String aiPersonality}) {
+      {required int selectNum, required String aiPersonality}) {
     state = state.copyWith(
-        step12: check,
+        step11: selectNum,
         userProfile: state.userProfile
             ?.copyWith(characterPersonality: aiPersonality));
   }
@@ -121,18 +117,15 @@ class UserViewModel extends Notifier<UserState> {
   void setUserNickName(
       {required bool check, required String userNickName}) {
     state = state.copyWith(
-        step14: check,
+        step13: check,
         userProfile: state.userProfile
             ?.copyWith(userNickNm: userNickName));
   }
 
-  void setAnswer(
-      {required int index,
-      required bool check,
-      required int score}) {
+  void setAnswer({required int index, required int score}) {
     if (index < 0 || index >= state.step2Answers.length) return;
-    final newAnswers = List<bool>.from(state.step2Answers);
-    newAnswers[index] = check;
+    final newAnswers = List<int>.from(state.step2Answers);
+    newAnswers[index] = score;
 
     final currentScores = Map<String, dynamic>.from(
         state.userProfile?.onboardingScores ?? {});
@@ -152,7 +145,6 @@ class UserViewModel extends Notifier<UserState> {
     state = state.copyWith(
         step2Answers: newAnswers,
         userProfile: newSurveyResponse);
-    print('survey: ${state.userProfile?.onboardingScores}');
   }
 
   Future<void> updateUserNickNM(

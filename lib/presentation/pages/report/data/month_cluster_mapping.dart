@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
+import 'day_emotion.dart';
 
 String clusterToAssetPath(String cluster) {
   switch (cluster) {
@@ -18,13 +19,14 @@ String clusterToAssetPath(String cluster) {
   }
 }
 
-/// 하루(로컬 시간 기준)의 대표 이모지를 얻기 쉽게 Map<int(일), String(에셋경로)>로 변환
-Map<int, String> buildEmojiMapByDay(List<ClusterScore> dailyMax) {
-  final map = <int, String>{};
+/// 하루(로컬 기준) → DayEmotion(assetPath + score)
+Map<int, DayEmotion> buildDayEmotionMapByDay(List<ClusterScore> dailyMax) {
+  final map = <int, DayEmotion>{};
   for (final row in dailyMax) {
-    final local = row.createdAt.toLocal(); // KST 등 로컬 기준
-    final day = local.day; // 1~31
-    map[day] = clusterToAssetPath(row.cluster);
+    final day = row.createdAt.toLocal().day; // 1~31
+    final cluster = row.cluster;
+    final asset = clusterToAssetPath(row.cluster);
+    map[day] = DayEmotion(cluster: cluster, assetPath: asset, score: row.score);
   }
   return map;
 }

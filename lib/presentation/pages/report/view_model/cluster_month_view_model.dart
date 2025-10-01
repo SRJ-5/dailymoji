@@ -1,3 +1,4 @@
+import 'package:dailymoji/presentation/pages/report/data/day_emotion.dart';
 import 'package:dailymoji/presentation/pages/report/data/month_cluster_mapping.dart';
 import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,23 +8,23 @@ import 'package:flutter_riverpod/legacy.dart';
 /// UI에 내보낼 상태
 class ClusterMonthState {
   final List<ClusterScore> dailyMax; // 하루당 1건(오름차순)
-  final Map<int, String> emojiByDay; // 1~31 -> asset path
+  final Map<int, DayEmotion> byDay; // 1~31 -> asset path
   final int? selectedDay; // 옵션: 현재 선택된 날짜
 
   const ClusterMonthState({
     required this.dailyMax,
-    required this.emojiByDay,
+    required this.byDay,
     this.selectedDay,
   });
 
   ClusterMonthState copyWith({
     List<ClusterScore>? dailyMax,
-    Map<int, String>? emojiByDay,
+    Map<int, DayEmotion>? byDay,
     int? selectedDay,
   }) {
     return ClusterMonthState(
       dailyMax: dailyMax ?? this.dailyMax,
-      emojiByDay: emojiByDay ?? this.emojiByDay,
+      byDay: byDay ?? this.byDay,
       selectedDay: selectedDay ?? this.selectedDay,
     );
   }
@@ -49,9 +50,9 @@ class ClusterMonthViewModel
         month: _params.month,
       );
 
-      final emoji = buildEmojiMapByDay(rows);
+      final byDay = buildDayEmotionMapByDay(rows);
       state = AsyncValue.data(
-        ClusterMonthState(dailyMax: rows, emojiByDay: emoji),
+        ClusterMonthState(dailyMax: rows, byDay: byDay),
       );
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -68,7 +69,12 @@ class ClusterMonthViewModel
 // UI 헬퍼: 특정 일의 에셋 경로
   String? emojiPathForDay(int day) {
     final cur = state.asData?.value; // ← 여기!
-    return cur?.emojiByDay[day];
+    return cur?.byDay[day]?.assetPath;
+  }
+
+  double? scoreForDay(int day) {
+    final cur = state.asData?.value;
+    return cur?.byDay[day]?.score; // ← 추가 헬퍼
   }
 
 // UI 헬퍼: 특정 일의 ClusterScore
