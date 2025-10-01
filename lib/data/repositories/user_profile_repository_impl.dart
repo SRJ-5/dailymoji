@@ -62,4 +62,14 @@ class UserProfileRepositoryImpl
             characterPersonality: characterPersonality);
     return result.toEntity();
   }
+
+  @override
+  Future<void> logOut() async {
+    await _userDataSource.logOut();
+  }
+
+  @override
+  Future<void> deleteAccount(String userId) async {
+    await _userDataSource.deleteAccount(userId);
+  }
 }

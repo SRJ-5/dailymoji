@@ -1,7 +1,8 @@
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
-import 'package:dailymoji/presentation/pages/my/privacy_policy/privacy_policy_page.dart';
+import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_page.dart';
+import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -23,8 +24,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     navigatorKey: navigatorkey,
     routes: [
-      GoRoute(path: '/', builder: (context, state) => SplashPage()),
-      GoRoute(path: '/login', builder: (context, state) => LoginPage()),
+      GoRoute(
+          path: '/', builder: (context, state) => SplashPage()),
+      GoRoute(
+          path: '/login',
+          builder: (context, state) => LoginPage()),
       GoRoute(
           path: '/onboarding1',
           builder: (context, state) => OnboardingPart1Page()),
@@ -33,7 +37,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
+        pageBuilder: (context, state) =>
+            const PortraitPage(child: HomePage()),
         routes: [
           GoRoute(
             path: '/chat',
@@ -90,19 +95,51 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]),
       GoRoute(
         path: '/my',
-        pageBuilder: (context, state) => PortraitPage(child: MyPage()),
-      ),
-      GoRoute(
-        path: '/privacyPolicy',
         pageBuilder: (context, state) =>
-            PortraitPage(child: PrivacyPolicyPage()),
+            PortraitPage(child: MyPage()),
       ),
+      // TODO: 아래에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
+      // GoRoute(
+      //   path: '/privacyPolicy',
+      //   pageBuilder: (context, state) =>
+      //       PortraitPage(child: PrivacyPolicyPage()),
+      // ),
       GoRoute(
-          path: '/prepare/:title',
+          // TODO: prepare 경로 다른 이름을 수정해야 할듯 webView라든가?
+          // 일단 info로 경로 이름 수정
+          path: '/info/:title',
           builder: (context, state) {
             final title = state.pathParameters["title"] ?? "";
-            return PreparingPage(title);
+            switch (title) {
+              case "언어 설정":
+                return PreparingPage(title);
+              case "공지사항":
+              case "이용 약관":
+              case "개인정보 처리방침":
+                return InfoWebViewPage(title: title);
+              default:
+                return PreparingPage("준비중");
+            }
+            // TODO: 위에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
+            // if (title == "공지사항") {
+            //   return PreparingPage(title);
+            // } else if
+            // return PrivacyPolicyPage();
           }),
+      // TODO: 준비중 페이지는 따로 빼놓음
+      GoRoute(
+        path: '/deleteAccount',
+        builder: (context, state) {
+          return DeleteAccountPage();
+        },
+      ),
+      GoRoute(
+        path: '/prepare/:title',
+        builder: (context, state) {
+          final title = state.pathParameters["title"] ?? "";
+          return PreparingPage(title);
+        },
+      ),
       GoRoute(
           path: '/characterSetting',
           builder: (context, state) => CharacterSettingPage()),
@@ -111,7 +148,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
           return PortraitPage(
-              child: BreathingSolutionPage(solutionId: solutionId));
+              child:
+                  BreathingSolutionPage(solutionId: solutionId));
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.
