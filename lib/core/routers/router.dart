@@ -1,6 +1,7 @@
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
+import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_page.dart';
 import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
@@ -126,6 +127,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             // return PrivacyPolicyPage();
           }),
       // TODO: 준비중 페이지는 따로 빼놓음
+      GoRoute(
+        path: '/deleteAccount',
+        builder: (context, state) {
+          return DeleteAccountPage();
+        },
+      ),
       GoRoute(
         path: '/prepare/:title',
         builder: (context, state) {

@@ -33,7 +33,9 @@ class _MyPageState extends ConsumerState<MyPage> {
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
-    final userNickname = userState.userProfile!.userNickNm!;
+    // 상태 초기화 시 userNickNm이 널이 되어서 화면이 깨지는 현상 때문에 ''를 넣음
+    final String userNickname =
+        userState.userProfile?.userNickNm ?? '';
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
@@ -122,12 +124,14 @@ class _MyPageState extends ConsumerState<MyPage> {
                           showDialog(
                             context: context,
                             builder: (context) {
-                              return ConfirmDialog();
+                              return ConfirmDialog(
+                                isDeleteAccount: false,
+                              );
                             },
                           );
                         case "회원 탈퇴":
                         default:
-                          context.push('/prepare/$title');
+                          context.push('/deleteAccount');
                       }
                     },
                   )

@@ -3,6 +3,7 @@ import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
@@ -41,16 +42,20 @@ void resetAppState(WidgetRef ref) {
   ref.invalidate(clusterScoresViewModelProvider);
   ref.invalidate(chatViewModelProvider);
   ref.invalidate(solutionContextViewModelProvider);
+  ref.invalidate(userViewModelProvider);
   // 필요한 provider들 전부 여기에 나열
 }
 
 class ConfirmDialog extends ConsumerWidget {
-  const ConfirmDialog({
+  final bool isDeleteAccount;
+  ConfirmDialog({
     super.key,
+    required this.isDeleteAccount,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final userProfileVM = ref.read(userViewModelProvider.notifier);
     // 배경 터치는 닫기, 다이얼로그 영역은 차단
     return GestureDetector(
       onTap: () => context.pop(), // 배경 터치시 다이얼로그 닫기
@@ -73,7 +78,7 @@ class ConfirmDialog extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    "로그아웃 하시겠어요?",
+                    isDeleteAccount ? "정말 탈퇴하시겠어요?" : "로그아웃 하시겠어요?",
                     style: AppFontStyles.heading3
                         .copyWith(color: AppColors.grey900),
                   ),
@@ -106,35 +111,35 @@ class ConfirmDialog extends ConsumerWidget {
                       SizedBox(width: 12.w),
                       GestureDetector(
                         onTap: () async {
-                          // TODO:로그아웃 후 로그인 시 자동로그인 말고 수동로그인이 되게 구현해야함
-                          // 지피티 말로는 세션이 초기화되면 재로그인을 해야한다고 하는데
-                          // currentUser가 null이여도 여전히 안되는 상황
-                          // 그래서 앱 내에서 캐시를 초기화하는 기능을 넣어봐야할듯
-
-                          // 실제 로그아웃 처리
-                          await Supabase.instance.client.auth.signOut();
-                          // 로그아웃 확인 // 잘됨!
-                          final user =
-                              Supabase.instance.client.auth.currentUser;
-                          // 로그아웃 전: User 객체 / 로그아웃 후: null
-                          print("아아아아아아$user");
-                          // 상태 리셋
-                          resetAppState(ref);
-                          // 화면 이동
+                          if (isDeleteAccount) {
+                            // 계정 삭제
+                            print('계정 탈퇴!!!!!');
+                            await userProfileVM.deleteAccount();
+                          } else {
+                            print('로그아웃!!!!');
+                            await userProfileVM.logOut();
+                          }
+                          print('상태태태태 초기화');
                           context.go('/login');
+                          resetAppState(ref);
+                          // 화면 이동 (GoRouter 사용시)
                         },
                         child: Container(
                           width: 120.w,
                           height: 48.h,
                           decoration: BoxDecoration(
-                            color: AppColors.green400,
+                            color: isDeleteAccount
+                                ? AppColors.noti900
+                                : AppColors.green400,
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Center(
                             child: Text(
                               '확인',
-                              style: AppFontStyles.bodyMedium16
-                                  .copyWith(color: AppColors.grey900),
+                              style: AppFontStyles.bodyMedium16.copyWith(
+                                  color: isDeleteAccount
+                                      ? AppColors.grey50
+                                      : AppColors.grey900),
                             ),
                           ),
                         ),
