@@ -137,22 +137,6 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                                 );
                               },
                             ),
-                            // ReasonBox(
-                            //   text: '더 이상 앱을 사용하지 않아요',
-                            //   isSelected: _isSelected,
-                            // ),
-                            // ReasonBox(
-                            //   text: '원하는 기능이 없어요',
-                            //   isSelected: _isSelected,
-                            // ),
-                            // ReasonBox(
-                            //   text: '사용이 불편했어요',
-                            //   isSelected: _isSelected,
-                            // ),
-                            // ReasonBox(
-                            //   text: '직접 입력',
-                            //   isSelected: _isSelected,
-                            // ),
                           ],
                         ),
                       ),
@@ -209,7 +193,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                                       BorderRadius.circular(
                                           12.r),
                                 )),
-                          ))
+                          )),
+                      SizedBox(height: 4.h)
                     ],
                   ),
                 ),
@@ -226,29 +211,36 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom >
                       0
                   ? MediaQuery.of(context).viewInsets.bottom +
-                      8.h
+                      10.h
                   : 32.h,
             ),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: AppColors.green400,
+                backgroundColor: _selectedNum == -1
+                    ? AppColors.grey200
+                    : AppColors.green500,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return ConfirmDialog(isDeleteAccount: true);
-                  },
-                );
-              },
+              onPressed: _selectedNum == -1
+                  ? null
+                  : () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return ConfirmDialog(
+                              isDeleteAccount: true);
+                        },
+                      );
+                    },
               child: Text(
                 '탈퇴하기',
-                style: AppFontStyles.bodyMedium16
-                    .copyWith(color: AppColors.grey900),
+                style: AppFontStyles.bodyMedium16.copyWith(
+                    color: _selectedNum == -1
+                        ? AppColors.grey500
+                        : AppColors.grey50),
               ),
             ),
           ),
@@ -295,8 +287,11 @@ class ReasonBox extends StatelessWidget {
           SizedBox(width: 8.w),
           Text(
             text,
-            style: AppFontStyles.bodyRegular14
-                .copyWith(color: AppColors.grey900),
+            style: isSelected
+                ? AppFontStyles.bodySemiBold14
+                    .copyWith(color: AppColors.grey900)
+                : AppFontStyles.bodyRegular14
+                    .copyWith(color: AppColors.grey900),
           )
         ],
       ),
