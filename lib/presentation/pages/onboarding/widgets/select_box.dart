@@ -22,7 +22,7 @@ class SelectBox extends StatelessWidget {
           EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.green500
+              ? AppColors.green700
               : AppColors.green50,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(

@@ -71,24 +71,28 @@ final routerProvider = Provider<GoRouter>((ref) {
                 Map<String, dynamic>? navData;
                 DateTime? targetDate;
 
-                if (extraData is String) {
-                  emotion = extraData;
-                } else if (extraData is Map<String, dynamic>) {
-                  navData = extraData;
-                } else if (extraData is DateTime) {
-                  targetDate = extraData;
-                }
+          if (extraData is String) {
+            emotion = extraData;
+          } else if (extraData is Map<String, dynamic>) {
+            navData = extraData;
+          } else if (extraData is DateTime) {
+            targetDate = extraData;
+          }
 
-                return PortraitPage(
-                  child: ChatPage(
-                    emotionFromHome: emotion,
-                    navigationData: navData,
-                    targetDate: targetDate,
-                  ),
-                );
-              },
+          return PortraitPage(
+            child: ChatPage(
+              emotionFromHome: emotion,
+              navigationData: navData,
+              targetDate: targetDate,
             ),
-          ]),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/report',
+        pageBuilder: (context, state) =>
+            const PortraitPage(child: ReportPage()),
+      ),
       GoRoute(
         path: '/my',
         pageBuilder: (context, state) => PortraitPage(child: MyPage()),

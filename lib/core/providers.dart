@@ -10,6 +10,7 @@ import 'package:dailymoji/data/repositories/message_repository_impl.dart';
 import 'package:dailymoji/data/repositories/reaction_repository.dart';
 import 'package:dailymoji/data/repositories/solution_repository_impl.dart';
 import 'package:dailymoji/domain/entities/solution.dart';
+import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/domain/repositories/emotion_repository.dart';
 import 'package:dailymoji/domain/repositories/message_repository.dart';
 import 'package:dailymoji/domain/repositories/solution_repository.dart';
@@ -20,6 +21,7 @@ import 'package:dailymoji/domain/use_cases/propose_solution_usecase.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/update_message_session_id_use_case.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:http/http.dart' as http;
@@ -129,5 +131,23 @@ final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 final homeDialogueProvider = FutureProvider<String>((ref) async {
   final selectedEmotion = ref.watch(selectedEmotionProvider);
   final repo = ref.watch(homeDialogueRepositoryProvider);
-  return repo.fetchHomeDialogue(selectedEmotion);
+
+  // RIN: 현재 사용자 프로필 정보 가져오기
+  final userProfile = ref.watch(userViewModelProvider).userProfile;
+  final personalityLabel = userProfile?.characterPersonality;
+  final userNickNm = userProfile?.userNickNm;
+
+  // RIN: Supabase DB에 저장된 dbValue('prob_solver' 등)로 변환
+  final personalityDbValue = personalityLabel != null
+      ? CharacterPersonality.values
+          .firstWhere(
+            (e) => e.label == personalityLabel,
+            orElse: () => CharacterPersonality.warmHeart, // 기본값
+          )
+          .dbValue
+      : null;
+
+  // RIN: 캐릭터 성향과 닉네임 함께 보내도록 수정
+  return repo.fetchHomeDialogue(
+      selectedEmotion, personalityDbValue, userNickNm);
 });

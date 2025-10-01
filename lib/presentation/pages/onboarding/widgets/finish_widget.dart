@@ -10,26 +10,29 @@ class FinishWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 90.h),
-        SizedBox(
-          width: double.infinity,
-          height: 94.h,
-          child: Center(
-              child: Text(
-            textAlign: TextAlign.center,
-            text,
-            style: AppFontStyles.heading2
-                .copyWith(color: AppColors.grey900),
-          )),
-        ),
-        Image.asset(
-          AppImages.cadoLove,
-          width: 180.w,
-          height: 270.h,
-        )
-      ],
+    return SizedBox(
+      height: 566.h,
+      child: Column(
+        children: [
+          SizedBox(height: 90.h),
+          SizedBox(
+            width: double.infinity,
+            height: 94.h,
+            child: Center(
+                child: Text(
+              textAlign: TextAlign.center,
+              text,
+              style: AppFontStyles.heading2
+                  .copyWith(color: AppColors.grey900),
+            )),
+          ),
+          Image.asset(
+            AppImages.cadoLove,
+            width: 180.w,
+            height: 270.h,
+          )
+        ],
+      ),
     );
   }
 }

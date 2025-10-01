@@ -144,6 +144,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Color(0xFFFEFBF4),
+        centerTitle: false,
         title: Image.asset(
           AppImages.dailymojiLogoBlack, // DailyMoji 로고 이미지 경로
           height: 30,
@@ -235,7 +236,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.push('/home/chat', extra: selectedEmotion),
+        onTap: () => context.push('/chat', extra: selectedEmotion),
         child: Container(
           color: Color(0xFFFEFBF4),
           child: Container(
