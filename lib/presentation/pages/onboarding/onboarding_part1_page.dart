@@ -29,7 +29,9 @@ class _OnboardingPart1PageState
     final isNextEnabled = switch (stepIndex) {
       // 캐릭터 선택창이 생기면 아래 step.11 활성화 해야하고 case 0~4로 해야함
       // 0 => ref.watch(userViewModelProvider).step11,
-      0 => ref.watch(userViewModelProvider).step11,
+      0 => ref.watch(userViewModelProvider).step11 == -1
+          ? false
+          : true,
       1 => ref.watch(userViewModelProvider).step12,
       2 => ref.watch(userViewModelProvider).step13,
       _ => true,

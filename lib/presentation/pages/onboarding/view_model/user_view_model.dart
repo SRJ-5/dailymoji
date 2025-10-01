@@ -4,29 +4,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UserState {
   final UserProfile? userProfile;
-  final bool step11;
+  final int step11;
   final bool step12;
   final bool step13;
-  final List<bool> step2Answers;
+  final List<int> step2Answers;
 
   UserState({
     required this.userProfile,
-    this.step11 = false,
+    this.step11 = -1,
     this.step12 = false,
     this.step13 = false,
-    List<bool>? step2Answers,
+    List<int>? step2Answers,
   }) : step2Answers = step2Answers ??
             List.generate(
               10,
-              (index) => index == 9 ? true : false,
+              (index) => index == 9 ? 0 : -1,
             );
 
   UserState copyWith({
     UserProfile? userProfile,
-    bool? step11,
+    int? step11,
     bool? step12,
     bool? step13,
-    List<bool>? step2Answers,
+    List<int>? step2Answers,
   }) {
     return UserState(
       userProfile: userProfile ?? this.userProfile,
@@ -107,9 +107,9 @@ class UserViewModel extends Notifier<UserState> {
   }
 
   void setAiPersonality(
-      {required bool check, required String aiPersonality}) {
+      {required int selectNum, required String aiPersonality}) {
     state = state.copyWith(
-        step11: check,
+        step11: selectNum,
         userProfile: state.userProfile
             ?.copyWith(characterPersonality: aiPersonality));
   }
@@ -122,13 +122,10 @@ class UserViewModel extends Notifier<UserState> {
             ?.copyWith(userNickNm: userNickName));
   }
 
-  void setAnswer(
-      {required int index,
-      required bool check,
-      required int score}) {
+  void setAnswer({required int index, required int score}) {
     if (index < 0 || index >= state.step2Answers.length) return;
-    final newAnswers = List<bool>.from(state.step2Answers);
-    newAnswers[index] = check;
+    final newAnswers = List<int>.from(state.step2Answers);
+    newAnswers[index] = score;
 
     final currentScores = Map<String, dynamic>.from(
         state.userProfile?.onboardingScores ?? {});
@@ -148,7 +145,6 @@ class UserViewModel extends Notifier<UserState> {
     state = state.copyWith(
         step2Answers: newAnswers,
         userProfile: newSurveyResponse);
-    print('survey: ${state.userProfile?.onboardingScores}');
   }
 
   Future<void> updateUserNickNM(

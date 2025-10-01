@@ -20,7 +20,13 @@ class SelectAiPersonality extends ConsumerStatefulWidget {
 
 class _SelectAiPersonalityState
     extends ConsumerState<SelectAiPersonality> {
-  int _selectedIndex = -1;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = ref.read(userViewModelProvider).step11;
+  }
 
   final _personalities = OnboardingCharacterPersonality.values
       .map((e) => e.label)
@@ -72,7 +78,7 @@ class _SelectAiPersonalityState
                               .read(
                                   userViewModelProvider.notifier)
                               .setAiPersonality(
-                                  check: _selectedIndex != -1,
+                                  selectNum: _selectedIndex,
                                   aiPersonality:
                                       _personalities[index]);
                         },

@@ -21,19 +21,21 @@ class TestWidget extends ConsumerStatefulWidget {
 }
 
 class _TestWidgetState extends ConsumerState<TestWidget> {
-  int _selectedIndex = -1;
+  late int _selectedIndex;
 
-  final Map<String, dynamic> _answerList = {
-    '전혀 없었어요': 0,
-    '가끔 있었어요': 1,
-    '자주 있었어요': 2,
-    '거의 매일 있었어요': 3
-  };
+  final List<String> _answerList = [
+    '전혀 없었어요',
+    '가끔 있었어요',
+    '자주 있었어요',
+    '거의 매일 있었어요'
+  ];
 
   @override
   void initState() {
     super.initState();
-    _selectedIndex = -1;
+    _selectedIndex = ref
+        .read(userViewModelProvider)
+        .step2Answers[widget.questionIndex];
   }
 
   @override
@@ -66,13 +68,14 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                       child: Padding(
                         padding: EdgeInsets.symmetric(
                             horizontal: 16.w, vertical: 10.h),
-                        child: Center(
+                        child: Align(
+                            alignment: Alignment.centerLeft,
                             child: Text(
-                          widget.text,
-                          style: AppFontStyles.bodyBold16
-                              .copyWith(
-                                  color: AppColors.grey900),
-                        )),
+                              widget.text,
+                              style: AppFontStyles.bodyBold16
+                                  .copyWith(
+                                      color: AppColors.grey900),
+                            )),
                       ),
                     ),
                   ],
@@ -86,7 +89,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
           children: List.generate(
             _answerList.length,
             (index) {
-              final answer = _answerList.entries.toList()[index];
+              final answer = _answerList[index];
               final isSelected = _selectedIndex == index;
               return Column(
                 children: [
@@ -101,14 +104,12 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                         ref
                             .read(userViewModelProvider.notifier)
                             .setAnswer(
-                              check: _selectedIndex != -1,
                               index: widget.questionIndex,
-                              score: answer.value,
+                              score: _selectedIndex,
                             );
                       },
                       child: SelectBox(
-                          isSelected: isSelected,
-                          text: answer.key)),
+                          isSelected: isSelected, text: answer)),
                   SizedBox(height: 8.h),
                 ],
               );

@@ -34,7 +34,8 @@ class _OnboardingPart2PageState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(userViewModelProvider);
-    final isNextEnabled = state.step2Answers[stepIndex];
+    final isNextEnabled =
+        state.step2Answers[stepIndex] == -1 ? false : true;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
