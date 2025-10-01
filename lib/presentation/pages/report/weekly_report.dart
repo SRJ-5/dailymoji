@@ -36,9 +36,9 @@ class EmotionData {
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
     "불안/분노": false,
-    "우울/무기력/번아웃": false,
-    "ADHD": false,
-    "불면/과다수면": false,
+    "우울/무기력": false,
+    "집중력 저하": false,
+    "불규칙 수면": false,
     "평온/회복": false,
   };
 });
@@ -76,7 +76,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
   Widget build(BuildContext context) {
     final state = ref.watch(clusterScoresViewModelProvider);
     if (state.isLoading)
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+          child:
+              CircularProgressIndicator(backgroundColor: AppColors.yellow50));
     if (state.error != null) return Center(child: Text('에러: ${state.error}'));
 
     // 기존 5개 감정 + 날짜
@@ -334,6 +336,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     ...selectedEmotions
                         .map((key) => _buildEmotionCard(key, mergedMap[key]!)),
                   ],
+                ),
+                SizedBox(
+                  height: 40.h,
                 ),
               ],
             ),

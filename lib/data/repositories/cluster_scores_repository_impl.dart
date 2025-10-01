@@ -69,6 +69,7 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
       year: year,
       month: month,
     );
+
     return _pickDailyMax(dtos);
   }
 

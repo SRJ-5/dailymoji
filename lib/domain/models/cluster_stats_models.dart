@@ -11,7 +11,7 @@ ClusterType clusterFromString(String s) {
       return ClusterType.positive;
     case 'sleep':
       return ClusterType.sleep;
-    case 'adhd':
+    case 'ADHD':
       return ClusterType.adhd;
     default:
       return ClusterType.positive; // fallback or throw
