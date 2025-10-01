@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/my/widgets/confirm_dialog.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/edit_nickname_card.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
@@ -32,7 +33,9 @@ class _MyPageState extends ConsumerState<MyPage> {
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
-    final userNickname = userState.userProfile!.userNickNm!;
+    // 상태 초기화 시 userNickNm이 널이 되어서 화면이 깨지는 현상 때문에 ''를 넣음
+    final String userNickname =
+        userState.userProfile?.userNickNm ?? '';
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
@@ -92,10 +95,17 @@ class _MyPageState extends ConsumerState<MyPage> {
                   ...List.generate(
                     4,
                     (index) => () {
-                      final title =
-                          ["공지사항", "언어 설정", "이용 약관", "개인정보 처리방침"][index];
+                      final title = [
+                        "공지사항",
+                        "언어 설정",
+                        "이용 약관",
+                        "개인정보 처리방침"
+                      ][index];
                       context.push(
-                          index == 3 ? '/privacyPolicy' : '/prepare/$title');
+                          // index == 3
+                          //   ? '/privacyPolicy'
+                          //   :
+                          '/info/$title');
                     },
                   )
                 ],
@@ -109,7 +119,20 @@ class _MyPageState extends ConsumerState<MyPage> {
                     2,
                     (index) => () {
                       final title = ["로그아웃", "회원 탈퇴"][index];
-                      context.push('/prepare/$title');
+                      switch (title) {
+                        case "로그아웃":
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return ConfirmDialog(
+                                isDeleteAccount: false,
+                              );
+                            },
+                          );
+                        case "회원 탈퇴":
+                        default:
+                          context.push('/deleteAccount');
+                      }
                     },
                   )
                 ],
@@ -130,7 +153,8 @@ class _MyPageState extends ConsumerState<MyPage> {
     Widget? widget,
   }) {
     return Container(
-      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding:
+          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12.r),
