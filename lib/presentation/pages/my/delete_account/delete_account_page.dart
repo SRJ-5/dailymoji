@@ -217,23 +217,30 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: AppColors.green500,
+                backgroundColor: _selectedNum == -1
+                    ? AppColors.grey200
+                    : AppColors.green500,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return ConfirmDialog(isDeleteAccount: true);
-                  },
-                );
-              },
+              onPressed: _selectedNum == -1
+                  ? null
+                  : () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return ConfirmDialog(
+                              isDeleteAccount: true);
+                        },
+                      );
+                    },
               child: Text(
                 '탈퇴하기',
-                style: AppFontStyles.bodyMedium16
-                    .copyWith(color: AppColors.grey50),
+                style: AppFontStyles.bodyMedium16.copyWith(
+                    color: _selectedNum == -1
+                        ? AppColors.grey500
+                        : AppColors.grey50),
               ),
             ),
           ),
