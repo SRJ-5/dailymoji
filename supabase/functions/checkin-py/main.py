@@ -132,7 +132,7 @@ def is_safety_text(text: str, llm_json: Optional[dict], debug_log: dict) -> Tupl
     
     if triggered:
         # 안전 장치가 발동하면, neg_low 점수를 극단적으로 높여 위기 상황임을 명시
-        return True, {"neg_low": 0.95, "neg_high": 0.0, "adhd_high": 0.0, "sleep": 0.0, "positive": 0.0}
+        return True, {"neg_low": 0.95, "neg_high": 0.0, "adhd": 0.0, "sleep": 0.0, "positive": 0.0}
     
     return False, {}
 
@@ -150,7 +150,7 @@ def _format_scores_for_print(scores: dict) -> str:
 def clip01(x: float) -> float: return max(0.0, min(1.0, float(x)))
 
 def g_score(final_scores: dict) -> float:
-    w = {"neg_high": 1.0, "neg_low": 0.9, "sleep": 0.7, "adhd_high": 0.6, "positive": -0.3}
+    w = {"neg_high": 1.0, "neg_low": 0.9, "sleep": 0.7, "adhd": 0.6, "positive": -0.3}
     g = sum(final_scores.get(k, 0.0) * w.get(k, 0.0) for k in CLUSTERS)
     return round(clip01((g + 1.0) / 2.0), 3)
 
@@ -461,200 +461,206 @@ async def analyze_emotion(payload: AnalyzeRequest):
         pass
 
         # --- 파이프라인 2: Triage (친구 모드 / 분석 모드 분기) ---
-        # rule_scores, _, _ = rule_scoring(text)
-        # # 텍스트가 짧고 (15자 미만) 룰 스코어가 낮을 때만 칭긔칭긔 모드 진입 --> llm으로 파악 으로 변경
-        # if max(rule_scores.values() or [0.0]) < 0.3 and len(text) < 15:
+        # 1차 필터: 텍스트가 매우 짧고, 규칙 기반 점수가 거의 없는 경우 LLM 호출 없이 바로 'FRIENDLY'로 판단
+        rule_scores, _, _ = rule_scoring(text)
+        
+        # 조건: 텍스트 길이가 10자 미만이고, 모든 규칙 기반 점수가 0.1 미만일 때
+        is_simple_text = len(text) < 10 and max(rule_scores.values() or [0.0]) < 0.1
 
- # 💛 RIN: LLM으로 사용자의 메시지가 분석이 필요한 내용인지, 단순 대화인지 먼저 판단!!
-        triage_mode = await call_llm(
-            system_prompt=TRIAGE_SYSTEM_PROMPT,
-            user_content=text,
-            openai_key=OPENAI_KEY,
-            expect_json=False # 'ANALYSIS' OR 'FRIENDLY'
-        )
+        if is_simple_text:
+            triage_mode = 'FRIENDLY'
+            debug_log["triage_decision"] = "Rule-based filter: Simple text"
+        else:
+        # 2차 판단: 1차 필터를 통과한 경우에만 LLM으로 사용자의 메시지가 분석이 필요한 내용인지, 단순 대화인지 먼저 판단!!
+            triage_mode = await call_llm(
+                system_prompt=TRIAGE_SYSTEM_PROMPT,
+                user_content=text,
+                openai_key=OPENAI_KEY,
+                expect_json=False # 'ANALYSIS' OR 'FRIENDLY'
+            )
 
-        debug_log["triage_mode"] = triage_mode
-        # Triage 결과에 따라 분기
-        if triage_mode == 'FRIENDLY':
-            debug_log["mode"] = "FRIENDLY"
-            print(f"\n--- 👋 FRIENDLY MODE DEBUG ---")
-            print(f"Input text: '{text}' -> Classified as FRIENDLY")
-            print("------❤️-------------❤️-----------❤️-------\n")
-           
-
-            # 🤩 RIN: 친구 모드에서도 캐릭터 성향을 반영한 프롬프트 사용하기
-            system_prompt = get_system_prompt(
-                mode='FRIENDLY',
-                personality=payload.character_personality,
-                language_code=payload.language_code,
-                user_nick_nm=user_nick_nm,
-                character_nm=character_nm
-            )           
-            friendly_text = await call_llm(system_prompt, text, OPENAI_KEY, expect_json=False)
-
-            intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": friendly_text}
-            # 친근한 대화도 세션을 남길 수 있음 (스코어는 비어있음)
-            session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
-            return {"session_id": session_id, "intervention": intervention}
-
-        else: # triage_mode == 'ANALYSIS' 또는 예외 발생 시 기본값
-            # --- 파이프라인 3: 분석 모드 ---
-            debug_log["mode"] = "ANALYSIS"
-            print("\n--- 🧐 TEXT ANALYSIS DEBUG 🧐 ---")
-
-            # 3-1. 온보딩 점수(Baseline) 계산
-            onboarding_scores = calculate_baseline_scores(payload.onboarding or {})
-            print(f"1. Onboarding Scores:\n{_format_scores_for_print(onboarding_scores)}")
-
-            # 3-2. 텍스트 분석 점수(fused_scores) 계산 (LLM, Rule-based 포함)
-            # rule_scores, _, _ = rule_scoring(text)
-            # 🤩 RIN: 분석 모드에서도 캐릭터 성향을 반영한 프롬프트 사용하기
-            system_prompt = get_system_prompt(
-                mode='ANALYSIS',
-                personality=payload.character_personality,
-                language_code=payload.language_code,
-                user_nick_nm=user_nick_nm,
-                character_nm=character_nm
-            )      
-            llm_payload = payload.dict()
-            llm_payload["baseline_scores"] = onboarding_scores
-            llm_json = await call_llm(system_prompt, json.dumps(llm_payload, ensure_ascii=False), OPENAI_KEY)
-            debug_log["llm"] = llm_json
+            debug_log["triage_mode"] = triage_mode
+            # Triage 결과에 따라 분기
+            if triage_mode == 'FRIENDLY':
+                debug_log["mode"] = "FRIENDLY"
+                print(f"\n--- 👋 FRIENDLY MODE DEBUG ---")
+                print(f"Input text: '{text}' -> Classified as FRIENDLY")
+                print("------❤️-------------❤️-----------❤️-------\n")
             
-            # --- 파이프라인 3.5: 2차 안전 장치 (LLM 결과 기반) - 점수 계산 전 실행 ---
-            is_safe_llm, crisis_scores_llm = is_safety_text(text, llm_json, debug_log)
-            if is_safe_llm:
-                print(f"🚨 2차 안전 장치 발동: '{text}'")
-                # 안전 모드 발동 시에는 위기 점수를 그대로 사용하고 DB에 저장
-                profile, g = 1, g_score(crisis_scores_llm)
-                top_cluster = "neg_low"
-                intervention = {
-                    "preset_id": PresetIds.SAFETY_CRISIS_MODAL,
-                    "analysis_text": "많이 힘드시군요. 지금 도움이 필요할 수 있어요.",
-                    "solution_id": f"{top_cluster}_crisis_01",
-                    "cluster": top_cluster
+
+                # 🤩 RIN: 친구 모드에서도 캐릭터 성향을 반영한 프롬프트 사용하기
+                system_prompt = get_system_prompt(
+                    mode='FRIENDLY',
+                    personality=payload.character_personality,
+                    language_code=payload.language_code,
+                    user_nick_nm=user_nick_nm,
+                    character_nm=character_nm
+                )           
+                friendly_text = await call_llm(system_prompt, text, OPENAI_KEY, expect_json=False)
+
+                intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": friendly_text}
+                # 친근한 대화도 세션을 남길 수 있음 (스코어는 비어있음)
+                session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
+                return {"session_id": session_id, "intervention": intervention}
+
+            else: # triage_mode == 'ANALYSIS' 또는 예외 발생 시 기본값
+                # --- 파이프라인 3: 분석 모드 ---
+                debug_log["mode"] = "ANALYSIS"
+                print("\n--- 🧐 TEXT ANALYSIS DEBUG 🧐 ---")
+
+                # 3-1. 온보딩 점수(Baseline) 계산
+                onboarding_scores = calculate_baseline_scores(payload.onboarding or {})
+                print(f"1. Onboarding Scores:\n{_format_scores_for_print(onboarding_scores)}")
+
+                # 3-2. 텍스트 분석 점수(fused_scores) 계산 (LLM, Rule-based 포함)
+                # rule_scores, _, _ = rule_scoring(text)
+                # 🤩 RIN: 분석 모드에서도 캐릭터 성향을 반영한 프롬프트 사용하기
+                system_prompt = get_system_prompt(
+                    mode='ANALYSIS',
+                    personality=payload.character_personality,
+                    language_code=payload.language_code,
+                    user_nick_nm=user_nick_nm,
+                    character_nm=character_nm
+                )      
+                llm_payload = payload.dict()
+                llm_payload["baseline_scores"] = onboarding_scores
+                llm_json = await call_llm(system_prompt, json.dumps(llm_payload, ensure_ascii=False), OPENAI_KEY)
+                debug_log["llm"] = llm_json
+                
+                # --- 파이프라인 3.5: 2차 안전 장치 (LLM 결과 기반) - 점수 계산 전 실행 ---
+                is_safe_llm, crisis_scores_llm = is_safety_text(text, llm_json, debug_log)
+                if is_safe_llm:
+                    print(f"🚨 2차 안전 장치 발동: '{text}'")
+                    # 안전 모드 발동 시에는 위기 점수를 그대로 사용하고 DB에 저장
+                    profile, g = 1, g_score(crisis_scores_llm)
+                    top_cluster = "neg_low"
+                    intervention = {
+                        "preset_id": PresetIds.SAFETY_CRISIS_MODAL,
+                        "analysis_text": "많이 힘드시군요. 지금 도움이 필요할 수 있어요.",
+                        "solution_id": f"{top_cluster}_crisis_01",
+                        "cluster": top_cluster
+                    }
+                    # 이 경우, 실제 계산된 점수가 아닌 위기 점수(crisis_scores_llm)를 저장
+                    session_id = await save_analysis_to_supabase(
+                        payload, profile=profile, g=g, intervention=intervention,
+                        debug_log=debug_log, final_scores=crisis_scores_llm
+                    )
+                    # 반환값도 위기 점수 기준으로 생성
+                    return {
+                        "session_id": session_id,
+                        "final_scores": crisis_scores_llm,
+                        "g_score": g,
+                        "profile": profile,
+                        "intervention": intervention
+                    }
+
+                # === 안전장치 모두 통과 시 ===
+                # --- 파이프라인 4: 전체 스코어링 로직 ---
+                # 4-1. 텍스트 분석 점수(fused_scores) 계산 
+                rule_scores, _, _ = rule_scoring(text)
+                text_if = {c: 0.0 for c in CLUSTERS}
+                if llm_json and not llm_json.get("error"):
+                    I, F = llm_json.get("intensity", {}), llm_json.get("frequency", {})
+                    for c in CLUSTERS:
+                        In = clip01((I.get(c, 0.0) or 0.0) / 3.0)
+                        Fn = clip01((F.get(c, 0.0) or 0.0) / 3.0)
+                        text_if[c] = clip01(0.6 * In + 0.4 * Fn + 0.1 * rule_scores.get(c, 0.0))
+                
+                fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
+                print(f"2a. Rule-Based Scores:\n{_format_scores_for_print(rule_scores)}")
+                print(f"2b. LLM-based Scores (I/F fusion):\n{_format_scores_for_print(text_if)}")
+                print(f"2c. Fused Text Scores (Rule + LLM):\n{_format_scores_for_print(fused_scores)}")
+
+                # 4-2. 이모지 점수(icon_prior) 생성
+                icon_prior = {c: 0.0 for c in CLUSTERS}
+                has_icon = payload.icon and ICON_TO_CLUSTER.get(payload.icon.lower()) != "neutral"
+                if has_icon:
+                    selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
+                    icon_prior[selected_cluster] = 1.0        
+                print(f"3. Icon Prior Scores:\n{_format_scores_for_print(icon_prior)}")
+
+                
+                # --- 가중치 재조정 로직 ---
+
+                # 4-3. FINAL_FUSION_WEIGHTS를 사용하여 최종 점수 융합 (가중치 재조정 포함)
+                w = FINAL_FUSION_WEIGHTS
+
+                if not has_icon:
+                # RIN 🌸 CASE 1: 텍스트만 입력 시 (icon 없음) -> icon 가중치를 text와 onboarding에 비례 배분
+                    w_text = w['text'] + w['icon'] * (w['text'] / (w['text'] + w['onboarding']))
+                    w_onboarding = w['onboarding'] + w['icon'] * (w['onboarding'] / (w['text'] + w['onboarding']))
+                    w_icon = 0.0
+                else:
+                # RIN 🌸 CASE 3: 텍스트 + 이모지 입력 시 -> 모든 가중치 그대로 사용
+                    w_text, w_onboarding, w_icon = w['text'], w['onboarding'], w['icon']
+
+                weights_used = {"text": w_text, "onboarding": w_onboarding, "icon": w_icon}
+                print(f"4. Final Fusion Weights:\n{_format_scores_for_print(weights_used)}")
+
+                adjusted_scores = {c: clip01(
+                    fused_scores.get(c, 0.0) * w_text +
+                    onboarding_scores.get(c, 0.0) * w_onboarding +
+                    icon_prior.get(c, 0.0) * w_icon
+                ) for c in CLUSTERS}
+                print(f"5. Final Adjusted Scores (after fusion):\n{_format_scores_for_print(adjusted_scores)}")
+
+                debug_log["scores"] = {
+                    "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
+                    "1_onboarding_scores": onboarding_scores,
+                    "2_text_fused_scores": fused_scores,
+                    "3_icon_prior": icon_prior,
+                    "4_final_adjusted_scores": adjusted_scores
                 }
-                # 이 경우, 실제 계산된 점수가 아닌 위기 점수(crisis_scores_llm)를 저장
+                
+                # 5. 최종 결과 생성
+                g = g_score(adjusted_scores)
+                profile = pick_profile(adjusted_scores, llm_json)
+                top_cluster = max(adjusted_scores, key=adjusted_scores.get, default="neg_low")
+                
+                print(f"G-Score: {g:.2f}")
+                print(f"Profile: {profile}")
+                print("------❤️-------------❤️-----------❤️-------\n")
+
+
+                debug_log["scores"] = {
+                    "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
+                    "final_adjusted_scores": adjusted_scores
+                }
+
+                # LLM으로부터 공감 메시지와 분석 메시지를 각각 가져옴
+                empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
+                # 🤩 RIN: get_analysis_message 호출 시 캐릭터 성향을 넘겨주고 DB에서 맞는 멘트 가져옴
+                analysis_text = await get_analysis_message(
+                    adjusted_scores, 
+                    payload.character_personality,
+                    payload.language_code
+                )
+                                
+                
+                # 4-4. Intervention 객체 생성 및 반환 
+                intervention = {
+                    "preset_id": PresetIds.SOLUTION_PROPOSAL,
+                    "empathy_text": empathy_text, 
+                    "analysis_text": analysis_text,
+                    "top_cluster": top_cluster
+                }
+                
                 session_id = await save_analysis_to_supabase(
                     payload, profile=profile, g=g, intervention=intervention,
-                    debug_log=debug_log, final_scores=crisis_scores_llm
+                    debug_log=debug_log, final_scores=adjusted_scores
                 )
-                # 반환값도 위기 점수 기준으로 생성
+                
+                if session_id:
+                    intervention['session_id'] = session_id
+
+
                 return {
                     "session_id": session_id,
-                    "final_scores": crisis_scores_llm,
+                    "final_scores": adjusted_scores,
                     "g_score": g,
                     "profile": profile,
-                    "intervention": intervention
+                    "intervention": intervention 
                 }
-
-            # === 안전장치 모두 통과 시 ===
-            # --- 파이프라인 4: 전체 스코어링 로직 ---
-            # 4-1. 텍스트 분석 점수(fused_scores) 계산 
-            rule_scores, _, _ = rule_scoring(text)
-            text_if = {c: 0.0 for c in CLUSTERS}
-            if llm_json and not llm_json.get("error"):
-                I, F = llm_json.get("intensity", {}), llm_json.get("frequency", {})
-                for c in CLUSTERS:
-                    In = clip01((I.get(c, 0.0) or 0.0) / 3.0)
-                    Fn = clip01((F.get(c, 0.0) or 0.0) / 3.0)
-                    text_if[c] = clip01(0.6 * In + 0.4 * Fn + 0.1 * rule_scores.get(c, 0.0))
-            
-            fused_scores = {c: clip01(W_RULE * rule_scores.get(c, 0.0) + W_LLM * text_if.get(c, 0.0)) for c in CLUSTERS}
-            print(f"2a. Rule-Based Scores:\n{_format_scores_for_print(rule_scores)}")
-            print(f"2b. LLM-based Scores (I/F fusion):\n{_format_scores_for_print(text_if)}")
-            print(f"2c. Fused Text Scores (Rule + LLM):\n{_format_scores_for_print(fused_scores)}")
-
-            # 4-2. 이모지 점수(icon_prior) 생성
-            icon_prior = {c: 0.0 for c in CLUSTERS}
-            has_icon = payload.icon and ICON_TO_CLUSTER.get(payload.icon.lower()) != "neutral"
-            if has_icon:
-                selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower())
-                icon_prior[selected_cluster] = 1.0        
-            print(f"3. Icon Prior Scores:\n{_format_scores_for_print(icon_prior)}")
-
-            
-            # --- 가중치 재조정 로직 ---
-
-            # 4-3. FINAL_FUSION_WEIGHTS를 사용하여 최종 점수 융합 (가중치 재조정 포함)
-            w = FINAL_FUSION_WEIGHTS
-
-            if not has_icon:
-            # RIN 🌸 CASE 1: 텍스트만 입력 시 (icon 없음) -> icon 가중치를 text와 onboarding에 비례 배분
-                w_text = w['text'] + w['icon'] * (w['text'] / (w['text'] + w['onboarding']))
-                w_onboarding = w['onboarding'] + w['icon'] * (w['onboarding'] / (w['text'] + w['onboarding']))
-                w_icon = 0.0
-            else:
-            # RIN 🌸 CASE 3: 텍스트 + 이모지 입력 시 -> 모든 가중치 그대로 사용
-                w_text, w_onboarding, w_icon = w['text'], w['onboarding'], w['icon']
-
-            weights_used = {"text": w_text, "onboarding": w_onboarding, "icon": w_icon}
-            print(f"4. Final Fusion Weights:\n{_format_scores_for_print(weights_used)}")
-
-            adjusted_scores = {c: clip01(
-                fused_scores.get(c, 0.0) * w_text +
-                onboarding_scores.get(c, 0.0) * w_onboarding +
-                icon_prior.get(c, 0.0) * w_icon
-            ) for c in CLUSTERS}
-            print(f"5. Final Adjusted Scores (after fusion):\n{_format_scores_for_print(adjusted_scores)}")
-
-            debug_log["scores"] = {
-                "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
-                "1_onboarding_scores": onboarding_scores,
-                "2_text_fused_scores": fused_scores,
-                "3_icon_prior": icon_prior,
-                "4_final_adjusted_scores": adjusted_scores
-            }
-            
-            # 5. 최종 결과 생성
-            g = g_score(adjusted_scores)
-            profile = pick_profile(adjusted_scores, llm_json)
-            top_cluster = max(adjusted_scores, key=adjusted_scores.get, default="neg_low")
-            
-            print(f"G-Score: {g:.2f}")
-            print(f"Profile: {profile}")
-            print("------❤️-------------❤️-----------❤️-------\n")
-
-
-            debug_log["scores"] = {
-                "weights_used": {"text": w_text, "onboarding": w_onboarding, "icon": w_icon},
-                "final_adjusted_scores": adjusted_scores
-            }
-
-            # LLM으로부터 공감 메시지와 분석 메시지를 각각 가져옴
-            empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
-            # 🤩 RIN: get_analysis_message 호출 시 캐릭터 성향을 넘겨주고 DB에서 맞는 멘트 가져옴
-            analysis_text = await get_analysis_message(
-                adjusted_scores, 
-                payload.character_personality,
-                payload.language_code
-            )
-                            
-            
-            # 4-4. Intervention 객체 생성 및 반환 
-            intervention = {
-                "preset_id": PresetIds.SOLUTION_PROPOSAL,
-                "empathy_text": empathy_text, 
-                "analysis_text": analysis_text,
-                "top_cluster": top_cluster
-            }
-            
-            session_id = await save_analysis_to_supabase(
-                payload, profile=profile, g=g, intervention=intervention,
-                debug_log=debug_log, final_scores=adjusted_scores
-            )
-            
-            if session_id:
-                intervention['session_id'] = session_id
-
-
-            return {
-                "session_id": session_id,
-                "final_scores": adjusted_scores,
-                "g_score": g,
-                "profile": profile,
-                "intervention": intervention 
-            }
 
     except Exception as e:
         tb = traceback.format_exc()
@@ -901,3 +907,12 @@ async def get_solution_details(solution_id: str):
     except Exception as e:
         print(f"RIN: ❌ 해당 솔루션을 찾을 수 없음: {solution_id}, 에러: {e}")
         raise HTTPException(status_code=404, detail="Solution not found")
+    
+
+# ======================================================================
+# ===     리포트 요약 엔드포인트     ===
+# ======================================================================
+
+
+
+
