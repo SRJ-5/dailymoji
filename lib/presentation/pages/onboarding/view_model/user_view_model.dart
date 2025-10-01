@@ -7,15 +7,13 @@ class UserState {
   final bool step11;
   final bool step12;
   final bool step13;
-  final bool step14;
   final List<bool> step2Answers;
 
   UserState({
     required this.userProfile,
-    this.step11 = true,
+    this.step11 = false,
     this.step12 = false,
     this.step13 = false,
-    this.step14 = false,
     List<bool>? step2Answers,
   }) : step2Answers = step2Answers ??
             List.generate(
@@ -28,7 +26,6 @@ class UserState {
     bool? step11,
     bool? step12,
     bool? step13,
-    bool? step14,
     List<bool>? step2Answers,
   }) {
     return UserState(
@@ -36,7 +33,6 @@ class UserState {
       step11: step11 ?? this.step11,
       step12: step12 ?? this.step12,
       step13: step13 ?? this.step13,
-      step14: step14 ?? this.step14,
       step2Answers: step2Answers ?? List.from(this.step2Answers),
     );
   }
@@ -105,7 +101,7 @@ class UserViewModel extends Notifier<UserState> {
 
   void setAiName({required bool check, required String aiName}) {
     state = state.copyWith(
-        step13: check,
+        step12: check,
         userProfile:
             state.userProfile?.copyWith(characterNm: aiName));
   }
@@ -113,7 +109,7 @@ class UserViewModel extends Notifier<UserState> {
   void setAiPersonality(
       {required bool check, required String aiPersonality}) {
     state = state.copyWith(
-        step12: check,
+        step11: check,
         userProfile: state.userProfile
             ?.copyWith(characterPersonality: aiPersonality));
   }
@@ -121,7 +117,7 @@ class UserViewModel extends Notifier<UserState> {
   void setUserNickName(
       {required bool check, required String userNickName}) {
     state = state.copyWith(
-        step14: check,
+        step13: check,
         userProfile: state.userProfile
             ?.copyWith(userNickNm: userNickName));
   }

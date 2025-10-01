@@ -30,3 +30,14 @@ enum CharacterPersonality {
   final String dbValue;
   const CharacterPersonality(this.label, this.dbValue);
 }
+
+enum OnboardingCharacterPersonality {
+  probSolver("차분하게 상황을 분석하고 문제를 해결하는 친구", "prob_solver"),
+  warmHeart("감정 표현이 풍부하고 따뜻한 친구", "warm_heart"),
+  oddKind("어딘가 엉뚱하지만 마음만은 따뜻한 친구", "odd_kind"),
+  balanced("따뜻함과 이성적인 사고를 모두 가진 친구", "balanced");
+
+  final String label;
+  final String dbValue;
+  const OnboardingCharacterPersonality(this.label, this.dbValue);
+}

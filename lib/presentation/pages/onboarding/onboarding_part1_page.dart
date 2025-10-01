@@ -29,9 +29,9 @@ class _OnboardingPart1PageState
     final isNextEnabled = switch (stepIndex) {
       // 캐릭터 선택창이 생기면 아래 step.11 활성화 해야하고 case 0~4로 해야함
       // 0 => ref.watch(userViewModelProvider).step11,
-      0 => ref.watch(userViewModelProvider).step12,
-      1 => ref.watch(userViewModelProvider).step13,
-      2 => ref.watch(userViewModelProvider).step14,
+      0 => ref.watch(userViewModelProvider).step11,
+      1 => ref.watch(userViewModelProvider).step12,
+      2 => ref.watch(userViewModelProvider).step13,
       _ => true,
     };
     return GestureDetector(
@@ -76,58 +76,57 @@ class _OnboardingPart1PageState
                 child: [
                   // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
                   // SelectAi(),
-                  SelectAiPersonality(),
-                  AiNameSetting(),
-                  UserNickName(),
-                  FinishWidget(
-                    text: '좋아요!\n이제 다음 단계로 가볼까요?',
+                  SingleChildScrollView(
+                      child: SelectAiPersonality()),
+                  SingleChildScrollView(child: AiNameSetting()),
+                  SingleChildScrollView(child: UserNickName()),
+                  SingleChildScrollView(
+                    child: FinishWidget(
+                      text: '좋아요!\n이제 다음 단계로 가볼까요?',
+                    ),
                   ),
                 ][stepIndex],
               ),
             ],
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: 8.h,
-              left: 12.w,
-              right: 12.w,
-              bottom: MediaQuery.of(context).viewInsets.bottom >
-                      0
-                  ? MediaQuery.of(context).viewInsets.bottom +
-                      8.h
-                  : 32.h,
-            ),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: isNextEnabled
-                    ? AppColors.green400
-                    : AppColors.grey200,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
+        bottomNavigationBar: Padding(
+          padding: EdgeInsets.only(
+            top: 8.h,
+            left: 12.w,
+            right: 12.w,
+            bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                ? MediaQuery.of(context).viewInsets.bottom + 10.h
+                : 56.h,
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(double.infinity, 52.h),
+              backgroundColor: isNextEnabled
+                  ? AppColors.green500
+                  : AppColors.grey200,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
               ),
-              onPressed: isNextEnabled
-                  ? () {
-                      if (stepIndex < totalSteps) {
-                        setState(() {
-                          // isNextEnabled = false;
-                          stepIndex++;
-                        });
-                      } else if (stepIndex == totalSteps) {
-                        context.go('/onboarding2');
-                      }
-                    }
-                  : null,
-              child: Text('계속하기',
-                  style: AppFontStyles.bodyMedium16.copyWith(
-                    color: isNextEnabled
-                        ? AppColors.grey900
-                        : AppColors.grey500,
-                  )),
             ),
+            onPressed: isNextEnabled
+                ? () {
+                    if (stepIndex < totalSteps) {
+                      setState(() {
+                        // isNextEnabled = false;
+                        stepIndex++;
+                      });
+                    } else if (stepIndex == totalSteps) {
+                      context.go('/onboarding2');
+                    }
+                  }
+                : null,
+            child: Text('계속하기',
+                style: AppFontStyles.bodyMedium16.copyWith(
+                  color: isNextEnabled
+                      ? AppColors.grey50
+                      : AppColors.grey500,
+                )),
           ),
         ),
       ),

@@ -91,7 +91,7 @@ class _OnboardingPart2PageState
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 52.h),
                     backgroundColor: isNextEnabled
-                        ? AppColors.green400
+                        ? AppColors.green500
                         : AppColors.grey200,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
@@ -118,7 +118,7 @@ class _OnboardingPart2PageState
                       stepIndex == totalSteps ? '시작하기' : '계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
-                            ? AppColors.grey900
+                            ? AppColors.grey50
                             : AppColors.grey500,
                       )),
                 )

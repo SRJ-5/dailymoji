@@ -193,7 +193,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                                       BorderRadius.circular(
                                           12.r),
                                 )),
-                          ))
+                          )),
+                      SizedBox(height: 4.h)
                     ],
                   ),
                 ),
@@ -210,13 +211,13 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom >
                       0
                   ? MediaQuery.of(context).viewInsets.bottom +
-                      8.h
+                      10.h
                   : 32.h,
             ),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: AppColors.green400,
+                backgroundColor: AppColors.green500,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
@@ -232,7 +233,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
               child: Text(
                 '탈퇴하기',
                 style: AppFontStyles.bodyMedium16
-                    .copyWith(color: AppColors.grey900),
+                    .copyWith(color: AppColors.grey50),
               ),
             ),
           ),
@@ -279,8 +280,11 @@ class ReasonBox extends StatelessWidget {
           SizedBox(width: 8.w),
           Text(
             text,
-            style: AppFontStyles.bodyRegular14
-                .copyWith(color: AppColors.grey900),
+            style: isSelected
+                ? AppFontStyles.bodySemiBold14
+                    .copyWith(color: AppColors.grey900)
+                : AppFontStyles.bodyRegular14
+                    .copyWith(color: AppColors.grey900),
           )
         ],
       ),
