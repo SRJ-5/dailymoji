@@ -76,7 +76,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
   Widget build(BuildContext context) {
     final state = ref.watch(clusterScoresViewModelProvider);
     if (state.isLoading)
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+          child:
+              CircularProgressIndicator(backgroundColor: AppColors.yellow50));
     if (state.error != null) return Center(child: Text('에러: ${state.error}'));
 
     // 기존 5개 감정 + 날짜

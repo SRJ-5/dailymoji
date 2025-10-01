@@ -81,6 +81,37 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     }
   }
 
+  /// 모든 지표(avg/min/max)가 동시에 0 또는 null이면 -> 결측(null)로 간주
+  List<double?> _cleanMissingByTriplet(
+    List<double?> avg,
+    List<double?> min,
+    List<double?> max,
+  ) {
+    final n = avg.length;
+    return List<double?>.generate(n, (i) {
+      final a = avg[i];
+      final mi = min[i];
+      final ma = max[i];
+      final allNull = (a == null && mi == null && ma == null);
+      final allZeroOrNull =
+          ((a ?? 0) == 0) && ((mi ?? 0) == 0) && ((ma ?? 0) == 0);
+
+      // 세 값이 전부 null이거나 전부 0이면 => 결측으로 본다
+      if (allNull || allZeroOrNull) return null;
+
+      // 그 외에는 원래 avg 값을 그대로 쓴다 (실제 0도 허용)
+      return a;
+    });
+  }
+
+  /// avg를 기준 마스크로 써서, avg가 null인 날은 다른 지표도 null로 맞춰준다
+  List<double?> _applyMaskByAvg(List<double?> values, List<double?> avgMask) {
+    final n = values.length;
+    return List<double?>.generate(n, (i) {
+      return avgMask[i] == null ? null : values[i];
+    });
+  }
+
   // ---------- 변환 유틸 ----------
   // 0~1 → 0~10 (소수 1자리 반올림, 0~10 클램프)
   double scaleToTen(num v) {
@@ -132,35 +163,58 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   }
 
   Map<String, EmotionData> _buildEmotionMap(FourteenDayAgg agg) {
-    final nhAvg = agg.series[ClusterType.negHigh]![Metric.avg]!;
-    final nhMin = agg.series[ClusterType.negHigh]![Metric.min]!;
-    final nhMax = agg.series[ClusterType.negHigh]![Metric.max]!;
+    // 원본(도메인) 리스트: List<double?> 라고 가정
+    final nhAvg0 = agg.series[ClusterType.negHigh]![Metric.avg]!;
+    final nhMin0 = agg.series[ClusterType.negHigh]![Metric.min]!;
+    final nhMax0 = agg.series[ClusterType.negHigh]![Metric.max]!;
 
-    final nlAvg = agg.series[ClusterType.negLow]![Metric.avg]!;
-    final nlMin = agg.series[ClusterType.negLow]![Metric.min]!;
-    final nlMax = agg.series[ClusterType.negLow]![Metric.max]!;
+    final nlAvg0 = agg.series[ClusterType.negLow]![Metric.avg]!;
+    final nlMin0 = agg.series[ClusterType.negLow]![Metric.min]!;
+    final nlMax0 = agg.series[ClusterType.negLow]![Metric.max]!;
 
-    final posAvg = agg.series[ClusterType.positive]![Metric.avg]!;
-    final posMin = agg.series[ClusterType.positive]![Metric.min]!;
-    final posMax = agg.series[ClusterType.positive]![Metric.max]!;
+    final posAvg0 = agg.series[ClusterType.positive]![Metric.avg]!;
+    final posMin0 = agg.series[ClusterType.positive]![Metric.min]!;
+    final posMax0 = agg.series[ClusterType.positive]![Metric.max]!;
 
-    final slAvg = agg.series[ClusterType.sleep]![Metric.avg]!;
-    final slMin = agg.series[ClusterType.sleep]![Metric.min]!;
-    final slMax = agg.series[ClusterType.sleep]![Metric.max]!;
+    final slAvg0 = agg.series[ClusterType.sleep]![Metric.avg]!;
+    final slMin0 = agg.series[ClusterType.sleep]![Metric.min]!;
+    final slMax0 = agg.series[ClusterType.sleep]![Metric.max]!;
 
-    final adAvg = agg.series[ClusterType.adhd]![Metric.avg]!;
-    final adMin = agg.series[ClusterType.adhd]![Metric.min]!;
-    final adMax = agg.series[ClusterType.adhd]![Metric.max]!;
+    final adAvg0 = agg.series[ClusterType.adhd]![Metric.avg]!;
+    final adMin0 = agg.series[ClusterType.adhd]![Metric.min]!;
+    final adMax0 = agg.series[ClusterType.adhd]![Metric.max]!;
+
+    // 1) “세 지표가 모두 0/NULL이면 결측(null)”로 정리
+    final nhAvg = _cleanMissingByTriplet(nhAvg0, nhMin0, nhMax0);
+    final nlAvg = _cleanMissingByTriplet(nlAvg0, nlMin0, nlMax0);
+    final posAvg = _cleanMissingByTriplet(posAvg0, posMin0, posMax0);
+    final slAvg = _cleanMissingByTriplet(slAvg0, slMin0, slMax0);
+    final adAvg = _cleanMissingByTriplet(adAvg0, adMin0, adMax0);
+
+    // 2) avg 마스크 기준으로 min/max도 맞춤
+    final nhMin = _applyMaskByAvg(nhMin0, nhAvg);
+    final nhMax = _applyMaskByAvg(nhMax0, nhAvg);
+
+    final nlMin = _applyMaskByAvg(nlMin0, nlAvg);
+    final nlMax = _applyMaskByAvg(nlMax0, nlAvg);
+
+    final posMin = _applyMaskByAvg(posMin0, posAvg);
+    final posMax = _applyMaskByAvg(posMax0, posAvg);
+
+    final slMin = _applyMaskByAvg(slMin0, slAvg);
+    final slMax = _applyMaskByAvg(slMax0, slAvg);
+
+    final adMin = _applyMaskByAvg(adMin0, adAvg);
+    final adMax = _applyMaskByAvg(adMax0, adAvg);
 
     return {
       "불안/분노": EmotionData(
         color: AppColors.negHigh,
-        spots: _toSpotsConnected(nhAvg), // 보통 평균 시퀀스로 라인 차트
-        avg: _avgScaledOpt(nhAvg), // 기간 전체 평균
-        min: _minScaledOpt(nhMin), // 기간 내 최저
-        max: _maxScaledOpt(nhMax), // 기간 내 최고
-        description:
-            "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠. 하지만 모든 걸 혼자 짊어질 필요는 없습니다. 잠시 내려놓고 숨을 고르며 작은 쉼을 허락하세요. 당신은 이미 충분히 잘해내고 있어요.",
+        spots: _toSpotsConnected(nhAvg), // ★ null은 건너뛰므로 선이 이어짐
+        avg: _avgScaledOpt(nhAvg), // ★ null 제외하고 평균
+        min: _minScaledOpt(nhMin), // ★ null 제외하고 최솟값
+        max: _maxScaledOpt(nhMax), // ★ null 제외하고 최댓값
+        description: "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...",
       ),
       "우울/무기력/번아웃": EmotionData(
         color: AppColors.negLow,
@@ -168,8 +222,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(nlAvg),
         min: _minScaledOpt(nlMin),
         max: _maxScaledOpt(nlMax),
-        description:
-            "지쳤다는 신호가 보여요. 완벽하지 않아도 괜찮습니다. 잠시 멈춰서 쉬어가는 것 또한 중요한 과정이에요. 자신을 위한 작은 여유를 챙겨 보세요.",
+        description: "지쳤다는 신호가 보여요...",
       ),
       "평온/회복": EmotionData(
         color: AppColors.positive,
@@ -177,8 +230,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(posAvg),
         min: _minScaledOpt(posMin),
         max: _maxScaledOpt(posMax),
-        description:
-            "평온함을 느끼고 있다면, 그건 당신이 잘 버텨온 증거예요. 회복의 순간은 스스로에게 주는 가장 큰 선물이에요. 이 시간을 충분히 누리며 마음 깊이 새겨두세요. 앞으로 걸어갈 힘이 되어줄 거예요.",
+        description: "평온함을 느끼고 있다면...",
       ),
       "불면/과다수면": EmotionData(
         color: AppColors.sleep,
@@ -186,8 +238,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(slAvg),
         min: _minScaledOpt(slMin),
         max: _maxScaledOpt(slMax),
-        description:
-            "잠이 오지 않거나, 반대로 너무 많이 잘 때도 있어요. 그건 몸과 마음이 회복을 필요로 한다는 신호일 뿐이에요. 억지로 조절하려 하지 말고, 오늘은 있는 그대로를 받아들여 주세요. 조금씩 균형은 찾아올 거예요.",
+        description: "잠이 오지 않거나...",
       ),
       "ADHD": EmotionData(
         color: AppColors.adhd,
@@ -195,8 +246,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(adAvg),
         min: _minScaledOpt(adMin),
         max: _maxScaledOpt(adMax),
-        description:
-            "집중이 흩어지고 마음이 산만할 때가 있죠. 완벽하지 않아도 괜찮습니다. 오늘은 작은 일 하나만 해내도 충분히 잘한 거예요. 자신을 탓하지 말고, 천천히 걸어가도 된다는 걸 기억하세요.",
+        description: "집중이 흩어지고 마음이 산만할 때가 있죠...",
       ),
     };
   }
