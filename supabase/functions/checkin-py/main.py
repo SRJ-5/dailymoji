@@ -18,7 +18,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from supabase import create_client, Client
 
-
+import uuid
+from ai_moderator import moderate_text
 from llm_prompts import call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
 from rule_based import rule_scoring
 from srj5_constants import (
@@ -314,7 +315,76 @@ async def save_analysis_to_supabase(
 async def analyze_emotion(payload: AnalyzeRequest):
     """사용자의 텍스트와 아이콘을 받아 감정을 분석하고 스코어링 결과를 반환합니다."""
     text = (payload.text or "").strip()
+ 
+ # --- 파이프라인 0: 입력 텍스트 검열 (가장 먼저 실행) ---
+    is_flagged, categories = await moderate_text(text, OPENAI_KEY)
+    
+    if is_flagged:
+        # 허용할 카테고리 정의 
+        # OpenAI Moderation에서 self-harm과 self-harm/intent는 탐지되더라도,
+        # 우리 서비스의 자체 안전장치 로직으로 넘기기 위해 예외 처리!
+        # 사용자의 솔직한 감정 표현(분노, 좌절, 욕설 포함)을 최대한 허용하여
+        # 자체 분석 파이프라인(neg_high 등)에서 처리할 수 있도록 범위를 넓
+        allowed_categories = {
+            # 기존: 자살/자해 관련 표현 허용
+            'self-harm', 
+            'self-harm/intent', 
+            'self-harm/instructions',
+            # 추가: 분노, 증오, 좌절 관련 표현 허용
+            'hate', 
+            'harassment', 
+            'violence'
+        }        
+        # 실제 차단할 유해 카테고리가 있는지 확인
+        # categories 딕셔너리를 순회하며, key가 allowed_categories에 없고 value가 True인 것이 있는지 찾습니다.
+        should_block = any(
+            category_name not in allowed_categories and is_triggered
+            for category_name, is_triggered in categories.items()
+        )
+
+        if should_block:
+            print(f"🚨 [차단] 부적절한 콘텐츠 감지: '{text}', 카테고리: {categories}")
+            
+            # 차단이 결정되면, 세션을 저장하고 사용자에게 응답
+            intervention = {
+                "preset_id": PresetIds.FRIENDLY_REPLY, 
+                "text": "제가 이해하기 어려운 표현이 포함되어 있어요. 조금 더 부드러운 표현으로 다시 말씀해주실 수 있을까요? 🙏"
+            }
+            
+            debug_log = {
+                "input": payload.dict(),
+                "moderation_action": "BLOCKED",
+                "moderation_categories": categories
+            }
+            
+            # 요청하신대로, 차단된 세션도 Supabase에 저장합니다.
+            # g_score와 profile은 중간값이 없으므로 0, 0.5 등으로 설정합니다.
+            session_id = await save_analysis_to_supabase(
+                payload, profile=0, g=0.5, 
+                intervention=intervention, 
+                debug_log=debug_log, 
+                final_scores={}
+            )
+            
+            return JSONResponse(
+                status_code=400, # Bad Request
+                content={
+                    "session_id": session_id or f"moderated_{uuid.uuid4()}", 
+                    "intervention": intervention,
+                    "error": "Inappropriate content detected and blocked."
+                }
+            )
+        else:
+            # self-harm만 감지된 경우: 차단하지 않고 로그만 남김
+            print(f"⚠️ [통과] 자체 안전장치 처리 위임: '{text}', 카테고리: {categories}")
+
+    # --- 검열 통과 후 기존 로직 시작 ---
     debug_log: Dict[str, Any] = {"input": payload.dict()}
+    debug_log["moderation_categories"] = categories # 로그에 검열 결과 기록
+
+
+
+ # --- 분석 시작 ---
 
     # 🤩 RIN: 사용자 닉네임과 캐릭터 이름을 미리 조회해둡니다.
     user_nick_nm = "사용자"
