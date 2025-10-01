@@ -1138,59 +1138,58 @@ class DailyReportRequest(BaseModel):
     date: str # "YYYY-MM-DD" 형식
     language_code: str = 'ko'
 
-@app.post("/report/summary")
-async def get_daily_report_summary(request: DailyReportRequest):
-    """특정 날짜의 사용자 활동을 종합하여 LLM으로 요약문을 생성합니다."""
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+
+async def create_and_save_summary_for_user(user_id: str, date_str: str):
+    """
+    특정 사용자의 특정 날짜에 대한 요약문을 생성하고 DB에 저장(Upsert)합니다.
+    이 함수는 스케줄링된 작업(/tasks/generate-summaries)에 의해 호출됩니다.
+    """
+    print(f"----- [Job Start] User: {user_id}, Date: {date_str} -----")
+    
+    # Supabase 또는 OpenAI 키가 설정되지 않은 경우 작업을 건너뜁니다.
+    if not supabase or not OPENAI_KEY:
+        print("Error: Supabase client or OpenAI key not initialized. Skipping summary generation.")
+        return
 
     try:
-        # --- 1. 필요한 정보 DB에서 수집 ---
-        user_nick_nm, character_nm = await get_user_info(request.user_id)
+        # --- 1. 기본 정보 수집 ---
+        user_nick_nm, character_nm = await get_user_info(user_id)
+        start_of_day = f"{date_str}T00:00:00+00:00"
+        end_of_day = f"{date_str}T23:59:59+00:00"
 
-        # a) 해당 날짜의 가장 높은 클러스터 점수 가져오기
-        start_of_day = f"{request.date}T00:00:00+00:00"
-        end_of_day = f"{request.date}T23:59:59+00:00"
-        
-         # --- 1. 대표 클러스터 및 평균 점수 계산 ---
-        
-        # Step 1: 그날의 모든 클러스터 점수 기록 가져오기
+        # --- 2. 그날의 모든 클러스터 점수 기록 및 평균 계산 ---
         score_query = supabase.table("cluster_scores").select("cluster, score") \
-            .eq("user_id", request.user_id) \
+            .eq("user_id", user_id) \
             .gte("created_at", start_of_day) \
             .lte("created_at", end_of_day)
         score_res = await run_in_threadpool(score_query.execute)
         
         all_scores_today = score_res.data
+        # 유저가 앱을 켰지만 유의미한 감정 분석 기록(cluster_scores)이 없는 경우 패스
         if not all_scores_today:
-            return {"summary": "해당 날짜에 대한 감정 기록이 없어요."}
+            print(f"Info: No score data for user {user_id} on {date_str}. Skipping.")
+            return
 
-        # 먼저 가장 높은 단일 점수를 기준으로 대표 클러스터를 정합니다.
         top_score_entry = max(all_scores_today, key=lambda x: x['score'])
         top_cluster_name = top_score_entry['cluster']
         
-        # 이제, 대표 클러스터에 해당하는 모든 점수를 모읍니다.
-        scores_for_top_cluster = [
-            item['score'] for item in all_scores_today if item['cluster'] == top_cluster_name
-        ]
+        scores_for_top_cluster = [item['score'] for item in all_scores_today if item['cluster'] == top_cluster_name]
+        
+        average_score = sum(scores_for_top_cluster) / len(scores_for_top_cluster) if scores_for_top_cluster else 0
+        top_score_for_llm = int(average_score * 100)
 
-        # 평균을 계산합니다.
-        average_score = sum(scores_for_top_cluster) / len(scores_for_top_cluster)
-        top_score_for_llm = int(average_score * 100) # LLM에 전달할 최종 점수 (0-100)
-
-        # --- 2. 그날의 모든 대화 요약 가져오기 ---
-        # 💡 [수정 2] sessions 테이블에서 'summary' 컬럼을 조회합니다.
+        # --- 3. 그날의 모든 대화 요약(summary) 가져오기 ---
         session_query = supabase.table("sessions").select("summary") \
-            .eq("user_id", request.user_id) \
+            .eq("user_id", user_id) \
             .gte("created_at", start_of_day) \
             .lte("created_at", end_of_day) \
-            .not_.is_("summary", "null") # summary가 null이 아닌 것만
+            .not_.is_("summary", "null")
         session_res = await run_in_threadpool(session_query.execute)
         dialogue_summaries = [s['summary'] for s in session_res.data if s.get('summary')]
 
-        # --- 3. 그날 제공된 솔루션 정보 가져오기 (기존 로직 유지) ---
+        # --- 4. 그날 제공된 솔루션 컨텍스트 가져오기 ---
         user_sessions_query = supabase.table("sessions").select("id") \
-            .eq("user_id", request.user_id) \
+            .eq("user_id", user_id) \
             .gte("created_at", start_of_day) \
             .lte("created_at", end_of_day)
         user_sessions_res = await run_in_threadpool(user_sessions_query.execute)
@@ -1203,21 +1202,21 @@ async def get_daily_report_summary(request: DailyReportRequest):
                 .eq("type", "propose")
             log_res = await run_in_threadpool(log_query.execute)
             if log_res.data:
-                solution_ids = list(set([log['solution_id'] for log in log_res.data])) # 중복 제거
+                solution_ids = list(set([log['solution_id'] for log in log_res.data]))
                 solution_query = supabase.table("solutions").select("context").in_("solution_id", solution_ids)
                 solution_res = await run_in_threadpool(solution_query.execute)
                 solution_contexts = [s['context'] for s in solution_res.data if s.get('context')]
 
-        # --- 4. 대표 클러스터 조언 가져오기 (기존 로직 유지) ---
+        # --- 5. 대표 클러스터에 대한 조언 가져오기 ---
         advice_text = await get_mention_from_db(
-            "analysis", request.language_code, cluster=top_cluster_name, level="high"
+            "analysis", "ko", cluster=top_cluster_name, level="high"
         )
 
-        # --- 5. LLM에 전달할 최종 컨텍스트 조합 ---
+        # --- 6. LLM에 전달할 컨텍스트 조합 ---
         llm_context = {
             "user_nick_nm": user_nick_nm,
             "top_cluster_today": top_cluster_name,
-            "top_score_today": top_score_for_llm, # 평균 점수 사용
+            "top_score_today": top_score_for_llm,
             "user_dialogue_summary": " ".join(dialogue_summaries) or "특별한 대화는 없었어요.",
             "solution_context": ", ".join(solution_contexts) or "제공된 솔루션이 없었어요.",
             "cluster_advice": advice_text
@@ -1225,20 +1224,110 @@ async def get_daily_report_summary(request: DailyReportRequest):
         
         system_prompt = REPORT_SUMMARY_PROMPT
 
-        # --- 6. LLM 호출 ---
+        # --- 7. LLM 호출하여 요약문 생성 ---
         summary_json = await call_llm(
             system_prompt=system_prompt,
             user_content=json.dumps(llm_context, ensure_ascii=False),
             openai_key=OPENAI_KEY
         )
+        
+        daily_summary_text = summary_json.get("daily_summary")
+        if not daily_summary_text:
+            print(f"Warning: LLM failed to generate summary for user {user_id} on {date_str}.")
+            return
 
-        if summary_json.get("error"):
-            raise HTTPException(status_code=500, detail=f"LLM summary generation failed: {summary_json.get('error')}")
-
-        return {"summary": summary_json.get("daily_summary", "요약을 생성하는 데 실패했어요.")}
+        # --- 8. 생성된 요약문을 `daily_summaries` 테이블에 저장 (Upsert) ---
+        summary_data = {
+            "user_id": user_id,
+            "date": date_str,
+            "summary_text": daily_summary_text,
+            "top_cluster": top_cluster_name,
+            "avg_score": top_score_for_llm
+        }
+        
+        # upsert: user_id와 date가 동일한 데이터가 있으면 업데이트, 없으면 삽입
+        upsert_query = supabase.table("daily_summaries").upsert(summary_data, on_conflict="user_id,date")
+        await run_in_threadpool(upsert_query.execute)
+        
+        print(f"Success: Saved summary for user {user_id} on {date_str}.")
 
     except Exception as e:
-        tb = traceback.format_exc()
-        print(f"🔥 UNHANDLED EXCEPTION in /report/summary: {e}\n{tb}")
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+        print(f"Error: Failed to generate summary for user {user_id} on {date_str}. Reason: {e}")
+        traceback.print_exc()
+
+    finally:
+        print(f"----- [Job End] User: {user_id}, Date: {date_str} -----")
+
+#  ------- daily_summaries 테이블에서 요약문 간단히 조회 ---------
+
+@app.post("/report/summary")
+async def get_daily_report_summary(request: DailyReportRequest):
+    """미리 생성된 일일 요약문을 DB에서 조회합니다."""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+
+    try:
+        query = supabase.table("daily_summaries").select("summary_text") \
+            .eq("user_id", request.user_id) \
+            .eq("date", request.date) \
+            .limit(1)
+            
+        response = await run_in_threadpool(query.execute)
+
+        if response.data:
+            summary = response.data[0].get("summary_text", "요약을 찾을 수 없습니다.")
+            return {"summary": summary}
+        else:
+            return {"summary": "해당 날짜의 요약 기록이 아직 생성되지 않았어요."}
+
+    except Exception as e:
+        print(f"🔥 EXCEPTION in /report/summary (read): {e}")
+        raise HTTPException(status_code=500, detail="요약을 불러오는 중 오류가 발생했습니다.")
     
+
+# ======================================================================
+# ===     백그라운드 스케줄링 작업용 엔드포인트     ===
+# ======================================================================
+
+@app.post("/tasks/generate-summaries")
+async def handle_generate_summaries_task():
+    """
+    Supabase Cron Job에 의해 호출될 엔드포인트.
+    어제 활동한 모든 사용자의 일일 요약을 생성합니다.
+    """
+    
+    # 어제 날짜 계산 (UTC 기준)
+    yesterday = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
+    
+    start_of_yesterday = f"{yesterday_str}T00:00:00+00:00"
+    end_of_yesterday = f"{yesterday_str}T23:59:59+00:00"
+
+    print(f"Starting daily summary generation task for date: {yesterday_str}")
+
+    # 어제 활동한 유저 ID 목록 가져오기 (중복 제거)
+    active_users_query = supabase.table("sessions").select("user_id", count='exact') \
+        .gte("created_at", start_of_yesterday) \
+        .lte("created_at", end_of_yesterday)
+    
+    active_users_res = await run_in_threadpool(active_users_query.execute)
+    # 어제 앱을 사용한 유저가 단 한 명도 없다면, 즉시 "어제 활동한 유저 없음" 메시지를 출력하고 작업을 종료
+    if not active_users_res.data:
+        message = "No active users yesterday. Task finished."
+        print(message)
+        return {"message": message}
+
+    # 활동 유저가 있을 때만 아래 로직 실행
+    user_ids = list(set([item['user_id'] for item in active_users_res.data]))
+    
+    print(f"Found {len(user_ids)} active users. Starting summary generation for each user...")
+
+    # 각 유저에 대해 순차적으로 요약 생성 함수 호출
+    for user_id in user_ids:
+        await create_and_save_summary_for_user(user_id, yesterday_str)
+
+    message = f"Summary generation task complete for {len(user_ids)} users."
+    print(message)
+    return {"message": message}
+
+
