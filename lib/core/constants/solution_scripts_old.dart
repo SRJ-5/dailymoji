@@ -13,7 +13,7 @@
 //     "HPA axis가 항진되어 몸과 마음이 긴장 상태로 유지되고 있어요.",
 //     "Insula가 과도하게 활성화되어 불안·분노 신호를 크게 증폭시키고 있어요."
 //   ],
-//   "adhd_high": [
+//   "adhd": [
 //     "전전두엽(PFC)의 주의 조절 기능이 저하되어 집중 유지가 어렵네요.",
 //     "도파민 회로의 불균형으로 충동적 행동이 늘어난 상태예요.",
 //     "전두엽-선조체 회로가 약해져 계획과 실행이 매끄럽지 못한 것 같아요."
@@ -43,7 +43,7 @@
 //     "불안과 분노가 치밀어 오를 땐, ",
 //     "몸의 긴장을 풀기엔 "
 //   ],
-//   "adhd_high": [
+//   "adhd": [
 //     "집중이 자꾸 흩어질 땐 ",
 //     "주의가 산만해질 땐 주변 맥락을 정리하는 게 좋아요. ",
 //     "산만할 때는 복잡한 자극 대신, "
@@ -105,22 +105,22 @@
 //     "endAt": "129"
 //   },
 
-//   // adhd_high
-//   "adhd_high_space_01": {
+//   // adhd
+//   "adhd_space_01": {
 //     "text": "우주 공간처럼 자극이 최소화된 환경이 효과적이에요.",
 //     "type": "video",
 //     "url": "https://www.youtube.com/watch?v=qRitf7c3-nQ",
 //     "startAt": "0",
 //     "endAt": "120"
 //   },
-//   "adhd_high_pomodoro_01": {
+//   "adhd_pomodoro_01": {
 //     "text": "딱 5분만, 가장 쉬운 일부터 시작해볼까요?",
 //     "type": "video",
 //     "url": "https://www.youtube.com/watch?v=TA9SZawYm2k",
 //     "startAt": "0",
 //     "endAt": "120"
 //   },
-//   "adhd_high_training_01": {
+//   "adhd_training_01": {
 //     "text": "공의 움직임을 따라가보세요! 집중력이 켜질겁니다!",
 //     "type": "video",
 //     "url": "https://www.youtube.com/watch?v=E7HOlJ_OhEo",
