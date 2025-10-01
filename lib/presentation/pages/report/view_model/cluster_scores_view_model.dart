@@ -209,7 +209,6 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
 
     return {
       "불안/분노": EmotionData(
-        cluster: "불안/분노",
         color: AppColors.negHigh,
         spots: _toSpotsConnected(nhAvg), // ★ null은 건너뛰므로 선이 이어짐
         avg: _avgScaledOpt(nhAvg), // ★ null 제외하고 평균
@@ -217,8 +216,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         max: _maxScaledOpt(nhMax), // ★ null 제외하고 최댓값
         description: "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...",
       ),
-      "우울/무기력/번아웃": EmotionData(
-        cluster: "우울/무기력",
+      "우울/무기력": EmotionData(
         color: AppColors.negLow,
         spots: _toSpotsConnected(nlAvg),
         avg: _avgScaledOpt(nlAvg),
@@ -227,7 +225,6 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         description: "지쳤다는 신호가 보여요...",
       ),
       "평온/회복": EmotionData(
-        cluster: "평온/회복",
         color: AppColors.positive,
         spots: _toSpotsConnected(posAvg),
         avg: _avgScaledOpt(posAvg),
@@ -235,8 +232,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         max: _maxScaledOpt(posMax),
         description: "평온함을 느끼고 있다면...",
       ),
-      "불면/과다수면": EmotionData(
-        cluster: "불규칙 수면",
+      "불규칙 수면": EmotionData(
         color: AppColors.sleep,
         spots: _toSpotsConnected(slAvg),
         avg: _avgScaledOpt(slAvg),
@@ -244,8 +240,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         max: _maxScaledOpt(slMax),
         description: "잠이 오지 않거나...",
       ),
-      "ADHD": EmotionData(
-        cluster: "산만/집중력저하",
+      "집중력 저하": EmotionData(
         color: AppColors.adhd,
         spots: _toSpotsConnected(adAvg),
         avg: _avgScaledOpt(adAvg),
