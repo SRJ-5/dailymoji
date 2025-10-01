@@ -3,9 +3,11 @@ import 'package:dailymoji/data/data_sources/user_profile_data_source_impl.dart';
 import 'package:dailymoji/data/repositories/user_profile_repository_impl.dart';
 import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/apple_login_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/delete_account_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/google_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/insert_user_profile_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/log_out_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_name_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_personality_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_user_nickname_use_case.dart';
@@ -67,6 +69,19 @@ final updateCharacterNameUseCaseProvider = Provider(
 final updateCharacterPersonalityUseCaseProvider = Provider(
   (ref) {
     return UpdateCharacterPersonalityUseCase(
+        ref.read(_userRepositoryProvider));
+  },
+);
+
+final logOutUseCaseProvider = Provider(
+  (ref) {
+    return LogOutUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final deletAccountUseCaseProvider = Provider(
+  (ref) {
+    return DeleteAccountUseCase(
         ref.read(_userRepositoryProvider));
   },
 );

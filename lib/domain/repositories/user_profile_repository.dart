@@ -12,4 +12,6 @@ abstract class UserProfileRepository {
   Future<UserProfile> updateCharacterPersonality(
       {required String uuid,
       required String characterPersonality});
+  Future<void> logOut();
+  Future<void> deleteAccount(String userId);
 }
