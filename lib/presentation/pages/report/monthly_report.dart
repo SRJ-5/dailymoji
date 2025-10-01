@@ -1,13 +1,19 @@
+import 'dart:convert';
+
+import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
 import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
     show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class MonthlyReport extends ConsumerStatefulWidget {
@@ -25,6 +31,9 @@ class MonthlyReport extends ConsumerStatefulWidget {
 class _MonthlyReportState extends ConsumerState<MonthlyReport> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+
+  String _dailySummary = "날짜를 선택하면 감정 요약을 볼 수 있어요.";
+  bool _isSummaryLoading = false;
 
   /// 클러스터 코드를 한국어 라벨로 변환
   String clusterLabel(String code) {
@@ -86,11 +95,21 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
       }
     }
 
+    // "오늘의" vs "n월 n일의" 라벨
+    String dayLabel = "이날의";
+    if (_selectedDay != null) {
+      final now = DateTime.now();
+      final sd = _selectedDay!;
+      final isToday =
+          now.year == sd.year && now.month == sd.month && now.day == sd.day;
+      dayLabel = isToday ? "오늘의" : "${sd.month}월 ${sd.day}일의";
+    }
+
     // 요약 카드 제목 문구
     final summaryTitle = (selectedRow == null)
         ? "이 날은 기록된 감정이 없어요!"
-        : "이 날의 ${clusterLabel(selectedRow.cluster)}이 "
-            "${displayScore100(selectedRow.score)}점으로 가장 강렬 했어요.";
+        : "이 날의 ${clusterLabel(selectedRow!.cluster)} "
+            "점수는 ${displayScore100(selectedRow!.score)}점 이에요.";
 
     // final params = MonthParams(
     //   userId: widget.userId,
@@ -136,6 +155,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                     _selectedDay = selected;
                     _focusedDay = focused;
                   });
+                  _fetchDailySummary(selected);
                 },
 
                 // 헤더 스타일
@@ -285,42 +305,48 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                           style: AppFontStyles.bodyBold14
                               .copyWith(color: AppColors.green700)),
                       SizedBox(height: 6.h),
-                      Text(
-                        "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루였어요. "
-                        "친구와의 짧은 대화가 위로가 되었어요. 혼자만의 시간을 꼭 가지며 마음을 돌보길 해요.",
-                        style: AppFontStyles.bodyRegular12_180
-                            .copyWith(color: AppColors.grey900),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: Size(133, 40),
-                            backgroundColor: AppColors.grey50,
-                            side: BorderSide(color: AppColors.grey200), // 테두리 색
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12), // 모서리 둥글게
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                .copyWith(left: 16.w, right: 10.w),
-                          ),
-                          onPressed: () {
-                            context.go("/report/chat", extra: _selectedDay);
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('채팅 확인하기',
-                                  style: AppFontStyles.bodyMedium14
-                                      .copyWith(color: AppColors.grey900)),
-                              SizedBox(width: 6.w),
-                              Icon(Icons.arrow_forward,
-                                  color: AppColors.grey900, size: 18.r),
-                            ],
-                          ),
+                      if (_isSummaryLoading)
+                        Center(
+                            child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20.h),
+                          child: CircularProgressIndicator(),
+                        ))
+                      else
+                        Text(
+                          _dailySummary,
+                          style: AppFontStyles.bodyRegular12_180
+                              .copyWith(color: AppColors.grey900),
                         ),
-                      ),
+                      Align(
+                          alignment: Alignment.bottomRight,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: Size(133, 40),
+                              backgroundColor: AppColors.grey50,
+                              side:
+                                  BorderSide(color: AppColors.grey200), // 테두리 색
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(12), // 모서리 둥글게
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 9.5.h)
+                                  .copyWith(left: 16.w, right: 10.w),
+                            ),
+                            onPressed: () {
+                              context.go("/report/chat", extra: _selectedDay);
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('채팅 확인하기',
+                                    style: AppFontStyles.bodyMedium14
+                                        .copyWith(color: AppColors.grey900)),
+                                SizedBox(width: 6.w),
+                                Icon(Icons.arrow_forward,
+                                    color: AppColors.grey900, size: 18.r),
+                              ],
+                            ),
+                          ))
                     ],
                   ),
                 ),
@@ -344,6 +370,46 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
       case 'positive':
       default:
         return AppImages.smileEmoji;
+    }
+  }
+
+// _MonthlyReportState 안에 추가
+  Future<void> _fetchDailySummary(DateTime date) async {
+    if (widget.userId.isEmpty) return;
+
+    setState(() {
+      _isSummaryLoading = true;
+      _dailySummary = "감정 기록을 요약하고 있어요...";
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/report/summary'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': widget.userId,
+          'date': DateFormat('yyyy-MM-dd').format(date),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          _dailySummary = data['summary'];
+        });
+      } else {
+        setState(() {
+          _dailySummary = "요약을 불러오는 데 실패했어요.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _dailySummary = "오류가 발생했어요: $e";
+      });
+    } finally {
+      setState(() {
+        _isSummaryLoading = false;
+      });
     }
   }
 }
