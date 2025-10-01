@@ -346,37 +346,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                     color: AppColors.grey900, size: 18.r),
                               ],
                             ),
-                          )
-
-                          // GestureDetector(
-                          //   onTap: () {
-                          //     context.go("/report/chat", extra: _selectedDay);
-                          //   },
-                          //   child: Container(
-                          //     alignment: Alignment.center,
-                          //     height: 40.h,
-                          //     width: 133.w,
-                          //     padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                          //         .copyWith(left: 16.w, right: 10.w),
-                          //     decoration: ShapeDecoration(
-                          //       color: AppColors.green400,
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(10),
-                          //       ),
-                          //     ),
-                          //     child: Row(
-                          //       mainAxisSize: MainAxisSize.min,
-                          //       children: [
-                          //         Text('채팅 확인하기',
-                          //             style: AppFontStyles.bodyMedium14),
-                          //         SizedBox(width: 6.w),
-                          //         Icon(Icons.arrow_forward,
-                          //             color: AppColors.grey900, size: 18.r),
-                          //       ],
-                          //     ),
-                          //   ),
-                          // ),
-                          )
+                          ))
                     ],
                   ),
                 ),
