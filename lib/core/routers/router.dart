@@ -24,11 +24,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     navigatorKey: navigatorkey,
     routes: [
-      GoRoute(
-          path: '/', builder: (context, state) => SplashPage()),
-      GoRoute(
-          path: '/login',
-          builder: (context, state) => LoginPage()),
+      GoRoute(path: '/', builder: (context, state) => SplashPage()),
+      GoRoute(path: '/login', builder: (context, state) => LoginPage()),
       GoRoute(
           path: '/onboarding1',
           builder: (context, state) => OnboardingPart1Page()),
@@ -37,66 +34,43 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) =>
-            const PortraitPage(child: HomePage()),
-        routes: [
-          GoRoute(
-            path: '/chat',
-            pageBuilder: (context, state) {
-              final extraData = state.extra as Object?;
-              Map<String, dynamic>? navData;
-
-              if (extraData is Map<String, dynamic>) {
-                navData = extraData;
-              }
-
-              return PortraitPage(
-                child: ChatPage(
-                  navigationData: navData,
-                ),
-              );
-            },
-          ),
-        ],
+        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
       ),
-      // ChatPage 라우트를 분리하여 extra를 받을 수 있도록 함
       GoRoute(
-          path: '/report',
-          pageBuilder: (context, state) =>
-              const PortraitPage(child: ReportPage()),
-          routes: [
-            GoRoute(
-              path: '/chat',
-              pageBuilder: (context, state) {
-                // extra를 Object?로 받아 유연하게 처리
-                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
-                final extraData = state.extra as Object?;
-                String? emotion;
-                Map<String, dynamic>? navData;
-                DateTime? targetDate;
+        path: '/chat',
+        pageBuilder: (context, state) {
+          // extra를 Object?로 받아 유연하게 처리
+          // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+          final extraData = state.extra as Object?;
+          String? emotion;
+          Map<String, dynamic>? navData;
+          DateTime? targetDate;
 
-                if (extraData is String) {
-                  emotion = extraData;
-                } else if (extraData is Map<String, dynamic>) {
-                  navData = extraData;
-                } else if (extraData is DateTime) {
-                  targetDate = extraData;
-                }
+          if (extraData is String) {
+            emotion = extraData;
+          } else if (extraData is Map<String, dynamic>) {
+            navData = extraData;
+          } else if (extraData is DateTime) {
+            targetDate = extraData;
+          }
 
-                return PortraitPage(
-                  child: ChatPage(
-                    emotionFromHome: emotion,
-                    navigationData: navData,
-                    targetDate: targetDate,
-                  ),
-                );
-              },
+          return PortraitPage(
+            child: ChatPage(
+              emotionFromHome: emotion,
+              navigationData: navData,
+              targetDate: targetDate,
             ),
-          ]),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/report',
+        pageBuilder: (context, state) =>
+            const PortraitPage(child: ReportPage()),
+      ),
       GoRoute(
         path: '/my',
-        pageBuilder: (context, state) =>
-            PortraitPage(child: MyPage()),
+        pageBuilder: (context, state) => PortraitPage(child: MyPage()),
       ),
       // TODO: 아래에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
       // GoRoute(
@@ -148,8 +122,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
           return PortraitPage(
-              child:
-                  BreathingSolutionPage(solutionId: solutionId));
+              child: BreathingSolutionPage(solutionId: solutionId));
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.

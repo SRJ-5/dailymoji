@@ -1,6 +1,6 @@
 # srj5_constants.py
 
-CLUSTERS = ["neg_low", "neg_high", "adhd_high", "sleep", "positive"]
+CLUSTERS = ["neg_low", "neg_high", "adhd", "sleep", "positive"]
 # ❤️ 이모지만 입력 시 적용될 점수 상한선 (안전장치)
 EMOJI_ONLY_SCORE_CAP = 0.5
 
@@ -29,7 +29,7 @@ W_LLM = 0.4
 ICON_TO_CLUSTER = {
     "angry": "neg_high",
     "crying": "neg_low",
-    "shocked": "adhd_high",
+    "shocked": "adhd",
     "sleeping": "sleep",
     "smile": "positive",
     "default": "neutral"
@@ -62,13 +62,13 @@ SAFETY_LEMMA_COMBOS = [
 # 각 질문(q1~q9)이 어떤 감정 클러스터에 얼마나 영향을 주는지 정의
 ONBOARDING_MAPPING = {
     "q1": [{"cluster": "neg_low", "w": 0.80}, {"cluster": "sleep", "w": 0.10}, {"cluster": "positive", "w": -0.10}],
-    "q2": [{"cluster": "neg_low", "w": 0.85}, {"cluster": "adhd_high", "w": 0.05}, {"cluster": "positive", "w": -0.10}],
+    "q2": [{"cluster": "neg_low", "w": 0.85}, {"cluster": "adhd", "w": 0.05}, {"cluster": "positive", "w": -0.10}],
     "q3": [{"cluster": "neg_high", "w": 0.90}, {"cluster": "sleep", "w": 0.10}],
     "q4": [{"cluster": "neg_high", "w": 0.85}, {"cluster": "neg_low", "w": 0.05}, {"cluster": "sleep", "w": 0.10}],
-    "q5": [{"cluster": "neg_high", "w": 0.60}, {"cluster": "neg_low", "w": 0.25}, {"cluster": "adhd_high", "w": 0.15}],
+    "q5": [{"cluster": "neg_high", "w": 0.60}, {"cluster": "neg_low", "w": 0.25}, {"cluster": "adhd", "w": 0.15}],
     "q6": [{"cluster": "sleep", "w": 0.90}, {"cluster": "neg_low", "w": 0.10}],
     "q7": [{"cluster": "positive", "w": 0.80}, {"cluster": "neg_low", "w": 0.20}],
     "q8": [{"cluster": "neg_low", "w": 0.80}, {"cluster": "sleep", "w": 0.20}],
-    "q9": [{"cluster": "adhd_high", "w": 0.85}, {"cluster": "neg_low", "w": 0.15}],
+    "q9": [{"cluster": "adhd", "w": 0.85}, {"cluster": "neg_low", "w": 0.15}],
 }
 
