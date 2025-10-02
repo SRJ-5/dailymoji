@@ -1239,6 +1239,7 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         top_score_entry = max(all_scores_today, key=lambda x: x['score'])
         top_cluster_name = top_score_entry['cluster']
 
+
         # 오늘의 대표 클러스터(top_cluster_name)에 해당하는 '표시용 이름'을 조회
         top_cluster_display_name = CLUSTER_TO_DISPLAY_NAME.get(top_cluster_name, "주요 감정")
 
