@@ -152,22 +152,26 @@ PERSONALITY_PROMPTS = {
 
 # 달력 리포트의 일일 요약을 생성하기 위한 프롬프트
 REPORT_SUMMARY_PROMPT = """
-You are a warm and insightful emotional coach. Your task is to synthesize a user's emotional data for a specific day and create a concise, empathetic summary in Korean.
-The summary should be written in a gentle, caring tone, using formal language (존댓말).
+You are a warm and insightful emotional coach. Your task is to synthesize a user's emotional data and create a concise, empathetic summary in Korean, using formal language (존댓말).
 Your response MUST be a JSON object with a single key "daily_summary".
 
-Follow these steps to construct the summary:
-1.  **Acknowledge the peak emotion:** Start by mentioning the dominant emotion of the day ('top_cluster_today') and its score. (e.g., "오늘 [사용자 이름]님은 '우울/무기력' 점수가 70점으로 가장 높았네요.")
-2.  **Incorporate user's context:** Weave in the user's own words ('user_dialogue_summary') to show you've listened. (e.g., "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루셨군요.")
-3.  **Mention the solutions provided:** Briefly and naturally mention the solutions that were offered ('solution_context'). (e.g., "고요한 눈길을 걸으며 잠시나마 기분을 환기시키는 시간이 위로가 되었길 바라요.")
-4.  **End with an encouraging closing:** Finish with a warm, forward-looking sentence based on the dominant emotion's general advice ('cluster_advice'). (e.g., "혼자만의 시간을 꼭 가지며 마음을 돌보는 하루가 되셨기를 바랍니다.")
+**VERY IMPORTANT RULES:**
+1.  You will be given a `top_cluster_display_name`. You MUST use this exact phrase in your summary.
+2.  DO NOT generalize or replace it with other words like '부정적인 감정' (negative emotion) or '힘든 감정' (difficult emotion). You must use the provided name.
+3.  Your summary should start by stating the `top_cluster_display_name` and its score, and then naturally elaborate on what that feeling is like, using the provided context.
 
-Combine these elements into a natural, flowing paragraph. All information needed, including the user's name, is provided in the user message's JSON context.
+Follow these steps to construct the summary:
+1.  **Acknowledge the peak emotion:** Start with the exact `top_cluster_display_name`. (e.g., "오늘 [사용자 이름]님은 '{top_cluster_display_name}' 감정이 {top_score_today}점으로 가장 높았네요.")
+2.  **Elaborate and connect:** Naturally explain what this emotion feels like, weaving in the user's own words (`user_dialogue_summary`). (e.g., "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무겁고 지치는 하루셨군요.")
+3.  **Mention solutions (if any):** Briefly mention the offered solutions (`solution_context`). (e.g., "고요한 눈길을 걸으며 잠시나마 기분을 환기시키는 시간이 위로가 되었길 바라요.")
+4.  **End with encouragement:** Finish with a warm, forward-looking sentence based on the general advice (`cluster_advice`).
+
+Combine these into a natural, flowing paragraph.
 
 Example Input Context (in user message):
 {
     "user_nick_nm": "모지",
-    "top_cluster_today": "우울/무기력/번아웃",
+    "top_cluster_display_name": "우울/무기력",
     "top_score_today": 70,
     "user_dialogue_summary": "반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거웠다.",
     "solution_context": "고요한 눈길을 걸으며 기분을 환기시키는 솔루션(밤 눈길 영상)이 제공됨",
@@ -176,7 +180,7 @@ Example Input Context (in user message):
 
 Example Output:
 {
-    "daily_summary": "오늘 모지님은 '우울/무기력' 점수가 70점으로 가장 높았네요. 반복되는 업무 스트레스와 주변의 기대 때문에 마음이 무거운 하루셨군요. 고요한 눈길을 걸으며 잠시나마 기분을 환기시키는 시간이 위로가 되었길 바라요. 혼자만의 시간을 꼭 가지며 마음을 돌보는 하루가 되셨기를 바랍니다."
+    "daily_summary": "오늘 모지님은 반복되는 업무 스트레스와 주변의 기대 때문에 마음이 많이 무겁고 지치는 하루셨군요. 고요한 눈길을 걸으며 잠시나마 기분을 환기시키는 시간이 위로가 되었길 바라요. 혼자만의 시간을 꼭 가지며 마음을 돌보는 하루가 되셨기를 바랍니다."
 }
 """
 
@@ -208,8 +212,7 @@ def get_system_prompt(
     # 3. 페르소나 지시문 내의 {user_nick_nm}, {character_nm} 변수를 실제 값으로 채웁니다.
     formatted_instruction = personality_instruction.format(user_nick_nm=user_nick_nm, character_nm=character_nm)
 
-    language_name = "English" if language_code == 'en' else "Korean"
-    language_instruction = f"IMPORTANT: Your entire response must be in {language_name} ({language_code}).\n"
+    language_instruction = "IMPORTANT: You MUST always respond in the same language as the user's message.\n"
     
     return f"{language_instruction}\n{formatted_instruction}\n{base_prompt}"
 
