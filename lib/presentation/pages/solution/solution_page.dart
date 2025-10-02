@@ -66,7 +66,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     // ]);
 
     // extra에 어떤 이유로 페이지를 떠나는지 정보를 담아 보냅니다.
-    context.go('/chat', extra: {'from': 'solution_page', 'reason': reason});
+    context
+        .go('/home/chat', extra: {'from': 'solution_page', 'reason': reason});
   }
 
   @override
