@@ -23,7 +23,7 @@ from ai_moderator import moderate_text
 from llm_prompts import REPORT_SUMMARY_PROMPT, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
 from rule_based import rule_scoring
 from srj5_constants import (
-    CLUSTERS, EMOJI_ONLY_SCORE_CAP, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
+    CLUSTER_TO_DISPLAY_NAME, CLUSTERS, EMOJI_ONLY_SCORE_CAP, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
     FINAL_FUSION_WEIGHTS, FINAL_FUSION_WEIGHTS_NO_TEXT,
     W_LLM, W_RULE, 
     SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, SAFETY_REGEX, SAFETY_FIGURATIVE
@@ -1008,18 +1008,23 @@ async def propose_solution(payload: SolutionRequest):
             "propose", payload.language_code,
             cluster=payload.top_cluster, user_nick_nm=user_nick_nm
         )
-            
+
+         # 먼저 클러스터에 맞는 솔루션 목록을 DB에서 가져옵니다.    
         solutions_res = await run_in_threadpool(
-            supabase.table("solutions").select("solution_id, text, url, start_at, end_at, context")
-            .eq("cluster", payload.top_cluster).execute
+            supabase.table("solutions")
+            .select("solution_id, text, url, start_at, end_at, context, solution_variant") # solution_variant 추가
+            .eq("cluster", payload.top_cluster)
+            .execute
         )
         
         if not solutions_res.data:
             return {"proposal_text": "지금은 제안해드릴 특별한 활동이 없네요.", "solution_id": None}
                   
-        # 4. 가져온 솔루션 목록 중 하나를 랜덤으로 선택
+        # 가져온 솔루션 목록 중 하나를 랜덤으로 선택
         solution_data = random.choice(solutions_res.data)
         solution_id = solution_data.get("solution_id")
+        solution_variant = solution_data.get("solution_variant") 
+
 
         # 솔루션 ID가 없는 경우에 대한 예외 처리 
         if not solution_id:
@@ -1029,19 +1034,29 @@ async def propose_solution(payload: SolutionRequest):
                 "solution_details": None
             }
         
-       # 5. 최종 제안 텍스트를 조합 (멘트 + 솔루션 자체 텍스트)
+        # 선택된 솔루션 정보를 바탕으로, 알맞은 제안 멘트를 DB에서 조회
+        #    이때 solution_variant를 함께 넘겨 필터링
+        proposal_script = await get_mention_from_db(
+            "propose",
+            payload.language_code,
+            cluster=payload.top_cluster,
+            user_nick_nm=user_nick_nm,
+            solution_variant=solution_variant 
+        )
+
+       # 최종 제안 텍스트를 조합 (멘트 + 솔루션 자체 텍스트)
         final_text = f"{proposal_script} {solution_data.get('text', '')}".strip()
-        if solution_data and solution_data.get('text'):
-            # 멘트와 솔루션 텍스트 사이에 자연스러운 공백 추가
-            final_text = f"{proposal_script} {solution_data['text']}"
+        # if solution_data and solution_data.get('text'):
+        #     # 멘트와 솔루션 텍스트 사이에 자연스러운 공백 추가
+        #     final_text = f"{proposal_script} {solution_data['text']}"
 
 
-        # 4. 제안 이력을 로그로 저장
+        # 제안 이력을 로그로 저장
         log_entry = {"session_id": payload.session_id, "type": "propose", "solution_id": solution_id}
         await run_in_threadpool(supabase.table("interventions_log").insert(log_entry).execute)
 
         return {"proposal_text": final_text, "solution_id": solution_id, "solution_details": solution_data}
-    
+
     except Exception as e:
         tb = traceback.format_exc()
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
@@ -1096,6 +1111,7 @@ async def get_solution_followup_dialogue(
         mention_type = "followup_user_closed"
     else: # 'video_ended' 또는 기타
         mention_type = "followup_video_ended"
+        print('mention_type찍혔음!!!!: ${mention_type}')
 
     # get_mention_from_db 헬퍼 함수를 사용하여 멘트를 가져옵니다.
     dialogue_text = await get_mention_from_db(
@@ -1223,6 +1239,11 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         top_score_entry = max(all_scores_today, key=lambda x: x['score'])
         top_cluster_name = top_score_entry['cluster']
 
+
+        # 오늘의 대표 클러스터(top_cluster_name)에 해당하는 '표시용 이름'을 조회
+        top_cluster_display_name = CLUSTER_TO_DISPLAY_NAME.get(top_cluster_name, "주요 감정")
+
+
         # 그날 최고 점수를 기록한 세션의 점수
         top_score = top_score_entry['score']
         top_score_for_llm = int(top_score * 100)
@@ -1270,7 +1291,8 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         # --- 6. LLM에 전달할 컨텍스트 조합 ---
         llm_context = {
             "user_nick_nm": user_nick_nm,
-            "top_cluster_today": top_cluster_name,
+            # "top_cluster_today": top_cluster_name, # 기존 내부 키는 이제 LLM에 필요 없음
+            "top_cluster_display_name": top_cluster_display_name, # 사용자에게 표시용 이름을 전달
             "top_score_today": top_score_for_llm,
             "user_dialogue_summary": " ".join(dialogue_summaries) or "특별한 대화는 없었어요.",
             "solution_context": ", ".join(solution_contexts) or "제공된 솔루션이 없었어요.",
