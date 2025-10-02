@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
@@ -139,11 +140,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     return Scaffold(
-      backgroundColor: Color(0xFFFEFBF4),
+      backgroundColor: AppColors.yellow50,
       // AppBar
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Color(0xFFFEFBF4),
+        backgroundColor: AppColors.yellow50,
         centerTitle: false,
         title: Image.asset(
           AppImages.dailymojiLogoBlack, // DailyMoji 로고 이미지 경로
@@ -168,67 +169,91 @@ class _HomePageState extends ConsumerState<HomePage> {
                   width: 160.w,
                 ),
                 Positioned(
-                  top: -6,
+                  top: -15,
                   child: SvgPicture.asset(
                     AppIcons.bubbleUnder,
-                    height: 95.h,
-                    width: 180.w,
+                    height: 110.h,
+                    width: 200.w,
                   ),
                 ),
                 Positioned(
-                  top: 3,
+                  top: -22,
                   child: SizedBox(
                     width: 150.w,
-                    child: Text(
-                      displayText, // 타이핑 효과 적용된 텍스트
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF333333),
-                        fontFamily: 'Pretendard',
+                    height: 110.h,
+                    child: Center(
+                      child: Text(
+                        displayText, // 타이핑 효과 적용된 텍스트
+                        style: AppFontStyles.bodyBold16
+                            .copyWith(color: AppColors.grey900),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
                     ),
                   ),
                 ),
                 // 감정 이모티콘들 (Stack + Positioned)
                 Positioned(
                     bottom: 15.h,
-                    child: _Imoge(
-                        imoKey: "smile",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 80,
+                      width: 80,
+                      child: _Imoge(
+                          imoKey: "smile",
+                          selectedEmotion: selectedEmotion,
+                          onEmojiTap: onEmojiTap),
+                    )),
                 Positioned(
                     top: 94.h,
                     right: 25.w,
-                    child: _Imoge(
-                        imoKey: "crying",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 80,
+                      width: 80,
+                      child: _Imoge(
+                          imoKey: "crying",
+                          selectedEmotion: selectedEmotion,
+                          onEmojiTap: onEmojiTap),
+                    )),
                 Positioned(
                     bottom: 110.h,
                     left: 15.w,
-                    child: _Imoge(
-                        imoKey: "shocked",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 80,
+                      width: 80,
+                      child: _Imoge(
+                          imoKey: "shocked",
+                          selectedEmotion: selectedEmotion,
+                          onEmojiTap: onEmojiTap),
+                    )),
                 Positioned(
                     bottom: 110.h,
                     right: 15.w,
-                    child: _Imoge(
-                        imoKey: "sleeping",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 80,
+                      width: 80,
+                      child: _Imoge(
+                          imoKey: "sleeping",
+                          selectedEmotion: selectedEmotion,
+                          onEmojiTap: onEmojiTap),
+                    )),
                 Positioned(
                     top: 94.h,
                     left: 25.w,
-                    child: _Imoge(
-                        imoKey: "angry",
-                        selectedEmotion: selectedEmotion,
-                        onEmojiTap: onEmojiTap)),
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 80,
+                      width: 80,
+                      child: _Imoge(
+                          imoKey: "angry",
+                          selectedEmotion: selectedEmotion,
+                          onEmojiTap: onEmojiTap),
+                    )),
               ],
             ),
           ),
@@ -238,22 +263,23 @@ class _HomePageState extends ConsumerState<HomePage> {
       bottomSheet: GestureDetector(
         onTap: () => context.go('/home/chat', extra: selectedEmotion),
         child: Container(
-          color: Color(0xFFFEFBF4),
+          color: AppColors.yellow50,
           child: Container(
             height: 40.h,
             margin: EdgeInsets.all(12.r),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.grey200),
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     "무엇이든 입력하세요",
-                    style: TextStyle(color: Colors.grey),
+                    style: AppFontStyles.bodyRegular14
+                        .copyWith(color: AppColors.grey600),
                   ),
                 ),
                 SvgPicture.asset(AppIcons.send),
@@ -297,8 +323,11 @@ class _Imoge extends StatelessWidget {
                 0.2126, 0.7152, 0.0722, 0, 0, // B
                 0, 0, 0, 1, 0, // A
               ]),
-              child: Image.asset(imagePath,
-                  height: 60.h, width: 60.w, fit: BoxFit.cover),
+              child: Image.asset(
+                imagePath,
+                height: 60.h,
+                width: 60.w,
+              ),
             ),
     );
   }
