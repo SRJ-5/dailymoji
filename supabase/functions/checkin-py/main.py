@@ -470,10 +470,19 @@ async def _handle_emoji_only_case(payload: AnalyzeRequest, debug_log: dict) -> d
         personality=payload.character_personality, cluster=selected_cluster, user_nick_nm=user_nick_nm
     )
     
-    intervention = {"preset_id": PresetIds.EMOJI_REACTION, "empathy_text": reaction_text, "top_cluster": selected_cluster}
+    intervention = {"preset_id": PresetIds.EMOJI_REACTION,"top_cluster": selected_cluster}
     session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, final_scores)
 
-    return {"session_id": session_id, "final_scores": final_scores, "g_score": g, "profile": profile, "intervention": intervention}
+    return {
+        "session_id": session_id, 
+        "final_scores": final_scores, 
+        "g_score": g, 
+        "profile": profile, 
+        "empathy_text": reaction_text, 
+        "analysisText": None, 
+        "proposalText":None,
+        "topCluter":selected_cluster,
+        "intervention": intervention}
 
 async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dict:
     """Triage 결과가 '친구 모드'일 경우를 처리합니다."""
@@ -485,12 +494,39 @@ async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dic
         mode='FRIENDLY', personality=payload.character_personality, language_code=payload.language_code,
         user_nick_nm=user_nick_nm, character_nm=character_nm
     )
-    friendly_text = await call_llm(system_prompt, payload.text, OPENAI_KEY, expect_json=False)
+    friendly_text_response = await call_llm(system_prompt, payload.text, OPENAI_KEY, expect_json=False)
 
-    intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": friendly_text}
+    # --- 👇 [수정] ---
+    # LLM 호출 결과를 바로 사용하지 않고, 에러인지 먼저 확인합니다.
+    final_text_for_intervention = ""
+    if isinstance(friendly_text_response, dict) and 'error' in friendly_text_response:
+        print(f"⛔️ Friendly LLM call failed: {friendly_text_response.get('error')}")
+        # 에러가 발생하면, 미리 정해둔 fallback 메시지를 사용합니다.
+        final_text_for_intervention = "미안, 지금은 잠시 생각할 시간을 줘!🥹"
+    else:
+        # 성공 시, LLM이 생성한 텍스트를 사용합니다.
+        final_text_for_intervention = friendly_text_response
+
+    # intervention 객체를 만들 때, 에러가 아닌 검증된 'final_text_for_intervention'을 'text' 키에 담습니다.
+    intervention = {
+        "preset_id": PresetIds.FRIENDLY_REPLY,
+        "text": final_text_for_intervention
+    }
+    # ------------------
+
+    # friendly_text 키는 이제 사용되지 않으므로, empathyText도 intervention의 텍스트를 사용하도록 통일합니다.
     session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
-    
-    return {"session_id": session_id, "intervention": intervention}
+
+    return {"session_id": session_id,
+            "final_scores": {},
+            "g_score": 0.3,
+            "profile": 0,
+            "empathyText": final_text_for_intervention, # empathyText도 수정된 값으로 통일
+            "analysisText": None,
+            "proposalText":None,
+            "topCluter":None,
+            "intervention": intervention
+            }
 
 async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> dict:
     """Triage 결과가 '분석 모드'일 경우의 전체 파이프라인을 실행합니다."""
@@ -549,10 +585,23 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
         format_kwargs={"emotion": top_cluster, "score": int(score_val * 100)}
     )
 
-    intervention = {"preset_id": PresetIds.SOLUTION_PROPOSAL, "empathy_text": empathy_text, "analysis_text": analysis_text, "top_cluster": top_cluster}
+    intervention = {
+        "preset_id": PresetIds.SOLUTION_PROPOSAL, 
+        "top_cluster": top_cluster
+        }
     session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, final_scores)
 
-    return {"session_id": session_id, "final_scores": final_scores, "g_score": g, "profile": profile, "intervention": intervention}
+    return {
+        "session_id": session_id, 
+        "final_scores": final_scores, 
+        "g_score": g, 
+        "profile": profile, 
+        "empathy_text": empathy_text, 
+        "analysis_text": analysis_text, 
+        "proposalText":None,
+        "topCluter": top_cluster,
+        "intervention": intervention
+        }
 
 
 
@@ -1169,12 +1218,18 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         if not all_scores_today:
             print(f"Info: No score data for user {user_id} on {date_str}. Skipping.")
             return
-
+        
+        # 가장 높은 점수를 가진 기록(entry)을 찾음
         top_score_entry = max(all_scores_today, key=lambda x: x['score'])
         top_cluster_name = top_score_entry['cluster']
+
+        # 그날 최고 점수를 기록한 세션의 점수
+        top_score = top_score_entry['score']
+        top_score_for_llm = int(top_score * 100)
         
+        # 해당 클러스터의 모든 점수를 다시 모아서 
         scores_for_top_cluster = [item['score'] for item in all_scores_today if item['cluster'] == top_cluster_name]
-        
+        # 평균을 계산함
         average_score = sum(scores_for_top_cluster) / len(scores_for_top_cluster) if scores_for_top_cluster else 0
         top_score_for_llm = int(average_score * 100)
 

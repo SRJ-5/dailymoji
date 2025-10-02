@@ -261,7 +261,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.push('/chat', extra: selectedEmotion),
+        onTap: () => context.go('/home/chat', extra: selectedEmotion),
         child: Container(
           color: AppColors.yellow50,
           child: Container(
