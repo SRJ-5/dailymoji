@@ -535,7 +535,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               // 좋아요, 싫어요 버튼 스타일 다르게
               final bool isPositiveAction =
                   action == 'accept_solution' ||
-                      action == 'preparing';
+                      action == 'safety_crisis';
               final double buttonWidth =
                   isPositiveAction ? 104.w : 128.w;
 
