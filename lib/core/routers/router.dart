@@ -33,41 +33,72 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: '/onboarding2',
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
-        path: '/home',
-        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
-      ),
-      GoRoute(
-        path: '/chat',
-        pageBuilder: (context, state) {
-          // extra를 Object?로 받아 유연하게 처리
-          // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
-          final extraData = state.extra as Object?;
-          String? emotion;
-          Map<String, dynamic>? navData;
-          DateTime? targetDate;
+          path: '/home',
+          pageBuilder: (context, state) =>
+              const PortraitPage(child: HomePage()),
+          routes: [
+            GoRoute(
+              path: '/chat',
+              pageBuilder: (context, state) {
+                // extra를 Object?로 받아 유연하게 처리
+                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+                final extraData = state.extra as Object?;
+                String? emotion;
+                Map<String, dynamic>? navData;
+                DateTime? targetDate;
 
-          if (extraData is String) {
-            emotion = extraData;
-          } else if (extraData is Map<String, dynamic>) {
-            navData = extraData;
-          } else if (extraData is DateTime) {
-            targetDate = extraData;
-          }
+                if (extraData is String) {
+                  emotion = extraData;
+                } else if (extraData is Map<String, dynamic>) {
+                  navData = extraData;
+                } else if (extraData is DateTime) {
+                  targetDate = extraData;
+                }
 
-          return PortraitPage(
-            child: ChatPage(
-              emotionFromHome: emotion,
-              navigationData: navData,
-              targetDate: targetDate,
+                return PortraitPage(
+                  child: ChatPage(
+                    emotionFromHome: emotion,
+                    navigationData: navData,
+                    targetDate: targetDate,
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
+          ]),
+
       GoRoute(
-        path: '/report',
-        pageBuilder: (context, state) =>
-            const PortraitPage(child: ReportPage()),
-      ),
+          path: '/report',
+          pageBuilder: (context, state) =>
+              const PortraitPage(child: ReportPage()),
+          routes: [
+            GoRoute(
+              path: '/chat',
+              pageBuilder: (context, state) {
+                // extra를 Object?로 받아 유연하게 처리
+                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+                final extraData = state.extra as Object?;
+                String? emotion;
+                Map<String, dynamic>? navData;
+                DateTime? targetDate;
+
+                if (extraData is String) {
+                  emotion = extraData;
+                } else if (extraData is Map<String, dynamic>) {
+                  navData = extraData;
+                } else if (extraData is DateTime) {
+                  targetDate = extraData;
+                }
+
+                return PortraitPage(
+                  child: ChatPage(
+                    emotionFromHome: emotion,
+                    navigationData: navData,
+                    targetDate: targetDate,
+                  ),
+                );
+              },
+            ),
+          ]),
       GoRoute(
         path: '/my',
         pageBuilder: (context, state) => PortraitPage(child: MyPage()),

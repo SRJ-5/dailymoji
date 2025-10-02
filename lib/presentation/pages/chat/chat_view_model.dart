@@ -367,6 +367,17 @@ class ChatViewModel extends Notifier<ChatState> {
       switch (presetId) {
 // Rin: 칭긔칭긔모드
         case PresetIds.friendlyReply:
+          final dynamic textData = emotionalRecord.intervention['text'];
+          String botMessageContent;
+
+          if (textData is String) {
+            botMessageContent = textData;
+          } else {
+            print(
+                "Warning: Received non-string data for friendly_reply text: $textData");
+            botMessageContent = "음.. 잠깐 생각 좀 해볼게! 🤔";
+          }
+
           final botMessage = Message(
             userId: currentUserId,
             content: emotionalRecord.intervention['text'] as String,
