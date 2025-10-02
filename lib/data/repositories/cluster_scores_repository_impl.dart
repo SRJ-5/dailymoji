@@ -8,6 +8,7 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
 
   ClusterScoresRepositoryImpl(this.dataSource);
 
+  // 하루치 데이터
   @override
   Future<List<ClusterScore>> fetchTodayClusters() async {
     try {
@@ -29,7 +30,7 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
     }
   }
 
-// (신규) 14일 집계용 범위 조회
+// 14일 집계용 범위 조회
   @override
   Future<List<ClusterScore>> fetchRangeByUser({
     required String userId,
