@@ -84,7 +84,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     // _timer?.cancel();
     setState(() {
       // displayText = "";
-      displayText = newText;
+      displayText = newText.replaceAll(r'\n', '\n');
       // _index = 0;
       // currentDialogue = newText;
     });
