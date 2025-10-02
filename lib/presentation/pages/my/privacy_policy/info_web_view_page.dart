@@ -22,15 +22,18 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
     switch (widget.title) {
       case "공지사항":
         url =
-            "https://www.notion.so/DailyMoji-27e3e951e08b80cebdbdfb10b8c35da4";
+            "https://uttermost-eggplant-630.notion.site/DailyMoji-28085dd27ed380f38c8bc52a23ab5233?source=copy_link";
         break;
       case "이용 약관":
         url =
-            "https://empty-judo-4e8.notion.site/DailyMoji-2793e951e08b80abb391d0a6cf9f7ca3";
+            "https://uttermost-eggplant-630.notion.site/DailyMoji-28085dd27ed380b9a68fe09898057360?source=copy_link";
         break;
       case "개인정보 처리방침":
         url =
-            "https://www.notion.so/DailyMoji-27e069aa0a8280aabceded865e1f4473";
+            "https://uttermost-eggplant-630.notion.site/DailyMoji-28085dd27ed3805d828df9a1bc8152a8?source=copy_link";
+        break;
+      case "상담센터 연결":
+        url = "https://findahelpline.com/ko-KR";
         break;
     }
     _webViewControl();
