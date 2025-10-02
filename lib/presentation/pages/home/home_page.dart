@@ -84,7 +84,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     // _timer?.cancel();
     setState(() {
       // displayText = "";
-      displayText = newText;
+      displayText = newText.replaceAll(r'\n', '\n');
       // _index = 0;
       // currentDialogue = newText;
     });
@@ -194,6 +194,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                 ),
+
                 // 감정 이모티콘들 (Stack + Positioned)
                 Positioned(
                     bottom: 15.h,
@@ -239,6 +240,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                       width: 80,
                       child: _Imoge(
                           imoKey: "sleeping",
+                          selectedEmotion: selectedEmotion,
+                          onEmojiTap: onEmojiTap),
+                    )),
+                Positioned(
+                    top: 94.h,
+                    left: 25.w,
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 80,
+                      width: 80,
+                      child: _Imoge(
+                          imoKey: "angry",
                           selectedEmotion: selectedEmotion,
                           onEmojiTap: onEmojiTap),
                     )),
@@ -314,21 +327,26 @@ class _Imoge extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
-      child: isSelected
-          ? Image.asset(imagePath, height: 80.h, width: 80.w, fit: BoxFit.cover)
-          : ColorFiltered(
-              colorFilter: const ColorFilter.matrix(<double>[
-                0.2126, 0.7152, 0.0722, 0, 0, // R
-                0.2126, 0.7152, 0.0722, 0, 0, // G
-                0.2126, 0.7152, 0.0722, 0, 0, // B
-                0, 0, 0, 1, 0, // A
-              ]),
-              child: Image.asset(
-                imagePath,
-                height: 60.h,
-                width: 60.w,
-              ),
-            ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        width: isSelected ? 80.r : 60.r,
+        height: isSelected ? 80.r : 60.r,
+        child: ColorFiltered(
+          colorFilter: isSelected
+              ? const ColorFilter.mode(
+                  Colors.transparent, // 원래 색 (필터 없음)
+                  BlendMode.multiply,
+                )
+              : const ColorFilter.matrix(<double>[
+                  0.2126, 0.7152, 0.0722, 0, 0, // R
+                  0.2126, 0.7152, 0.0722, 0, 0, // G
+                  0.2126, 0.7152, 0.0722, 0, 0, // B
+                  0, 0, 0, 1, 0, // A
+                ]),
+          child: Image.asset(imagePath),
+        ),
+      ),
     );
   }
 }

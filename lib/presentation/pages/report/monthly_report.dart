@@ -1,11 +1,9 @@
 import 'dart:convert';
-
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
-import 'package:dailymoji/presentation/pages/report/view_model/cluster_month_view_model.dart';
 import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
     show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
@@ -31,6 +29,8 @@ class MonthlyReport extends ConsumerStatefulWidget {
 class _MonthlyReportState extends ConsumerState<MonthlyReport> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+
+  bool checkEmoji = false;
 
   String _dailySummary = "날짜를 선택하면 감정 요약을 볼 수 있어요.";
   bool _isSummaryLoading = false;
@@ -95,38 +95,11 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
       }
     }
 
-    // "오늘의" vs "n월 n일의" 라벨
-    String dayLabel = "이날의";
-    if (_selectedDay != null) {
-      final now = DateTime.now();
-      final sd = _selectedDay!;
-      final isToday =
-          now.year == sd.year && now.month == sd.month && now.day == sd.day;
-      dayLabel = isToday ? "오늘의" : "${sd.month}월 ${sd.day}일의";
-    }
-
     // 요약 카드 제목 문구
     final summaryTitle = (selectedRow == null)
-        ? "이 날은 기록된 감정이 없어요!"
-        : "이 날의 ${clusterLabel(selectedRow!.cluster)} "
-            "점수는 ${displayScore100(selectedRow!.score)}점 이에요.";
-
-    // final params = MonthParams(
-    //   userId: widget.userId,
-    //   year: _focusedDay.year,
-    //   month: _focusedDay.month,
-    // );
-
-    // 뷰모델 구독: 상태(AsyncValue<ClusterMonthState>) + notifier
-    // final vmState =
-    //     ref.watch(clusterMonthViewModelProvider(params)).asData?.value;
-    // final vm = ref.read(clusterMonthViewModelProvider(params).notifier);
-
-    // // 상태가 data일 때만 이모지 맵을 꺼내 쓰고, 아니면 빈 맵
-    // final emojiByDay = vmState.maybeWhen(
-    //   data: (s) => s.emojiByDay,
-    //   orElse: () => const <int, String>{},
-    // );
+        ? "이 날은 기록이 없는 하루예요"
+        : "이 날의 ${clusterLabel(selectedRow.cluster)} 감정이 "
+            "${displayScore100(selectedRow.score)}점으로 가장 강렬했습니다.";
 
     return Scaffold(
       backgroundColor: AppColors.yellow50,
@@ -199,8 +172,13 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   defaultBuilder: (context, day, focusedDay) {
                     final path = emojiByDay[day.day]; // ← 뷰모델의 이모지 맵 사용!
                     if (path != null) {
-                      return Center(
-                          child: Image.asset(path, width: 40, height: 40));
+                      return SizedBox(
+                        width: 40.w,
+                        height: 40.h,
+                        child: Center(
+                            child:
+                                Image.asset(path, width: 36.w, height: 36.h)),
+                      );
                     }
                     return SizedBox(
                       width: 40.w,
@@ -230,6 +208,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   // 선택된 날짜 셀
                   selectedBuilder: (context, day, focusedDay) {
                     final path = emojiByDay[day.day];
+                    checkEmoji = path == null ? false : true;
                     return path == null
                         ? Container(
                             height: 40.h,
@@ -253,18 +232,22 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                             height: 40.h,
                             width: 40.w,
                             decoration: BoxDecoration(
+                                color: Colors.black,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: AppColors.orange600,
-                                  width: 2,
+                                  width: 2.sp,
                                 )),
-                            child: Container(child: Image.asset(path)),
-                          );
+                            child: Center(child: Image.asset(path)));
                   },
                 ),
               ),
-
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
+              Divider(
+                height: 1.h,
+                color: AppColors.grey100,
+              ),
+              SizedBox(height: 16.h),
 
               // 상태 분기(로딩/에러/데이터)
               asyncRows.when(
@@ -272,8 +255,6 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 error: (e, _) => Text('로드 실패: $e'),
                 data: (_) => const SizedBox.shrink(),
               ),
-
-              const SizedBox(height: 8),
 
               // 선택된 날짜 텍스트
               if (_selectedDay != null)
@@ -287,69 +268,77 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   ),
                 ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: 8.h),
 
               // 감정 요약 카드 (현재는 더미, 나중에 선택일 기반 상세 연결)
               if (_selectedDay != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.green100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(summaryTitle,
-                          style: AppFontStyles.bodyBold14
-                              .copyWith(color: AppColors.green700)),
-                      SizedBox(height: 6.h),
-                      if (_isSummaryLoading)
-                        Center(
-                            child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20.h),
-                          child: CircularProgressIndicator(),
-                        ))
-                      else
-                        Text(
-                          _dailySummary,
-                          style: AppFontStyles.bodyRegular12_180
-                              .copyWith(color: AppColors.grey900),
+                checkEmoji
+                    ? Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.green100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.green200),
                         ),
-                      Align(
-                          alignment: Alignment.bottomRight,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: Size(133, 40),
-                              backgroundColor: AppColors.grey50,
-                              side:
-                                  BorderSide(color: AppColors.grey200), // 테두리 색
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(12), // 모서리 둥글게
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(summaryTitle,
+                                style: AppFontStyles.bodyBold14
+                                    .copyWith(color: AppColors.green700)),
+                            SizedBox(height: 6.h),
+                            if (_isSummaryLoading)
+                              Center(
+                                  child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20.h),
+                                child: CircularProgressIndicator(),
+                              ))
+                            else
+                              Text(
+                                _dailySummary,
+                                style: AppFontStyles.bodyRegular12_180
+                                    .copyWith(color: AppColors.grey900),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 9.5.h)
-                                  .copyWith(left: 16.w, right: 10.w),
-                            ),
-                            onPressed: () {
-                              context.go("/report/chat", extra: _selectedDay);
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('채팅 확인하기',
-                                    style: AppFontStyles.bodyMedium14
-                                        .copyWith(color: AppColors.grey900)),
-                                SizedBox(width: 6.w),
-                                Icon(Icons.arrow_forward,
-                                    color: AppColors.grey900, size: 18.r),
-                              ],
-                            ),
-                          ))
-                    ],
-                  ),
-                ),
+                            Align(
+                                alignment: Alignment.bottomRight,
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: Size(133, 40),
+                                    backgroundColor: AppColors.grey50,
+                                    side: BorderSide(
+                                        color: AppColors.grey200), // 테두리 색
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12), // 모서리 둥글게
+                                    ),
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 9.5.h)
+                                            .copyWith(left: 16.w, right: 10.w),
+                                  ),
+                                  onPressed: () {
+                                    context.go("/report/chat",
+                                        extra: _selectedDay);
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text('채팅 확인하기',
+                                          style: AppFontStyles.bodyMedium14
+                                              .copyWith(
+                                                  color: AppColors.grey900)),
+                                      SizedBox(width: 6.w),
+                                      Icon(Icons.arrow_forward,
+                                          color: AppColors.grey900, size: 18.r),
+                                    ],
+                                  ),
+                                ))
+                          ],
+                        ),
+                      )
+                    : Padding(
+                        padding: EdgeInsets.only(top: 76.h),
+                        child: Text("이 날은 기록이 없는 하루예요"),
+                      ),
             ],
           ),
         ),
