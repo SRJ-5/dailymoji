@@ -746,10 +746,11 @@ class ChatViewModel extends Notifier<ChatState> {
 
 // 이미 해당 메시지가 있는지 확인하여 중복 전송 방지
 // 가장 마지막 메시지가 이 메시지와 동일하면 보내지 않음
-    if (state.messages.isNotEmpty &&
-        state.messages.last.content == followUpMessage.content) {
-      return;
-    }
+// --> 이거 바로 이전 메시지와 내용이 같더라도 후속 메시지는 항상 보내야 하므로 주석처리함.
+    // if (state.messages.isNotEmpty &&
+    //     state.messages.last.content == followUpMessage.content) {
+    //   return;
+    // }
 
     await _addMessage(followUpMessage);
   }

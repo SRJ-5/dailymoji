@@ -11,8 +11,10 @@ import 'package:go_router/go_router.dart';
 
 class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String solutionId;
+  final String? sessionId;
 
-  const BreathingSolutionPage({super.key, required this.solutionId});
+  const BreathingSolutionPage(
+      {super.key, required this.solutionId, this.sessionId});
 
   @override
   ConsumerState<BreathingSolutionPage> createState() =>

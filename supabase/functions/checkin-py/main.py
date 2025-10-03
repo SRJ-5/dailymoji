@@ -1111,7 +1111,6 @@ async def get_solution_followup_dialogue(
         mention_type = "followup_user_closed"
     else: # 'video_ended' 또는 기타
         mention_type = "followup_video_ended"
-        print('mention_type찍혔음!!!!: ${mention_type}')
 
     # get_mention_from_db 헬퍼 함수를 사용하여 멘트를 가져옵니다.
     dialogue_text = await get_mention_from_db(
