@@ -84,18 +84,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // Rin: enterChatRoom방식: 홈에서 들어갈때 이 부분 충돌안나게 주의하기
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final navData = widget.navigationData;
-      if (navData != null && navData['from'] == 'solution_page') {
-        final reason = navData['reason'] as String? ?? 'video_ended'; // 기본값 설정
-        ref
-            .read(chatViewModelProvider.notifier)
-            .sendFollowUpMessageAfterSolution(reason: reason);
-      } else {
-        // 기존 로직: 홈에서 진입한 경우 또는 리포트에서 특정 날짜로 진입한 경우
-        ref.read(chatViewModelProvider.notifier).enterChatRoom(
-            widget.emotionFromHome,
-            specificDate: widget.targetDate);
-      }
+      // RIN: SolutionPage에서 보낸 navigationData, 홈에서 보낸 emotionFromHome, 리포트에서 보낸 targetDate 등
+      // RIN: 모든 진입 케이스의 데이터를 ViewModel의 단일 진입점인 enterChatRoom 메서드로 전달하기!
+
+      ref.read(chatViewModelProvider.notifier).enterChatRoom(
+            emotionFromHome: widget.emotionFromHome,
+            specificDate: widget.targetDate,
+            navigationData: widget.navigationData,
+          );
     });
   }
 
