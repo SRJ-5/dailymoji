@@ -518,6 +518,7 @@ class ChatViewModel extends Notifier<ChatState> {
         type: MessageType.solutionProposal,
         proposal: {
           "solution_id": proposalResponse['solution_id'],
+          "session_id": sessionId,
           "options": [
             {"label": "좋아, 해볼게!", "action": "accept_solution"},
             {"label": "아니, 더 대화할래", "action": "decline_solution_and_talk"}
@@ -754,9 +755,14 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   /// 솔루션 제안에 대한 사용자 응답 처리
-  Future<void> respondToSolution(String solutionId, String action) async {
+  Future<void> respondToSolution(
+      Map<String, dynamic> proposalData, String action) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
+
+    final String solutionId = proposalData['solution_id'] as String;
+    final String? sessionId = proposalData['session_id']
+        as String?; // 🍿RIN: proposal 맵에서 sessionId를 추출합니다.
 
     if (action == "decline_solution_and_talk") {
       // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
@@ -784,9 +790,11 @@ class ChatViewModel extends Notifier<ChatState> {
       return;
     }
 
-    // 페이지 두개뜨는 오류 해결
+    // RIN: 페이지 이동 시, solutionId와 함께 sessionId를 쿼리 파라미터로 전달해야 후속 메시지가 옴!
     if (action == "accept_solution") {
-      navigatorkey.currentContext?.push('/breathing/$solutionId');
+      // 🍿RIN: 이 sessionId는 나중에 채팅방으로 돌아올 때 사용됨
+      navigatorkey.currentContext
+          ?.push('/breathing/$solutionId?sessionId=$sessionId');
     } else if (action == "safety_crisis") {
       String title = "상담센터 연결";
       navigatorkey.currentContext?.push('/info/$title');

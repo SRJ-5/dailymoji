@@ -524,7 +524,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       ref
                           .read(chatViewModelProvider.notifier)
                           .respondToSolution(
-                            proposal['solution_id'] as String,
+                            message.proposal!,
                             action,
                           );
                     },

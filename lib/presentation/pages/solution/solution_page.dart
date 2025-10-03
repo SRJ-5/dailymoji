@@ -10,8 +10,10 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class SolutionPage extends ConsumerWidget {
   final String solutionId;
+  final String? sessionId;
 
-  const SolutionPage({super.key, required this.solutionId});
+  const SolutionPage(
+      {super.key, required this.solutionId, this.sessionId}); // 🍿RIN: 생성자 수정
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,7 +33,11 @@ class SolutionPage extends ConsumerWidget {
       ),
       data: (solution) {
         // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
-        return _PlayerView(solution: solution);
+        return _PlayerView(
+          solutionId: solutionId,
+          sessionId: sessionId,
+          solution: solution,
+        );
       },
     );
   }
@@ -39,9 +45,15 @@ class SolutionPage extends ConsumerWidget {
 
 // 실제 플레이어 UI를 담당하는 위젯
 class _PlayerView extends ConsumerStatefulWidget {
+  final String solutionId;
+  final String? sessionId;
   final Solution solution;
 
-  const _PlayerView({required this.solution});
+  const _PlayerView({
+    required this.solutionId,
+    this.sessionId,
+    required this.solution,
+  });
 
   @override
   ConsumerState<_PlayerView> createState() => _PlayerViewState();
@@ -66,8 +78,12 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     // ]);
 
     // extra에 어떤 이유로 페이지를 떠나는지 정보를 담아 보냅니다.
-    context
-        .go('/home/chat', extra: {'from': 'solution_page', 'reason': reason});
+    context.go('/home/chat', extra: {
+      'from': 'solution_page',
+      'reason': reason,
+      'solutionId': widget.solutionId,
+      'sessionId': widget.sessionId,
+    });
   }
 
   @override
