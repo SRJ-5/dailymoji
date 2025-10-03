@@ -8,9 +8,15 @@ import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
+
+// A simple provider to hold the result from the solution page.
+final solutionResultProvider =
+    StateProvider<Map<String, dynamic>?>((ref) => null);
 
 class ChatState {
   final List<Message> messages;
@@ -72,6 +78,8 @@ class ChatViewModel extends Notifier<ChatState> {
   String? _lastEmojiMessageId; // RIN ♥ 이모지 전송 직후의 메시지 ID 저장 (세션 업데이트용)
   DateTime? _targetDate; // 현재 로드 중인 특정 날짜 (무한 스크롤 제어용)
 
+  String? _pendingSessionIdForFollowUp; // 솔루션에서 돌아왔는지 확인하기 위한 로직 추가
+
   @override
   ChatState build() => ChatState();
 
@@ -125,23 +133,21 @@ class ChatViewModel extends Notifier<ChatState> {
     }
     _subscribeToMessages(currentUserId);
 
-    // 🍿RIN: 1. 어떤 경로로 진입하든, 가장 먼저 이전 대화 기록을 불러옴
+    // RIN: 1. 어떤 경로로 진입하든, 가장 먼저 이전 대화 기록을 불러옴
     await _loadMessages(currentUserId, targetDate: specificDate);
-
-// RIN: 2. 대화 기록이 로드된 후, 각 진입 경로에 맞는 추가 작업 수행
+    //[로직 변경] SolutionPage에서 직접 데이터를 보내는 방식은 유지하되, 만약을 대비합니다.
     if (navigationData != null && navigationData['from'] == 'solution_page') {
       final reason = navigationData['reason'] as String? ?? 'video_ended';
-      // RIN: 추후 피드백 기능을 위해 solutionId와 sessionId를 전달받도록 수정
       final solutionId = navigationData['solutionId'] as String?;
       final sessionId = navigationData['sessionId'] as String?;
 
       if (solutionId != null && sessionId != null) {
+        // 후속 메시지 요청 후, 새로운 로직이 중복 실행되지 않도록 상태를 초기화합니다.
+        _pendingSessionIdForFollowUp = null;
         await sendFollowUpMessageAfterSolution(
             reason: reason, solutionId: solutionId, sessionId: sessionId);
       }
-// 홈에서 이모지를 선택하고 들어온 경우, 대화 흐름 시작
     } else if (emotionFromHome != null) {
-// 1. UI에 표시할 메시지 객체들을 먼저 생성
       final emojiMessage = Message(
         userId: currentUserId,
         sender: Sender.user,
@@ -149,20 +155,46 @@ class ChatViewModel extends Notifier<ChatState> {
         imageAssetPath: kEmojiAssetMap[emotionFromHome],
       );
       final savedMessage = await _addMessage(emojiMessage);
-
-// 2. UI 업데이트 이후, 백그라운드에서 대화 시작 로직 실행
       await _startConversationWithEmoji(savedMessage, emotionFromHome);
-// RIN ♥ : 홈에서 온 이모지 처리가 끝나면 ui에 초기화 신호 보내기(디폴트로 돌려놓기 위함)
       state = state.copyWith(clearPendingEmoji: true);
-    } else {
-      // RIN: 그 외의 모든 경우(예: 리포트에서 날짜 선택, 그냥 채팅방 아이콘 클릭)에는 메시지만 로드
-      await _loadMessages(currentUserId, targetDate: specificDate);
+    }
+  }
+
+  // [새 로직 추가] ChatPage가 다시 화면에 보일 때 호출될 함수
+  Future<void> checkForPendingFollowUp() async {
+    //저장해둔 sessionId가 있는지 확인
+    if (_pendingSessionIdForFollowUp != null) {
+      print("솔루션 페이지에서 복귀 감지! sessionId: $_pendingSessionIdForFollowUp");
+      final sessionId = _pendingSessionIdForFollowUp!;
+      // 중복 실행을 막기 위해 즉시 null로 초기화
+      _pendingSessionIdForFollowUp = null;
+
+      // 후속 메시지 전송 (solutionId는 현재 알 수 없으므로 임의의 값을 넣거나, 서버에서 무시하도록 처리 필요. 여기서는 'unknown'으로 전달)
+      await sendFollowUpMessageAfterSolution(
+        reason: 'returned', // '돌아왔다'는 새로운 이유
+        solutionId: 'unknown',
+        sessionId: sessionId,
+      );
     }
   }
 
 // RIN ♥ : UI에서 초기화 신호를 확인한 후, 다시 false로 돌려놓는 함수
   void consumeClearPendingEmojiSignal() {
     state = state.copyWith(clearPendingEmoji: false);
+  }
+
+  Future<void> processSolutionResult(Map<String, dynamic> result) async {
+    final reason = result['reason'] as String? ?? 'video_ended';
+    final solutionId = result['solutionId'] as String?;
+    final sessionId = result['sessionId'] as String?;
+
+    if (solutionId != null && sessionId != null) {
+      await sendFollowUpMessageAfterSolution(
+        reason: reason,
+        solutionId: solutionId,
+        sessionId: sessionId,
+      );
+    }
   }
 
 // // ---------------------------------------------------------------------------
@@ -704,7 +736,6 @@ class ChatViewModel extends Notifier<ChatState> {
       {required String reason,
       required String solutionId,
       required String sessionId}) async {
-    // 🍿RIN: solutionId, sessionId 파라미터 추가
     /// 솔루션 완료 후 후속 멘트 전송
     final currentUserId = _userId;
     if (currentUserId == null) return;
@@ -762,8 +793,7 @@ class ChatViewModel extends Notifier<ChatState> {
     if (currentUserId == null) return;
 
     final String solutionId = proposalData['solution_id'] as String;
-    final String? sessionId = proposalData['session_id']
-        as String?; // 🍿RIN: proposal 맵에서 sessionId를 추출합니다.
+    final String? sessionId = proposalData['session_id'] as String?;
 
     if (action == "decline_solution_and_talk") {
       // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
@@ -791,11 +821,25 @@ class ChatViewModel extends Notifier<ChatState> {
       return;
     }
 
-    // RIN: 페이지 이동 시, solutionId와 함께 sessionId를 쿼리 파라미터로 전달해야 후속 메시지가 옴!
+    // RIN: 솔루션 페이지로 이동하기 직전에, 돌아왔을 때를 대비해 sessionId를 저장
     if (action == "accept_solution") {
-      // 🍿RIN: 이 sessionId는 나중에 채팅방으로 돌아올 때 사용됨
-      navigatorkey.currentContext
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+
+      final result = await navigatorkey.currentContext
           ?.push('/breathing/$solutionId?sessionId=$sessionId');
+
+      if (result is Map<String, dynamic>) {
+        final reason = result['reason'] as String? ?? 'video_ended';
+        final returnedSessionId = result['sessionId'] as String?;
+
+        if (returnedSessionId != null) {
+          await sendFollowUpMessageAfterSolution(
+            reason: reason,
+            solutionId: solutionId,
+            sessionId: returnedSessionId,
+          );
+        }
+      }
     } else if (action == "safety_crisis") {
       String title = "상담센터 연결";
       navigatorkey.currentContext?.push('/info/$title');

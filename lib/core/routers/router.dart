@@ -18,11 +18,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final navigatorkey = GlobalKey<NavigatorState>();
+final routeObserverProvider =
+    Provider((_) => RouteObserver<ModalRoute<void>>());
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final routeObserver = ref.watch(routeObserverProvider);
+
   return GoRouter(
     initialLocation: '/',
     navigatorKey: navigatorkey,
+    observers: [routeObserver],
     routes: [
       GoRoute(path: '/', builder: (context, state) => SplashPage()),
       GoRoute(path: '/login', builder: (context, state) => LoginPage()),

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/constants/emoji_assets.dart';
+import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
@@ -35,12 +36,19 @@ class ChatPage extends ConsumerStatefulWidget {
 }
 
 class _ChatPageState extends ConsumerState<ChatPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   bool showEmojiBar = false;
   late String currentSelectedEmojiKey;
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final routeObserver = ref.read(routeObserverProvider);
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
 
 // 봇입력중일때 사용자입력못하게
   void _onInputChanged() {
@@ -97,12 +105,31 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   void dispose() {
+    ref.read(routeObserverProvider).unsubscribe(this);
     _messageInputController.removeListener(_onInputChanged);
     _scrollController.removeListener(_scrollListener);
     _messageInputController.dispose();
     _scrollController.dispose();
     _emojiCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    Future.microtask(() {
+      // Check if there's a result from the solution page
+      final result = ref.read(solutionResultProvider);
+
+      if (result != null) {
+        debugPrint("RIN: didPopNext processing result: $result");
+
+        // Process the result using the ViewModel
+        ref.read(chatViewModelProvider.notifier).processSolutionResult(result);
+
+        // IMPORTANT: Consume the result so it's not processed again
+        ref.read(solutionResultProvider.notifier).state = null;
+      }
+    });
   }
 
   void _scrollToBottom() {

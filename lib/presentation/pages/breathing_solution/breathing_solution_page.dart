@@ -85,7 +85,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     // 깜빡임 애니메이션 컨트롤러
     _blinkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 300),
     )..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
 
     _blinkAnimation = Tween<double>(
@@ -191,7 +191,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
         if (_showFinalHint) {
-          context.pushReplacement('/solution/${widget.solutionId}');
+          context.pushReplacement(
+              '/solution/${widget.solutionId}?sessionId=${widget.sessionId}');
         }
       },
       child: Scaffold(
