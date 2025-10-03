@@ -120,24 +120,27 @@ class ChatViewModel extends Notifier<ChatState> {
     // RIN: 모든 진입 경로의 파라미터를 받도록 통합
     final currentUserId = _userId; // Getter를 통해 현재 ID 가져오기
     if (currentUserId == null) {
-      print(
-          "RIN: 🚨 [ViewModel] ERROR: User ID is null. Cannot enter chat room.");
       state = state.copyWith(isLoading: false, errorMessage: "로그인 정보가 없습니다.");
       return;
     }
     _subscribeToMessages(currentUserId);
 
-// RIN: SolutionPage에서 왔는지 먼저 확인
+    // 🍿RIN: 1. 어떤 경로로 진입하든, 가장 먼저 이전 대화 기록을 불러옴
+    await _loadMessages(currentUserId, targetDate: specificDate);
+
+// RIN: 2. 대화 기록이 로드된 후, 각 진입 경로에 맞는 추가 작업 수행
     if (navigationData != null && navigationData['from'] == 'solution_page') {
       final reason = navigationData['reason'] as String? ?? 'video_ended';
-      // RIN: 후속 메시지 전송 로직을 먼저 수행하고, 그다음에 일반 메시지를 로드
-      await sendFollowUpMessageAfterSolution(reason: reason);
-    } else if (emotionFromHome != null) {
-      // RIN: 홈에서 이모지와 함께 진입한 경우, 기존 대화 시작 로직을 수행
-// 1. 대화 기록 불러오기 (특정 날짜 또는 오늘)
-      await _loadMessages(currentUserId, targetDate: specificDate);
+      // RIN: 추후 피드백 기능을 위해 solutionId와 sessionId를 전달받도록 수정
+      final solutionId = navigationData['solutionId'] as String?;
+      final sessionId = navigationData['sessionId'] as String?;
 
+      if (solutionId != null && sessionId != null) {
+        await sendFollowUpMessageAfterSolution(
+            reason: reason, solutionId: solutionId, sessionId: sessionId);
+      }
 // 홈에서 이모지를 선택하고 들어온 경우, 대화 흐름 시작
+    } else if (emotionFromHome != null) {
 // 1. UI에 표시할 메시지 객체들을 먼저 생성
       final emojiMessage = Message(
         userId: currentUserId,
@@ -153,7 +156,6 @@ class ChatViewModel extends Notifier<ChatState> {
       state = state.copyWith(clearPendingEmoji: true);
     } else {
       // RIN: 그 외의 모든 경우(예: 리포트에서 날짜 선택, 그냥 채팅방 아이콘 클릭)에는 메시지만 로드
-
       await _loadMessages(currentUserId, targetDate: specificDate);
     }
   }
@@ -698,15 +700,14 @@ class ChatViewModel extends Notifier<ChatState> {
 
   /// 솔루션 완료 후 후속 질문 메시지 전송
   Future<void> sendFollowUpMessageAfterSolution(
-      {required String reason}) async {
+      {required String reason,
+      required String solutionId,
+      required String sessionId}) async {
+    // 🍿RIN: solutionId, sessionId 파라미터 추가
     /// 솔루션 완료 후 후속 멘트 전송
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-// 채팅방 진입 시 기존 메시지를 먼저 로드
-    if (state.messages.isEmpty) {
-      await _loadMessages(currentUserId);
-    }
 // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
     final userProfile = ref.read(userViewModelProvider).userProfile;
     final personality = userProfile?.characterPersonality;
