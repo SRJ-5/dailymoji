@@ -390,9 +390,10 @@ class ChatViewModel extends Notifier<ChatState> {
         case PresetIds.solutionProposal:
 // intervention 맵에서 직접 데이터 추출 (안전성)
 // `as String?`을 사용하여, 혹시 키가 없더라도 null로 처리되어 앱이 멈추지 않도록
-          final empathyText = intervention['empathy_text'] as String?;
-          final analysisText = intervention['analysis_text'] as String?;
-          final topCluster = intervention['top_cluster'] as String?;
+          final empathyText = emotionalRecord.empathyText;
+          final analysisText = emotionalRecord.analysisText;
+          final topCluster =
+              emotionalRecord.intervention['top_cluster'] as String?;
 
 // 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
           if (empathyText != null && empathyText.isNotEmpty) {
@@ -491,10 +492,10 @@ class ChatViewModel extends Notifier<ChatState> {
             .toList(),
         errorMessage: "감정 분석에 실패했어요. 😥",
       );
-      return null;
     } finally {
       state = state.copyWith(isTyping: false);
     }
+    return null;
   }
 
   /// 솔루션 제안 로직
