@@ -338,7 +338,8 @@ class ChatViewModel extends Notifier<ChatState> {
       );
 
 // 이모지 전송 직후의 클러스터와 메시지 ID 저장
-      _lastEmojiOnlyCluster = emotionalRecord.topCluster;
+      _lastEmojiOnlyCluster =
+          emotionalRecord.intervention['top_cluster'] as String?;
       _lastEmojiMessageId = savedEmojiMsg.id;
 
 // 세션 연결
@@ -350,13 +351,16 @@ class ChatViewModel extends Notifier<ChatState> {
                   emotionalRecord.sessionId!, // emotionalRecord.sessionId 사용
             );
       }
+      final reactionText =
+          emotionalRecord.intervention['empathy_text'] as String?;
+
       await _addMessage(Message(
         userId: currentUserId,
         sender: Sender.bot,
-        content: emotionalRecord.empathyText ?? "어떤 일 때문에 그렇게 느끼셨나요?",
+        content: reactionText ?? "어떤 일 때문에 그렇게 느끼셨나요?", // fallback 메시지
       ));
     } catch (e) {
-      print("RIN: 🚨 Failed to fetch reaction script: $e");
+      print("RIN: 🚨 Failed to start conversation with emoji: $e");
       await _addMessage(Message(
           userId: currentUserId,
           sender: Sender.bot,
@@ -412,61 +416,67 @@ class ChatViewModel extends Notifier<ChatState> {
               .toList());
 
       final sessionId = emotionalRecord.sessionId;
-// intervention은 항상 Map 형태
+      // 1. intervention 객체 먼저 추출
       final intervention = emotionalRecord.intervention;
       final presetId = intervention['preset_id'] as String?;
 
       switch (presetId) {
-// Rin: 칭긔칭긔모드
+        // Rin: 칭긔칭긔모드
         case PresetIds.friendlyReply:
-          final dynamic textData = emotionalRecord.intervention['text'];
-          String botMessageContent;
-
-          if (textData is String) {
-            botMessageContent = textData;
-          } else {
-            print(
-                "Warning: Received non-string data for friendly_reply text: $textData");
-            botMessageContent = "음.. 잠깐 생각 좀 해볼게! 🤔";
-          }
-
+          // 2. intervention 안에서 'text'를 찾음
+          final botMessageContent =
+              intervention['text'] as String? ?? "음.. 잠깐 생각 좀 해볼게! 🤔";
           final botMessage = Message(
-            userId: currentUserId,
-            content: botMessageContent,
-            sender: Sender.bot,
-          );
+              userId: currentUserId,
+              content: botMessageContent,
+              sender: Sender.bot);
           await _addMessage(botMessage);
           break; // 여기서 대화 흐름이 한번 끝남
 
+        // final dynamic textData = emotionalRecord.intervention['text'];
+        // String botMessageContent;
+
+        // if (textData is String) {
+        //   botMessageContent = textData;
+        // } else {
+        //   print(
+        //       "Warning: Received non-string data for friendly_reply text: $textData");
+        //   botMessageContent = "음.. 잠깐 생각 좀 해볼게! 🤔";
+        // }
+
+        // final botMessage = Message(
+        //   userId: currentUserId,
+        //   content: botMessageContent,
+        //   sender: Sender.bot,
+        // );
+        // await _addMessage(botMessage);
+        // break; // 여기서 대화 흐름이 한번 끝남
+
 // 솔루션 제안 모드
         case PresetIds.solutionProposal:
-// intervention 맵에서 직접 데이터 추출 (안전성)
-// `as String?`을 사용하여, 혹시 키가 없더라도 null로 처리되어 앱이 멈추지 않도록
-          final empathyText = emotionalRecord.empathyText;
-          final analysisText = emotionalRecord.analysisText;
-          final topCluster =
-              emotionalRecord.intervention['top_cluster'] as String?;
+          // 3. intervention 안에서 필요한 모든 텍스트를 찾음
+          final empathyText = intervention['empathy_text'] as String?;
+          final analysisText = intervention['analysis_text'] as String?;
+          final topCluster = intervention['top_cluster'] as String?;
 
 // 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
           if (empathyText != null && empathyText.isNotEmpty) {
-            final empathyMessage = Message(
-              userId: currentUserId,
-              content: empathyText,
-              sender: Sender.bot,
-            );
-            await _addMessage(empathyMessage);
+            await _addMessage(Message(
+                userId: currentUserId,
+                content: empathyText,
+                sender: Sender.bot));
             await Future.delayed(const Duration(milliseconds: 1000));
           }
 
 // 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
           if (analysisText != null && analysisText.isNotEmpty) {
-            final analysisMessage = Message(
+            await _addMessage(Message(
                 userId: currentUserId,
                 content: analysisText,
-                sender: Sender.bot);
-            await _addMessage(analysisMessage);
+                sender: Sender.bot));
             await Future.delayed(const Duration(milliseconds: 1200));
           }
+
 // 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
           if (sessionId != null && topCluster != null) {
             await _proposeSolution(sessionId, topCluster, currentUserId);
@@ -478,29 +488,35 @@ class ChatViewModel extends Notifier<ChatState> {
         case PresetIds.safetyCrisisSelfHarm:
         case PresetIds.safetyCrisisAngerAnxiety:
         case PresetIds.safetyCheckIn:
-          final cluster = intervention['cluster'] as String;
-          final solutionId = intervention['solution_id'] as String;
-          final safetyText = kSolutionProposalScripts[cluster]?.first ??
+          // 4. intervention 안에서 위기 관련 정보를 찾음
+          final cluster = intervention['cluster'] as String?;
+          final solutionId = intervention['solution_id'] as String?;
+          final safetyText = intervention['analysis_text'] as String? ??
+              kSolutionProposalScripts[cluster]?.first ??
               "많이 힘드시군요. 지금 도움이 필요할 수 있어요.";
 
-          final botMessage = Message(
-            userId: currentUserId,
-            content: safetyText,
-            sender: Sender.bot,
-            type: MessageType.solutionProposal,
-            proposal: {
-              "solution_id": solutionId,
-              "options": [
-                {"label": "도움받기", "action": "safety_crisis"},
-                {"label": "괜찮아요", "action": "decline_solution_and_talk"}
-              ]
-            },
-          );
-          await _addMessage(botMessage);
+          if (cluster != null && solutionId != null) {
+            final botMessage = Message(
+              userId: currentUserId,
+              content: safetyText,
+              sender: Sender.bot,
+              type: MessageType.solutionProposal,
+              proposal: {
+                "solution_id": solutionId,
+                "options": [
+                  {"label": "도움받기", "action": "safety_crisis"},
+                  {"label": "괜찮아요", "action": "decline_solution_and_talk"}
+                ]
+              },
+            );
+            await _addMessage(botMessage);
+          }
           break;
 
 // RIN ♥ : 이모지 단독 입력 시의 응답 처리 (백엔드에서 EMOJI_REACTION presetId로 옴)
         case PresetIds.emojiReaction:
+          // 5. intervention 안에서 'empathy_text' 찾기
+
           final reactionText = intervention['empathy_text'] as String?;
           if (reactionText != null) {
             final botMessage = Message(
