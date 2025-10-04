@@ -568,7 +568,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       isReview: true, // 다시보기 모드임을 알림
                     );
               },
-              child: Text("솔루션 다시보기"),
+              child: Text("솔루션 다시 볼래!"),
             ),
           ),
         ],
