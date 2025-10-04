@@ -42,12 +42,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
   final _messageInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _emojiCtrl;
+  RouteObserver<ModalRoute<void>>? _routeObserver;
 
+  // RouteObserver를 didChangeDependencies에서 지역 변수로 가져오도록 변경
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final routeObserver = ref.read(routeObserverProvider);
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
+    _routeObserver = ref.read(routeObserverProvider);
+    _routeObserver?.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
 
 // 봇입력중일때 사용자입력못하게
@@ -105,7 +107,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   void dispose() {
-    ref.read(routeObserverProvider).unsubscribe(this);
+    _routeObserver?.unsubscribe(this);
+
     _messageInputController.removeListener(_onInputChanged);
     _scrollController.removeListener(_scrollListener);
     _messageInputController.dispose();
@@ -180,6 +183,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
 
     final chatState = ref.watch(chatViewModelProvider);
+    final isArchivedView = chatState.isArchivedView;
+
     // 캐릭터 이름 연동
     final userState = ref.watch(userViewModelProvider);
     final characterName = userState.userProfile?.characterNm ?? "모지";
@@ -189,6 +194,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final isBotTyping = chatState.isTyping;
 
     final messages = chatState.messages.reversed.toList();
+    // 전체 대화 목록에서 가장 마지막 메시지의 ID를 가져옵니다.
+    final originalMessages = chatState.messages;
+    final veryLastMessageId =
+        originalMessages.isNotEmpty ? originalMessages.last.id : null;
+
+    final lastBotMessage = chatState.messages.lastWhere(
+        (m) => m.sender == Sender.bot && m.type == MessageType.solutionProposal,
+        orElse: () => Message(userId: '', sender: Sender.bot, id: ''));
 
     //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동 (무한 스크롤 로딩 중이 아닐 때만)
     ref.listen(chatViewModelProvider.select((state) => state.messages.length),
@@ -266,27 +279,50 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                 );
                               }
                               //  reverse된 리스트에서 올바른 메시지 가져오기
-                              final allMessages = chatState.messages;
-                              final reversedIndex =
-                                  allMessages.length - 1 - index;
-                              final message = allMessages[reversedIndex];
+                              // final allMessages = chatState.messages;
+                              // final reversedIndex =
+                              //     allMessages.length - 1 - index;
+                              // final message = allMessages[reversedIndex];
+
+                              // RIN: 날짜구분선 로직 단순화 (마지막 메시지 판단에 오류가 발생할 수 있음)
+                              final message = messages[index];
 
                               // --- 날짜 구분선 표시 로직 ---
                               bool showDateSeparator = false;
-                              if (reversedIndex == 0) {
+                              // if (reversedIndex == 0) {
+                              //   showDateSeparator = true;
+                              // } else {
+                              //   // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
+                              //   final prevMessageInTime =
+                              //       allMessages[reversedIndex - 1];
+                              //   if (!isSameDay(prevMessageInTime.createdAt,
+                              //       message.createdAt)) {
+                              //     showDateSeparator = true;
+                              //   }
+                              // }
+
+                              // RIN: reverse 리스트에서 현재가 마지막 아이템(시간상 가장 오래된 메시지)일 경우
+                              if (index == messages.length - 1) {
                                 showDateSeparator = true;
                               } else {
-                                // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
-                                final prevMessageInTime =
-                                    allMessages[reversedIndex - 1];
-                                if (!isSameDay(prevMessageInTime.createdAt,
+                                // 현재 메시지와 바로 다음 메시지(시간상 더 이전)의 날짜를 비교
+                                final prevMessageInList = messages[index + 1];
+                                if (!isSameDay(prevMessageInList.createdAt,
                                     message.createdAt)) {
                                   showDateSeparator = true;
                                 }
                               }
 
-                              final messageWidget = _buildMessageWidget(message,
-                                  key: ValueKey(message.tempId));
+                              final bool isLastProposal = !isArchivedView &&
+                                  (message.id == veryLastMessageId);
+
+                              final messageWidget = _buildMessageWidget(
+                                message,
+                                key: ValueKey(message.tempId),
+                                // isLastProposal: message.id == lastBotMessage.id,
+                                // isLastProposal: message.id == veryLastMessageId,
+                                isLastProposal: isLastProposal,
+                              );
 
                               // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
                               // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
@@ -325,7 +361,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   // (따로 뺌) --- 메시지 종류에 따라 위젯을 분기하는 Helper 함수 ---
-  Widget _buildMessageWidget(Message message, {required Key key}) {
+  Widget _buildMessageWidget(Message message,
+      {required Key key, required bool isLastProposal}) {
     if (message.sender == Sender.user) {
       return _userMessage(message, key: key);
     } else {
@@ -333,7 +370,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
         case MessageType.analysis:
           return _analysisMessage(message, key: key);
         case MessageType.solutionProposal:
-          return _solutionProposalMessage(message, key: key);
+          return _solutionProposalMessage(message,
+              key: key, isLastProposal: isLastProposal);
         // --- 시스템 메시지 UI case 추가 ---
         case MessageType.system:
           return _systemMessage(message, key: key);
@@ -495,10 +533,47 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  Widget _solutionProposalMessage(Message message, {required Key key}) {
+  Widget _solutionProposalMessage(Message message,
+      {required Key key, required bool isLastProposal}) {
     final proposal = message.proposal!;
     final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
     // debugPrint("RIN: Rendering solution proposal text: ${message.content}");
+
+// 과거의 솔루션이면 다시보기로!
+    if (!isLastProposal) {
+      return Column(
+        key: key,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _botMessage(message, key: ValueKey('${message.tempId}_text')),
+          SizedBox(height: 8.h),
+          Padding(
+            padding: EdgeInsets.only(left: 8.w),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.green50,
+                foregroundColor: AppColors.grey900,
+                padding:
+                    EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  side: BorderSide(color: AppColors.grey200, width: 1),
+                ),
+                textStyle: AppFontStyles.bodyRegular14,
+              ),
+              onPressed: () {
+                ref.read(chatViewModelProvider.notifier).respondToSolution(
+                      message.proposal!,
+                      'accept_solution',
+                      isReview: true, // 다시보기 모드임을 알림
+                    );
+              },
+              child: Text("솔루션 다시보기"),
+            ),
+          ),
+        ],
+      );
+    }
 
     // 상황 결정 버튼 UI 전체 수정
     return Column(

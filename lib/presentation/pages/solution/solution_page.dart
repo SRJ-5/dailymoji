@@ -12,8 +12,13 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 class SolutionPage extends ConsumerWidget {
   final String solutionId;
   final String? sessionId;
+  final bool isReview;
 
-  const SolutionPage({super.key, required this.solutionId, this.sessionId});
+  const SolutionPage(
+      {super.key,
+      required this.solutionId,
+      this.sessionId,
+      this.isReview = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,6 +42,7 @@ class SolutionPage extends ConsumerWidget {
           solutionId: solutionId,
           sessionId: sessionId,
           solution: solution,
+          isReview: isReview,
         );
       },
     );
@@ -48,11 +54,13 @@ class _PlayerView extends ConsumerStatefulWidget {
   final String solutionId;
   final String? sessionId;
   final Solution solution;
+  final bool isReview;
 
   const _PlayerView({
     required this.solutionId,
     this.sessionId,
     required this.solution,
+    required this.isReview,
   });
 
   @override
@@ -121,6 +129,11 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 //   }
 
   void _playerListener() {
+    // 플레이어 컨트롤 개선: 컨트롤러 값(재생/일시정지 상태 등)이 변경될 때마다 UI를 갱신
+    if (mounted) {
+      setState(() {});
+    }
+
     if (_controller.value.playerState == PlayerState.ended) {
       // "나가는 이유"를 'video_ended'로 확정하고
       _exitReason = 'video_ended';
@@ -135,15 +148,19 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     if (_isNavigating) return;
     _isNavigating = true;
 
-    // `_exitReason`이 설정되지 않았다면 비정상적인 경우이므로, 안전하게 'user_closed'로 처리합니다.
-    final reason = _exitReason ?? 'user_closed';
-    debugPrint("RIN: Setting result and navigating with reason: $reason");
+    if (!widget.isReview) {
+      // `_exitReason`이 설정되지 않았다면 비정상적인 경우이므로, 안전하게 'user_closed'로 처리합니다.
+      final reason = _exitReason ?? 'user_closed';
+      debugPrint("RIN: Setting result and navigating with reason: $reason");
 
-    ref.read(solutionResultProvider.notifier).state = {
-      'reason': reason,
-      'solutionId': widget.solutionId,
-      'sessionId': widget.sessionId,
-    };
+      ref.read(solutionResultProvider.notifier).state = {
+        'reason': reason,
+        'solutionId': widget.solutionId,
+        'sessionId': widget.sessionId,
+      };
+    } else {
+      debugPrint("RIN: This is a review. Skipping follow-up message.");
+    }
 
     // Go back to using `context.go` which is more stable.
     context.go('/home/chat');
@@ -219,13 +236,13 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                // 첫 터치 시 음소거 해제 (자동재생 정책 우회)
-                if (_isMuted) {
-                  _controller.unMute();
-                  setState(() {
-                    _isMuted = false;
-                  });
-                }
+                // // 첫 터치 시 음소거 해제 (자동재생 정책 우회)
+                // if (_isMuted) {
+                //   _controller.unMute();
+                //   setState(() {
+                //     _isMuted = false;
+                //   });
+                // }
                 setState(() => _showControls = !_showControls);
               },
               child: const SizedBox(),

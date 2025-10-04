@@ -12,9 +12,13 @@ import 'package:go_router/go_router.dart';
 class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String solutionId;
   final String? sessionId;
+  final bool isReview;
 
   const BreathingSolutionPage(
-      {super.key, required this.solutionId, this.sessionId});
+      {super.key,
+      required this.solutionId,
+      this.sessionId,
+      this.isReview = false});
 
   @override
   ConsumerState<BreathingSolutionPage> createState() =>
@@ -22,9 +26,7 @@ class BreathingSolutionPage extends ConsumerStatefulWidget {
 }
 
 class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
-// RIN: 수정된 부분: SingleTickerProviderStateMixin -> TickerProviderStateMixin 애니메이션 여러개 허용
-    with
-        TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
   int _timerSeconds = 0;
@@ -192,7 +194,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       onTap: () {
         if (_showFinalHint) {
           context.pushReplacement(
-              '/solution/${widget.solutionId}?sessionId=${widget.sessionId}');
+              '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}');
         }
       },
       child: Scaffold(

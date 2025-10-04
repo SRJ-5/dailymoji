@@ -14,7 +14,6 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 
-// A simple provider to hold the result from the solution page.
 final solutionResultProvider =
     StateProvider<Map<String, dynamic>?>((ref) => null);
 
@@ -26,6 +25,7 @@ class ChatState {
   final bool isLoadingMore; // 추가 메시지 로딩 상태
   final bool hasMore; // 더 불러올 메시지가 있는지
   final bool clearPendingEmoji; // RIN ♥ : UI의 이모지 상태를 초기화하기 위해 추가
+  final bool isArchivedView;
 
   ChatState({
     this.messages = const [],
@@ -35,6 +35,7 @@ class ChatState {
     this.isLoadingMore = false,
     this.hasMore = true,
     this.clearPendingEmoji = false,
+    this.isArchivedView = false,
   });
 
   ChatState copyWith({
@@ -45,6 +46,7 @@ class ChatState {
     bool? isLoadingMore,
     bool? hasMore,
     bool? clearPendingEmoji,
+    bool? isArchivedView,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -54,6 +56,7 @@ class ChatState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
       clearPendingEmoji: clearPendingEmoji ?? this.clearPendingEmoji,
+      isArchivedView: isArchivedView ?? this.isArchivedView,
     );
   }
 }
@@ -78,7 +81,12 @@ class ChatViewModel extends Notifier<ChatState> {
   String? _lastEmojiMessageId; // RIN ♥ 이모지 전송 직후의 메시지 ID 저장 (세션 업데이트용)
   DateTime? _targetDate; // 현재 로드 중인 특정 날짜 (무한 스크롤 제어용)
 
-  String? _pendingSessionIdForFollowUp; // 솔루션에서 돌아왔는지 확인하기 위한 로직 추가
+  // String? _pendingSessionIdForFollowUp; // 솔루션에서 돌아왔는지 확인하기 위한 로직 추가
+
+// ❤️💛 주석 1: 문제 1번 (대화 기억) 해결을 위한 상태 변수
+  // 솔루션이 끝난 직후 "어땠어요?" 라는 질문을 보냈다는 것을 기억하기 위한 상태입니다.
+  // 이 값이 true일 때 사용자가 메시지를 보내면, 백엔드에 "이것은 솔루션 피드백에 대한 답변입니다"라는 추가 정보를 함께 보낼 수 있습니다.
+  bool _isWaitingForSolutionFeedback = false;
 
   @override
   ChatState build() => ChatState();
@@ -125,6 +133,10 @@ class ChatViewModel extends Notifier<ChatState> {
     DateTime? specificDate,
     Map<String, dynamic>? navigationData,
   }) async {
+    // 리포트 페이지에서 특정 날짜를 통해 들어온 경우 '과거 기록 보기' 모드로 설정
+    final bool isArchived = specificDate != null;
+    state = state.copyWith(isArchivedView: isArchived);
+
     // RIN: 모든 진입 경로의 파라미터를 받도록 통합
     final currentUserId = _userId; // Getter를 통해 현재 ID 가져오기
     if (currentUserId == null) {
@@ -143,7 +155,7 @@ class ChatViewModel extends Notifier<ChatState> {
 
       if (solutionId != null && sessionId != null) {
         // 후속 메시지 요청 후, 새로운 로직이 중복 실행되지 않도록 상태를 초기화합니다.
-        _pendingSessionIdForFollowUp = null;
+        // _pendingSessionIdForFollowUp = null;
         await sendFollowUpMessageAfterSolution(
             reason: reason, solutionId: solutionId, sessionId: sessionId);
       }
@@ -160,23 +172,23 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-  // [새 로직 추가] ChatPage가 다시 화면에 보일 때 호출될 함수
-  Future<void> checkForPendingFollowUp() async {
-    //저장해둔 sessionId가 있는지 확인
-    if (_pendingSessionIdForFollowUp != null) {
-      print("솔루션 페이지에서 복귀 감지! sessionId: $_pendingSessionIdForFollowUp");
-      final sessionId = _pendingSessionIdForFollowUp!;
-      // 중복 실행을 막기 위해 즉시 null로 초기화
-      _pendingSessionIdForFollowUp = null;
+  // // [새 로직 추가] ChatPage가 다시 화면에 보일 때 호출될 함수
+  // Future<void> checkForPendingFollowUp() async {
+  //   //저장해둔 sessionId가 있는지 확인
+  //   if (_pendingSessionIdForFollowUp != null) {
+  //     print("솔루션 페이지에서 복귀 감지! sessionId: $_pendingSessionIdForFollowUp");
+  //     final sessionId = _pendingSessionIdForFollowUp!;
+  //     // 중복 실행을 막기 위해 즉시 null로 초기화
+  //     _pendingSessionIdForFollowUp = null;
 
-      // 후속 메시지 전송 (solutionId는 현재 알 수 없으므로 임의의 값을 넣거나, 서버에서 무시하도록 처리 필요. 여기서는 'unknown'으로 전달)
-      await sendFollowUpMessageAfterSolution(
-        reason: 'returned', // '돌아왔다'는 새로운 이유
-        solutionId: 'unknown',
-        sessionId: sessionId,
-      );
-    }
-  }
+  //     // 후속 메시지 전송 (solutionId는 현재 알 수 없으므로 임의의 값을 넣거나, 서버에서 무시하도록 처리 필요. 여기서는 'unknown'으로 전달)
+  //     await sendFollowUpMessageAfterSolution(
+  //       reason: 'returned', // '돌아왔다'는 새로운 이유
+  //       solutionId: 'unknown',
+  //       sessionId: sessionId,
+  //     );
+  //   }
+  // }
 
 // RIN ♥ : UI에서 초기화 신호를 확인한 후, 다시 false로 돌려놓는 함수
   void consumeClearPendingEmojiSignal() {
@@ -376,6 +388,11 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(
         isTyping: true, messages: [...state.messages, analyzingMessage]);
 
+// 이전 대화 기억: 최근 4개의 메시지를 history로 전달
+    final history = state.messages.length > 4
+        ? state.messages.sublist(state.messages.length - 4)
+        : state.messages;
+
     try {
 // /analyze 앤드포인트 연결
       final emotionalRecord =
@@ -385,6 +402,7 @@ class ChatViewModel extends Notifier<ChatState> {
                 emotion: emotion,
                 onboarding: userProfile?.onboardingScores ?? {},
                 characterPersonality: userProfile?.characterPersonality,
+                history: history,
               );
 
 // "입력 중..." 메시지 제거
@@ -414,7 +432,7 @@ class ChatViewModel extends Notifier<ChatState> {
 
           final botMessage = Message(
             userId: currentUserId,
-            content: emotionalRecord.intervention['text'] as String,
+            content: botMessageContent,
             sender: Sender.bot,
           );
           await _addMessage(botMessage);
@@ -788,7 +806,8 @@ class ChatViewModel extends Notifier<ChatState> {
 
   /// 솔루션 제안에 대한 사용자 응답 처리
   Future<void> respondToSolution(
-      Map<String, dynamic> proposalData, String action) async {
+      Map<String, dynamic> proposalData, String action,
+      {bool isReview = false}) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -825,8 +844,8 @@ class ChatViewModel extends Notifier<ChatState> {
     if (action == "accept_solution") {
       SystemChrome.setPreferredOrientations(DeviceOrientation.values);
 
-      final result = await navigatorkey.currentContext
-          ?.push('/breathing/$solutionId?sessionId=$sessionId');
+      final result = await navigatorkey.currentContext?.push(
+          '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview');
 
       if (result is Map<String, dynamic>) {
         final reason = result['reason'] as String? ?? 'video_ended';

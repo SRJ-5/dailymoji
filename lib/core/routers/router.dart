@@ -43,7 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               const PortraitPage(child: HomePage()),
           routes: [
             GoRoute(
-              path: '/chat',
+              path: 'chat',
               pageBuilder: (context, state) {
                 // extra를 Object?로 받아 유연하게 처리
                 // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
@@ -77,7 +77,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               const PortraitPage(child: ReportPage()),
           routes: [
             GoRoute(
-              path: '/chat',
+              path: 'chat',
               pageBuilder: (context, state) {
                 // extra를 Object?로 받아 유연하게 처리
                 // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
@@ -159,9 +159,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
           final sessionId = state.uri.queryParameters['sessionId'];
+          final isReview = state.uri.queryParameters['isReview'] == 'true';
+
           return PortraitPage(
               child: BreathingSolutionPage(
-                  solutionId: solutionId, sessionId: sessionId));
+                  solutionId: solutionId,
+                  sessionId: sessionId,
+                  isReview: isReview));
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.
@@ -171,7 +175,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           final solutionId = state.pathParameters['solutionId']!;
           final sessionId = state.uri.queryParameters['sessionId'];
 
-          return SolutionPage(solutionId: solutionId, sessionId: sessionId);
+          final isReview = state.uri.queryParameters['isReview'] == 'true';
+          return SolutionPage(
+              solutionId: solutionId, sessionId: sessionId, isReview: isReview);
         },
       ),
     ],
