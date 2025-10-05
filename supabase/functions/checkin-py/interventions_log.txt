@@ -1,0 +1,6 @@
+# interventions_log.txt
+# supabase와 연동이 안되어있어도, 오류나지 않지 않도록 하는 임시저장 파일.
+
+
+
+

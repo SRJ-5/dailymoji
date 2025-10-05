@@ -1,19 +1,50 @@
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
+  //세로 고정
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+  runApp(
+    ProviderScope(
+      child: ScreenUtilInit(
+        designSize: const Size(375, 812),
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) {
+          return const MyApp();
+        },
+      ),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
     return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
       routerConfig: router,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

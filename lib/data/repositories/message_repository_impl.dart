@@ -1,0 +1,54 @@
+import 'package:dailymoji/data/data_sources/message_remote_data_source.dart';
+import 'package:dailymoji/data/dtos/message_dto.dart';
+import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/domain/repositories/message_repository.dart';
+
+class MessageRepositoryImpl implements MessageRepository {
+  final MessageRemoteDataSource remoteDataSource;
+
+  MessageRepositoryImpl(this.remoteDataSource);
+
+  @override
+  Future<List<Message>> loadMessages({
+    required String userId,
+    int limit = 50,
+    String? cursorIso,
+  }) async {
+    final dtos = await remoteDataSource.fetchMessages(
+      userId: userId,
+      limit: limit,
+      cursorIso: cursorIso,
+    );
+    return dtos.map((dto) => dto.toEntity()).toList();
+  }
+
+  @override
+  Future<Message> sendMessage(Message message) async {
+    final dto = MessageDto.fromEntity(message);
+    final savedDto = await remoteDataSource.insertMessage(dto);
+    return savedDto.toEntity();
+  }
+
+  @override
+  void subscribeToMessages({
+    required String userId,
+    required void Function(Message message) onNewMessage,
+  }) {
+    remoteDataSource.subscribeToMessages(
+      userId: userId,
+      onNewMessage: (dto) => onNewMessage(dto.toEntity()),
+    );
+  }
+
+  @override
+  Future<void> updateMessageSessionId({
+    required String messageId,
+    required String sessionId,
+  }) {
+    // 실제 작업은 remoteDataSource에게 그대로 넘겨줍니다.
+    return remoteDataSource.updateMessageSessionId(
+      messageId: messageId,
+      sessionId: sessionId,
+    );
+  }
+}

@@ -1,19 +1,175 @@
+import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
+import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
+import 'package:dailymoji/presentation/pages/home/home_page.dart';
+import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_page.dart';
+import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
+import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
+import 'package:dailymoji/presentation/pages/login/login_page.dart';
+import 'package:dailymoji/presentation/pages/my/my_page.dart';
+import 'package:dailymoji/presentation/pages/report/report_page.dart';
+import 'package:dailymoji/presentation/pages/solution/solution_page.dart';
+import 'package:dailymoji/presentation/pages/breathing_solution/breathing_solution_page.dart';
+import 'package:dailymoji/presentation/pages/onboarding/onboarding_part1_page.dart';
+import 'package:dailymoji/presentation/pages/onboarding/onboarding_part2_page.dart';
+import 'package:dailymoji/presentation/pages/splash/splash_page.dart';
+import 'package:dailymoji/presentation/widgets/portrait_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final navigatorkey = GlobalKey<NavigatorState>();
 
-final router = GoRouter(
-  initialLocation: '/',
-  navigatorKey: navigatorkey,
-  routes: [
-    GoRoute(
-      path: '/',
-      // builder: (context, state) =>
-    ),
-    GoRoute(
-      path: '/next',
-      // builder: (context, state) => ,
-    ),
-  ],
-);
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/',
+    navigatorKey: navigatorkey,
+    routes: [
+      GoRoute(
+          path: '/', builder: (context, state) => SplashPage()),
+      GoRoute(
+          path: '/login',
+          builder: (context, state) => LoginPage()),
+      GoRoute(
+          path: '/onboarding1',
+          builder: (context, state) => OnboardingPart1Page()),
+      GoRoute(
+          path: '/onboarding2',
+          builder: (context, state) => OnboardingPart2Page()),
+      GoRoute(
+          path: '/home',
+          pageBuilder: (context, state) =>
+              const PortraitPage(child: HomePage()),
+          routes: [
+            GoRoute(
+              path: '/chat',
+              pageBuilder: (context, state) {
+                // extra를 Object?로 받아 유연하게 처리
+                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+                final extraData = state.extra as Object?;
+                String? emotion;
+                Map<String, dynamic>? navData;
+                DateTime? targetDate;
+
+                if (extraData is String) {
+                  emotion = extraData;
+                } else if (extraData is Map<String, dynamic>) {
+                  navData = extraData;
+                } else if (extraData is DateTime) {
+                  targetDate = extraData;
+                }
+
+                return PortraitPage(
+                  child: ChatPage(
+                    emotionFromHome: emotion,
+                    navigationData: navData,
+                    targetDate: targetDate,
+                  ),
+                );
+              },
+            ),
+          ]),
+
+      GoRoute(
+          path: '/report',
+          pageBuilder: (context, state) =>
+              const PortraitPage(child: ReportPage()),
+          routes: [
+            GoRoute(
+              path: '/chat',
+              pageBuilder: (context, state) {
+                // extra를 Object?로 받아 유연하게 처리
+                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+                final extraData = state.extra as Object?;
+                String? emotion;
+                Map<String, dynamic>? navData;
+                DateTime? targetDate;
+
+                if (extraData is String) {
+                  emotion = extraData;
+                } else if (extraData is Map<String, dynamic>) {
+                  navData = extraData;
+                } else if (extraData is DateTime) {
+                  targetDate = extraData;
+                }
+
+                return PortraitPage(
+                  child: ChatPage(
+                    emotionFromHome: emotion,
+                    navigationData: navData,
+                    targetDate: targetDate,
+                  ),
+                );
+              },
+            ),
+          ]),
+      GoRoute(
+        path: '/my',
+        pageBuilder: (context, state) =>
+            PortraitPage(child: MyPage()),
+      ),
+      // TODO: 아래에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
+      // GoRoute(
+      //   path: '/privacyPolicy',
+      //   pageBuilder: (context, state) =>
+      //       PortraitPage(child: PrivacyPolicyPage()),
+      // ),
+      GoRoute(
+          // TODO: prepare 경로 다른 이름을 수정해야 할듯 webView라든가?
+          // 일단 info로 경로 이름 수정
+          path: '/info/:title',
+          builder: (context, state) {
+            final title = state.pathParameters["title"] ?? "";
+            switch (title) {
+              case "언어 설정":
+                return PreparingPage(title);
+              case "공지사항":
+              case "이용 약관":
+              case "개인정보 처리방침":
+              case "상담센터 연결":
+                return InfoWebViewPage(title: title);
+              default:
+                return PreparingPage("준비중");
+            }
+            // TODO: 위에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
+            // if (title == "공지사항") {
+            //   return PreparingPage(title);
+            // } else if
+            // return PrivacyPolicyPage();
+          }),
+      // TODO: 준비중 페이지는 따로 빼놓음
+      GoRoute(
+        path: '/deleteAccount',
+        builder: (context, state) {
+          return DeleteAccountPage();
+        },
+      ),
+      GoRoute(
+        path: '/prepare/:title',
+        builder: (context, state) {
+          final title = state.pathParameters["title"] ?? "";
+          return PreparingPage(title);
+        },
+      ),
+      GoRoute(
+          path: '/characterSetting',
+          builder: (context, state) => CharacterSettingPage()),
+      GoRoute(
+        path: '/breathing/:solutionId',
+        pageBuilder: (context, state) {
+          final solutionId = state.pathParameters['solutionId']!;
+          return PortraitPage(
+              child:
+                  BreathingSolutionPage(solutionId: solutionId));
+        },
+      ),
+      // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.
+      GoRoute(
+        path: '/solution/:solutionId',
+        builder: (context, state) {
+          final solutionId = state.pathParameters['solutionId']!;
+          return SolutionPage(solutionId: solutionId);
+        },
+      ),
+    ],
+  );
+});
