@@ -500,7 +500,6 @@ async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dic
     )
     # 이전 대화 기억: 친구 모드에서도 대화 기록을 user_content에 포함
     history_str = "\n".join([f"{h.sender}: {h.content}" for h in payload.history]) if payload.history else ""
-<<<<<<< HEAD
     user_content = f"Previous conversation:\n{history_str}\n\nCurrent message: {payload.text}"
 
     llm_response = await call_llm(system_prompt, user_content, OPENAI_KEY, expect_json=False)
@@ -510,31 +509,6 @@ async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dic
     final_text = llm_response if not (isinstance(llm_response, dict) and 'error' in llm_response) else "음... 지금은 잠시 생각할 시간이 필요해요!🥹"
     intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": final_text}
     
-=======
-    user_content_with_history = f"Previous conversation:\n{history_str}\n\nCurrent message: {payload.text}"
-
-    friendly_text_response = await call_llm(system_prompt, user_content_with_history, OPENAI_KEY, expect_json=False)
-
-    # --- 👇 [수정] ---
-    # LLM 호출 결과를 바로 사용하지 않고, 에러인지 먼저 확인합니다.
-    final_text_for_intervention = ""
-    if isinstance(friendly_text_response, dict) and 'error' in friendly_text_response:
-        print(f"⛔️ Friendly LLM call failed: {friendly_text_response.get('error')}")
-        # 에러가 발생하면, 미리 정해둔 fallback 메시지를 사용합니다.
-        final_text_for_intervention = "음... 지금은 잠시 생각할 시간이 필요해요!🥹"
-    else:
-        # 성공 시, LLM이 생성한 텍스트를 사용합니다.
-        final_text_for_intervention = friendly_text_response
-
-    # intervention 객체를 만들 때, 에러가 아닌 검증된 'final_text_for_intervention'을 'text' 키에 담습니다.
-    intervention = {
-        "preset_id": PresetIds.FRIENDLY_REPLY,
-        "text": final_text_for_intervention
-    }
-    # ------------------
-
-    # friendly_text 키는 이제 사용되지 않으므로, empathyText도 intervention의 텍스트를 사용하도록 통일합니다.
->>>>>>> dev
     session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
     return {"session_id": session_id, "intervention": intervention}
 
@@ -566,27 +540,11 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
         mode='ANALYSIS', personality=payload.character_personality, language_code=payload.language_code,
         user_nick_nm=user_nick_nm, character_nm=character_nm
     )
-<<<<<<< HEAD
 
    # 이전 대화 기억: 분석 모드에서도 LLM 호출 시 history를 포함
     history_for_llm = [h.dict() for h in payload.history] if payload.history else []
     llm_payload = {"user_message": payload.text, "baseline_scores": assessment_scores, "history": history_for_llm}
    
-=======
-    onboarding_scores = calculate_baseline_scores(payload.onboarding)
-    llm_payload = payload.dict()
-    llm_payload["baseline_scores"] = onboarding_scores
-
-    # 이전 대화 기억: 분석 모드에서도 LLM 호출 시 history를 포함
-    history_for_llm = [h.dict() for h in payload.history] if payload.history else []
-    llm_payload_with_history = {
-        "user_message": payload.text,
-        "baseline_scores": onboarding_scores,
-        "history": history_for_llm
-    }
-    
-    
->>>>>>> dev
     # 2. LLM 호출 및 2차 안전 장치
     llm_json = await call_llm(system_prompt, json.dumps(llm_payload_with_history, ensure_ascii=False), OPENAI_KEY) # 💛 1. history 포함된 페이로드 전달
     debug_log["llm"] = llm_json
@@ -793,97 +751,6 @@ async def propose_solution(payload: SolutionRequest):
 
 
 # ======================================================================
-<<<<<<< HEAD
-=======
-# ===          홈화면 대사 엔드포인트         ===
-# ======================================================================
-# 🤩 RIN: 홈 대사들을 성향별로 불러오도록 변경
-@app.get("/dialogue/home")
-async def get_home_dialogue(
-    personality: Optional[str] = None, 
-    user_nick_nm: Optional[str] = "친구",
-    language_code: Optional[str] = 'ko',
-    emotion: Optional[str] = None 
-):
-    """홈 화면에 표시할 대사를 반환합니다."""
-    if emotion:
-        # 이모지가 선택된 경우: 'reaction' 멘트를 가져옵니다.
-        mention_type = "reaction"
-        cluster = ICON_TO_CLUSTER.get(emotion.lower(), "common")
-    else:
-        # 이모지가 없는 초기 상태: 'home' 멘트를 가져옵니다.
-        mention_type = "home"
-        cluster = "common"
-
-    dialogue_text = await get_mention_from_db(
-        mention_type=mention_type,
-        personality=personality,
-        language_code=language_code,
-        cluster=cluster,
-        default_message=f"안녕, {user_nick_nm}! 오늘 기분은 어때?",
-        format_kwargs={"user_nick_nm": user_nick_nm}
-    )
-    
-    return {"dialogue": dialogue_text}
-    
-# ======================================================================
-# ===  솔루션 완료 후 후속 질문을 위한 엔드포인트   ===
-# ======================================================================
-@app.get("/dialogue/solution-followup")
-async def get_solution_followup_dialogue(
-    reason: str, # 'user_closed' 또는 'video_ended'
-    personality: Optional[str] = None, 
-    user_nick_nm: Optional[str] = "친구",
-    language_code: Optional[str] = 'ko'
-):
-    """솔루션이 끝난 후의 상황(reason)과 캐릭터 성향에 맞는 후속 질문을 반환합니다."""
-    
-    # 이유(reason)에 따라 DB에서 조회할 mention_type을 결정합니다.
-    if reason == 'user_closed':
-        mention_type = "followup_user_closed"
-    else: # 'video_ended' 또는 기타
-        mention_type = "followup_video_ended"
-
-    # get_mention_from_db 헬퍼 함수를 사용하여 멘트를 가져옵니다.
-    dialogue_text = await get_mention_from_db(
-        mention_type=mention_type,
-        personality=personality,
-        language_code=language_code,
-        cluster="common", 
-        default_message="어때요? 좀 좋아진 것 같아요?😊",
-        format_kwargs={"user_nick_nm": user_nick_nm}
-    )
-    
-    return {"dialogue": dialogue_text}
-
-
-# ======================================================================
-# ===  솔루션 완료 후 후속 질문을 위한 엔드포인트   ===
-# ======================================================================
-
-# 솔루션 제안을 거절했을 때의 멘트를 성향별로 주기 위해 추가
-@app.get("/dialogue/decline-solution")
-async def get_decline_solution_dialogue(
-    personality: Optional[str] = None, 
-    user_nick_nm: Optional[str] = "친구",
-    language_code: Optional[str] = 'ko'
-):
-    """솔루션 제안을 거절하고 대화를 이어가고 싶어할 때의 반응 멘트를 반환합니다."""
-    
-    dialogue_text = await get_mention_from_db(
-        mention_type="decline_solution",
-        personality=personality,
-        language_code=language_code,
-        cluster="common",
-        default_message="알겠습니다. 그럼요. 저에게 편안하게 털어놓으세요. 귀 기울여 듣고 있을게요.",
-        format_kwargs={"user_nick_nm": user_nick_nm}
-    )
-    
-    return {"dialogue": dialogue_text}
-
-
-# ======================================================================
->>>>>>> dev
 # ===          솔루션 영상 엔드포인트         ===
 # ======================================================================
 
