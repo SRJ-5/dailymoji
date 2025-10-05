@@ -151,3 +151,7 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
   return repo.fetchHomeDialogue(
       selectedEmotion, personalityDbValue, userNickNm);
 });
+
+// [추가됨] SolutionPage에서 ChatPage로 후속 조치 데이터를 전달하기 위한 Provider
+final solutionFollowUpProvider =
+    StateProvider<Map<String, dynamic>?>((ref) => null);

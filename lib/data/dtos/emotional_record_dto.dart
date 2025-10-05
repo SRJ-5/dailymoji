@@ -1,50 +1,40 @@
 // lib/data/dtos/emotional_record_dto.dart
-// 0924 변경:
-// 1. 백엔드 응답 변경에 맞춰 DTO 구조 수정 (analysis_text, proposal_text 추가)
-// 2. intervention 필드를 더 유연하게 처리
 
 import 'package:dailymoji/domain/entities/emotional_record.dart';
 
 class EmotionalRecordDto {
-  final Map<String, double>? finalScores;
-  final double? gScore;
-  final int? profile;
-  final Map<String, dynamic>? intervention;
+  final Map<String, dynamic> finalScores;
+  final double gScore;
+  final int profile;
   final String? sessionId;
+  final Map<String, dynamic> intervention;
 
   EmotionalRecordDto({
-    this.finalScores,
-    this.gScore,
-    this.profile,
-    this.intervention,
+    required this.finalScores,
+    required this.gScore,
+    required this.profile,
     this.sessionId,
+    required this.intervention,
   });
 
   factory EmotionalRecordDto.fromJson(Map<String, dynamic> json) {
     return EmotionalRecordDto(
-      finalScores: (json["final_scores"] as Map?)?.map(
-        (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
-      ),
-      gScore: (json["g_score"] as num?)?.toDouble(),
-      profile: json["profile"],
-      intervention: json["intervention"] != null
-          ? Map<String, dynamic>.from(json["intervention"])
-          : null,
-      sessionId: json["session_id"],
+      finalScores: Map<String, dynamic>.from(json['final_scores'] ?? {}),
+      gScore: (json['g_score'] as num?)?.toDouble() ?? 0.0,
+      profile: json['profile'] as int? ?? 0,
+      sessionId: json['session_id'] as String?,
+      intervention: Map<String, dynamic>.from(json['intervention'] ?? {}),
     );
   }
 
   EmotionalRecord toEntity() {
     return EmotionalRecord(
-      finalScores: finalScores ?? {},
-      gScore: gScore ?? 0.0,
-      profile: profile ?? 0,
+      finalScores: finalScores
+          .map((key, value) => MapEntry(key, (value as num).toDouble())),
+      gScore: gScore,
+      profile: profile,
       sessionId: sessionId,
-      interventionPresetId: intervention?['preset_id'] as String?,
-      empathyText: intervention?['empathy_text'] as String?, // 공감 메시지
-      analysisText: intervention?['analysis_text'] as String?,
-      proposalText: intervention?['proposal_text'] as String?,
-      intervention: intervention ?? {},
+      intervention: intervention,
     );
   }
 }

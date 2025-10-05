@@ -6,6 +6,7 @@
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/emoji_assets.dart';
+import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
@@ -21,51 +22,51 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 
-// 현재 선택된 이모지 상태를 관리하는 Provider
-final selectedEmotionProvider = StateProvider<String?>((ref) => null);
+// // 현재 선택된 이모지 상태를 관리하는 Provider
+// final selectedEmotionProvider = StateProvider<String?>((ref) => null);
 
-// 백엔드에서 대사를 비동기적으로 가져오는 Provider
-final homeDialogueProvider = FutureProvider<String>((ref) async {
-  final selectedEmotion = ref.watch(selectedEmotionProvider);
+// // 백엔드에서 대사를 비동기적으로 가져오는 Provider
+// final homeDialogueProvider = FutureProvider<String>((ref) async {
+//   final selectedEmotion = ref.watch(selectedEmotionProvider);
 
-// 🤩 RIN: userViewModelProvider를 통해 현재 사용자 프로필 정보를 가져옵니다.
-  final userProfile = ref.watch(userViewModelProvider).userProfile;
-  final personality = userProfile?.characterPersonality;
-  // 🤩 RIN: Supabase DB에 저장된 dbValue('prob_solver' 등)를 사용해야 합니다.
-  final personalityDbValue = CharacterPersonality.values
-      .firstWhere(
-        (e) => e.label == personality,
-        orElse: () => CharacterPersonality.probSolver, // 기본값
-      )
-      .dbValue;
-  final userNickNm = userProfile?.userNickNm;
+// // 🤩 RIN: userViewModelProvider를 통해 현재 사용자 프로필 정보를 가져옵니다.
+//   final userProfile = ref.watch(userViewModelProvider).userProfile;
+//   final personality = userProfile?.characterPersonality;
+//   // 🤩 RIN: Supabase DB에 저장된 dbValue('prob_solver' 등)를 사용해야 합니다.
+//   final personalityDbValue = CharacterPersonality.values
+//       .firstWhere(
+//         (e) => e.label == personality,
+//         orElse: () => CharacterPersonality.probSolver, // 기본값
+//       )
+//       .dbValue;
+//   final userNickNm = userProfile?.userNickNm;
 
-  // 🤩 RIN: 기본 URL에 쿼리 파라미터 추가 로직 분기함
-  final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/home');
-  final queryParameters = {
-    if (selectedEmotion != null) 'emotion': selectedEmotion,
-    // 🤩 RIN: personality와 user_nick_nm을 쿼리 파라미터로 추가
-    if (personalityDbValue != null) 'personality': personalityDbValue,
-    if (userNickNm != null) 'user_nick_nm': userNickNm,
-  };
+//   // 🤩 RIN: 기본 URL에 쿼리 파라미터 추가 로직 분기함
+//   final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/home');
+//   final queryParameters = {
+//     if (selectedEmotion != null) 'emotion': selectedEmotion,
+//     // 🤩 RIN: personality와 user_nick_nm을 쿼리 파라미터로 추가
+//     if (personalityDbValue != null) 'personality': personalityDbValue,
+//     if (userNickNm != null) 'user_nick_nm': userNickNm,
+//   };
 
-  final finalUri = uri.replace(queryParameters: queryParameters);
+//   final finalUri = uri.replace(queryParameters: queryParameters);
 
-  try {
-    final response = await http.get(finalUri);
+//   try {
+//     final response = await http.get(finalUri);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['dialogue'] as String;
-    } else {
-      // 에러 발생 시 기본 텍스트 반환
-      return "안녕!\n오늘 기분은 어때?";
-    }
-  } catch (e) {
-    print("Error fetching home dialogue: $e");
-    return "안녕!\n오늘 기분은 어때?";
-  }
-});
+//     if (response.statusCode == 200) {
+//       final data = jsonDecode(utf8.decode(response.bodyBytes));
+//       return data['dialogue'] as String;
+//     } else {
+//       // 에러 발생 시 기본 텍스트 반환
+//       return "안녕!\n오늘 기분은 어때?";
+//     }
+//   } catch (e) {
+//     print("Error fetching home dialogue: $e");
+//     return "안녕!\n오늘 기분은 어때?";
+//   }
+// });
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -84,7 +85,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     // _timer?.cancel();
     setState(() {
       // displayText = "";
-      displayText = newText;
+      displayText = newText.replaceAll(r'\n', '\n');
       // _index = 0;
       // currentDialogue = newText;
     });
