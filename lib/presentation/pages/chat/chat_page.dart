@@ -9,6 +9,7 @@ import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -238,7 +239,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         : const AssetImage(AppImages.cadoFace) as ImageProvider,
               ),
               SizedBox(width: 12.r),
-              Text(
+              AppText(
                 characterName,
                 style:
                     AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
@@ -400,7 +401,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               )
             ],
           ),
-          child: Text(
+          child: AppText(
             message.content,
             style: TextStyle(fontSize: 12.sp, color: Colors.black54),
           ),
@@ -421,7 +422,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(12.r),
           ),
-          child: Text(
+          child: AppText(
             message.content,
             style: TextStyle(
               fontSize: 12.sp,
@@ -455,7 +456,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       );
     } else {
       // 텍스트 메시지
-      messageContent = Text(
+      messageContent = AppText(
         message.content,
         style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
       );
@@ -468,7 +469,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
+          AppText(
             _formattedNow(message.createdAt),
             style:
                 AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
@@ -516,14 +517,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 bottomLeft: Radius.circular(12.r),
               ),
             ),
-            child: Text(
+            child: AppText(
               message.content.replaceAll(r'\n', '\n'),
               style: AppFontStyles.bodyRegular14
                   .copyWith(color: AppColors.grey900),
             ),
           ),
           SizedBox(width: 4.w),
-          Text(
+          AppText(
             _formattedNow(message.createdAt),
             style:
                 AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
@@ -568,7 +569,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       isReview: true, // 다시보기 모드임을 알림
                     );
               },
-              child: Text("솔루션 다시 볼래!"),
+              child: AppText("솔루션 다시 볼래!"),
             ),
           ),
         ],
@@ -630,7 +631,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             action,
                           );
                     },
-                    child: Text(
+                    child: AppText(
                       // 좋아, 싫어 레이블
                       label,
                       // style: AppFontStyles.bodyMedium14,
@@ -932,7 +933,7 @@ class _DateSeparator extends StatelessWidget {
               )
             ],
           ),
-          child: Text(DateFormat('yyyy년 MM월 dd일').format(date),
+          child: AppText(DateFormat('yyyy년 MM월 dd일').format(date),
               style: AppFontStyles.bodyRegular12
                   .copyWith(color: AppColors.grey900)),
         ),

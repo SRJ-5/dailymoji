@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
@@ -79,7 +80,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
       return const Center(
           child:
               CircularProgressIndicator(backgroundColor: AppColors.yellow50));
-    if (state.error != null) return Center(child: Text('에러: ${state.error}'));
+    if (state.error != null) return Center(child: AppText('에러: ${state.error}'));
 
     // 기존 5개 감정 + 날짜
     final baseDays = state.days;
@@ -134,7 +135,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     SizedBox(
                       height: 64.h,
                       child: Center(
-                        child: Text(
+                        child: AppText(
                           "나의 2주간 감정 상태",
                           style: AppFontStyles.bodyMedium14.copyWith(
                             color: AppColors.grey900,
@@ -192,7 +193,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                                 },
                                               ),
                                               const SizedBox(width: 8),
-                                              Text(
+                                              AppText(
                                                 key,
                                                 style: TextStyle(
                                                   fontSize: 14,
@@ -238,7 +239,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                   getTitlesWidget: (value, meta) {
                                     if (value.toInt() == 0)
                                       return const SizedBox.shrink();
-                                    return Text(
+                                    return AppText(
                                       value.toInt().toString(),
                                       style: AppFontStyles.bodyRegular12
                                           .copyWith(color: AppColors.grey600),
@@ -260,7 +261,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                       return const SizedBox.shrink();
                                     }
                                     final d = baseDays[index];
-                                    return Text(
+                                    return AppText(
                                       "${d.month}.${d.day}",
                                       style: AppFontStyles.bodyRegular12
                                           .copyWith(color: AppColors.grey600),
@@ -364,9 +365,9 @@ class _ScoreBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
+        AppText(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
         SizedBox(height: 2.h),
-        Text(value,
+        AppText(value,
             style:
                 AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
       ],
@@ -418,7 +419,7 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Text(
+            AppText(
               key,
               style:
                   AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
@@ -455,7 +456,7 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                 ],
               ),
               SizedBox(height: 8.h),
-              Text(
+              AppText(
                 data.description,
                 style: AppFontStyles.bodyRegular12_180
                     .copyWith(color: AppColors.grey900),
@@ -481,7 +482,7 @@ Widget _legendChip(String label, Color color) {
         ),
       ),
       const SizedBox(width: 4),
-      Text(label, style: const TextStyle(fontSize: 12)),
+      AppText(label, style: const TextStyle(fontSize: 12)),
     ],
   );
 }

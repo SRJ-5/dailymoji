@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
@@ -45,7 +46,7 @@ class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: AppText(
                 '캐릭터의 성격을\n골라볼까요?',
                 style: AppFontStyles.heading2.copyWith(color: AppColors.grey900),
               ),

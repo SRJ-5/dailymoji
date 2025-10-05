@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
@@ -50,7 +51,7 @@ class _OnboardingPart2PageState
             : null,
         title: stepIndex == totalSteps
             ? null
-            : Text(
+            : AppText(
                 '현재 ${state.userProfile!.userNickNm}의 감정 기록',
                 style: AppFontStyles.bodyBold18
                     .copyWith(color: AppColors.grey900),
@@ -115,7 +116,7 @@ class _OnboardingPart2PageState
                           }
                         }
                       : null,
-                  child: Text(
+                  child: AppText(
                       stepIndex == totalSteps ? '시작하기' : '계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled

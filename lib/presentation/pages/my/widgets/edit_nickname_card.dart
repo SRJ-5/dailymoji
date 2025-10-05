@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +34,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AppText(
             widget.isUser ? "닉네임" : "캐릭터 이름",
             style: AppFontStyles.bodyBold14.copyWith(
               color: AppColors.grey900,
@@ -43,7 +44,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
             padding: EdgeInsets.symmetric(vertical: 12.h),
             child: Row(
               children: [
-                Text(
+                AppText(
                   widget.nickname,
                   style: AppFontStyles.bodyRegular16.copyWith(
                     color: AppColors.grey700,
@@ -89,7 +90,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     isUser ? "닉네임 수정" : "캐릭터 이름 수정",
                     style: AppFontStyles.heading3.copyWith(
                       color: AppColors.grey900,
@@ -137,7 +138,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                       ),
                     ),
                   ),
-                  Text(
+                  AppText(
                     " • 2~10자만 사용 가능해요",
                     style: AppFontStyles.bodyRegular12.copyWith(
                       color: invalid ? AppColors.noti900 : AppColors.grey700,
@@ -153,7 +154,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                         },
                         child: Container(
                           padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
-                          child: Text(
+                          child: AppText(
                             "취소",
                             style: AppFontStyles.bodyMedium14.copyWith(
                               color: AppColors.grey700,
@@ -169,7 +170,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
                         },
                         child: Container(
                           padding: EdgeInsets.only(top: 8.h, bottom: 8.h, left: 16.w, right: 10.w),
-                          child: Text(
+                          child: AppText(
                             "완료",
                             style: AppFontStyles.bodyMedium14.copyWith(
                               color: AppColors.green600,
