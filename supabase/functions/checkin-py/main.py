@@ -885,16 +885,15 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
     특정 사용자의 특정 날짜에 대한 요약문을 생성하고 DB에 저장(Upsert)합니다.
     이 함수는 스케줄링된 작업(/tasks/generate-summaries)에 의해 호출됩니다.
     """
-    print(f"----- [Job Start] User: {user_id}, Date: {date_str} -----")
+    print(f"----- [Daily Summary Job Start] User: {user_id}, Date: {date_str} -----")
     
     # Supabase 또는 OpenAI 키가 설정되지 않은 경우 작업을 건너뜁니다.
     if not supabase or not OPENAI_KEY:
-        print("Error: Supabase client or OpenAI key not initialized. Skipping summary generation.")
         return
 
     try:
         # --- 1. 기본 정보 수집 ---
-        user_nick_nm, character_nm = await get_user_info(user_id)
+        # user_nick_nm, character_nm = await get_user_info(user_id)
         start_of_day = f"{date_str}T00:00:00+00:00"
         end_of_day = f"{date_str}T23:59:59+00:00"
 
