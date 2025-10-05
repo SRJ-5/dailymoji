@@ -5,7 +5,7 @@
 
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
-import 'package:dailymoji/core/constants/emoji_assets.dart';
+import 'package:dailymoji/domain/enums/emoji_asset.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -322,8 +322,8 @@ class _Imoge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(default)를 보여줌.
-    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['default']!;
+    // EmojiAsset enum에서 이미지 경로를 가져옴
+    final imagePath = EmojiAsset.fromString(imoKey).asset;
     final isSelected = selectedEmotion == imoKey;
 
     return GestureDetector(

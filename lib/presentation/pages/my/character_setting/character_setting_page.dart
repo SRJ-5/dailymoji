@@ -83,9 +83,9 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: CharacterPersonality.values.map((e) {
-                                    final isSelected = userState.userProfile!.characterPersonality! == e.label;
+                                    final isSelected = userState.userProfile!.characterPersonality! == e.myLabel;
                                     return GestureDetector(
-                                      onTap: () => Navigator.pop(context, e.label),
+                                      onTap: () => Navigator.pop(context, e.myLabel),
                                       child: Container(
                                         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                                         alignment: Alignment.centerLeft,
@@ -98,7 +98,7 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                                             ),
                                             SizedBox(width: 8.w),
                                             Text(
-                                              e.label,
+                                              e.myLabel,
                                               style: isSelected
                                                   ? AppFontStyles.bodySemiBold14.copyWith(
                                                       color: AppColors.grey900,

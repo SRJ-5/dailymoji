@@ -1,10 +1,10 @@
-import 'package:dailymoji/core/constants/emoji_assets.dart';
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/message.dart';
+import 'package:dailymoji/domain/enums/emoji_asset.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/chat/widgets/triangle_painter.dart';
@@ -190,7 +190,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final characterName = userState.userProfile?.characterNm ?? "모지";
     final characterImageUrl = userState.userProfile?.aiCharacter; // 캐릭터 프사
 
-// 봇이 입력중일 때 사용자가 입력 못하게
+    // 봇이 입력중일 때 사용자가 입력 못하게
     final isBotTyping = chatState.isTyping;
 
     final messages = chatState.messages.reversed.toList();
@@ -647,9 +647,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   Widget _buildEmojiBarAnimated() {
     // 애초에 디폴트 이미지는 여기서 안뜨게! (MVP)
-    final emojiKeys =
-        kEmojiAssetMap.keys.where((key) => key != 'default').toList();
-    final emojiAssets = emojiKeys.map((key) => kEmojiAssetMap[key]!).toList();
+    final emojis = EmojiAsset.withoutDefault;
+    final emojiKeys = emojis.map((e) => e.label).toList();
+    final emojiAssets = emojis.map((e) => e.asset).toList();
 
     // 0.0~0.25 구간: 배경 페이드인
     final bgOpacity = CurvedAnimation(
@@ -852,7 +852,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     padding:
                         EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                     child: Image.asset(
-                      kEmojiAssetMap[currentSelectedEmojiKey]!,
+                      EmojiAsset.fromString(currentSelectedEmojiKey).asset,
                       width: 24.w,
                       height: 24.h,
                     ),

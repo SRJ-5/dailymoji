@@ -1,21 +1,18 @@
-import 'package:dailymoji/core/constants/emoji_assets.dart';
-import 'package:dailymoji/core/constants/emotion_map.dart';
-import 'package:dailymoji/core/constants/presets.dart';
-import 'package:dailymoji/core/constants/solution_scripts.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
+import 'package:dailymoji/domain/enums/emoji_asset.dart';
+import 'package:dailymoji/domain/enums/preset_id.dart';
+import 'package:dailymoji/domain/enums/solution_proposal.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dailymoji/domain/enums/enum_data.dart';
 
-final solutionResultProvider =
-    StateProvider<Map<String, dynamic>?>((ref) => null);
+final solutionResultProvider = StateProvider<Map<String, dynamic>?>((ref) => null);
 
 class ChatState {
   final List<Message> messages;
@@ -71,9 +68,7 @@ class ChatViewModel extends Notifier<ChatState> {
 
 // UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
 
-  String? get _userId =>
-      ref.read(userViewModelProvider).userProfile?.id ??
-      "ffc9c57c-b744-4924-a3e7-65781ecf6ab3";
+  String? get _userId => ref.read(userViewModelProvider).userProfile?.id ?? "ffc9c57c-b744-4924-a3e7-65781ecf6ab3";
 
 //사용자의 텍스트 답변을 기다리는 이모지 상태
   String? _pendingEmotionForAnalysis;
@@ -99,15 +94,13 @@ class ChatViewModel extends Notifier<ChatState> {
   Future<Message> _addMessage(Message message) async {
     state = state.copyWith(messages: [...state.messages, message]);
     try {
-      final savedMessageFromDB =
-          await ref.read(sendMessageUseCaseProvider).execute(message);
+      final savedMessageFromDB = await ref.read(sendMessageUseCaseProvider).execute(message);
       final completeMessage = savedMessageFromDB.copyWith(
         imageAssetPath: message.imageAssetPath,
         tempId: message.tempId,
       );
       final updatedMessages = List<Message>.from(state.messages);
-      final index =
-          updatedMessages.indexWhere((m) => m.tempId == completeMessage.tempId);
+      final index = updatedMessages.indexWhere((m) => m.tempId == completeMessage.tempId);
 
       if (index != -1) {
         updatedMessages[index] = completeMessage;
@@ -115,9 +108,7 @@ class ChatViewModel extends Notifier<ChatState> {
       }
       return completeMessage;
     } catch (e) {
-      state = state.copyWith(
-          messages:
-              state.messages.where((m) => m.tempId != message.tempId).toList());
+      state = state.copyWith(messages: state.messages.where((m) => m.tempId != message.tempId).toList());
       print("Error in _addMessage: $e");
       rethrow;
     }
@@ -156,15 +147,14 @@ class ChatViewModel extends Notifier<ChatState> {
       if (solutionId != null && sessionId != null) {
         // 후속 메시지 요청 후, 새로운 로직이 중복 실행되지 않도록 상태를 초기화합니다.
         // _pendingSessionIdForFollowUp = null;
-        await sendFollowUpMessageAfterSolution(
-            reason: reason, solutionId: solutionId, sessionId: sessionId);
+        await sendFollowUpMessageAfterSolution(reason: reason, solutionId: solutionId, sessionId: sessionId);
       }
     } else if (emotionFromHome != null) {
       final emojiMessage = Message(
         userId: currentUserId,
         sender: Sender.user,
         type: MessageType.image,
-        imageAssetPath: kEmojiAssetMap[emotionFromHome],
+        imageAssetPath: EmojiAsset.fromString(emotionFromHome).asset,
       );
       final savedMessage = await _addMessage(emojiMessage);
       await _startConversationWithEmoji(savedMessage, emotionFromHome);
@@ -239,17 +229,14 @@ class ChatViewModel extends Notifier<ChatState> {
 // RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
 // 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
     EmotionalRecord? emotionalRecordFromEmojiOnly;
-    if (_lastEmojiOnlyCluster != null &&
-        _lastEmojiMessageId != null &&
-        emotionForAnalysis != null) {
+    if (_lastEmojiOnlyCluster != null && _lastEmojiMessageId != null && emotionForAnalysis != null) {
 // 백엔드에 _pendingEmotionForAnalysis (이모지)와 텍스트를 함께 전달하여 풀파이프라인 분석 요청
 // 이모지+텍스트 가중치를 붙여 최종 점수로 저장
       emotionalRecordFromEmojiOnly = await _analyzeAndRespond(
         userMessage: savedMessage,
         textForAnalysis: message.content,
         emotion: emotionForAnalysis,
-        updateSessionIdForMessageId:
-            _lastEmojiMessageId, // 이전 이모지 메시지 ID로 세션 업데이트
+        updateSessionIdForMessageId: _lastEmojiMessageId, // 이전 이모지 메시지 ID로 세션 업데이트
       );
 // 이모지-텍스트 연계 분석이 완료되면 상태 초기화
       _lastEmojiOnlyCluster = null;
@@ -273,7 +260,7 @@ class ChatViewModel extends Notifier<ChatState> {
       userId: currentUserId,
       sender: Sender.user,
       type: MessageType.image,
-      imageAssetPath: kEmojiAssetMap[emotion],
+      imageAssetPath: EmojiAsset.fromString(emotion).asset,
     );
     final savedEmojiMessage = await _addMessage(emojiMessage);
 
@@ -283,23 +270,15 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
 // RIN ♥ : 텍스트와 이모지를 별도의 메시지로 전송 (케이스 3)
-  Future<void> sendTextAndEmojiAsMessages(
-      String text, String emotionKey) async {
+  Future<void> sendTextAndEmojiAsMessages(String text, String emotionKey) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
 // 1. 이모지 메시지 객체를 바로 생성해서 전달
-    await _addMessage(Message(
-        userId: currentUserId,
-        sender: Sender.user,
-        type: MessageType.image,
-        imageAssetPath: kEmojiAssetMap[emotionKey]));
+    await _addMessage(
+        Message(userId: currentUserId, sender: Sender.user, type: MessageType.image, imageAssetPath: EmojiAsset.fromString(emotionKey).asset));
     // 2. 텍스트 메시지 객체를 바로 생성해서 전달
-    final savedTextMessage = await _addMessage(Message(
-        userId: currentUserId,
-        content: text,
-        sender: Sender.user,
-        type: MessageType.normal));
+    final savedTextMessage = await _addMessage(Message(userId: currentUserId, content: text, sender: Sender.user, type: MessageType.normal));
 
     // 3. 분석 요청
     await _analyzeAndRespond(
@@ -317,8 +296,7 @@ class ChatViewModel extends Notifier<ChatState> {
   /// 이모지 선택 후 공감 질문으로 이어지는 대화 시작 로직
   /// DB 저장 및 봇 질문 로직을 담당하므로
   /// UI에 메시지를 중복으로 추가하지 않도록 조심하기!!
-  Future<void> _startConversationWithEmoji(
-      Message savedEmojiMsg, String emotion) async {
+  Future<void> _startConversationWithEmoji(Message savedEmojiMsg, String emotion) async {
     _pendingEmotionForAnalysis = emotion; // 텍스트 입력 대기중인 이모지 설정
     final currentUserId = _userId!;
     final userProfile = ref.read(userViewModelProvider).userProfile;
@@ -327,8 +305,7 @@ class ChatViewModel extends Notifier<ChatState> {
 //리액션 스크립트로 질문/공감 멘트
 // - 서버 /analyze(text="") 퀵세이브 → sessionId + 대사(text) 동시 수신
       final emojiRepo = ref.read(emojiReactionRepositoryProvider);
-      final EmotionalRecord emotionalRecord =
-          await emojiRepo.getReactionWithSession(
+      final EmotionalRecord emotionalRecord = await emojiRepo.getReactionWithSession(
 // EmotionalRecord 타입으로 받기
         userId: currentUserId,
         emotion: emotion,
@@ -338,8 +315,7 @@ class ChatViewModel extends Notifier<ChatState> {
       );
 
 // 이모지 전송 직후의 클러스터와 메시지 ID 저장
-      _lastEmojiOnlyCluster =
-          emotionalRecord.intervention['top_cluster'] as String?;
+      _lastEmojiOnlyCluster = emotionalRecord.intervention['top_cluster'] as String?;
       _lastEmojiMessageId = savedEmojiMsg.id;
 
 // 세션 연결
@@ -347,12 +323,10 @@ class ChatViewModel extends Notifier<ChatState> {
 //emotionalRecord.sessionId 사용
         await ref.read(updateMessageSessionIdUseCaseProvider).execute(
               messageId: savedEmojiMsg.id!,
-              sessionId:
-                  emotionalRecord.sessionId!, // emotionalRecord.sessionId 사용
+              sessionId: emotionalRecord.sessionId!, // emotionalRecord.sessionId 사용
             );
       }
-      final reactionText =
-          emotionalRecord.intervention['empathy_text'] as String?;
+      final reactionText = emotionalRecord.intervention['empathy_text'] as String?;
 
       await _addMessage(Message(
         userId: currentUserId,
@@ -361,10 +335,7 @@ class ChatViewModel extends Notifier<ChatState> {
       ));
     } catch (e) {
       print("RIN: 🚨 Failed to start conversation with emoji: $e");
-      await _addMessage(Message(
-          userId: currentUserId,
-          sender: Sender.bot,
-          content: "어떤 일 때문에 그렇게 느끼셨나요?"));
+      await _addMessage(Message(userId: currentUserId, sender: Sender.bot, content: "어떤 일 때문에 그렇게 느끼셨나요?"));
     }
   }
 
@@ -384,52 +355,40 @@ class ChatViewModel extends Notifier<ChatState> {
     final characterName = userProfile?.characterNm ?? "모지";
 
 // "입력 중..." 메시지 표시
-    final analyzingMessage = Message(
-        userId: currentUserId,
-        content: "$characterName이(가) 입력하고 있어요...",
-        sender: Sender.bot,
-        type: MessageType.analysis);
-    state = state.copyWith(
-        isTyping: true, messages: [...state.messages, analyzingMessage]);
+    final analyzingMessage =
+        Message(userId: currentUserId, content: "$characterName이(가) 입력하고 있어요...", sender: Sender.bot, type: MessageType.analysis);
+    state = state.copyWith(isTyping: true, messages: [...state.messages, analyzingMessage]);
 
 // 이전 대화 기억: 최근 4개의 메시지를 history로 전달
-    final history = state.messages.length > 4
-        ? state.messages.sublist(state.messages.length - 4)
-        : state.messages;
+    final history = state.messages.length > 4 ? state.messages.sublist(state.messages.length - 4) : state.messages;
 
     try {
 // /analyze 앤드포인트 연결
-      final emotionalRecord =
-          await ref.read(analyzeEmotionUseCaseProvider).execute(
-                userId: currentUserId,
-                text: textForAnalysis,
-                emotion: emotion,
-                onboarding: userProfile?.onboardingScores ?? {},
-                characterPersonality: userProfile?.characterPersonality,
-                history: history,
-              );
+      final emotionalRecord = await ref.read(analyzeEmotionUseCaseProvider).execute(
+            userId: currentUserId,
+            text: textForAnalysis,
+            emotion: emotion,
+            onboarding: userProfile?.onboardingScores ?? {},
+            characterPersonality: userProfile?.characterPersonality,
+            history: history,
+          );
 
 // "입력 중..." 메시지 제거
-      state = state.copyWith(
-          messages: state.messages
-              .where((m) => m.type != MessageType.analysis)
-              .toList());
+      state = state.copyWith(messages: state.messages.where((m) => m.type != MessageType.analysis).toList());
 
       final sessionId = emotionalRecord.sessionId;
       // 1. intervention 객체 먼저 추출
       final intervention = emotionalRecord.intervention;
       final presetId = intervention['preset_id'] as String?;
 
-      switch (presetId) {
+      final preset = PresetId.fromString(presetId ?? '');
+
+      switch (preset) {
         // Rin: 칭긔칭긔모드
-        case PresetIds.friendlyReply:
+        case PresetId.friendlyReply:
           // 2. intervention 안에서 'text'를 찾음
-          final botMessageContent =
-              intervention['text'] as String? ?? "음.. 잠깐 생각 좀 해볼게! 🤔";
-          final botMessage = Message(
-              userId: currentUserId,
-              content: botMessageContent,
-              sender: Sender.bot);
+          final botMessageContent = intervention['text'] as String? ?? "음.. 잠깐 생각 좀 해볼게! 🤔";
+          final botMessage = Message(userId: currentUserId, content: botMessageContent, sender: Sender.bot);
           await _addMessage(botMessage);
           break; // 여기서 대화 흐름이 한번 끝남
 
@@ -453,7 +412,7 @@ class ChatViewModel extends Notifier<ChatState> {
         // break; // 여기서 대화 흐름이 한번 끝남
 
 // 솔루션 제안 모드
-        case PresetIds.solutionProposal:
+        case PresetId.solutionProposal:
           // 3. intervention 안에서 필요한 모든 텍스트를 찾음
           final empathyText = intervention['empathy_text'] as String?;
           final analysisText = intervention['analysis_text'] as String?;
@@ -461,19 +420,13 @@ class ChatViewModel extends Notifier<ChatState> {
 
 // 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
           if (empathyText != null && empathyText.isNotEmpty) {
-            await _addMessage(Message(
-                userId: currentUserId,
-                content: empathyText,
-                sender: Sender.bot));
+            await _addMessage(Message(userId: currentUserId, content: empathyText, sender: Sender.bot));
             await Future.delayed(const Duration(milliseconds: 1000));
           }
 
 // 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
           if (analysisText != null && analysisText.isNotEmpty) {
-            await _addMessage(Message(
-                userId: currentUserId,
-                content: analysisText,
-                sender: Sender.bot));
+            await _addMessage(Message(userId: currentUserId, content: analysisText, sender: Sender.bot));
             await Future.delayed(const Duration(milliseconds: 1200));
           }
 
@@ -484,16 +437,15 @@ class ChatViewModel extends Notifier<ChatState> {
           break;
 
 // 안전 위기 모드
-        case PresetIds.safetyCrisisModal:
-        case PresetIds.safetyCrisisSelfHarm:
-        case PresetIds.safetyCrisisAngerAnxiety:
-        case PresetIds.safetyCheckIn:
+        case PresetId.safetyCrisisModal:
+        case PresetId.safetyCrisisSelfHarm:
+        case PresetId.safetyCrisisAngerAnxiety:
+        case PresetId.safetyCheckIn:
           // 4. intervention 안에서 위기 관련 정보를 찾음
           final cluster = intervention['cluster'] as String?;
           final solutionId = intervention['solution_id'] as String?;
-          final safetyText = intervention['analysis_text'] as String? ??
-              kSolutionProposalScripts[cluster]?.first ??
-              "많이 힘드시군요. 지금 도움이 필요할 수 있어요.";
+          final safetyText =
+              intervention['analysis_text'] as String? ?? SolutionProposal.fromString(cluster ?? '')?.scripts.first ?? "많이 힘드시군요. 지금 도움이 필요할 수 있어요.";
 
           if (cluster != null && solutionId != null) {
             final botMessage = Message(
@@ -514,7 +466,7 @@ class ChatViewModel extends Notifier<ChatState> {
           break;
 
 // RIN ♥ : 이모지 단독 입력 시의 응답 처리 (백엔드에서 EMOJI_REACTION presetId로 옴)
-        case PresetIds.emojiReaction:
+        case PresetId.emojiReaction:
           // 5. intervention 안에서 'empathy_text' 찾기
 
           final reactionText = intervention['empathy_text'] as String?;
@@ -528,6 +480,7 @@ class ChatViewModel extends Notifier<ChatState> {
           }
           break;
 
+        case null:
         default:
           final errorMessage = Message(
             userId: currentUserId,
@@ -555,9 +508,7 @@ class ChatViewModel extends Notifier<ChatState> {
     } catch (e, stackTrace) {
       print("analyzeAndRespond error : $e\n$stackTrace");
       state = state.copyWith(
-        messages: state.messages
-            .where((m) => m.type != MessageType.analysis)
-            .toList(),
+        messages: state.messages.where((m) => m.type != MessageType.analysis).toList(),
         errorMessage: "감정 분석에 실패했어요. 😥",
       );
     } finally {
@@ -567,15 +518,13 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   /// 솔루션 제안 로직
-  Future<void> _proposeSolution(
-      String sessionId, String topCluster, String currentUserId) async {
+  Future<void> _proposeSolution(String sessionId, String topCluster, String currentUserId) async {
     try {
-      final proposalResponse =
-          await ref.read(proposeSolutionUseCaseProvider).execute(
-                userId: currentUserId,
-                sessionId: sessionId,
-                topCluster: topCluster,
-              );
+      final proposalResponse = await ref.read(proposeSolutionUseCaseProvider).execute(
+            userId: currentUserId,
+            sessionId: sessionId,
+            topCluster: topCluster,
+          );
 
       final proposalMessage = Message(
         userId: currentUserId,
@@ -594,10 +543,7 @@ class ChatViewModel extends Notifier<ChatState> {
       await _addMessage(proposalMessage);
     } catch (e) {
       print("RIN: 🚨 [ViewModel] Failed to propose solution: $e");
-      final errorMessage = Message(
-          userId: currentUserId,
-          content: "솔루션을 제안하는 중에 문제가 발생했어요.",
-          sender: Sender.bot);
+      final errorMessage = Message(userId: currentUserId, content: "솔루션을 제안하는 중에 문제가 발생했어요.", sender: Sender.bot);
       await _addMessage(errorMessage);
     }
   }
@@ -616,8 +562,7 @@ class ChatViewModel extends Notifier<ChatState> {
       String? cursorIso;
       if (_targetDate != null) {
 // 해당 날짜의 다음 날 00:00:00을 커서로 설정 (그 이전 메시지들을 가져오기 위해)
-        final nextDay = DateTime(
-            _targetDate!.year, _targetDate!.month, _targetDate!.day + 1);
+        final nextDay = DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day + 1);
         cursorIso = nextDay.toIso8601String();
       }
 
@@ -633,14 +578,11 @@ class ChatViewModel extends Notifier<ChatState> {
 // 특정 날짜가 지정된 경우, 해당 날짜의 메시지만 필터링
       List<Message> filteredMsgs = msgs;
       if (_targetDate != null) {
-        final targetDateStart =
-            DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day);
-        final targetDateEnd = DateTime(_targetDate!.year, _targetDate!.month,
-            _targetDate!.day, 23, 59, 59);
+        final targetDateStart = DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day);
+        final targetDateEnd = DateTime(_targetDate!.year, _targetDate!.month, _targetDate!.day, 23, 59, 59);
 
         filteredMsgs = msgs.where((msg) {
-          return msg.createdAt.isAfter(targetDateStart) &&
-              msg.createdAt.isBefore(targetDateEnd);
+          return msg.createdAt.isAfter(targetDateStart) && msg.createdAt.isBefore(targetDateEnd);
         }).toList();
       }
 
@@ -649,8 +591,7 @@ class ChatViewModel extends Notifier<ChatState> {
 
 // 특정 날짜 모드에서는 무한 스크롤 비활성화, 일반 모드에서는 페이지 사이즈로 판단
       final hasMore = _targetDate != null ? false : (msgs.length >= _pageSize);
-      state = state.copyWith(
-          messages: filteredMsgs, isLoading: false, hasMore: hasMore);
+      state = state.copyWith(messages: filteredMsgs, isLoading: false, hasMore: hasMore);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString(), isLoading: false);
     }
@@ -675,12 +616,11 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(isLoadingMore: true);
 
     try {
-      final additionalMsgs =
-          await ref.read(loadMessagesUseCaseProvider).execute(
-                userId: currentUserId,
-                limit: _pageSize,
-                cursorIso: cursorIso,
-              );
+      final additionalMsgs = await ref.read(loadMessagesUseCaseProvider).execute(
+            userId: currentUserId,
+            limit: _pageSize,
+            cursorIso: cursorIso,
+          );
 
       if (additionalMsgs.isNotEmpty) {
 // 새로 가져온 메시지들을 정렬 (특정 날짜 모드는 이미 early return으로 제외됨)
@@ -702,8 +642,7 @@ class ChatViewModel extends Notifier<ChatState> {
         state = state.copyWith(isLoadingMore: false, hasMore: false);
       }
     } catch (e) {
-      state = state.copyWith(
-          isLoadingMore: false, errorMessage: "추가 메시지를 불러오는데 실패했어요.");
+      state = state.copyWith(isLoadingMore: false, errorMessage: "추가 메시지를 불러오는데 실패했어요.");
     }
   }
 
@@ -766,10 +705,7 @@ class ChatViewModel extends Notifier<ChatState> {
 // ---------------------------------------------------------------------------
 
   /// 솔루션 완료 후 후속 질문 메시지 전송
-  Future<void> sendFollowUpMessageAfterSolution(
-      {required String reason,
-      required String solutionId,
-      required String sessionId}) async {
+  Future<void> sendFollowUpMessageAfterSolution({required String reason, required String solutionId, required String sessionId}) async {
     /// 솔루션 완료 후 후속 멘트 전송
     final currentUserId = _userId;
     if (currentUserId == null) return;
@@ -778,21 +714,17 @@ class ChatViewModel extends Notifier<ChatState> {
     final userProfile = ref.read(userViewModelProvider).userProfile;
     final personality = userProfile?.characterPersonality;
     final personalityDbValue = personality != null
-        ? CharacterPersonality.values
-            .firstWhere((e) => e.label == personality,
-                orElse: () => CharacterPersonality.probSolver)
-            .dbValue
+        ? CharacterPersonality.values.firstWhere((e) => e.myLabel == personality, orElse: () => CharacterPersonality.probSolver).dbValue
         : null;
     final userNickNm = userProfile?.userNickNm;
 
 // chat 페이지로 넘어가는 reason에 따라 다른 메시지를 선택
 // API를 통해 성향에 맞는 후속 질문 멘트 가져오기
-    final content =
-        await ref.read(homeDialogueRepositoryProvider).fetchFollowUpDialogue(
-              reason: reason,
-              personality: personalityDbValue,
-              userNickNm: userNickNm,
-            );
+    final content = await ref.read(homeDialogueRepositoryProvider).fetchFollowUpDialogue(
+          reason: reason,
+          personality: personalityDbValue,
+          userNickNm: userNickNm,
+        );
 
 //     String content;
 //     if (reason == 'user_closed') {
@@ -821,9 +753,7 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   /// 솔루션 제안에 대한 사용자 응답 처리
-  Future<void> respondToSolution(
-      Map<String, dynamic> proposalData, String action,
-      {bool isReview = false}) async {
+  Future<void> respondToSolution(Map<String, dynamic> proposalData, String action, {bool isReview = false}) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -835,23 +765,17 @@ class ChatViewModel extends Notifier<ChatState> {
       final userProfile = ref.read(userViewModelProvider).userProfile;
       final personality = userProfile?.characterPersonality;
       final personalityDbValue = personality != null
-          ? CharacterPersonality.values
-              .firstWhere((e) => e.label == personality,
-                  orElse: () => CharacterPersonality.probSolver)
-              .dbValue
+          ? CharacterPersonality.values.firstWhere((e) => e.myLabel == personality, orElse: () => CharacterPersonality.probSolver).dbValue
           : null;
       final userNickNm = userProfile?.userNickNm;
 
       // API를 통해 성향에 맞는 거절 멘트 가져오기
-      final content = await ref
-          .read(homeDialogueRepositoryProvider)
-          .fetchDeclineSolutionDialogue(
+      final content = await ref.read(homeDialogueRepositoryProvider).fetchDeclineSolutionDialogue(
             personality: personalityDbValue,
             userNickNm: userNickNm,
           );
 
-      final message =
-          Message(userId: currentUserId, content: content, sender: Sender.bot);
+      final message = Message(userId: currentUserId, content: content, sender: Sender.bot);
       await _addMessage(message);
       return;
     }
@@ -860,8 +784,7 @@ class ChatViewModel extends Notifier<ChatState> {
     if (action == "accept_solution") {
       SystemChrome.setPreferredOrientations(DeviceOrientation.values);
 
-      final result = await navigatorkey.currentContext?.push(
-          '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview');
+      final result = await navigatorkey.currentContext?.push('/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview');
 
       if (result is Map<String, dynamic>) {
         final reason = result['reason'] as String? ?? 'video_ended';
@@ -891,5 +814,4 @@ class ChatViewModel extends Notifier<ChatState> {
 // Provider Definition
 // ---------------------------------------------------------------------------
 
-final chatViewModelProvider =
-    NotifierProvider<ChatViewModel, ChatState>(ChatViewModel.new);
+final chatViewModelProvider = NotifierProvider<ChatViewModel, ChatState>(ChatViewModel.new);
