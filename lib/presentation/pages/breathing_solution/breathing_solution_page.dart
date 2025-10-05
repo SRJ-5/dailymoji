@@ -11,8 +11,14 @@ import 'package:go_router/go_router.dart';
 
 class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String solutionId;
+  final String? sessionId;
+  final bool isReview;
 
-  const BreathingSolutionPage({super.key, required this.solutionId});
+  const BreathingSolutionPage(
+      {super.key,
+      required this.solutionId,
+      this.sessionId,
+      this.isReview = false});
 
   @override
   ConsumerState<BreathingSolutionPage> createState() =>
@@ -20,9 +26,7 @@ class BreathingSolutionPage extends ConsumerStatefulWidget {
 }
 
 class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
-// RIN: 수정된 부분: SingleTickerProviderStateMixin -> TickerProviderStateMixin 애니메이션 여러개 허용
-    with
-        TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
   int _timerSeconds = 0;
@@ -83,7 +87,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     // 깜빡임 애니메이션 컨트롤러
     _blinkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 300),
     )..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
 
     _blinkAnimation = Tween<double>(
@@ -189,7 +193,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
         if (_showFinalHint) {
-          context.pushReplacement('/solution/${widget.solutionId}');
+          context.pushReplacement(
+              '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}');
         }
       },
       child: Scaffold(

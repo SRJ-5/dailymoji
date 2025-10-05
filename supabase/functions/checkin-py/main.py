@@ -67,6 +67,12 @@ app.add_middleware(
 
 # --- 데이터 모델 (분리된 구조에 맞게 수정) ---
 
+
+# 이전 대화 기록(history)을 받기 위한 모델 수정
+class HistoryItem(BaseModel):
+    sender: str
+    content: str
+
 # /analyze 엔드포인트의 입력 모델
 class AnalyzeRequest(BaseModel):
     user_id: str
@@ -76,6 +82,7 @@ class AnalyzeRequest(BaseModel):
     timestamp: Optional[str] = None
     onboarding: Optional[Dict[str, Any]] = None
     character_personality: Optional[str] = None
+    history: Optional[List[HistoryItem]] = None # history 필드 추가
 
 
 # /solutions/propose 엔드포인트의 입력 모델
@@ -118,9 +125,12 @@ def _kiwi_detect_safety_lemmas(text: str) -> List[str]:
 
 def is_safety_text(text: str, llm_json:  Optional[dict], debug_log: dict) -> Tuple[bool, dict]:
     """
-    사용자 텍스트의 자해/자살 위험을 다단계로 분석합니다.
-    - 1단계: 명백히 안전한 비유적 표현을 먼저 걸러냅니다.
-    - 2단계: Kiwi 형태소 분석과 LLM의 의도 분석으로 위험 신호를 탐지합니다.
+    점수 체계 및 안전 모드 설명: 이 함수는 사용자의 텍스트에서 자해/자살 위험을 다단계로 분석합니다.
+    - 1단계: "졸려 죽겠다"와 같이 명백히 안전한 비유적 표현을 먼저 걸러냅니다.
+    - 2단계: Kiwi 형태소 분석('죽다', '자살' 등)과 LLM의 의도 분석('self_harm' 플래그)으로 위험 신호를 탐지합니다.
+    - "다 때려치우고 싶다"와 같은 문장은 명시적인 자해 단어가 없어 1, 2단계를 통과할 수 있지만,
+      LLM이 문장의 절망적인 뉘앙스를 'self_harm: possible'로 판단하면 안전 장치가 발동될 수 있습니다.
+      이러한 오탐지는 모델의 보수적인 안전 설계 때문이며, 지속적인 프롬프트 튜닝이 필요합니다.
     """
 
     # 1단계: 비유적/관용적 표현 우선 필터링 ("졸려 죽겠다" 등)
@@ -494,7 +504,11 @@ async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dic
         mode='FRIENDLY', personality=payload.character_personality, language_code=payload.language_code,
         user_nick_nm=user_nick_nm, character_nm=character_nm
     )
-    friendly_text_response = await call_llm(system_prompt, payload.text, OPENAI_KEY, expect_json=False)
+    # 이전 대화 기억: 친구 모드에서도 대화 기록을 user_content에 포함
+    history_str = "\n".join([f"{h.sender}: {h.content}" for h in payload.history]) if payload.history else ""
+    user_content_with_history = f"Previous conversation:\n{history_str}\n\nCurrent message: {payload.text}"
+
+    friendly_text_response = await call_llm(system_prompt, user_content_with_history, OPENAI_KEY, expect_json=False)
 
     # --- 👇 [수정] ---
     # LLM 호출 결과를 바로 사용하지 않고, 에러인지 먼저 확인합니다.
@@ -502,7 +516,7 @@ async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dic
     if isinstance(friendly_text_response, dict) and 'error' in friendly_text_response:
         print(f"⛔️ Friendly LLM call failed: {friendly_text_response.get('error')}")
         # 에러가 발생하면, 미리 정해둔 fallback 메시지를 사용합니다.
-        final_text_for_intervention = "미안, 지금은 잠시 생각할 시간을 줘!🥹"
+        final_text_for_intervention = "음... 지금은 잠시 생각할 시간이 필요해요!🥹"
     else:
         # 성공 시, LLM이 생성한 텍스트를 사용합니다.
         final_text_for_intervention = friendly_text_response
@@ -542,9 +556,18 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
     onboarding_scores = calculate_baseline_scores(payload.onboarding)
     llm_payload = payload.dict()
     llm_payload["baseline_scores"] = onboarding_scores
+
+    # 이전 대화 기억: 분석 모드에서도 LLM 호출 시 history를 포함
+    history_for_llm = [h.dict() for h in payload.history] if payload.history else []
+    llm_payload_with_history = {
+        "user_message": payload.text,
+        "baseline_scores": onboarding_scores,
+        "history": history_for_llm
+    }
+    
     
     # 2. LLM 호출 및 2차 안전 장치
-    llm_json = await call_llm(system_prompt, json.dumps(llm_payload, ensure_ascii=False), OPENAI_KEY)
+    llm_json = await call_llm(system_prompt, json.dumps(llm_payload_with_history, ensure_ascii=False), OPENAI_KEY) # 💛 1. history 포함된 페이로드 전달
     debug_log["llm"] = llm_json
 
     is_crisis, crisis_scores = is_safety_text(payload.text, llm_json, debug_log)
@@ -1111,7 +1134,6 @@ async def get_solution_followup_dialogue(
         mention_type = "followup_user_closed"
     else: # 'video_ended' 또는 기타
         mention_type = "followup_video_ended"
-        print('mention_type찍혔음!!!!: ${mention_type}')
 
     # get_mention_from_db 헬퍼 함수를 사용하여 멘트를 가져옵니다.
     dialogue_text = await get_mention_from_db(

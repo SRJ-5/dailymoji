@@ -11,6 +11,10 @@ class EmotionalRecordDto {
   final int? profile;
   final Map<String, dynamic>? intervention;
   final String? sessionId;
+  // RIN: 백엔드가 최상위 레벨로 보내주는 텍스트 필드들을 DTO 클래스의 멤버 변수로 직접 선언
+  final String? empathyText;
+  final String? analysisText;
+  final String? proposalText;
 
   EmotionalRecordDto({
     this.finalScores,
@@ -18,6 +22,9 @@ class EmotionalRecordDto {
     this.profile,
     this.intervention,
     this.sessionId,
+    this.empathyText,
+    this.analysisText,
+    this.proposalText,
   });
 
   factory EmotionalRecordDto.fromJson(Map<String, dynamic> json) {
@@ -31,6 +38,9 @@ class EmotionalRecordDto {
           ? Map<String, dynamic>.from(json["intervention"])
           : null,
       sessionId: json["session_id"],
+      empathyText: json["empathy_text"] ?? json["empathyText"],
+      analysisText: json["analysis_text"] ?? json["analysisText"],
+      proposalText: json["proposal_text"] ?? json["proposalText"],
     );
   }
 
@@ -41,9 +51,9 @@ class EmotionalRecordDto {
       profile: profile ?? 0,
       sessionId: sessionId,
       interventionPresetId: intervention?['preset_id'] as String?,
-      empathyText: intervention?['empathy_text'] as String?, // 공감 메시지
-      analysisText: intervention?['analysis_text'] as String?,
-      proposalText: intervention?['proposal_text'] as String?,
+      empathyText: empathyText,
+      analysisText: analysisText,
+      proposalText: proposalText,
       intervention: intervention ?? {},
     );
   }

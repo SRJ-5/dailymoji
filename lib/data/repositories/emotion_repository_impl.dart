@@ -1,6 +1,7 @@
 // 감정 분석 Repository 구현체
 import 'package:dailymoji/data/data_sources/emotion_remote_data_source.dart';
 import 'package:dailymoji/domain/entities/emotional_record.dart';
+import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/repositories/emotion_repository.dart';
 
 class EmotionRepositoryImpl implements EmotionRepository {
@@ -15,6 +16,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     String? emotion,
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
+    List<Message>? history,
   }) async {
     final dto = await remoteDataSource.analyzeEmotion(
       userId: userId,
@@ -22,6 +24,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
       emotion: emotion,
       onboarding: onboarding ?? const {},
       characterPersonality: characterPersonality,
+      history: history,
     );
     return dto.toEntity();
   }
