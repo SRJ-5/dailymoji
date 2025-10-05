@@ -4,6 +4,7 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
+import 'package:dailymoji/presentation/pages/report/data/month_cluster_mapping.dart';
 import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
     show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
@@ -344,22 +345,6 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
         ),
       ),
     );
-  }
-
-  String clusterToAssetPath(String cluster) {
-    switch (cluster) {
-      case 'neg_high':
-        return AppImages.angryEmoji;
-      case 'neg_low':
-        return AppImages.cryingEmoji;
-      case 'ADHD':
-        return AppImages.shockedEmoji;
-      case 'sleep':
-        return AppImages.sleepingEmoji;
-      case 'positive':
-      default:
-        return AppImages.smileEmoji;
-    }
   }
 
 // _MonthlyReportState 안에 추가
