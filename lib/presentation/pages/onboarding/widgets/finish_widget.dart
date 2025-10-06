@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ class FinishWidget extends StatelessWidget {
             width: double.infinity,
             height: 94.h,
             child: Center(
-                child: Text(
+                child: AppText(
               textAlign: TextAlign.center,
               text,
               style: AppFontStyles.heading2

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -70,7 +71,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                             horizontal: 16.w, vertical: 10.h),
                         child: Align(
                             alignment: Alignment.centerLeft,
-                            child: Text(
+                            child: AppText(
                               widget.text,
                               style: AppFontStyles.bodyBold16
                                   .copyWith(
@@ -116,7 +117,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             },
           ),
         ),
-        Text(
+        AppText(
           '• 자주: 일주일 중 절반 이상은 그런 기분을 느꼈던 경우',
           style: AppFontStyles.bodyRegular12
               .copyWith(color: AppColors.grey700),

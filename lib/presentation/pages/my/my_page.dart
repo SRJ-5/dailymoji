@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/confirm_dialog.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/edit_nickname_card.dart';
@@ -41,7 +42,7 @@ class _MyPageState extends ConsumerState<MyPage> {
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        title: Text(
+        title: AppText(
           "마이페이지",
           style: AppFontStyles.heading3.copyWith(
             color: AppColors.grey900,
@@ -165,7 +166,7 @@ class _MyPageState extends ConsumerState<MyPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AppText(
             title,
             style: AppFontStyles.bodyBold14.copyWith(
               color: AppColors.grey900,
@@ -202,7 +203,7 @@ class _MyPageState extends ConsumerState<MyPage> {
       height: 48.h,
       child: Row(
         children: [
-          Text(
+          AppText(
             title,
             style: AppFontStyles.bodyRegular16.copyWith(
               color: AppColors.grey700,

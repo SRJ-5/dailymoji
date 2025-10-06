@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
@@ -14,12 +15,10 @@ class SelectAiPersonality extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SelectAiPersonality> createState() =>
-      _SelectAiPersonalityState();
+  ConsumerState<SelectAiPersonality> createState() => _SelectAiPersonalityState();
 }
 
-class _SelectAiPersonalityState
-    extends ConsumerState<SelectAiPersonality> {
+class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
   late int _selectedIndex;
 
   @override
@@ -28,11 +27,8 @@ class _SelectAiPersonalityState
     _selectedIndex = ref.read(userViewModelProvider).step11;
   }
 
-  final _personalitiesOnboarding = CharacterPersonality.values
-      .map((e) => e.onboardingLabel)
-      .toList();
-  final _personalitiesMy =
-      CharacterPersonality.values.map((e) => e.label).toList();
+  final _personalitiesOnboarding = CharacterPersonality.values.map((e) => e.onboardingLabel).toList();
+  final _personalitiesMy = CharacterPersonality.values.map((e) => e.myLabel).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -47,14 +43,12 @@ class _SelectAiPersonalityState
           Container(
             width: double.infinity,
             height: 94.h,
-            padding: EdgeInsets.symmetric(
-                horizontal: 4.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: AppText(
                 '캐릭터의 성격을\n골라볼까요?',
-                style: AppFontStyles.heading2
-                    .copyWith(color: AppColors.grey900),
+                style: AppFontStyles.heading2.copyWith(color: AppColors.grey900),
               ),
             ),
           ),
@@ -71,23 +65,13 @@ class _SelectAiPersonalityState
                     GestureDetector(
                         onTap: () {
                           setState(() {
-                            _selectedIndex =
-                                (_selectedIndex == index)
-                                    ? -1
-                                    : index;
+                            _selectedIndex = (_selectedIndex == index) ? -1 : index;
                           });
                           ref
-                              .read(
-                                  userViewModelProvider.notifier)
-                              .setAiPersonality(
-                                  selectNum: _selectedIndex,
-                                  aiPersonality:
-                                      _personalitiesMy[index]);
+                              .read(userViewModelProvider.notifier)
+                              .setAiPersonality(selectNum: _selectedIndex, aiPersonality: _personalitiesMy[index]);
                         },
-                        child: SelectBox(
-                            isSelected: isSelected,
-                            text: _personalitiesOnboarding[
-                                index])),
+                        child: SelectBox(isSelected: isSelected, text: _personalitiesOnboarding[index])),
                     _personalitiesOnboarding.length - 1 == index
                         ? SizedBox.shrink()
                         : SizedBox(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
@@ -160,7 +161,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   // 요일 라벨
                   dowBuilder: (context, day) {
                     return Center(
-                      child: Text(
+                      child: AppText(
                         weekdays[day.weekday % 7],
                         style: AppFontStyles.bodyMedium14
                             .copyWith(color: AppColors.grey900),
@@ -183,7 +184,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                     return SizedBox(
                       width: 40.w,
                       height: 40.h,
-                      child: Center(child: Text('${day.day}')),
+                      child: Center(child: AppText('${day.day}')),
                     );
                   },
 
@@ -197,7 +198,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                         color: AppColors.orange600,
                         shape: BoxShape.circle,
                       ),
-                      child: Text(
+                      child: AppText(
                         '${day.day}',
                         style: AppFontStyles.bodySemiBold14
                             .copyWith(color: AppColors.grey50),
@@ -220,7 +221,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                   color: AppColors.orange600, width: 1),
                             ),
                             child: Center(
-                              child: Text(
+                              child: AppText(
                                 '${day.day}',
                                 style: AppFontStyles.bodySemiBold14
                                     .copyWith(color: AppColors.orange600),
@@ -252,7 +253,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
               // 상태 분기(로딩/에러/데이터)
               asyncRows.when(
                 loading: () => const LinearProgressIndicator(minHeight: 2),
-                error: (e, _) => Text('로드 실패: $e'),
+                error: (e, _) => AppText('로드 실패: $e'),
                 data: (_) => const SizedBox.shrink(),
               ),
 
@@ -260,7 +261,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
               if (_selectedDay != null)
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
+                  child: AppText(
                     "${_selectedDay!.month}월 ${_selectedDay!.day}일 "
                     "${weekdays[_selectedDay!.weekday % 7]}요일",
                     style: AppFontStyles.bodyBold16
@@ -283,7 +284,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(summaryTitle,
+                            AppText(summaryTitle,
                                 style: AppFontStyles.bodyBold14
                                     .copyWith(color: AppColors.green700)),
                             SizedBox(height: 6.h),
@@ -294,7 +295,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                 child: CircularProgressIndicator(),
                               ))
                             else
-                              Text(
+                              AppText(
                                 _dailySummary,
                                 style: AppFontStyles.bodyRegular12_180
                                     .copyWith(color: AppColors.grey900),
@@ -322,7 +323,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('채팅 확인하기',
+                                      AppText('채팅 확인하기',
                                           style: AppFontStyles.bodyMedium14
                                               .copyWith(
                                                   color: AppColors.grey900)),
@@ -337,7 +338,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                       )
                     : Padding(
                         padding: EdgeInsets.only(top: 76.h),
-                        child: Text("이 날은 기록이 없는 하루예요"),
+                        child: AppText("이 날은 기록이 없는 하루예요"),
                       ),
             ],
           ),
