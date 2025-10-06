@@ -122,9 +122,18 @@ class AppTextStrings {
   static const String clusterAdhd = '집중력저하';
   static const String clusterPositive = '평온/회복';
   static const String clusterTotalScore = '종합 감정 점수';
+
+  // weekly_report.dart 용
+  static const String weeklyReportError = '에러: ';
+
+  // monthly_report.dart 용
+  static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  static const String monthlyReportLoadFailed = '로드 실패: ';
+  static const String monthlyReportDateFormat = 'yyyy년 MM월';
+  static const String monthlyReportDayFormat = 'M월 d일 EEEE'; // 예: 10월 7일 월요일
 }
 
-// 🧡 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가
+// 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가
 class ClusterUtil {
   static const Map<ClusterType, String> displayNames = {
     ClusterType.negHigh: AppTextStrings.clusterNegHigh,

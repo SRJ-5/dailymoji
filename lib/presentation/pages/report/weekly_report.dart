@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -36,11 +37,11 @@ class EmotionData {
 // ===== 체크박스: 종합 감정 점수는 제외(항상 노출) =====
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
-    "불안/분노": false,
-    "우울/무기력": false,
-    "집중력 저하": false,
-    "불규칙 수면": false,
-    "평온/회복": false,
+    AppTextStrings.clusterNegHigh: false,
+    AppTextStrings.clusterNegLow: false,
+    AppTextStrings.clusterAdhd: false,
+    AppTextStrings.clusterSleep: false,
+    AppTextStrings.clusterPositive: false,
   };
 });
 
@@ -80,7 +81,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
       return const Center(
           child:
               CircularProgressIndicator(backgroundColor: AppColors.yellow50));
-    if (state.error != null) return Center(child: AppText('에러: ${state.error}'));
+    if (state.error != null)
+      return Center(
+          child: AppText('${AppTextStrings.weeklyReportError}${state.error}'));
 
     // 기존 5개 감정 + 날짜
     final baseDays = state.days;

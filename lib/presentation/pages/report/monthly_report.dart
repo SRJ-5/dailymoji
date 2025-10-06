@@ -145,7 +145,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
   @override
   Widget build(BuildContext context) {
-    final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    // final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     // ── 여기서 key 만들고
     final key = (widget.userId, _focusedDay.year, _focusedDay.month);
 
@@ -214,8 +214,9 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 headerStyle: HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
-                  titleTextFormatter: (date, locale) =>
-                      "${date.year}년 ${date.month}월",
+                  titleTextFormatter: (date, locale) => DateFormat(
+                          AppTextStrings.monthlyReportDateFormat, 'ko_KR')
+                      .format(date),
                   titleTextStyle: AppFontStyles.bodyMedium14.copyWith(
                     color: AppColors.grey900,
                   ),
@@ -240,7 +241,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   dowBuilder: (context, day) {
                     return Center(
                       child: AppText(
-                        weekdays[day.weekday % 7],
+                        DateFormat('E', 'ko_KR').format(day),
                         style: AppFontStyles.bodyMedium14
                             .copyWith(color: AppColors.grey900),
                       ),
@@ -340,8 +341,8 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: AppText(
-                    "${_selectedDay!.month}월 ${_selectedDay!.day}일 "
-                    "${weekdays[_selectedDay!.weekday % 7]}요일",
+                    DateFormat(AppTextStrings.monthlyReportDayFormat, 'ko_KR')
+                        .format(_selectedDay!),
                     style: AppFontStyles.bodyBold16
                         .copyWith(color: AppColors.grey900),
                   ),
