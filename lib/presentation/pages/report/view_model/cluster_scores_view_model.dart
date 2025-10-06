@@ -1,3 +1,5 @@
+import 'package:dailymoji/domain/enums/cluster_type.dart';
+import 'package:dailymoji/domain/enums/metric.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
@@ -54,8 +56,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   final GetTodayClusterScoresUseCase _getTodayUC;
   final Get14DayClusterStatsUseCase _getAgg14UC;
 
-  ClusterScoresViewModel(this._getTodayUC, this._getAgg14UC)
-      : super(ClusterScoresState.initial());
+  ClusterScoresViewModel(this._getTodayUC, this._getAgg14UC) : super(ClusterScoresState.initial());
 
   /// 오늘 원본 리스트 로드 (기존 용도)
   Future<void> fetchTodayScores() async {
@@ -74,8 +75,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     try {
       final agg = await _getAgg14UC.execute(userId: userId);
       final emap = _buildEmotionMap(agg);
-      state =
-          state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
+      state = state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -93,8 +93,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       final mi = min[i];
       final ma = max[i];
       final allNull = (a == null && mi == null && ma == null);
-      final allZeroOrNull =
-          ((a ?? 0) == 0) && ((mi ?? 0) == 0) && ((ma ?? 0) == 0);
+      final allZeroOrNull = ((a ?? 0) == 0) && ((mi ?? 0) == 0) && ((ma ?? 0) == 0);
 
       // 세 값이 전부 null이거나 전부 0이면 => 결측으로 본다
       if (allNull || allZeroOrNull) return null;
@@ -120,8 +119,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     return one.clamp(0.0, 10.0);
   }
 
-  List<double> scaleList(Iterable<num> values) =>
-      values.map(scaleToTen).toList();
+  List<double> scaleList(Iterable<num> values) => values.map(scaleToTen).toList();
 
   List<FlSpot> _toSpotsConnected(List<double?> ys) {
     final spots = <FlSpot>[];
@@ -253,8 +251,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
 }
 
 /// ----- Provider (ViewModel) -----
-final clusterScoresViewModelProvider =
-    StateNotifierProvider<ClusterScoresViewModel, ClusterScoresState>((ref) {
+final clusterScoresViewModelProvider = StateNotifierProvider<ClusterScoresViewModel, ClusterScoresState>((ref) {
   final todayUC = ref.watch(getTodayClusterScoresUseCaseProvider);
   final agg14UC = ref.watch(get14DayClusterStatsUseCaseProvider);
   return ClusterScoresViewModel(todayUC, agg14UC);

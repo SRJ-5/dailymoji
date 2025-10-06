@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/domain/entities/solution.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
@@ -32,7 +33,7 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: Text("솔루션을 불러오는 데 실패했습니다: $err",
+          child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
               style: const TextStyle(color: AppColors.white)),
         ),
       ),

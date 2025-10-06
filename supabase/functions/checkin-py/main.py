@@ -893,7 +893,7 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
 
     try:
         # --- 1. 기본 정보 수집 ---
-        # user_nick_nm, character_nm = await get_user_info(user_id)
+        user_nick_nm, character_nm = await get_user_info(user_id)
         start_of_day = f"{date_str}T00:00:00+00:00"
         end_of_day = f"{date_str}T23:59:59+00:00"
 

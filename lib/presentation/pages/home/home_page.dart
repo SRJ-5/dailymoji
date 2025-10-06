@@ -5,7 +5,8 @@
 
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
-import 'package:dailymoji/core/constants/emoji_assets.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
+import 'package:dailymoji/domain/enums/emoji_asset.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -183,7 +184,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     width: 150.w,
                     height: 110.h,
                     child: Center(
-                      child: Text(
+                      child: AppText(
                         displayText, // 타이핑 효과 적용된 텍스트
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
@@ -290,7 +291,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AppText(
                     "무엇이든 입력하세요",
                     style: AppFontStyles.bodyRegular14
                         .copyWith(color: AppColors.grey600),
@@ -322,8 +323,8 @@ class _Imoge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // kEmojiAssetMap에서 이미지 경로를 가져옴. 만약 키가 없다면 기본 이미지(default)를 보여줌.
-    final imagePath = kEmojiAssetMap[imoKey] ?? kEmojiAssetMap['default']!;
+    // EmojiAsset enum에서 이미지 경로를 가져옴
+    final imagePath = EmojiAsset.fromString(imoKey).asset;
     final isSelected = selectedEmotion == imoKey;
 
     return GestureDetector(

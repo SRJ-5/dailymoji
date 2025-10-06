@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
 class SelectAi extends StatelessWidget {
@@ -9,7 +10,7 @@ class SelectAi extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          Text(
+          AppText(
             '도우미 모지 캐릭터를 골라주세요!',
             style: TextStyle(fontSize: 40),
           ),

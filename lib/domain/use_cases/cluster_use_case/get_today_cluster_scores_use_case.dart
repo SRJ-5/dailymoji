@@ -1,4 +1,6 @@
 import 'package:dailymoji/domain/entities/cluster_score.dart';
+import 'package:dailymoji/domain/enums/cluster_type.dart';
+import 'package:dailymoji/domain/enums/metric.dart';
 import 'package:dailymoji/domain/repositories/cluster_scores_repository.dart';
 import 'package:dailymoji/domain/models/cluster_stats_models.dart';
 
@@ -19,8 +21,7 @@ class Get14DayClusterStatsUseCase {
     // 2) 14일 타임라인 키(자정) 생성: 길이 14 (오래된 → 최신)
     final days = List.generate(
       14,
-      (i) => DateTime.utc(start.year, start.month, start.day)
-          .add(Duration(days: i)),
+      (i) => DateTime.utc(start.year, start.month, start.day).add(Duration(days: i)),
     );
 
     // 3) 레포지토리에서 한 번에 로드
@@ -33,9 +34,8 @@ class Get14DayClusterStatsUseCase {
     // 4) 버킷팅: 날짜별 → 클러스터별 → 점수 리스트
     final Map<DateTime, Map<ClusterType, List<double>>> bucket = {};
     for (final r in rows) {
-      final dayKey =
-          DateTime.utc(r.createdAt.year, r.createdAt.month, r.createdAt.day);
-      final cluster = clusterFromString(r.cluster);
+      final dayKey = DateTime.utc(r.createdAt.year, r.createdAt.month, r.createdAt.day);
+      final cluster = ClusterType.fromString(r.cluster);
       final byCluster = bucket.putIfAbsent(dayKey, () => {});
       final list = byCluster.putIfAbsent(cluster, () => []);
       list.add(r.score);
@@ -46,8 +46,7 @@ class Get14DayClusterStatsUseCase {
     final metrics = Metric.values;
 
     final Map<ClusterType, Map<Metric, List<double>>> series = {
-      for (final c in clusters)
-        c: {for (final m in metrics) m: List.filled(14, 0.0)}
+      for (final c in clusters) c: {for (final m in metrics) m: List.filled(14, 0.0)}
     };
 
     double _avg(List<double> v) => v.reduce((a, b) => a + b) / v.length;

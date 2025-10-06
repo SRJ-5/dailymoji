@@ -27,7 +27,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       final personalityDbValue = characterPersonality != null
           ? CharacterPersonality.values
               .firstWhere(
-                (e) => e.label == characterPersonality,
+                (e) => e.myLabel == characterPersonality,
                 orElse: () => CharacterPersonality.probSolver, // 기본값
               )
               .dbValue
@@ -67,14 +67,12 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         final jsonResult = jsonDecode(responseBody);
 
         if (jsonResult == null || jsonResult is! Map<String, dynamic>) {
-          throw Exception(
-              'Received null or invalid JSON from API. Response Body: $responseBody');
+          throw Exception('Received null or invalid JSON from API. Response Body: $responseBody');
         }
 
         return EmotionalRecordDto.fromJson(jsonResult);
       } else {
-        throw Exception(
-            'Failed to analyze emotion: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to analyze emotion: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       print("Emotion analysis http error: $e");

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -54,7 +55,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                 horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: AppText(
                 '캐릭터에게\n멋진 이름을 지어주세요',
                 style: AppFontStyles.heading2,
               ),
@@ -142,12 +143,12 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
               ),
             ),
           ),
-          Text('• 2~10자만 사용 가능해요',
+          AppText('• 2~10자만 사용 가능해요',
               style: AppFontStyles.bodyRegular12.copyWith(
                   color: _isNameCheck
                       ? AppColors.grey700
                       : AppColors.noti900)),
-          Text(
+          AppText(
             '• 나중에 언제든지 변경할 수 있어요',
             style: AppFontStyles.bodyRegular12
                 .copyWith(color: AppColors.grey700),

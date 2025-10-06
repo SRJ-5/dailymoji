@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +54,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         appBar: AppBar(
           scrolledUnderElevation: 0,
           backgroundColor: AppColors.yellow50,
-          title: Text(
+          title: AppText(
             '회원 탈퇴',
             style: AppFontStyles.bodyBold18
                 .copyWith(color: AppColors.grey900),
@@ -73,25 +74,25 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                       SizedBox(
                         height: 16.h,
                       ),
-                      Text(
+                      AppText(
                         '떠나신다니 아쉬워요 🥲',
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
                       ),
                       SizedBox(height: 12.h),
-                      Text(
+                      AppText(
                         '저희 서비스가 아직 부족했나 봐요. 만족을 드리지 못해 죄송합니다. 더 좋은 경험을 드릴 수 있도록 노력하겠습니다.',
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey900),
                       ),
                       SizedBox(height: 16.h),
-                      Text(
+                      AppText(
                         '탈퇴 전, 꼭 확인해 주세요',
                         style: AppFontStyles.bodyBold16.copyWith(
                             color: AppColors.orange700),
                       ),
                       SizedBox(height: 12.h),
-                      Text(
+                      AppText(
                         ' ∙ 지금까지 저장된 대화 내역과 데이터는 모두 삭제돼요.\n ∙ 다시 가입하셔도 예전 기록은 복구되지 않아요.\n ∙ 회원 탈퇴 후 3개월간 재가입이 불가능해요.',
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey900),
@@ -113,7 +114,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 16.h),
-                      Text(
+                      AppText(
                         '무엇이 불편하셨나요?',
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
@@ -235,7 +236,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                         },
                       );
                     },
-              child: Text(
+              child: AppText(
                 '탈퇴하기',
                 style: AppFontStyles.bodyMedium16.copyWith(
                     color: _selectedNum == -1
@@ -285,7 +286,7 @@ class ReasonBox extends StatelessWidget {
                     )
                   : SizedBox.shrink()),
           SizedBox(width: 8.w),
-          Text(
+          AppText(
             text,
             style: isSelected
                 ? AppFontStyles.bodySemiBold14
