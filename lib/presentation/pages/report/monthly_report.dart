@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
+import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/domain/enums/cluster_type.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -14,6 +16,13 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+// RIN: 날짜(년,월,일)만 비교하기 위한 유틸리티 함수
+bool isSameDate(DateTime date1, DateTime date2) {
+  return date1.year == date2.year &&
+      date1.month == date2.month &&
+      date1.day == date2.day;
+}
 
 class MonthlyReport extends ConsumerStatefulWidget {
   const MonthlyReport({
@@ -31,27 +40,10 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
-  bool checkEmoji = false;
+  // bool checkEmoji = false;
 
-  String _dailySummary = "날짜를 선택하면 감정 요약을 볼 수 있어요.";
+  String _dailySummary = AppTextStrings.monthlyReportDefaultSummary;
   bool _isSummaryLoading = false;
-
-  /// 클러스터 코드를 한국어 라벨로 변환
-  String clusterLabel(String code) {
-    switch (code) {
-      case 'neg_high':
-        return '불안/분노';
-      case 'neg_low':
-        return '우울/무기력';
-      case 'sleep':
-        return '불규칙 수면';
-      case 'ADHD':
-        return '집중력저하';
-      case 'positive':
-      default:
-        return '평온/회복';
-    }
-  }
 
   /// 점수를 100배 후 정수 반환 (반올림)
   int displayScore100(double score) => (score * 100).round();
@@ -60,6 +52,95 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
   void initState() {
     super.initState();
     _selectedDay = DateTime.now();
+    // 앱 시작 시 오늘 날짜의 '기본 안내 문구'를 설정
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchDailySummary(DateTime.now());
+      }
+    });
+  }
+
+// RIN: _fetchDailySummary 갈아엎음
+  Future<void> _fetchDailySummary(DateTime selectedDay) async {
+    // provider로부터 해당 월의 데이터를 읽어옴
+    final asyncRows = ref.read(dailyMaxByMonthProvider(
+        (widget.userId, selectedDay.year, selectedDay.month)));
+    final rows = asyncRows.asData?.value ?? [];
+    final bool hasRecord =
+        rows.any((r) => isSameDate(r.createdAt.toLocal(), selectedDay));
+
+    final now = DateTime.now();
+    final bool isPastDate =
+        !isSameDate(selectedDay, now) && selectedDay.isBefore(now);
+
+    // 1. 기록이 없는 '과거' 날짜인 경우
+    if (!hasRecord && isPastDate) {
+      setState(() {
+        _isSummaryLoading = false;
+        _dailySummary = AppTextStrings.monthlyReportNoRecord;
+      });
+      return;
+    }
+
+    // 2. 그 외의 경우 (기록이 있거나, 오늘 날짜이거나, 미래 날짜) API 호출
+    if (widget.userId.isEmpty) return;
+
+    setState(() {
+      _isSummaryLoading = true;
+      _dailySummary = AppTextStrings.monthlyReportLoadingSummary;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/report/summary'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': widget.userId,
+          'date': DateFormat('yyyy-MM-dd').format(selectedDay),
+        }),
+      );
+
+      if (mounted && response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          _dailySummary = data['summary'];
+        });
+      } else if (mounted) {
+        setState(() {
+          _dailySummary = AppTextStrings.monthlyReportFailedSummary;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _dailySummary =
+              "${AppTextStrings.monthlyReportErrorSummary.split('%s')[0]}$e";
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSummaryLoading = false;
+        });
+      }
+    }
+  }
+
+  String clusterToAssetPath(String cluster) {
+    // RIN: Enum사용하여 매핑
+    switch (ClusterType.fromString(cluster)) {
+      case ClusterType.negHigh:
+        return AppImages.angryEmoji;
+      case ClusterType.negLow:
+        return AppImages.cryingEmoji;
+      case ClusterType.adhd:
+        return AppImages.shockedEmoji;
+      case ClusterType.sleep:
+        return AppImages.sleepingEmoji;
+      case ClusterType.positive:
+      default:
+        return AppImages.smileEmoji;
+    }
   }
 
   @override
@@ -85,22 +166,19 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
     ClusterScore? selectedRow;
     if (rows != null && _selectedDay != null) {
       final sd = _selectedDay!;
-      for (final r in rows) {
-        final local = r.createdAt.toLocal();
-        if (local.year == sd.year &&
-            local.month == sd.month &&
-            local.day == sd.day) {
-          selectedRow = r;
-          break;
-        }
-      }
+      // firstWhere는 요소를 찾지 못하면 에러를 발생시키므로, try-catch 대신 안전한 방식으로 변경
+      selectedRow = rows.cast<ClusterScore?>().firstWhere(
+            (r) => r != null && isSameDate(r.createdAt.toLocal(), sd),
+            orElse: () => null,
+          );
     }
+
+    final bool hasRecordOnSelectedDay = selectedRow != null;
 
     // 요약 카드 제목 문구
     final summaryTitle = (selectedRow == null)
-        ? "이 날은 기록이 없는 하루예요"
-        : "이 날의 ${clusterLabel(selectedRow.cluster)} 감정이 "
-            "${displayScore100(selectedRow.score)}점으로 가장 강렬했습니다.";
+        ? AppTextStrings.monthlyReportNoRecord
+        : "이 날의 ${ClusterUtil.getDisplayName(selectedRow.cluster)} 감정이 ${displayScore100(selectedRow.score)}점으로 가장 강렬했습니다.";
 
     return Scaffold(
       backgroundColor: AppColors.yellow50,
@@ -209,7 +287,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                   // 선택된 날짜 셀
                   selectedBuilder: (context, day, focusedDay) {
                     final path = emojiByDay[day.day];
-                    checkEmoji = path == null ? false : true;
+                    // checkEmoji = path == null ? false : true;
                     return path == null
                         ? Container(
                             height: 40.h,
@@ -273,7 +351,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
               // 감정 요약 카드 (현재는 더미, 나중에 선택일 기반 상세 연결)
               if (_selectedDay != null)
-                checkEmoji
+                hasRecordOnSelectedDay
                     ? Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -323,10 +401,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      AppText('채팅 확인하기',
-                                          style: AppFontStyles.bodyMedium14
-                                              .copyWith(
-                                                  color: AppColors.grey900)),
+                                      AppText(AppTextStrings.checkChatHistory),
                                       SizedBox(width: 6.w),
                                       Icon(Icons.arrow_forward,
                                           color: AppColors.grey900, size: 18.r),
@@ -338,7 +413,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                       )
                     : Padding(
                         padding: EdgeInsets.only(top: 76.h),
-                        child: AppText("이 날은 기록이 없는 하루예요"),
+                        child: AppText(_dailySummary),
                       ),
             ],
           ),
@@ -347,59 +422,59 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
     );
   }
 
-  String clusterToAssetPath(String cluster) {
-    switch (cluster) {
-      case 'neg_high':
-        return AppImages.angryEmoji;
-      case 'neg_low':
-        return AppImages.cryingEmoji;
-      case 'ADHD':
-        return AppImages.shockedEmoji;
-      case 'sleep':
-        return AppImages.sleepingEmoji;
-      case 'positive':
-      default:
-        return AppImages.smileEmoji;
-    }
-  }
+//   String clusterToAssetPath(String cluster) {
+//     switch (cluster) {
+//       case 'neg_high':
+//         return AppImages.angryEmoji;
+//       case 'neg_low':
+//         return AppImages.cryingEmoji;
+//       case 'ADHD':
+//         return AppImages.shockedEmoji;
+//       case 'sleep':
+//         return AppImages.sleepingEmoji;
+//       case 'positive':
+//       default:
+//         return AppImages.smileEmoji;
+//     }
+//   }
 
-// _MonthlyReportState 안에 추가
-  Future<void> _fetchDailySummary(DateTime date) async {
-    if (widget.userId.isEmpty) return;
+// // _MonthlyReportState 안에 추가
+//   Future<void> _fetchDailySummary(DateTime date) async {
+//     if (widget.userId.isEmpty) return;
 
-    setState(() {
-      _isSummaryLoading = true;
-      _dailySummary = "감정 기록을 요약하고 있어요...";
-    });
+//     setState(() {
+//       _isSummaryLoading = true;
+//       _dailySummary = "감정 기록을 요약하고 있어요...";
+//     });
 
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/report/summary'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_id': widget.userId,
-          'date': DateFormat('yyyy-MM-dd').format(date),
-        }),
-      );
+//     try {
+//       final response = await http.post(
+//         Uri.parse('${ApiConfig.baseUrl}/report/summary'),
+//         headers: {'Content-Type': 'application/json'},
+//         body: jsonEncode({
+//           'user_id': widget.userId,
+//           'date': DateFormat('yyyy-MM-dd').format(date),
+//         }),
+//       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        setState(() {
-          _dailySummary = data['summary'];
-        });
-      } else {
-        setState(() {
-          _dailySummary = "요약을 불러오는 데 실패했어요.";
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _dailySummary = "오류가 발생했어요: $e";
-      });
-    } finally {
-      setState(() {
-        _isSummaryLoading = false;
-      });
-    }
-  }
+//       if (response.statusCode == 200) {
+//         final data = jsonDecode(utf8.decode(response.bodyBytes));
+//         setState(() {
+//           _dailySummary = data['summary'];
+//         });
+//       } else {
+//         setState(() {
+//           _dailySummary = "요약을 불러오는 데 실패했어요.";
+//         });
+//       }
+//     } catch (e) {
+//       setState(() {
+//         _dailySummary = "오류가 발생했어요: $e";
+//       });
+//     } finally {
+//       setState(() {
+//         _isSummaryLoading = false;
+//       });
+//     }
+//   }
 }

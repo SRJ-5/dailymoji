@@ -883,7 +883,7 @@ class DailyReportRequest(BaseModel):
 
 async def create_and_save_summary_for_user(user_id: str, date_str: str):
     """
-    특정 사용자의 특정 날짜에 대한 요약문을 생성하고 DB에 저장(Upsert)합니다.
+    g_score가 가장 높았던 세션을 기준으로 일일 요약을 생성하고 DB에 저장합니다.
     이 함수는 스케줄링된 작업(/tasks/generate-summaries)에 의해 호출됩니다.
     """
     print(f"----- [Daily Summary Job Start] User: {user_id}, Date: {date_str} -----")
@@ -932,13 +932,23 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         user_nick_nm, _ = await get_user_info(user_id)
         advice_text = await get_mention_from_db("analysis", "ko", cluster=top_cluster_name, level="high")
 
+        # --- LLM의 답변 반복을 막기 위해 최근 5개의 요약 기록을 가져옴
+        recent_summaries_query = supabase.table("daily_summaries") \
+            .select("summary_text") \
+            .eq("user_id", user_id) \
+            .order("date", desc=True) \
+            .limit(5)
+        recent_summaries_res = await run_in_threadpool(recent_summaries_query.execute)
+        previous_summaries = [s['summary_text'] for s in recent_summaries_res.data]
+
         # --- LLM에 전달할 컨텍스트 조합 ---
         llm_context = {
             "user_nick_nm": user_nick_nm,
             "top_cluster_display_name": CLUSTER_TO_DISPLAY_NAME.get(top_cluster_name, "주요 감정"),
             "top_score_today": top_score_for_llm,
             "user_dialogue_summary": top_session_summary,
-            "cluster_advice": advice_text
+            "cluster_advice": advice_text,
+            "previous_summaries": previous_summaries 
         }
         
         # --- LLM 호출하여 요약문 생성 ---
@@ -953,6 +963,7 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
             print(f"Warning: LLM failed to generate summary for user {user_id} on {date_str}.")
             return
 
+
         # --- 8. 생성된 요약문을 `daily_summaries` 테이블에 저장 (Upsert) ---
         summary_data = {
             "user_id": user_id,
@@ -961,7 +972,7 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
             "top_cluster": top_cluster_name,
             "top_score": top_score_for_llm 
         }
-        
+
         # upsert: user_id와 date가 동일한 데이터가 있으면 업데이트, 없으면 삽입
         upsert_query = supabase.table("daily_summaries").upsert(summary_data, on_conflict="user_id,date")
         await run_in_threadpool(upsert_query.execute)
