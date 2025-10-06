@@ -15,12 +15,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
+import numpy as np
 from pydantic import BaseModel
 from supabase import create_client, Client
 
 import uuid
 from ai_moderator import moderate_text
-from llm_prompts import REPORT_SUMMARY_PROMPT, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
+from llm_prompts import REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
 from rule_based import rule_scoring
 from srj5_constants import (
     CLUSTER_TO_DISPLAY_NAME, CLUSTERS, DEEP_DIVE_MAX_SCORES, EMOJI_ONLY_SCORE_CAP, FINAL_FUSION_WEIGHTS_NO_ICON, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
@@ -979,55 +980,144 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
     if not supabase or not OPENAI_KEY: return
 
     try:
+        # 오늘 날짜를 datetime 객체로 변환하여 요일 확인
+        today_dt = dt.datetime.strptime(date_str, '%Y-%m-%d')
+        # (월요일=0, 화요일=1, ..., 일요일=6)
+        is_sunday = today_dt.weekday() == 6
+
+        # 요일에 따라 다른 프롬프트 선택
+        if is_sunday:
+            system_prompt = WEEKLY_REPORT_SUMMARY_PROMPT_NEURO
+            print(f"    Info: 일요일이므로 '뇌과학 리포트'를 생성합니다.")
+        else:
+            system_prompt = WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD
+            print(f"    Info: 일반 2주 리포트를 생성합니다.")
+            
         today = dt.datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=dt.timezone.utc)
         start_date = today - dt.timedelta(days=13)
+        end_date = today + dt.timedelta(days=1)
+
+        # 14일간의 세션 및 클러스터 점수 데이터 한 번에 가져오기
+        sessions_res = supabase.table("sessions").select("id, created_at, g_score").eq("user_id", user_id).gte("created_at", start_date.isoformat()).lt("created_at", end_date.isoformat()).execute()
+        if not sessions_res.data:
+            print(f"Info: No data for weekly summary for user {user_id}. Skipping.")
+            return
         
-        # 14일간의 g_score와 클러스터별 점수 데이터 가져오기
-        g_score_query = supabase.table("sessions").select("created_at, g_score").eq("user_id", user_id).gte("created_at", start_date.isoformat()).lte("created_at", (today + dt.timedelta(days=1)).isoformat())
-        cluster_score_query = supabase.table("cluster_scores").select("created_at, cluster, score").eq("user_id", user_id).gte("created_at", start_date.isoformat()).lte("created_at", (today + dt.timedelta(days=1)).isoformat())
+        session_ids = [s['id'] for s in sessions_res.data]
+        scores_res = supabase.table("cluster_scores").select("session_id, created_at, cluster, score").in_("session_id", session_ids).execute()
+        
+        sessions_with_scores = []
+        scores_by_session_id = {sid: [] for sid in session_ids}
+        for score in scores_res.data:
+            scores_by_session_id.setdefault(score['session_id'], []).append(score)
 
-        g_score_res = await run_in_threadpool(g_score_query.execute)
-        cluster_score_res = await run_in_threadpool(cluster_score_query.execute)
+        for session in sessions_res.data:
+            session['cluster_scores'] = scores_by_session_id.get(session['id'], [])
+            sessions_with_scores.append(session)
 
-        if not g_score_res.data and not cluster_score_res.data:
+        if not session:
             print(f"Info: No data for weekly summary for user {user_id}. Skipping.")
             return
 
-        # 데이터 가공하여 LLM에 전달할 형식으로 만들기 (간략한 예시)
-        # 실제로는 더 정교한 트렌드 분석 로직(평균, 변동성 등)이 필요함
-        trend_data = {
-            "g_score_trend": [d['g_score'] for d in g_score_res.data],
-            "dominant_clusters": [], # 가장 많이 나타난 클러스터 계산 로직
-            "correlations": [], # 클러스터간 상관관계 계산 로직
-        }
-        for cluster in CLUSTERS:
-            trend_data[f"{cluster}_trend"] = [d['score'] for d in cluster_score_res.data if d['cluster'] == cluster]
 
+ # --- 데이터 가공: 트렌드 분석 로직 시작 ---
+
+        # 1. 일별 데이터 구조화
+        daily_data = {}
+        # 14일간의 모든 날짜 키를 미리 생성
+        for i in range(14):
+            day_key = (start_date + dt.timedelta(days=i)).strftime('%Y-%m-%d')
+            daily_data[day_key] = {'g_scores': [], 'clusters': {c: [] for c in CLUSTERS}}
+        for session in sessions_with_scores:
+            created_at_str = session['created_at'].split('+')[0]
+            try: day = dt.datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%S.%f").strftime('%Y-%m-%d')
+            except ValueError: day = dt.datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%S").strftime('%Y-%m-%d')
+            if day in daily_data:
+                if session['g_score'] is not None: daily_data[day]['g_scores'].append(session['g_score'])
+                for score_data in session.get('cluster_scores', []):
+                    if score_data['cluster'] in daily_data[day]['clusters']: daily_data[day]['clusters'][score_data['cluster']].append(score_data['score'])
+       
+        # 2. 통계 지표 계산
+        g_scores = [np.mean(day['g_scores']) for day in daily_data.values() if day['g_scores']]
+        
+        cluster_stats = {}
+        all_scores = []
+        for c in CLUSTERS:
+            # 하루에 여러 기록이 있으면 평균을 내어 그날의 대표 점수로 사용
+            daily_avgs = [np.mean(day['clusters'][c]) for day in daily_data.values() if day['clusters'][c]]
+            
+            if not daily_avgs: cluster_stats[c] = {"avg": 0, "std": 0, "trend": "stable"}; continue
+            all_scores.extend([(c, s) for s in daily_avgs])
+           
+            # 추세 분석 (간단한 기울기 계산)
+            x = np.arange(len(daily_avgs)); slope = np.polyfit(x, daily_avgs, 1)[0] if len(daily_avgs) > 1 else 0
+            # 하루 평균 5점씩 점수가 상승/하락 하는 추세일 때 통계적으로 의미있는 변화로 침
+            trend = "increasing" if slope > 0.05 else "decreasing" if slope < -0.05 else "stable"
+
+            cluster_stats[c] = {
+                "avg": int(np.mean(daily_avgs) * 100), 
+                "std": int(np.std(daily_avgs) * 100), 
+                "trend": trend
+                }
+
+        # 3. 주요 클러스터 및 상관관계 분석
+
+        # 상관관계 분석 로직 (모든 클러스터 대상)
+        correlations = []
+            #  "해당 클러스터의 2주 평균 점수가 '낮음' 수준을 넘어, '중간' 수준 이상으로 꾸준히 나타났다"
+        
+        # [긍정적 상관관계: A가 높을 때 B도 높음]
+        if cluster_stats['sleep']['avg'] > 40 and cluster_stats['neg_low']['avg'] > 40:
+            correlations.append("수면의 질 저하와 우울/무기력감이 함께 높게 나타나는 경향이 있습니다. 이는 심리적 에너지를 고갈시키는 주요 원인일 수 있습니다.")
+        if cluster_stats['neg_high']['avg'] > 40 and cluster_stats['sleep']['avg'] > 40:
+            correlations.append("불안/긴장감이 높은 날, 수면 문제도 함께 증가하는 패턴이 보입니다. 과도한 각성 상태가 편안한 휴식을 방해하고 있을 수 있습니다.")
+        if cluster_stats['adhd']['avg'] > 50 and cluster_stats['neg_high']['avg'] > 50:
+            correlations.append("집중력 저하 문제와 불안감이 모두 높은 수준으로 나타났습니다. 주의를 통제하려는 노력이 과도한 정신적 긴장으로 이어지고 있을 가능성이 있습니다.")
+
+        # [부정적/반비례 상관관계: A가 높을 때 B는 낮음]
+        if cluster_stats['neg_low']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
+            correlations.append("우울/무기력감이 높은 시기에는 긍정적 감정을 느끼는 정도가 현저히 낮아지는 패턴이 뚜렷합니다. 이는 감정 회복을 위한 인지적 자원이 부족하다는 신호일 수 있습니다.")
+        if cluster_stats['neg_high']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
+            correlations.append("불안/분노 감정이 높아질 때, 평온/회복 점수는 반대로 낮아지는 경향을 보입니다. 정서적 안정성을 유지하기 위한 노력이 필요해 보입니다.")
+
+        # [추세 기반 반비례 상관관계: A가 개선될 때 B도 개선됨]
+        if cluster_stats['sleep']['trend'] == 'decreasing' and cluster_stats['neg_low']['trend'] == 'decreasing':
+            correlations.append("매우 긍정적인 신호입니다! 최근 2주간 수면의 질이 개선되면서, 우울/무기력감 또한 함께 감소하는 선순환이 만들어지고 있습니다.")
+        if cluster_stats['neg_low']['trend'] == 'decreasing' and cluster_stats['positive']['trend'] == 'increasing':
+            correlations.append("회복탄력성이 강화되고 있습니다. 우울감이 점차 줄어들면서 그 자리를 긍정적이고 평온한 감정이 채워나가고 있는 모습이 인상적입니다.")
+
+        # 4. 주요 클러스터 식별
+        # 지난 2주간 발생한 모든 감정 기록 중에서, 점수가 가장 높았던 순간 Top 2를 찾아내라
+        dominant_clusters = list(set([item[0] for item in sorted(all_scores, key=lambda item: item[1], reverse=True)[:2]]))
+        
+        # 최종 LLM 전달 데이터 구조
+        trend_data = {
+            "g_score_stats": {"avg": int(np.mean(g_scores)*100) if g_scores else 0, 
+                              "std": int(np.std(g_scores)*100) if g_scores else 0}, 
+            "cluster_stats": cluster_stats, 
+            "dominant_clusters": dominant_clusters, 
+            "correlations": correlations
+            }
+
+        # 5. LLM 호출 및 결과 저장
+        # 분석한 트렌드 llm에 넣기
         user_nick_nm, _ = await get_user_info(user_id)
         llm_context = { "user_nick_nm": user_nick_nm, "trend_data": trend_data }
-        
-        summary_json = await call_llm(WEEKLY_REPORT_SUMMARY_PROMPT, json.dumps(llm_context, ensure_ascii=False), OPENAI_KEY)
+        summary_json = await call_llm(system_prompt, json.dumps(llm_context, ensure_ascii=False), OPENAI_KEY)
 
         if not summary_json or "error" in summary_json:
             print(f"Warning: LLM failed to generate weekly summary for user {user_id}.")
             return
             
-        summary_data = {
-            "user_id": user_id,
-            "summary_date": date_str,
-            "overall_summary": summary_json.get("overall_summary"),
-            "neg_low_summary": summary_json.get("neg_low_summary"),
-            "neg_high_summary": summary_json.get("neg_high_summary"),
-            "adhd_summary": summary_json.get("adhd_summary"),
-            "sleep_summary": summary_json.get("sleep_summary"),
-            "positive_summary": summary_json.get("positive_summary"),
-        }
+        summary_data = { "user_id": user_id, "summary_date": date_str, **summary_json }
         await run_in_threadpool(supabase.table("weekly_summaries").upsert(summary_data, on_conflict="user_id,summary_date").execute)
         print(f"Success: Saved weekly summary for user {user_id} on {date_str}.")
     except Exception as e:
         print(f"Error in create_and_save_weekly_summary_for_user: {e}"); traceback.print_exc()
 
-# 스케줄링 엔드포인트: 두 가지 요약 함수를 모두 호출
+
+#  ------- 스케줄링 엔드포인트: 두 가지 요약 함수를 모두 호출 ---------
+
 @app.post("/tasks/generate-summaries")
 async def handle_generate_summaries_task():
     yesterday = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
@@ -1045,14 +1135,9 @@ async def handle_generate_summaries_task():
     
     for user_id in user_ids:
         await create_and_save_summary_for_user(user_id, yesterday_str)
-        await create_and_save_weekly_summary_for_user(user_id, yesterday_str) # ⭐️ 주간 요약 함수 호출 추가
+        await create_and_save_weekly_summary_for_user(user_id, yesterday_str)
 
     return {"message": f"Summary generation task complete for {len(user_ids)} users."}
-
-
-
-
-
 
 
 
