@@ -12,7 +12,7 @@ void main() async {
 
   await dotenv.load(fileName: ".env");
 
-  await initializeDateFormatting('ko_KR', null);
+  await initializeDateFormatting();
 
   //세로 고정
   await SystemChrome.setPreferredOrientations([
