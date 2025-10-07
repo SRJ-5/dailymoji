@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
@@ -76,7 +77,7 @@ class ConfirmDialog extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
+                  AppText(
                     isDeleteAccount ? "정말 탈퇴하시겠어요?" : "로그아웃 하시겠어요?",
                     style: AppFontStyles.heading3
                         .copyWith(color: AppColors.grey900),
@@ -99,7 +100,7 @@ class ConfirmDialog extends ConsumerWidget {
                                 Border.all(width: 1, color: AppColors.grey200),
                           ),
                           child: Center(
-                            child: Text(
+                            child: AppText(
                               '취소',
                               style: AppFontStyles.bodyMedium16
                                   .copyWith(color: AppColors.grey900),
@@ -133,7 +134,7 @@ class ConfirmDialog extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Center(
-                            child: Text(
+                            child: AppText(
                               '확인',
                               style: AppFontStyles.bodyMedium16.copyWith(
                                   color: isDeleteAccount

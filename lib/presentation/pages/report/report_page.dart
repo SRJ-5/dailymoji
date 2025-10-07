@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
@@ -20,7 +21,7 @@ class ReportPage extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
         centerTitle: true,
-        title: Text('리포트',
+        title: AppText('리포트',
             style: AppFontStyles.heading3.copyWith(color: AppColors.grey900)),
       ),
       body: DefaultTabController(

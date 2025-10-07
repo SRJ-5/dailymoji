@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,7 +33,7 @@ class SelectBox extends StatelessWidget {
                   : AppColors.grey200)),
       child: Align(
           alignment: Alignment.centerLeft,
-          child: Text(
+          child: AppText(
             text,
             style: AppFontStyles.bodyMedium16.copyWith(
                 color: isSelected

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/icons.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -32,7 +33,7 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
         centerTitle: true,
-        title: Text(
+        title: AppText(
           "캐릭터 설정",
           style: AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
         ),
@@ -83,9 +84,9 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: CharacterPersonality.values.map((e) {
-                                    final isSelected = userState.userProfile!.characterPersonality! == e.label;
+                                    final isSelected = userState.userProfile!.characterPersonality! == e.myLabel;
                                     return GestureDetector(
-                                      onTap: () => Navigator.pop(context, e.label),
+                                      onTap: () => Navigator.pop(context, e.myLabel),
                                       child: Container(
                                         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                                         alignment: Alignment.centerLeft,
@@ -97,8 +98,8 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                                               height: 16.r,
                                             ),
                                             SizedBox(width: 8.w),
-                                            Text(
-                                              e.label,
+                                            AppText(
+                                              e.myLabel,
                                               style: isSelected
                                                   ? AppFontStyles.bodySemiBold14.copyWith(
                                                       color: AppColors.grey900,
@@ -134,14 +135,14 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                   ),
                   child: Row(
                     children: [
-                      Text(
+                      AppText(
                         "캐릭터 성격",
                         style: AppFontStyles.bodyRegular16.copyWith(
                           color: AppColors.grey700,
                         ),
                       ),
                       Spacer(),
-                      Text(
+                      AppText(
                         userState.userProfile!.characterPersonality!,
                         style: AppFontStyles.bodyRegular14.copyWith(
                           color: AppColors.grey500,
