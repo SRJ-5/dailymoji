@@ -730,105 +730,117 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware {
   Widget _buildInputField({required bool isBotTyping}) {
     final bool isSendButtonEnabled = !isBotTyping && (_messageInputController.text.trim().isNotEmpty || currentSelectedEmojiKey != 'default');
 
-    return KeyboardVisibilityBuilder(builder: (context, isKeyboardVisible) {
-      return Container(
-        key: _inputFieldKey,
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        margin: EdgeInsets.only(bottom: isKeyboardVisible ? 0 : 34.h),
-        child: Container(
-          decoration: BoxDecoration(
-            // color: isBotTyping ? AppColors.grey100 : Colors.white,
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: AppColors.grey200),
-          ),
-          constraints: BoxConstraints(
-            minHeight: 40.h,
-            maxHeight: 142.h,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  //입력 비활성화 로직
-                  enabled: !isBotTyping,
-                  controller: _messageInputController,
-                  maxLength: 300, // 300자 제한
-                  maxLines: 6,
-                  minLines: 1,
-                  textAlignVertical: TextAlignVertical.top,
-                  decoration: InputDecoration(
-                    counterText: "", // 글자 수 카운터 숨기기
-                    hintText: isBotTyping ? "" : "무엇이든 입력하세요", // TODO: 입력 못하게 멘트를 넣어야하나..?
-                    hintStyle: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
-                    fillColor: Colors.transparent, // 컨테이너 색상을 따르도록 투명화
-                    filled: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.5.h),
-                    border: InputBorder.none,
-                    // 비활성화 상태일 때 밑줄 제거
-                    disabledBorder: InputBorder.none,
-                  ),
-                ),
-              ),
-              // 봇 입력 중에는 이모지 선택 비활성화
-              AbsorbPointer(
-                absorbing: isBotTyping,
-                child: GestureDetector(
-                  onTap: _toggleEmojiBar,
+    return KeyboardVisibilityBuilder(
+      builder: (context, isKeyboardVisible) {
+        return Container(
+          key: _inputFieldKey,
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          margin: EdgeInsets.only(bottom: isKeyboardVisible ? 0 : 34.h),
+          child: Container(
+            decoration: BoxDecoration(
+              // color: isBotTyping ? AppColors.grey100 : Colors.white,
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.grey200),
+            ),
+            constraints: BoxConstraints(
+              minHeight: 40.h,
+              maxHeight: 142.h,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
-                    child: Image.asset(
-                      EmojiAsset.fromString(currentSelectedEmojiKey).asset,
-                      width: 24.w,
-                      height: 24.h,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    child: TextField(
+                      //입력 비활성화 로직
+                      enabled: !isBotTyping,
+                      controller: _messageInputController,
+                      maxLength: 300, // 300자 제한
+                      maxLines: 6,
+                      minLines: 1,
+                      decoration: InputDecoration(
+                        counterText: "", // 글자 수 카운터 숨기기
+                        hintText: isBotTyping ? "" : "무엇이든 입력하세요", // TODO: 입력 못하게 멘트를 넣어야하나..?
+                        hintStyle: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
+                        fillColor: Colors.transparent, // 컨테이너 색상을 따르도록 투명화
+                        filled: true,
+                        contentPadding: EdgeInsets.zero,
+                        border: InputBorder.none,
+                        // 비활성화 상태일 때 밑줄 제거
+                        disabledBorder: InputBorder.none,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              GestureDetector(
-                // 봇 입력 중이거나 텍스트가 비어있으면 onTap을 null로 처리하여 비활성화
-                onTap: isSendButtonEnabled
-                    ? () {
-                        final chatVm = ref.read(chatViewModelProvider.notifier);
-                        final text = _messageInputController.text.trim();
-                        // RIN ♥ 텍스트만, 이모지만, 텍스트+이모지 케이스 분리
-                        if (text.isNotEmpty && currentSelectedEmojiKey != 'default') {
-                          // 케이스 3: 텍스트 + 이모지 같이 입력
-                          chatVm.sendTextAndEmojiAsMessages(text, currentSelectedEmojiKey);
-                        } else if (text.isNotEmpty) {
-                          // 케이스 1: 텍스트만 입력
-                          chatVm.sendMessage(text, null);
-                        } else if (currentSelectedEmojiKey != 'default') {
-                          // 케이스 2: 이모지만 입력
-                          // 디폴트 이미지면 아예 안보내지게!!
-                          chatVm.sendEmojiAsMessage(currentSelectedEmojiKey);
-                        }
+                // 봇 입력 중에는 이모지 선택 비활성화
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h).copyWith(right: 12),
+                  child: Row(
+                    children: [
+                      AbsorbPointer(
+                        absorbing: isBotTyping,
+                        child: GestureDetector(
+                          onTap: _toggleEmojiBar,
+                          child: Container(
+                            padding: EdgeInsets.all(2.r),
+                            child: Image.asset(
+                              EmojiAsset.fromString(currentSelectedEmojiKey).asset,
+                              width: 24.w,
+                              height: 24.h,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      GestureDetector(
+                        // 봇 입력 중이거나 텍스트가 비어있으면 onTap을 null로 처리하여 비활성화
+                        onTap: isSendButtonEnabled
+                            ? () {
+                                final chatVm = ref.read(chatViewModelProvider.notifier);
+                                final text = _messageInputController.text.trim();
+                                // RIN ♥ 텍스트만, 이모지만, 텍스트+이모지 케이스 분리
+                                if (text.isNotEmpty && currentSelectedEmojiKey != 'default') {
+                                  // 케이스 3: 텍스트 + 이모지 같이 입력
+                                  chatVm.sendTextAndEmojiAsMessages(text, currentSelectedEmojiKey);
+                                } else if (text.isNotEmpty) {
+                                  // 케이스 1: 텍스트만 입력
+                                  chatVm.sendMessage(text, null);
+                                } else if (currentSelectedEmojiKey != 'default') {
+                                  // 케이스 2: 이모지만 입력
+                                  // 디폴트 이미지면 아예 안보내지게!!
+                                  chatVm.sendEmojiAsMessage(currentSelectedEmojiKey);
+                                }
 
-                        _messageInputController.clear();
-                        setState(() {
-                          currentSelectedEmojiKey = 'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
-                        });
-                      }
-                    : null,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.h, vertical: 13.33.h),
-                  width: 40.67.w,
-                  height: 40.h,
-                  child: SvgPicture.asset(
-                    AppIcons.send,
-                    colorFilter: ColorFilter.mode(
-                      isBotTyping ? AppColors.grey200 : AppColors.grey600,
-                      BlendMode.srcIn,
-                    ),
+                                _messageInputController.clear();
+                                setState(() {
+                                  currentSelectedEmojiKey = 'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
+                                });
+                              }
+                            : null,
+                        child: Container(
+                          padding: EdgeInsets.all(2.r),
+                          width: 24.w,
+                          height: 24.h,
+                          child: SvgPicture.asset(
+                            AppIcons.send,
+                            colorFilter: ColorFilter.mode(
+                              isBotTyping ? AppColors.grey200 : AppColors.grey400,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
