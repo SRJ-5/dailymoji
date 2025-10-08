@@ -16,6 +16,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
   int _selectedNum = -1;
+  bool _deleteCheck = false;
 
   final reasons = [
     '더 이상 앱을 사용하지 않아요',
@@ -31,10 +32,12 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       if (_selectedNum == 3) {
         // 직접 입력이면 TextField 포커스
         FocusScope.of(context).requestFocus(_focusNode);
+        _deleteCheck = false;
       } else {
         // 다른 항목이면 입력 초기화 & 포커스 해제
         _textEditingController.clear();
         _focusNode.unfocus();
+        _deleteCheck = true;
       }
     });
   }
@@ -151,6 +154,15 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                             style: AppFontStyles.bodyRegular16
                                 .copyWith(
                                     color: AppColors.grey900),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value.isEmpty) {
+                                  _deleteCheck = false;
+                                } else {
+                                  _deleteCheck = true;
+                                }
+                              });
+                            },
                             decoration: InputDecoration(
                               hintText: '의견을 적어주세요',
                               hintStyle: AppFontStyles
@@ -162,6 +174,9 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                                   ? null
                                   : IconButton(
                                       onPressed: () {
+                                        setState(() {
+                                          _deleteCheck = false;
+                                        });
                                         _textEditingController
                                             .clear();
                                       },
@@ -225,16 +240,15 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: _selectedNum == -1
-                    ? AppColors.grey200
-                    : AppColors.green500,
+                backgroundColor: _deleteCheck
+                    ? AppColors.green500
+                    : AppColors.grey200,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
-              onPressed: _selectedNum == -1
-                  ? null
-                  : () {
+              onPressed: _deleteCheck
+                  ? () {
                       showDialog(
                         context: context,
                         builder: (context) {
@@ -242,13 +256,14 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                               isDeleteAccount: true);
                         },
                       );
-                    },
+                    }
+                  : null,
               child: AppText(
                 '탈퇴하기',
                 style: AppFontStyles.bodyMedium16.copyWith(
-                    color: _selectedNum == -1
-                        ? AppColors.grey500
-                        : AppColors.grey50),
+                    color: _deleteCheck
+                        ? AppColors.grey50
+                        : AppColors.grey500),
               ),
             ),
           ),
