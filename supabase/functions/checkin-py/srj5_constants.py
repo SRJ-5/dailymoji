@@ -20,10 +20,13 @@ FINAL_FUSION_WEIGHTS_NO_TEXT = {
 # 이모지는 저비용 입력이므로, 그 영향력을 0.5점으로 제한하는 EMOJI_ONLY_SCORE_CAP은 점수가 과도하게 변하는 것을 막는 매우 중요한 안전장치입니다.
 EMOJI_ONLY_SCORE_CAP = 0.5
 
+# assessment_score가 최종 점수 계산에 미치는 영향력을 제한하기 위한 상한선
+ASSESSMENT_SCORE_CAP = 0.7
+
 # 3. 텍스트는 있지만 아이콘이 없을 때를 위한 가중치 (비례 배분)
 FINAL_FUSION_WEIGHTS_NO_ICON = {
-    "text": 0.55, # text(0.45) + icon(0.15)의 일부
-    "assessment": 0.45  # assessment(0.40) + icon(0.15)의 일부
+    "text": 0.40, # text + icon
+    "assessment": 0.60  # assessment + icon
 }
 
 # --- Scoring Weights & Parameters ---

@@ -47,8 +47,8 @@ EMPHASIS_WORDS = ["너무", "진짜", "완전", "엄청", "매우", "ㅈㄴ", "�
 NEGATION_WORDS = ["안", "않", "아니", "없", "못"]
 SLANG_AMBIGUOUS = ["개"]
 
-GLOBAL_BOOST = 1.1  # 강조어 있을 때 모든 hit에 적용
-DIST_K = 0.5        # 거리 기반 보정 상수
+GLOBAL_BOOST = 1.05  # 강조어 있을 때 모든 hit에 적용
+DIST_K = 0.3        # 거리 기반 보정 상수
 
 
 def tokenize(text: str):
@@ -90,7 +90,7 @@ def rule_scoring(text: str):
         for cluster, words in LEXICON.items():
             if tok in words:
                 matched = True
-                score = 0.3  # base score
+                score = 0.2  # base score
                 boost = 1.0
 
                 # Global boost

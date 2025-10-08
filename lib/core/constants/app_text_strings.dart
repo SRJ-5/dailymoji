@@ -43,6 +43,12 @@ class AppTextStrings {
   static const String getHelp = '도움받기';
   static const String itsOkay = '괜찮아요';
 
+  // 피드백 기능 관련 문자열 추가
+  static const String solutionFeedbackQuestion = '이번 활동은 어땠나요?';
+  static const String solutionHelpful = '도움됨';
+  static const String solutionNotHelpful = '도움 안됨';
+  static const String solutionBlock = '이런 종류 그만 보기';
+
   // Chat ViewModel Fallbacks
   static const String fallbackEmojiQuestion = '어떤 일 때문에 그렇게 느끼셨나요?';
   static const String fallbackAnalysisError = '죄송해요, 응답을 이해할 수 없었어요.';

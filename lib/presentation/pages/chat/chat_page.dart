@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -373,6 +374,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
         case MessageType.solutionProposal:
           return _solutionProposalMessage(message,
               key: key, isLastProposal: isLastProposal);
+        //RIN: 솔루션 피드백 메시지 위젯
+        case MessageType.solutionFeedback:
+          return _solutionFeedbackMessage(message, key: key);
         // --- 시스템 메시지 UI case 추가 ---
         case MessageType.system:
           return _systemMessage(message, key: key);
@@ -382,7 +386,83 @@ class _ChatPageState extends ConsumerState<ChatPage>
     }
   }
 
-  // (새로 추가) --- 시스템 메시지 위젯 ---
+  // RIN: 솔루션 피드백 위젯
+  Widget _solutionFeedbackMessage(Message message, {required Key key}) {
+    final proposal = message.proposal!;
+    final solutionId = proposal['solution_id'] as String;
+    final sessionId = proposal['session_id'] as String?;
+    final solutionType = proposal['solution_type'] as String;
+
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _botMessage(message, key: ValueKey('${message.tempId}_text')),
+        SizedBox(height: 8.h),
+        Padding(
+          padding: EdgeInsets.only(left: 8.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              ElevatedButton.icon(
+                icon: const Text('👍'),
+                label: const AppText(AppTextStrings.solutionHelpful),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green50,
+                  foregroundColor: AppColors.grey900,
+                  padding:
+                      EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                    side: BorderSide(color: AppColors.grey200, width: 1),
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(chatViewModelProvider.notifier)
+                      .respondToSolutionFeedback(
+                        solutionId: solutionId,
+                        sessionId: sessionId,
+                        solutionType: solutionType,
+                        feedback: 'helpful',
+                        messageIdToRemove: message.id!,
+                      );
+                },
+              ),
+              SizedBox(width: 12.w),
+              ElevatedButton.icon(
+                icon: const Text('👎'),
+                label: const AppText(AppTextStrings.solutionNotHelpful),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green50,
+                  foregroundColor: AppColors.grey900,
+                  padding:
+                      EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                    side: BorderSide(color: AppColors.grey200, width: 1),
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(chatViewModelProvider.notifier)
+                      .respondToSolutionFeedback(
+                        solutionId: solutionId,
+                        sessionId: sessionId,
+                        solutionType: solutionType,
+                        feedback: 'not_helpful',
+                        messageIdToRemove: message.id!,
+                      );
+                },
+              ),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  // --- 시스템 메시지 위젯 ---
   Widget _systemMessage(Message message, {required Key key}) {
     return Padding(
       key: key,

@@ -2,6 +2,7 @@ import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source_impl.dart';
 import 'package:dailymoji/data/repositories/user_profile_repository_impl.dart';
 import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
+import 'package:dailymoji/domain/use_cases/submit_solution_feedback_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/apple_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/delete_account_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_case.dart';
@@ -21,8 +22,7 @@ final _userDataSourceProvider = Provider<UserProfileDataSource>(
 
 final _userRepositoryProvider = Provider<UserProfileRepository>(
   (ref) {
-    return UserProfileRepositoryImpl(
-        ref.read(_userDataSourceProvider));
+    return UserProfileRepositoryImpl(ref.read(_userDataSourceProvider));
   },
 );
 
@@ -40,36 +40,31 @@ final appleLoginUseCaseProvider = Provider(
 
 final insertUserProfileUseCaseProvider = Provider(
   (ref) {
-    return InsertUserProfileUseCase(
-        ref.read(_userRepositoryProvider));
+    return InsertUserProfileUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final getUserProfileUseCaseProvider = Provider(
   (ref) {
-    return GetUserProfileUseCase(
-        ref.read(_userRepositoryProvider));
+    return GetUserProfileUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final updateUserNickNameUseCaseProvider = Provider(
   (ref) {
-    return UpdateUserNicknameUseCase(
-        ref.read(_userRepositoryProvider));
+    return UpdateUserNicknameUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final updateCharacterNameUseCaseProvider = Provider(
   (ref) {
-    return UpdateCharacterNameUseCase(
-        ref.read(_userRepositoryProvider));
+    return UpdateCharacterNameUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final updateCharacterPersonalityUseCaseProvider = Provider(
   (ref) {
-    return UpdateCharacterPersonalityUseCase(
-        ref.read(_userRepositoryProvider));
+    return UpdateCharacterPersonalityUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
@@ -79,9 +74,14 @@ final logOutUseCaseProvider = Provider(
   },
 );
 
+final submitSolutionFeedbackUseCaseProvider = Provider(
+  (ref) {
+    return SubmitSolutionFeedbackUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
 final deletAccountUseCaseProvider = Provider(
   (ref) {
-    return DeleteAccountUseCase(
-        ref.read(_userRepositoryProvider));
+    return DeleteAccountUseCase(ref.read(_userRepositoryProvider));
   },
 );

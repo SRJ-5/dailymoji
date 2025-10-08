@@ -10,22 +10,31 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 class UserProfileDataSourceImpl implements UserProfileDataSource {
   final supabase = Supabase.instance.client;
   final auth = Supabase.instance.client.auth;
-  final google =
-      GoogleSignIn(clientId: Platform.isIOS ? dotenv.env['GOOGLE_IOS_CLIENT_ID'] : null, serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
+  final google = GoogleSignIn(
+      clientId: Platform.isIOS ? dotenv.env['GOOGLE_IOS_CLIENT_ID'] : null,
+      serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
 
   @override
   Future<String?> appleLogin() async {
     try {
       final apple = await SignInWithApple.getAppleIDCredential(
           webAuthenticationOptions: WebAuthenticationOptions(
-              clientId: 'com.dailymoji.service', redirectUri: Uri.parse('https://dltzahlhemuigebsiafi.supabase.co/auth/v1/callback')),
-          scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName]);
+              clientId: 'com.dailymoji.service',
+              redirectUri: Uri.parse(
+                  'https://dltzahlhemuigebsiafi.supabase.co/auth/v1/callback')),
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName
+          ]);
       final idToken = apple.identityToken;
       final accessToken = apple.authorizationCode;
       if (idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth.signInWithIdToken(provider: OAuthProvider.apple, idToken: idToken, accessToken: accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: idToken,
+          accessToken: accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(OAuthProvider.apple,
       //     authScreenLaunchMode: LaunchMode.externalApplication,
@@ -46,8 +55,10 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
       if (auth?.idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth
-          .signInWithIdToken(provider: OAuthProvider.google, idToken: auth!.idToken!, accessToken: auth.accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: auth!.idToken!,
+          accessToken: auth.accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(
       //   OAuthProvider.google,
@@ -65,7 +76,11 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
 
   @override
   Future<UserProfileDto?> getUserProfile(String uuid) async {
-    final result = await supabase.from('user_profiles').select().eq('id', uuid).maybeSingle();
+    final result = await supabase
+        .from('user_profiles')
+        .select()
+        .eq('id', uuid)
+        .maybeSingle();
     if (result != null) {
       return UserProfileDto.fromJson(result);
     } else {
@@ -79,7 +94,8 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   @override
-  Future<UserProfileDto> updateUserNickNM({required String userNickNM, required String uuid}) async {
+  Future<UserProfileDto> updateUserNickNM(
+      {required String userNickNM, required String uuid}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({
@@ -91,14 +107,59 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
     return UserProfileDto.fromJson(updated);
   }
 
+  // RIN: 솔루션 피드백을 백엔드로 전송하는 함수
   @override
-  Future<UserProfileDto> updateCharacterNM({required String uuid, required String characterNM}) async {
-    final updated = await supabase.from('user_profiles').update({'character_nm': characterNM}).eq('id', uuid).select().single();
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) async {
+    try {
+      await supabase.rpc('handle_solution_feedback', params: {
+        'p_user_id': userId,
+        'p_solution_id': solutionId,
+        'p_session_id': sessionId,
+        'p_solution_type': solutionType,
+        'p_feedback': feedback,
+      });
+    } catch (e) {
+      print('Error submitting solution feedback: $e');
+      rethrow;
+    }
+  }
+
+  // RIN: '이런 종류 그만 보기' 태그를 백엔드로 전송하는 함수
+  @override
+  Future<void> addNegativeTags(
+      {required String userId, required List<String> tags}) async {
+    try {
+      await supabase.rpc('add_negative_tags', params: {
+        'p_user_id': userId,
+        'p_tags_to_add': tags,
+      });
+    } catch (e) {
+      print('Error adding negative tags: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<UserProfileDto> updateCharacterNM(
+      {required String uuid, required String characterNM}) async {
+    final updated = await supabase
+        .from('user_profiles')
+        .update({'character_nm': characterNM})
+        .eq('id', uuid)
+        .select()
+        .single();
     return UserProfileDto.fromJson(updated);
   }
 
   @override
-  Future<UserProfileDto> updateCharacterPersonality({required String uuid, required String characterPersonality}) async {
+  Future<UserProfileDto> updateCharacterPersonality(
+      {required String uuid, required String characterPersonality}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({

@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
@@ -14,12 +15,15 @@ class SolutionPage extends ConsumerWidget {
   final String solutionId;
   final String? sessionId;
   final bool isReview;
+  final String solutionType;
 
-  const SolutionPage(
-      {super.key,
-      required this.solutionId,
-      this.sessionId,
-      this.isReview = false});
+  const SolutionPage({
+    super.key,
+    required this.solutionId,
+    this.sessionId,
+    this.isReview = false,
+    this.solutionType = 'video',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,7 +37,8 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
+          child: AppText(
+              '${AppTextStrings.solutionLoadFailed.split('%s')[0]}$err',
               style: const TextStyle(color: AppColors.white)),
         ),
       ),
@@ -44,6 +49,7 @@ class SolutionPage extends ConsumerWidget {
           sessionId: sessionId,
           solution: solution,
           isReview: isReview,
+          solutionType: solutionType,
         );
       },
     );
@@ -56,12 +62,14 @@ class _PlayerView extends ConsumerStatefulWidget {
   final String? sessionId;
   final Solution solution;
   final bool isReview;
+  final String solutionType;
 
   const _PlayerView({
     required this.solutionId,
     this.sessionId,
     required this.solution,
     required this.isReview,
+    required this.solutionType,
   });
 
   @override
@@ -158,6 +166,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
         'reason': reason,
         'solutionId': widget.solutionId,
         'sessionId': widget.sessionId,
+        'solution_type': widget.solutionType,
       };
     } else {
       debugPrint("RIN: This is a review. Skipping follow-up message.");

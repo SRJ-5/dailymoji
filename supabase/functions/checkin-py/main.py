@@ -24,7 +24,7 @@ from ai_moderator import moderate_text
 from llm_prompts import REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
 from rule_based import rule_scoring
 from srj5_constants import (
-    CLUSTER_TO_DISPLAY_NAME, CLUSTERS, DEEP_DIVE_MAX_SCORES, EMOJI_ONLY_SCORE_CAP, FINAL_FUSION_WEIGHTS_NO_ICON, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
+    ASSESSMENT_SCORE_CAP, CLUSTER_TO_DISPLAY_NAME, CLUSTERS, DEEP_DIVE_MAX_SCORES, EMOJI_ONLY_SCORE_CAP, FINAL_FUSION_WEIGHTS_NO_ICON, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
     FINAL_FUSION_WEIGHTS, FINAL_FUSION_WEIGHTS_NO_TEXT,
     W_LLM, W_RULE, 
     SAFETY_LEMMAS, SAFETY_LEMMA_COMBOS, SAFETY_REGEX, SAFETY_FIGURATIVE
@@ -534,6 +534,9 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
         # 최신 평가 점수가 없으면(예: 첫 사용자), 온보딩 점수를 대신 사용합니다.
         print("⚠️ Latest assessment scores not found, using onboarding scores as baseline.")
         assessment_scores = calculate_baseline_scores(payload.onboarding)
+    # assessment_scores에 상한선(Cap)을 적용
+    for cluster in assessment_scores:
+        assessment_scores[cluster] = min(assessment_scores.get(cluster, 0.0), ASSESSMENT_SCORE_CAP)
 
     # --------------------------------------------------------------------------
     # 2. 시스템 프롬프트 준비 
@@ -1310,3 +1313,41 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
         tb = traceback.format_exc()
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
     
+
+
+# ======================================================================
+# ===     수면위생 팁 제공 엔드포인트     ===
+# ======================================================================
+
+@app.get("/dialogue/sleep-tip")
+async def get_sleep_tip(
+    personality: Optional[str] = None,
+    user_nick_nm: Optional[str] = "친구",
+    language_code: Optional[str] = 'ko'
+):
+    """캐릭터 성향에 맞는 수면위생 팁을 랜덤으로 하나 반환합니다."""
+    # 👀 get_mention_from_db 대신 직접 쿼리 (별도 테이블이므로)
+    if not supabase:
+        return {"tip": "규칙적인 수면 습관을 가져보세요."}
+    try:
+        query = supabase.table("sleep_hygiene_tips").select("text").eq("language_code", language_code)
+        if personality:
+            query = query.eq("personality", personality)
+        
+        # SQL의 ORDER BY random() LIMIT 1과 유사한 효과
+        response = await run_in_threadpool(query.execute)
+        tips = [row['text'] for row in response.data]
+        
+        if not tips:
+            # 해당 성격의 팁이 없으면 기본 팁 반환
+            fallback_res = await run_in_threadpool(supabase.table("sleep_hygiene_tips").select("text").eq("personality", "prob_solver").execute)
+            tips = [row['text'] for row in fallback_res.data]
+
+        selected_tip = random.choice(tips) if tips else "규칙적인 수면 습관을 가져보세요."
+        
+        # user_nick_nm 플레이스홀더를 실제 값으로 채워서 반환
+        return {"tip": selected_tip.format(user_nick_nm=user_nick_nm)}
+
+    except Exception as e:
+        print(f"❌ get_sleep_tip Error: {e}")
+        return {"tip": "규칙적인 수면 습관을 가져보세요."}
