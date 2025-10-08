@@ -204,6 +204,31 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   @override
+  Future<String> fetchActionMission(
+      {String? personality, String? userNickNm}) async {
+    try {
+      final queryParams = {
+        if (personality != null) 'personality': personality,
+        if (userNickNm != null) 'user_nick_nm': userNickNm,
+      };
+      final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/action-mission')
+          .replace(queryParameters: queryParams);
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data['mission'] as String;
+      } else {
+        throw Exception('Failed to load action mission');
+      }
+    } catch (e) {
+      print('Error fetching action mission: $e');
+      return '잠시 자리에서 일어나 굳은 몸을 풀어보는 건 어때요?'; // Fallback message
+    }
+  }
+
+  @override
   Future<void> logOut() async {
     print("확인");
     await google.signOut();

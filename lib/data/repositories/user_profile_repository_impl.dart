@@ -97,6 +97,14 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   }
 
   @override
+  Future<String> fetchActionMission({String? personality, String? userNickNm}) {
+    return _userDataSource.fetchActionMission(
+      personality: personality,
+      userNickNm: userNickNm,
+    );
+  }
+
+  @override
   Future<void> logOut() async {
     await _userDataSource.logOut();
   }

@@ -32,6 +32,11 @@ abstract class UserProfileRepository {
     String? userNickNm,
   });
 
+  Future<String> fetchActionMission({
+    String? personality,
+    String? userNickNm,
+  });
+
   Future<void> logOut();
   Future<void> deleteAccount(String userId);
 }

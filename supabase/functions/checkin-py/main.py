@@ -1436,3 +1436,38 @@ async def get_sleep_tip(
     except Exception as e:
         print(f"❌ get_sleep_tip Error: {e}")
         return {"tip": "수면 위생법을 참고해보세요."}
+    
+
+
+# ======================================================================
+# ===     행동 활성화 미션 제공 엔드포인트     ===
+# ======================================================================
+
+@app.get("/dialogue/action-mission")
+async def get_action_mission(
+    personality: Optional[str] = None,
+    user_nick_nm: Optional[str] = "친구",
+    language_code: Optional[str] = 'ko'
+):
+    """우울(neg_low) 클러스터를 위한 행동 미션을 랜덤으로 하나 반환합니다."""
+    if not supabase:
+        return {"mission": "창문을 열고 1분간 바깥 공기를 쐬어보는 건 어떨까요?"}
+    try:
+        query = supabase.table("action_solutions").select("text").eq("language_code", language_code)
+        if personality:
+            query = query.eq("personality", personality)
+        
+        response = await run_in_threadpool(query.execute)
+        missions = [row['text'] for row in response.data]
+        
+        if not missions:
+            fallback_res = await run_in_threadpool(supabase.table("action_solutions").select("text").eq("personality", "prob_solver").execute)
+            missions = [row['text'] for row in fallback_res.data]
+
+        selected_mission = random.choice(missions) if missions else "잠시 자리에서 일어나 굳은 몸을 풀어주세요."
+        
+        return {"mission": selected_mission.format(user_nick_nm=user_nick_nm)}
+
+    except Exception as e:
+        print(f"❌ get_action_mission Error: {e}")
+        return {"mission": "잠시 자리에서 일어나 굳은 몸을 풀어주세요."}

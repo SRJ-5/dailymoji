@@ -813,9 +813,10 @@ class ChatViewModel extends Notifier<ChatState> {
       await _addMessage(
           Message(userId: currentUserId, content: tip, sender: Sender.bot));
     } else if (topCluster == 'neg_low') {
-      // TODO: 행동 미션 가져오는 로직 추가 (userViewModel에 fetchActionMission 함수 구현 필요)
-      // final mission = await ref.read(userViewModelProvider.notifier).fetchActionMission();
-      // await _addMessage(Message(userId: currentUserId, content: mission, sender: Sender.bot));
+      final userVM = ref.read(userViewModelProvider.notifier);
+      final mission = await userVM.fetchActionMission();
+      await _addMessage(
+          Message(userId: currentUserId, content: mission, sender: Sender.bot));
     }
     _lastProposedSolutionCluster = null;
   }

@@ -208,6 +208,24 @@ class UserViewModel extends Notifier<UserState> {
     return tip;
   }
 
+  Future<String> fetchActionMission() async {
+    final profile = state.userProfile;
+    if (profile == null) return "잠시 자리에서 일어나 굳은 몸을 풀어보는 건 어때요?";
+
+    final personalityDbValue = profile.characterPersonality != null
+        ? CharacterPersonality.values
+            .firstWhere((e) => e.myLabel == profile.characterPersonality,
+                orElse: () => CharacterPersonality.probSolver)
+            .dbValue
+        : null;
+
+    final mission = await ref.read(fetchActionMissionUseCaseProvider).execute(
+          personality: personalityDbValue,
+          userNickNm: profile.userNickNm,
+        );
+    return mission;
+  }
+
   Future<void> logOut() async {
     await ref.read(logOutUseCaseProvider).execute();
   }
