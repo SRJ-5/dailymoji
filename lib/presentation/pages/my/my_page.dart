@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -16,55 +17,55 @@ class MyPage extends ConsumerStatefulWidget {
 }
 
 class _MyPageState extends ConsumerState<MyPage> {
-  List<String> surveyTitles = [
-    "우울 진단 검사하기",
-    "스트레스 진단 검사하기",
-    "불안 진단 검사하기",
-    "번아웃 진단 검사하기",
-    "자존감 진단 검사하기",
-    "ADHD 진단 검사하기",
-  ];
-
-  List<String> userSettingTitles = [
-    "캐릭터 설정",
-    "튜토리얼",
-    "알림 설정",
-  ];
-
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
     // 상태 초기화 시 userNickNm이 널이 되어서 화면이 깨지는 현상 때문에 ''를 넣음
-    final String userNickname =
-        userState.userProfile?.userNickNm ?? '';
+    final String userNickname = userState.userProfile?.userNickNm ?? '';
+
+// onTap 동작을 위한 라우팅 맵 정의
+    final Map<String, VoidCallback> infoTapActions = {
+      AppTextStrings.notice: () => context.push('/info/${AppTextStrings.notice}'),
+      AppTextStrings.languageSettings: () => context.push('/info/${AppTextStrings.languageSettings}'),
+      AppTextStrings.termsOfService: () => context.push('/info/${AppTextStrings.termsOfService}'),
+      AppTextStrings.privacyPolicy: () => context.push('/info/${AppTextStrings.privacyPolicy}'),
+    };
+
+    final Map<String, VoidCallback> etcTapActions = {
+      AppTextStrings.logout: () => showDialog(
+            context: context,
+            builder: (context) => ConfirmDialog(isDeleteAccount: false),
+          ),
+      AppTextStrings.deleteAccount: () => context.push('/deleteAccount'),
+    };
+
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Colors.transparent,
         title: AppText(
-          "마이페이지",
-          style: AppFontStyles.heading3.copyWith(
-            color: AppColors.grey900,
-          ),
+          AppTextStrings.myPageTitle,
+          style: AppFontStyles.heading3,
         ),
-        // actions: [
-        //   GestureDetector(
-        //     onTap: () {
-        //       // TODO 설정 페이지 이동(MVP 이후)
-        //     },
-        //     child: Container(
-        //       width: 50.w,
-        //       height: 50.h,
-        //       child: Icon(
-        //         Icons.settings,
-        //         color: Color(0xff333333),
-        //         size: 19.2.sp,
-        //       ),
-        //     ),
-        //   ),
-        // ],
       ),
+      // actions: [
+      //   GestureDetector(
+      //     onTap: () {
+      //       // TODO 설정 페이지 이동(MVP 이후)
+      //     },
+      //     child: Container(
+      //       width: 50.w,
+      //       height: 50.h,
+      //       child: Icon(
+      //         Icons.settings,
+      //         color: Color(0xff333333),
+      //         size: 19.2.sp,
+      //       ),
+      //     ),
+      //   ),
+      // ],
+
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: SingleChildScrollView(
@@ -77,67 +78,23 @@ class _MyPageState extends ConsumerState<MyPage> {
               ),
               SizedBox(height: 16.h),
               _buildSection(
-                title: "맞춤 설정",
-                items: ["캐릭터 설정"],
-                onTapList: [
-                  ...List.generate(
-                    1,
-                    (index) => () {
-                      context.push('/characterSetting');
-                    },
-                  )
-                ],
+                title: AppTextStrings.customSettings,
+                items: [AppTextStrings.characterSettings],
+                onTapList: [() => context.push('/characterSetting')],
               ),
               SizedBox(height: 16.h),
               _buildSection(
-                title: "정보",
-                items: ["공지사항", "언어 설정", "이용 약관", "개인정보 처리방침"],
-                onTapList: [
-                  ...List.generate(
-                    4,
-                    (index) => () {
-                      final title = [
-                        "공지사항",
-                        "언어 설정",
-                        "이용 약관",
-                        "개인정보 처리방침"
-                      ][index];
-                      context.push(
-                          // index == 3
-                          //   ? '/privacyPolicy'
-                          //   :
-                          '/info/$title');
-                    },
-                  )
-                ],
+                title: AppTextStrings.information,
+                items: infoTapActions.keys.toList(),
+                onTapList: infoTapActions.values.toList(),
               ),
               SizedBox(height: 16.h),
               _buildSection(
-                title: "기타",
-                items: ["로그아웃", "회원 탈퇴"],
-                onTapList: [
-                  ...List.generate(
-                    2,
-                    (index) => () {
-                      final title = ["로그아웃", "회원 탈퇴"][index];
-                      switch (title) {
-                        case "로그아웃":
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return ConfirmDialog(
-                                isDeleteAccount: false,
-                              );
-                            },
-                          );
-                        case "회원 탈퇴":
-                        default:
-                          context.push('/deleteAccount');
-                      }
-                    },
-                  )
-                ],
+                title: AppTextStrings.etc,
+                items: etcTapActions.keys.toList(),
+                onTapList: etcTapActions.values.toList(),
               ),
+              SizedBox(height: 16.h),
             ],
           ),
         ),
@@ -154,8 +111,7 @@ class _MyPageState extends ConsumerState<MyPage> {
     Widget? widget,
   }) {
     return Container(
-      padding:
-          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12.r),
