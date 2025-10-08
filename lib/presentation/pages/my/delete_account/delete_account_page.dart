@@ -225,46 +225,44 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             ),
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: 8.h,
-              left: 12.w,
-              right: 12.w,
-              bottom: MediaQuery.of(context).viewInsets.bottom >
-                      0
-                  ? MediaQuery.of(context).viewInsets.bottom +
-                      10.h
-                  : 32.h,
+        bottomNavigationBar: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            top: 8.h,
+            left: 12.w,
+            right: 12.w,
+            bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                ? MediaQuery.of(context).viewInsets.bottom + 10.h
+                : 56.h,
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(double.infinity, 52.h),
+              backgroundColor: _deleteCheck
+                  ? AppColors.green500
+                  : AppColors.grey200,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
             ),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: _deleteCheck
-                    ? AppColors.green500
-                    : AppColors.grey200,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              onPressed: _deleteCheck
-                  ? () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return ConfirmDialog(
-                              isDeleteAccount: true);
-                        },
-                      );
-                    }
-                  : null,
-              child: AppText(
-                '탈퇴하기',
-                style: AppFontStyles.bodyMedium16.copyWith(
-                    color: _deleteCheck
-                        ? AppColors.grey50
-                        : AppColors.grey500),
-              ),
+            onPressed: _deleteCheck
+                ? () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return ConfirmDialog(
+                            isDeleteAccount: true);
+                      },
+                    );
+                  }
+                : null,
+            child: AppText(
+              '탈퇴하기',
+              style: AppFontStyles.bodyMedium16.copyWith(
+                  color: _deleteCheck
+                      ? AppColors.grey50
+                      : AppColors.grey500),
             ),
           ),
         ),

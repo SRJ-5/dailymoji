@@ -93,7 +93,9 @@ class _OnboardingPart1PageState
             ],
           ),
         ),
-        bottomNavigationBar: Padding(
+        bottomNavigationBar: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
           padding: EdgeInsets.only(
             top: 8.h,
             left: 12.w,
