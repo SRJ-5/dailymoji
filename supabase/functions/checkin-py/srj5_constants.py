@@ -1,29 +1,36 @@
 # srj5_constants.py
 
 CLUSTERS = ["neg_low", "neg_high", "adhd", "sleep", "positive"]
-# ❤️ 이모지만 입력 시 적용될 점수 상한선 (안전장치)
-EMOJI_ONLY_SCORE_CAP = 0.5
 
 
 # ❤️ 1. 텍스트가 포함된 경우 사용할 기본 가중치
 # e.g. 최종 점수 = (텍스트 * 0.5) + (온보딩 * 0.2) + (이모지 * 0.3)
 FINAL_FUSION_WEIGHTS = {
-    "text": 0.5,
-    "onboarding": 0.2,
-    "icon": 0.3
+    "text": 0.45, # 사용자의 순간의 감정
+    "assessment": 0.40, # 사용자의 안정된 임상적 상태
+    "icon": 0.15 # 보조적인 감정 신호
 }
 
 # ❤️ 2. 텍스트가 없이 이모지만 입력된 경우 사용할 가중치 
 FINAL_FUSION_WEIGHTS_NO_TEXT = {
-    "onboarding": 0.2, # 기존 onboarding 가중치 0.2
+    "assessment": 0.2, 
     "icon": 0.8 # text 가중치 0.5 + icon 가중치 0.3
 }
+# ❤️ 이모지만 입력 시 적용될 점수 상한선 (안전장치)
+# 이모지는 저비용 입력이므로, 그 영향력을 0.5점으로 제한하는 EMOJI_ONLY_SCORE_CAP은 점수가 과도하게 변하는 것을 막는 매우 중요한 안전장치입니다.
+EMOJI_ONLY_SCORE_CAP = 0.5
 
+# 3. 텍스트는 있지만 아이콘이 없을 때를 위한 가중치 (비례 배분)
+FINAL_FUSION_WEIGHTS_NO_ICON = {
+    "text": 0.55, # text(0.45) + icon(0.15)의 일부
+    "assessment": 0.45  # assessment(0.40) + icon(0.15)의 일부
+}
 
 # --- Scoring Weights & Parameters ---
 # ❤️ Rule-based와 LLM 텍스트 분석 결과를 융합할 때의 가중치
-W_RULE = 0.6
-W_LLM = 0.4
+# 나중에 앱 운영 데이터가 쌓이고 LLM의 성능에 대한 확신이 들었을 때, 점진적으로 LLM의 비중을 50%까지 높여보는 것을 고려할 수 있습니다.
+W_RULE = 0.6 #Rule-based (60%): 명확한 키워드("너무 우울해")를 빠르고 정확하게 잡아내는 장점이 있습니다. 예측 가능성이 높아 안정적입니다.
+W_LLM = 0.4 #LLM (40%): 직접적인 단어는 없지만 미묘한 뉘앙스("요즘은 웃는 게 웃는 게 아닌 것 같아")를 파악하는 데 강점이 있습니다.
 
 # ❤️ 이모지-클러스터 매핑
 ICON_TO_CLUSTER = {
@@ -76,12 +83,22 @@ ONBOARDING_MAPPING = {
     "q9": [{"cluster": "adhd", "w": 0.85}, {"cluster": "neg_low", "w": 0.15}],
 }
 
+# 심층 분석 문항 별 최대 점수 (정규화에 사용)
+DEEP_DIVE_MAX_SCORES = {
+    "neg_low": 24,  # 8문항 * 3점
+    "neg_high": 18, # 6문항 * 3점
+    "adhd_high": 18,# 6문항 * 3점
+    "sleep": 15,    # 5문항 * 3점
+    "positive": 15  # 5문항 * 3점
+}
+
+
 # 사용자에게 보여줄 이름
 CLUSTER_TO_DISPLAY_NAME = {
     "neg_high": "불안/분노",
     "neg_low": "우울/무기력",
     "adhd": "집중력 저하",
-    "sleep": "불규지",
+    "sleep": "불규칙한 수면",
     "positive": "평온/회복"
 }
 

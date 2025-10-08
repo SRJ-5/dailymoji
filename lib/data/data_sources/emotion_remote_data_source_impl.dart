@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart'; // URL 가져오기
 import 'package:dailymoji/data/data_sources/emotion_remote_data_source.dart';
 import 'package:dailymoji/data/dtos/emotional_record_dto.dart';
+import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:http/http.dart' as http; // http 패키지 추가
 
@@ -15,21 +16,30 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     String? emotion, // 홈 또는 채팅에서 선택한 이모지
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
+    List<Message>? history,
   }) async {
     try {
       // 1. .env 파일에 설정한 FastAPI 서버 URL로 /analyze 엔드포인트 호출
       final url = "${ApiConfig.baseUrl}/analyze";
       print("Calling API: $url with text: '$text', icon: '$emotion'");
 
-// 🤩 RIN: 백엔드로 보낼 때 DB에 저장된 dbValue('prob_solver' 등) 보내기
+// RIN: 백엔드로 보낼 때 DB에 저장된 dbValue('prob_solver' 등) 보내기
       final personalityDbValue = characterPersonality != null
           ? CharacterPersonality.values
               .firstWhere(
-                (e) => e.label == characterPersonality,
+                (e) => e.myLabel == characterPersonality,
                 orElse: () => CharacterPersonality.probSolver, // 기본값
               )
               .dbValue
           : null;
+
+      // 1. 이전 대화 기록을 API 요청 본문에 포함시키기
+      final historyPayload = history
+          ?.map((msg) => {
+                'sender': msg.sender == Sender.user ? 'user' : 'bot',
+                'content': msg.content,
+              })
+          .toList();
 
       // 2. 원래 코드처럼 http.post를 사용하여 API 호출
       final response = await http.post(
@@ -42,6 +52,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
           'timestamp': DateTime.now().toIso8601String(),
           'onboarding': onboarding,
           'character_personality': personalityDbValue,
+          'history': historyPayload, // 1. history 페이로드 추가
         }),
       );
 
@@ -56,14 +67,12 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         final jsonResult = jsonDecode(responseBody);
 
         if (jsonResult == null || jsonResult is! Map<String, dynamic>) {
-          throw Exception(
-              'Received null or invalid JSON from API. Response Body: $responseBody');
+          throw Exception('Received null or invalid JSON from API. Response Body: $responseBody');
         }
 
         return EmotionalRecordDto.fromJson(jsonResult);
       } else {
-        throw Exception(
-            'Failed to analyze emotion: ${response.statusCode} ${response.body}');
+        throw Exception('Failed to analyze emotion: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       print("Emotion analysis http error: $e");

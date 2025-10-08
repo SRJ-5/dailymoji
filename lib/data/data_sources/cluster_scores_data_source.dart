@@ -11,7 +11,9 @@ abstract interface class ClusterScoresDataSource {
     required DateTime endExclusive,
   });
 
-  Future<List<ClusterScoreDto>> fetchByUserAndMonth({
+  // RIN: 기존 fetchByUserAndMonth가 RPC 호출을 위한 새 함수로 변경되었습니다.
+  Future<List<ClusterScoreDto>> fetchDailyMaxByUserAndMonth({
+    // Future<List<ClusterScoreDto>> fetchByUserAndMonth({
     required String userId,
     required int year,
     required int month,

@@ -1,5 +1,5 @@
-import "package:dailymoji/core/constants/emoji_assets.dart";
 import "package:dailymoji/domain/entities/message.dart";
+import 'package:dailymoji/domain/enums/emoji_asset.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 
 class MessageDto {
@@ -76,22 +76,29 @@ class MessageDto {
       sender: messageSender, // 변환된 enum 사용
       type: messageType, // 변환된 enum 사용
       proposal: proposal,
-      imageAssetPath: isImageType ? kEmojiAssetMap[imageKey] : null,
+      imageAssetPath: isImageType ? EmojiAsset.fromString(imageKey).asset : null,
     );
   }
 
   // 앱 내부의 Message Entity 객체를 DB에 저장하기 위한 DTO 객체로 변환
   factory MessageDto.fromEntity(Message message) {
+    // 이미지 타입이면 asset 경로에서 label을 찾아서 content로 저장
+    String? contentValue;
+    if (message.type == MessageType.image) {
+      final emoji = EmojiAsset.values.firstWhere(
+        (e) => e.asset == message.imageAssetPath,
+        orElse: () => EmojiAsset.defaultEmoji,
+      );
+      contentValue = emoji.label;
+    } else {
+      contentValue = message.content;
+    }
+
     return MessageDto(
       id: message.id,
       createdAt: message.createdAt,
       userId: message.userId,
-      content: message.type == MessageType.image
-          ? kEmojiAssetMap.entries
-              .firstWhere((e) => e.value == message.imageAssetPath,
-                  orElse: () => const MapEntry('', ''))
-              .key
-          : message.content,
+      content: contentValue,
       // enum을 문자열로 변환 (dbValue 기준)
       sender: message.sender.dbValue,
       type: message.type.dbValue,

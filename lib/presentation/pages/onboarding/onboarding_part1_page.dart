@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
@@ -57,7 +58,7 @@ class _OnboardingPart1PageState
               : null,
           title: stepIndex == totalSteps
               ? null
-              : Text(
+              : AppText(
                   stepIndex == 2 ? '나의 닉네임 설정' : '캐릭터 설정',
                   style: AppFontStyles.bodyBold18
                       .copyWith(color: AppColors.grey900),
@@ -123,7 +124,7 @@ class _OnboardingPart1PageState
                     }
                   }
                 : null,
-            child: Text('계속하기',
+            child: AppText('계속하기',
                 style: AppFontStyles.bodyMedium16.copyWith(
                   color: isNextEnabled
                       ? AppColors.grey50

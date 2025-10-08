@@ -1,6 +1,8 @@
 import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/domain/entities/solution.dart';
+import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,8 +12,14 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class SolutionPage extends ConsumerWidget {
   final String solutionId;
+  final String? sessionId;
+  final bool isReview;
 
-  const SolutionPage({super.key, required this.solutionId});
+  const SolutionPage(
+      {super.key,
+      required this.solutionId,
+      this.sessionId,
+      this.isReview = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,13 +33,18 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: Text("솔루션을 불러오는 데 실패했습니다: $err",
+          child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
               style: const TextStyle(color: AppColors.white)),
         ),
       ),
       data: (solution) {
         // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
-        return _PlayerView(solution: solution);
+        return _PlayerView(
+          solutionId: solutionId,
+          sessionId: sessionId,
+          solution: solution,
+          isReview: isReview,
+        );
       },
     );
   }
@@ -39,9 +52,17 @@ class SolutionPage extends ConsumerWidget {
 
 // 실제 플레이어 UI를 담당하는 위젯
 class _PlayerView extends ConsumerStatefulWidget {
+  final String solutionId;
+  final String? sessionId;
   final Solution solution;
+  final bool isReview;
 
-  const _PlayerView({required this.solution});
+  const _PlayerView({
+    required this.solutionId,
+    this.sessionId,
+    required this.solution,
+    required this.isReview,
+  });
 
   @override
   ConsumerState<_PlayerView> createState() => _PlayerViewState();
@@ -53,22 +74,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   bool _isMuted = true;
   bool _isNavigating = false;
 
-// RIN: 채팅페이지로 이동하기
-// X 버튼을 눌러서 끄면: "대화를 하고 싶어?"
-// 영상이 끝나면: "어때? 좋아진 것 같아?"
-  void _navigateToChatPage({String reason = 'video_ended'}) {
-    if (_isNavigating) return;
-    _isNavigating = true;
-    // // 이동하기 전에 화면 방향을 세로로 먼저 고정합니다.
-    // SystemChrome.setPreferredOrientations([
-    //   DeviceOrientation.portraitUp,
-    //   DeviceOrientation.portraitDown,
-    // ]);
-
-    // extra에 어떤 이유로 페이지를 떠나는지 정보를 담아 보냅니다.
-    context
-        .go('/home/chat', extra: {'from': 'solution_page', 'reason': reason});
-  }
+  String? _exitReason;
 
   @override
   void initState() {
@@ -94,6 +100,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
       ),
     );
     // _isMuted = true; // ← 플래그와 맞추기
+    _controller.addListener(_playerListener);
 
 // RIN: 0.1초 후에 음소거를 해제로직 추가
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -104,25 +111,65 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
         });
       }
     });
+  }
 
-// 영상 종료 시 채팅 페이지로 돌아가는 리스너
-    _controller.addListener(() {
-      if (_isNavigating) return; // 이미 이동 중이면 무시
+// // 영상 종료 시 채팅 페이지로 돌아가는 리스너
+//     _controller.addListener(() {
+//       if (_isNavigating) return; // 이미 이동 중이면 무시
 
-      if (_controller.value.playerState == PlayerState.ended) {
-        debugPrint("RIN: YouTube video ended. Navigating to chat page.");
-        _navigateToChatPage(reason: 'video_ended'); // 영상이 끝나면 채팅 페이지로 이동
-      }
-      // 플레이어 상태 리스너(음소거 상태를 동기화)
-      // final mutedNow = _controller.value.isMuted;
-      // if (mutedNow != _isMuted) {
-      //   setState(() => _isMuted = mutedNow);
-      // }
-    });
+//       if (_controller.value.playerState == PlayerState.ended) {
+//         debugPrint("RIN: YouTube video ended. Navigating to chat page.");
+//         _navigateToChatPage(reason: 'video_ended'); // 영상이 끝나면 채팅 페이지로 이동
+//       }
+//       // 플레이어 상태 리스너(음소거 상태를 동기화)
+//       // final mutedNow = _controller.value.isMuted;
+//       // if (mutedNow != _isMuted) {
+//       //   setState(() => _isMuted = mutedNow);
+//       // }
+//     });
+//   }
+
+  void _playerListener() {
+    // 플레이어 컨트롤 개선: 컨트롤러 값(재생/일시정지 상태 등)이 변경될 때마다 UI를 갱신
+    if (mounted) {
+      setState(() {});
+    }
+
+    if (_controller.value.playerState == PlayerState.ended) {
+      // "나가는 이유"를 'video_ended'로 확정하고
+      _exitReason = 'video_ended';
+      // 네비게이션 시작을 요청합니다.
+      _startExitSequence();
+    }
+  }
+
+//모든 네비게이션 로직을 처리하는 유일한 함수
+  void _startExitSequence() {
+    // 이미 나가는 중이면 아무것도 하지 않습니다.
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    if (!widget.isReview) {
+      // `_exitReason`이 설정되지 않았다면 비정상적인 경우이므로, 안전하게 'user_closed'로 처리합니다.
+      final reason = _exitReason ?? 'user_closed';
+      debugPrint("RIN: Setting result and navigating with reason: $reason");
+
+      ref.read(solutionResultProvider.notifier).state = {
+        'reason': reason,
+        'solutionId': widget.solutionId,
+        'sessionId': widget.sessionId,
+      };
+    } else {
+      debugPrint("RIN: This is a review. Skipping follow-up message.");
+    }
+
+    // Go back to using `context.go` which is more stable.
+    context.go('/home/chat');
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_playerListener);
     _controller.dispose();
     // 돌려놓은 화면 UI 다시 원상복구
     SystemChrome.setPreferredOrientations([
@@ -190,13 +237,13 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                // 첫 터치 시 음소거 해제 (자동재생 정책 우회)
-                if (_isMuted) {
-                  _controller.unMute();
-                  setState(() {
-                    _isMuted = false;
-                  });
-                }
+                // // 첫 터치 시 음소거 해제 (자동재생 정책 우회)
+                // if (_isMuted) {
+                //   _controller.unMute();
+                //   setState(() {
+                //     _isMuted = false;
+                //   });
+                // }
                 setState(() => _showControls = !_showControls);
               },
               child: const SizedBox(),
@@ -220,8 +267,10 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                       ),
                       // onPressed: () => Navigator.of(context).pop(),
                       //RIN: X 버튼을 누르면 'user_closed' 신호를 extra로
-                      onPressed: () =>
-                          _navigateToChatPage(reason: 'user_closed'),
+                      onPressed: () {
+                        _exitReason = 'user_closed';
+                        _startExitSequence();
+                      },
                     ),
                   ),
 

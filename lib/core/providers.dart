@@ -41,18 +41,15 @@ final httpClientProvider = Provider((ref) => http.Client());
 // Data Sources
 // -----------------------------------------------------------------------------
 
-final messageRemoteDataSourceProvider =
-    Provider<MessageRemoteDataSource>((ref) {
+final messageRemoteDataSourceProvider = Provider<MessageRemoteDataSource>((ref) {
   return MessageRemoteDataSourceImpl(ref.watch(supabaseClientProvider));
 });
 
-final emotionRemoteDataSourceProvider =
-    Provider<EmotionRemoteDataSource>((ref) {
+final emotionRemoteDataSourceProvider = Provider<EmotionRemoteDataSource>((ref) {
   return EmotionRemoteDataSourceImpl();
 });
 
-final solutionRemoteDataSourceProvider =
-    Provider<SolutionRemoteDataSourceImpl>((ref) {
+final solutionRemoteDataSourceProvider = Provider<SolutionRemoteDataSourceImpl>((ref) {
   final client = ref.watch(httpClientProvider);
   return SolutionRemoteDataSourceImpl(client);
 });
@@ -74,11 +71,9 @@ final solutionRepositoryProvider = Provider<SolutionRepository>((ref) {
 });
 
 // 홈 대사
-final homeDialogueRepositoryProvider =
-    Provider<HomeDialogueRepository>((ref) => HomeDialogueRepositoryImpl());
+final homeDialogueRepositoryProvider = Provider<HomeDialogueRepository>((ref) => HomeDialogueRepositoryImpl());
 // 이모지 대사
-final emojiReactionRepositoryProvider =
-    Provider<EmojiReactionRepository>((ref) {
+final emojiReactionRepositoryProvider = Provider<EmojiReactionRepository>((ref) {
   final analyze = ref.watch(analyzeEmotionUseCaseProvider);
   return EmojiReactionRepositoryImpl(analyze);
 });
@@ -95,8 +90,7 @@ final sendMessageUseCaseProvider = Provider<SendMessageUseCase>((ref) {
   return SendMessageUseCase(ref.watch(messageRepositoryProvider));
 });
 
-final subscribeMessagesUseCaseProvider =
-    Provider<SubscribeMessagesUseCase>((ref) {
+final subscribeMessagesUseCaseProvider = Provider<SubscribeMessagesUseCase>((ref) {
   return SubscribeMessagesUseCase(ref.watch(messageRepositoryProvider));
 });
 
@@ -104,8 +98,7 @@ final analyzeEmotionUseCaseProvider = Provider<AnalyzeEmotionUseCase>((ref) {
   return AnalyzeEmotionUseCase(ref.watch(emotionRepositoryProvider));
 });
 
-final updateMessageSessionIdUseCaseProvider =
-    Provider<UpdateMessageSessionIdUseCase>((ref) {
+final updateMessageSessionIdUseCaseProvider = Provider<UpdateMessageSessionIdUseCase>((ref) {
   return UpdateMessageSessionIdUseCase(ref.watch(messageRepositoryProvider));
 });
 
@@ -119,8 +112,7 @@ final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
 // -----------------------------------------------------------------------------
 
 // solutionId를 받아 특정 솔루션 정보 가져옴
-final solutionProvider =
-    FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
+final solutionProvider = FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
   final repository = ref.watch(solutionRepositoryProvider);
   return repository.fetchSolutionById(solutionId);
 });
@@ -141,13 +133,15 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
   final personalityDbValue = personalityLabel != null
       ? CharacterPersonality.values
           .firstWhere(
-            (e) => e.label == personalityLabel,
+            (e) => e.myLabel == personalityLabel,
             orElse: () => CharacterPersonality.warmHeart, // 기본값
           )
           .dbValue
       : null;
 
   // RIN: 캐릭터 성향과 닉네임 함께 보내도록 수정
-  return repo.fetchHomeDialogue(
-      selectedEmotion, personalityDbValue, userNickNm);
+  return repo.fetchHomeDialogue(selectedEmotion, personalityDbValue, userNickNm);
 });
+
+// [추가됨] SolutionPage에서 ChatPage로 후속 조치 데이터를 전달하기 위한 Provider
+final solutionFollowUpProvider = StateProvider<Map<String, dynamic>?>((ref) => null);
