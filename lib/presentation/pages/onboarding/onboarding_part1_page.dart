@@ -76,20 +76,18 @@ class _OnboardingPart1PageState
                       totalSteps: totalSteps - 1,
                       stepIndex: stepIndex), // indicator 맨 위
               Expanded(
+                  child: SingleChildScrollView(
                 child: [
                   // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
                   // SelectAi(),
-                  SingleChildScrollView(
-                      child: SelectAiPersonality()),
-                  SingleChildScrollView(child: AiNameSetting()),
-                  SingleChildScrollView(child: UserNickName()),
-                  SingleChildScrollView(
-                    child: FinishWidget(
-                      text: '좋아요!\n이제 다음 단계로 가볼까요?',
-                    ),
+                  SelectAiPersonality(),
+                  AiNameSetting(),
+                  UserNickName(),
+                  FinishWidget(
+                    text: '좋아요!\n이제 다음 단계로 가볼까요?',
                   ),
                 ][stepIndex],
-              ),
+              )),
             ],
           ),
         ),
@@ -100,7 +98,8 @@ class _OnboardingPart1PageState
             top: 8.h,
             left: 12.w,
             right: 12.w,
-            bottom: MediaQuery.of(context).viewInsets.bottom > 0
+            bottom: MediaQuery.of(context).viewInsets.bottom >
+                    56.h
                 ? MediaQuery.of(context).viewInsets.bottom + 10.h
                 : 56.h,
           ),

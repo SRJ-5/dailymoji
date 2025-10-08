@@ -232,7 +232,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             top: 8.h,
             left: 12.w,
             right: 12.w,
-            bottom: MediaQuery.of(context).viewInsets.bottom > 0
+            bottom: MediaQuery.of(context).viewInsets.bottom >
+                    56.h
                 ? MediaQuery.of(context).viewInsets.bottom + 10.h
                 : 56.h,
           ),
