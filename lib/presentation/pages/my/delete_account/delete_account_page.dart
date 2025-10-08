@@ -152,48 +152,55 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                                 .copyWith(
                                     color: AppColors.grey900),
                             decoration: InputDecoration(
-                                hintText: '의견을 적어주세요',
-                                hintStyle: AppFontStyles.bodyRegular16
-                                    .copyWith(
-                                        color:
-                                            AppColors.grey400),
-                                suffixIcon: _textEditingController
-                                        .text.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        onPressed: () {
-                                          _textEditingController
-                                              .clear();
-                                        },
-                                        icon: Icon(Icons.clear)),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 12.h),
-                                filled: true,
-                                fillColor: AppColors.green50,
-                                border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color:
-                                            AppColors.grey200),
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                            12.r)),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color:
-                                            AppColors.green500),
-                                    borderRadius:
-                                        BorderRadius.circular(12.r)),
-                                enabledBorder: OutlineInputBorder(
+                              hintText: '의견을 적어주세요',
+                              hintStyle: AppFontStyles
+                                  .bodyRegular16
+                                  .copyWith(
+                                      color: AppColors.grey400),
+                              suffixIcon: _textEditingController
+                                      .text.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      onPressed: () {
+                                        _textEditingController
+                                            .clear();
+                                      },
+                                      icon: Icon(Icons.clear)),
+                              contentPadding:
+                                  EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 12.h),
+                              filled: true,
+                              fillColor: AppColors.green50,
+                              border: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       width: 1,
                                       color: AppColors.grey200),
                                   borderRadius:
                                       BorderRadius.circular(
-                                          12.r),
-                                )),
+                                          12.r)),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      width: 1,
+                                      color: AppColors.green500),
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                          12.r)),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1,
+                                    color: AppColors.grey200),
+                                borderRadius:
+                                    BorderRadius.circular(12.r),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1,
+                                    color: AppColors.grey200),
+                                borderRadius:
+                                    BorderRadius.circular(12.r),
+                              ),
+                            ),
                           )),
                       SizedBox(height: 4.h)
                     ],
