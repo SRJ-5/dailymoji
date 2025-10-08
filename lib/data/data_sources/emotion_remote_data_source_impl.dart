@@ -17,6 +17,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
   }) async {
     try {
       // 1. .env 파일에 설정한 FastAPI 서버 URL로 /analyze 엔드포인트 호출
@@ -52,7 +53,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
           'timestamp': DateTime.now().toIso8601String(),
           'onboarding': onboarding,
           'character_personality': personalityDbValue,
-          'history': historyPayload, // 1. history 페이로드 추가
+          'history': historyPayload,
+          'adhd_context': adhdContext,
         }),
       );
 
@@ -67,12 +69,14 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         final jsonResult = jsonDecode(responseBody);
 
         if (jsonResult == null || jsonResult is! Map<String, dynamic>) {
-          throw Exception('Received null or invalid JSON from API. Response Body: $responseBody');
+          throw Exception(
+              'Received null or invalid JSON from API. Response Body: $responseBody');
         }
 
         return EmotionalRecordDto.fromJson(jsonResult);
       } else {
-        throw Exception('Failed to analyze emotion: ${response.statusCode} ${response.body}');
+        throw Exception(
+            'Failed to analyze emotion: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       print("Emotion analysis http error: $e");

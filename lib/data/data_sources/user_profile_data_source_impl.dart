@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -173,6 +176,31 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
         .select()
         .single();
     return UserProfileDto.fromJson(updated);
+  }
+
+  @override
+  Future<String> fetchSleepHygieneTip(
+      {String? personality, String? userNickNm}) async {
+    try {
+      final queryParams = {
+        if (personality != null) 'personality': personality,
+        if (userNickNm != null) 'user_nick_nm': userNickNm,
+      };
+      final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/sleep-tip')
+          .replace(queryParameters: queryParams);
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data['tip'] as String;
+      } else {
+        throw Exception('Failed to load sleep tip');
+      }
+    } catch (e) {
+      print('Error fetching sleep tip: $e');
+      return '규칙적인 수면 습관을 가져보세요.'; // Fallback message
+    }
   }
 
   @override

@@ -10,5 +10,6 @@ abstract class EmotionRepository {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
   });
 }

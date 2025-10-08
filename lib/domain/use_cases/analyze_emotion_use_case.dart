@@ -15,6 +15,7 @@ class AnalyzeEmotionUseCase {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
   }) {
     return repository.analyzeEmotion(
       userId: userId,
@@ -23,6 +24,7 @@ class AnalyzeEmotionUseCase {
       onboarding: onboarding,
       characterPersonality: characterPersonality,
       history: history,
+      adhdContext: adhdContext,
     );
   }
 }

@@ -27,6 +27,11 @@ abstract class UserProfileRepository {
     required List<String> tags,
   });
 
+  Future<String> fetchSleepHygieneTip({
+    String? personality,
+    String? userNickNm,
+  });
+
   Future<void> logOut();
   Future<void> deleteAccount(String userId);
 }

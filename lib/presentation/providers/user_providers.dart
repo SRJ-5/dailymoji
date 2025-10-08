@@ -2,7 +2,8 @@ import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source_impl.dart';
 import 'package:dailymoji/data/repositories/user_profile_repository_impl.dart';
 import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
-import 'package:dailymoji/domain/use_cases/submit_solution_feedback_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/fetch_sleep_hygiene_tip_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/submit_solution_feedback_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/apple_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/delete_account_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_case.dart';
@@ -71,6 +72,12 @@ final updateCharacterPersonalityUseCaseProvider = Provider(
 final logOutUseCaseProvider = Provider(
   (ref) {
     return LogOutUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final fetchSleepHygieneTipUseCaseProvider = Provider(
+  (ref) {
+    return FetchSleepHygieneTipUseCase(ref.read(_userRepositoryProvider));
   },
 );
 

@@ -88,6 +88,15 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   }
 
   @override
+  Future<String> fetchSleepHygieneTip(
+      {String? personality, String? userNickNm}) {
+    return _userDataSource.fetchSleepHygieneTip(
+      personality: personality,
+      userNickNm: userNickNm,
+    );
+  }
+
+  @override
   Future<void> logOut() async {
     await _userDataSource.logOut();
   }

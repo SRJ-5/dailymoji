@@ -21,7 +21,7 @@ from supabase import create_client, Client
 
 import uuid
 from ai_moderator import moderate_text
-from llm_prompts import REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
+from llm_prompts import ADHD_TASK_BREAKDOWN_PROMPT, ADHD_TASK_DETECTION_PROMPT, REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
 from rule_based import rule_scoring
 from srj5_constants import (
     ASSESSMENT_SCORE_CAP, CLUSTER_TO_DISPLAY_NAME, CLUSTERS, DEEP_DIVE_MAX_SCORES, EMOJI_ONLY_SCORE_CAP, FINAL_FUSION_WEIGHTS_NO_ICON, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
@@ -83,7 +83,9 @@ class AnalyzeRequest(BaseModel):
     timestamp: Optional[str] = None
     onboarding: Optional[Dict[str, Any]] = None
     character_personality: Optional[str] = None
-    history: Optional[List[HistoryItem]] = None # history 필드 추가
+    history: Optional[List[HistoryItem]] = None 
+    # ADHD 분기 로직 처리를 위한 상태 정보
+    adhd_context: Optional[Dict[str, Any]] = None
 
 
 # /solutions/propose 엔드포인트의 입력 모델
@@ -107,6 +109,9 @@ class PresetIds:
     SOLUTION_PROPOSAL = "SOLUTION_PROPOSAL"
     SAFETY_CRISIS_MODAL = "SAFETY_CRISIS_MODAL"
     EMOJI_REACTION = "EMOJI_REACTION"
+    ADHD_PRE_SOLUTION_QUESTION = "ADHD_PRE_SOLUTION_QUESTION" # 질문 상태
+    ADHD_TASK_BREAKDOWN = "ADHD_TASK_BREAKDOWN" # 작업 분할 결과
+
 
 # ======================================================================
 # === kiwi를 사용하는 안전 장치 ===
@@ -423,7 +428,7 @@ async def save_analysis_to_supabase(
                 for row in score_rows:
                     row["session_text"] = payload.text
                 
-                # 💡 [수정] .execute를 분리
+                # .execute를 분리
                 scores_insert_query = supabase.table("cluster_scores").insert(score_rows)
                 await run_in_threadpool(scores_insert_query.execute)
         
@@ -432,6 +437,53 @@ async def save_analysis_to_supabase(
         print(f"🚨 Supabase save failed: {e}")
         traceback.print_exc()
         return None
+
+
+# RIN: ADHD 질문에 대한 사용자 답변을 처리하는 함수
+async def _handle_adhd_response(payload: AnalyzeRequest, original_text: str, debug_log: dict):
+    print(f"🧠 Handling ADHD follow-up. User response: '{payload.text}'")
+    user_nick_nm, _ = await get_user_info(payload.user_id)
+    
+    # 1. 사용자의 답변이 'YES'인지 'NO'인지 LLM으로 판단
+    decision = await call_llm(ADHD_TASK_DETECTION_PROMPT, payload.text, OPENAI_KEY, expect_json=False)
+    debug_log["adhd_decision"] = decision
+
+    if "YES" in decision:
+        # 2-1. 'YES'인 경우: 원래 텍스트를 기반으로 작업을 분할
+        print("-> Decision: YES. Breaking down the task.")
+        breakdown_prompt = ADHD_TASK_BREAKDOWN_PROMPT.format(user_nick_nm=user_nick_nm, user_message=original_text)
+        breakdown_result = await call_llm(breakdown_prompt, "", OPENAI_KEY, expect_json=True)
+        
+        breakdown_steps = breakdown_result.get("breakdown", ["작업을 작은 단계로 나눠보세요."])
+        
+        # 뽀모도로 솔루션 제안 멘트와 솔루션 ID를 DB에서 조회
+        solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1).single().execute)
+        solution_id = solution_res.data.get("solution_id") if solution_res.data else None
+
+        return {
+            "intervention": {
+                "preset_id": PresetIds.ADHD_TASK_BREAKDOWN,
+                "breakdown_steps": breakdown_steps, # 분할된 작업 목록
+                "proposal_text": "좋아요! 이 작은 단계들을 하나씩 끝내보는 건 어때요? 제가 뽀모도로 타이머로 집중을 도와줄게요!",
+                "solution_id": solution_id
+            }
+        }
+    else:
+        # 2-2. 'NO'인 경우: 집중력 훈련 영상 제안
+        print("-> Decision: NO. Proposing focus training.")
+        solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, text").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1).single().execute)
+        solution_data = solution_res.data or {}
+
+        # 집중력 훈련 제안 멘트를 DB에서 가져옴
+        proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="focus_training")
+        
+        return {
+            "intervention": {
+                "preset_id": PresetIds.SOLUTION_PROPOSAL,
+                "proposal_text": f"{proposal_text} {solution_data.get('text', '')}".strip(),
+                "solution_id": solution_data.get("solution_id")
+            }
+        }
 
 
 # ---------- API Endpoints (분리된 구조) ----------
@@ -505,7 +557,6 @@ async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dic
 
     llm_response = await call_llm(system_prompt, user_content, OPENAI_KEY, expect_json=False)
 
-    # --- 👇 [수정] ---
     # LLM 호출 결과를 바로 사용하지 않고, 에러인지 먼저 확인합니다.
     final_text = llm_response if not (isinstance(llm_response, dict) and 'error' in llm_response) else "음... 지금은 잠시 생각할 시간이 필요해요!🥹"
     intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": final_text}
@@ -638,6 +689,12 @@ async def analyze_emotion(payload: AnalyzeRequest):
             session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores)
             return {"session_id": session_id, "intervention": intervention}
 
+        # [추가] ADHD 분기 로직 처리
+        if payload.adhd_context and payload.adhd_context.get("awaiting_response"):
+            original_text = payload.adhd_context.get("original_text", "")
+            # ADHD 질문에 대한 답변 처리 함수를 호출하고 결과를 즉시 반환
+            return await _handle_adhd_response(payload, original_text, debug_log)
+
         # --- 파이프라인 3: Triage (친구 모드 / 분석 모드 분기) ---
         rule_scores, _, _ = rule_scoring(text)
         is_simple_text = len(text) < 10 and max(rule_scores.values() or [0.0]) < 0.1
@@ -653,7 +710,35 @@ async def analyze_emotion(payload: AnalyzeRequest):
         if triage_mode == 'FRIENDLY':
             return await _handle_friendly_mode(payload, debug_log)
         else: # ANALYSIS
-            return await _run_analysis_pipeline(payload, debug_log)
+            analysis_result = await _run_analysis_pipeline(payload, debug_log)
+            
+            intervention = analysis_result.get("intervention", {})
+            top_cluster = intervention.get("top_cluster")
+            
+            # 만약 분석 결과 top_cluster가 ADHD라면, 솔루션을 바로 제안하지 않고 질문을 던짐
+            if top_cluster == "adhd":
+                print("🧠 ADHD cluster detected. Switching to pre-solution question flow.")
+                
+                # DB에서 ADHD 질문 멘트 가져오기 (character_mentions 테이블에 mention_type='adhd_question'으로 추가 필요)
+                question_text = await get_mention_from_db(
+                    mention_type="adhd_question",
+                    language_code=payload.language_code,
+                    personality=payload.character_personality,
+                    default_message="혹시 지금 바로 해야 할 일이 있다면 알려주세요!",
+                    format_kwargs={"user_nick_nm": (await get_user_info(payload.user_id))[0]}
+                )
+                
+                # 프론트엔드로 질문과 다음 요청에 필요한 컨텍스트를 전달
+                analysis_result["intervention"] = {
+                    "preset_id": PresetIds.ADHD_PRE_SOLUTION_QUESTION,
+                    "text": question_text,
+                    "adhd_context": {
+                        "awaiting_response": True,
+                        "original_text": payload.text # 원래 사용자가 입력했던 텍스트
+                    }
+                }
+
+            return analysis_result
 
     except Exception as e:
         tb = traceback.format_exc()
@@ -1326,7 +1411,7 @@ async def get_sleep_tip(
     language_code: Optional[str] = 'ko'
 ):
     """캐릭터 성향에 맞는 수면위생 팁을 랜덤으로 하나 반환합니다."""
-    # 👀 get_mention_from_db 대신 직접 쿼리 (별도 테이블이므로)
+    # get_mention_from_db 대신 직접 쿼리 (별도 테이블이므로)
     if not supabase:
         return {"tip": "규칙적인 수면 습관을 가져보세요."}
     try:
@@ -1343,11 +1428,11 @@ async def get_sleep_tip(
             fallback_res = await run_in_threadpool(supabase.table("sleep_hygiene_tips").select("text").eq("personality", "prob_solver").execute)
             tips = [row['text'] for row in fallback_res.data]
 
-        selected_tip = random.choice(tips) if tips else "규칙적인 수면 습관을 가져보세요."
+        selected_tip = random.choice(tips) if tips else "수면 위생법을 참고해보세요."
         
         # user_nick_nm 플레이스홀더를 실제 값으로 채워서 반환
         return {"tip": selected_tip.format(user_nick_nm=user_nick_nm)}
 
     except Exception as e:
         print(f"❌ get_sleep_tip Error: {e}")
-        return {"tip": "규칙적인 수면 습관을 가져보세요."}
+        return {"tip": "수면 위생법을 참고해보세요."}

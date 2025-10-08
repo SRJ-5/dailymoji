@@ -1,4 +1,5 @@
 import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:dailymoji/domain/enums/character_personality.dart';
 import 'package:dailymoji/presentation/providers/user_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -186,6 +187,25 @@ class UserViewModel extends Notifier<UserState> {
 
     // 피드백에 따라 변경된 사용자 프로필(가중치 등)을 다시 불러와 상태를 업데이트
     await getUserProfile(userId);
+  }
+
+// RIN: 수면위생 팁을 가져오는 함수
+  Future<String> fetchSleepHygieneTip() async {
+    final profile = state.userProfile;
+    if (profile == null) return "규칙적인 수면 습관을 가져보세요."; // Fallback
+
+    final personalityDbValue = profile.characterPersonality != null
+        ? CharacterPersonality.values
+            .firstWhere((e) => e.myLabel == profile.characterPersonality,
+                orElse: () => CharacterPersonality.probSolver)
+            .dbValue
+        : null;
+
+    final tip = await ref.read(fetchSleepHygieneTipUseCaseProvider).execute(
+          personality: personalityDbValue,
+          userNickNm: profile.userNickNm,
+        );
+    return tip;
   }
 
   Future<void> logOut() async {

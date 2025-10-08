@@ -320,7 +320,7 @@ def get_system_prompt(
 
 
     # 2. 캐릭터 성향에 맞는 페르소나 지시문을 가져옵니다.
-    #    성향 값이 없거나 정의되지 않은 값이면 기본 페르소나(A. prob_solver)를 사용합니다.
+    #  성향 값이 없거나 정의되지 않은 값이면 기본 페르소나(A. prob_solver)를 사용합니다.
     personality_instruction = PERSONALITY_PROMPTS.get(personality, PERSONALITY_PROMPTS["prob_solver"])
     
     # 3. 페르소나 지시문 내의 {user_nick_nm}, {character_nm} 변수를 실제 값으로 채웁니다.
@@ -346,7 +346,7 @@ User: "방 청소 해야되는데 엄두가 안나" -> YES
 User: "요즘 그냥 계속 산만한 것 같아" -> NO
 """
 
-# 🤩 RIN: ADHD 사용자의 할 일을 3분 내외의 작은 단위로 쪼개주기 위한 프롬프트 추가
+# RIN: ADHD 사용자의 할 일을 3분 내외의 작은 단위로 쪼개주기 위한 프롬프트 추가
 ADHD_TASK_BREAKDOWN_PROMPT = """
 You are an expert executive function coach specializing in ADHD. Your task is to break down the user's stated goal into 3 very small, concrete, and actionable steps. Each step should feel achievable in 3 minutes or less.
 The user's name is {user_nick_nm}.
@@ -366,7 +366,6 @@ Example Output:
 Now, break down the following user's task.
 User's message: "{user_message}"
 """
-
 
 
 # 3. 통합 LLM 호출 함수
