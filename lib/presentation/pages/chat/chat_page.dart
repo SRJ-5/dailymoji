@@ -889,11 +889,13 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                           width: 24.w,
                           height: 24.h,
                           child: SvgPicture.asset(
-                            AppIcons.send,
-                            colorFilter: ColorFilter.mode(
-                              isBotTyping ? AppColors.grey200 : AppColors.grey400,
-                              BlendMode.srcIn,
-                            ),
+                            currentSelectedEmojiKey != "default" || _messageInputController.text.isNotEmpty ? AppIcons.send_orange : AppIcons.send,
+                            colorFilter: currentSelectedEmojiKey != "default" || _messageInputController.text.isNotEmpty
+                                ? null
+                                : ColorFilter.mode(
+                                    isBotTyping ? AppColors.grey200 : AppColors.grey400,
+                                    BlendMode.srcIn,
+                                  ),
                           ),
                         ),
                       ),
