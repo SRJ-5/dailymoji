@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
 final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
@@ -12,7 +13,11 @@ final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 class BottomBar extends ConsumerWidget {
   const BottomBar({super.key});
 
-  static const List<String> _routes = ['/home', '/report', '/my'];
+  static const List<String> _routes = [
+    '/home',
+    '/report',
+    '/my'
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,7 +45,8 @@ class BottomBar extends ConsumerWidget {
           onTap: (index) {
             // 이미 같은 탭을 눌렀다면 다시 이동할 필요 없음
             if (index != currentIndex) {
-              ref.read(bottomNavIndexProvider.notifier).state = index;
+              ref.read(bottomNavIndexProvider.notifier).state =
+                  index;
               context.go(_routes[index]);
             }
           },
@@ -50,17 +56,38 @@ class BottomBar extends ConsumerWidget {
           backgroundColor: AppColors.yellow50,
           selectedLabelStyle: AppFontStyles.bodyMedium14,
           unselectedLabelStyle: AppFontStyles.bodyMedium14,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage(AppIcons.home)),
+              icon: SvgPicture.asset(
+                AppIcons.home,
+                colorFilter: ColorFilter.mode(
+                    currentIndex == 0
+                        ? AppColors.green500
+                        : AppColors.grey700,
+                    BlendMode.srcIn),
+              ),
               label: '홈',
             ),
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage(AppIcons.report)),
+              icon: SvgPicture.asset(
+                AppIcons.report,
+                colorFilter: ColorFilter.mode(
+                    currentIndex == 1
+                        ? AppColors.green500
+                        : AppColors.grey700,
+                    BlendMode.srcIn),
+              ),
               label: "리포트",
             ),
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage(AppIcons.my)),
+              icon: SvgPicture.asset(
+                AppIcons.my,
+                colorFilter: ColorFilter.mode(
+                    currentIndex == 2
+                        ? AppColors.green500
+                        : AppColors.grey700,
+                    BlendMode.srcIn),
+              ),
               label: "마이",
             ),
           ],

@@ -16,6 +16,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
   int _selectedNum = -1;
+  bool _deleteCheck = false;
 
   final reasons = [
     '더 이상 앱을 사용하지 않아요',
@@ -31,10 +32,12 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       if (_selectedNum == 3) {
         // 직접 입력이면 TextField 포커스
         FocusScope.of(context).requestFocus(_focusNode);
+        _deleteCheck = false;
       } else {
         // 다른 항목이면 입력 초기화 & 포커스 해제
         _textEditingController.clear();
         _focusNode.unfocus();
+        _deleteCheck = true;
       }
     });
   }
@@ -151,49 +154,68 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                             style: AppFontStyles.bodyRegular16
                                 .copyWith(
                                     color: AppColors.grey900),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value.isEmpty) {
+                                  _deleteCheck = false;
+                                } else {
+                                  _deleteCheck = true;
+                                }
+                              });
+                            },
                             decoration: InputDecoration(
-                                hintText: '의견을 적어주세요',
-                                hintStyle: AppFontStyles.bodyRegular16
-                                    .copyWith(
-                                        color:
-                                            AppColors.grey400),
-                                suffixIcon: _textEditingController
-                                        .text.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        onPressed: () {
-                                          _textEditingController
-                                              .clear();
-                                        },
-                                        icon: Icon(Icons.clear)),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 12.h),
-                                filled: true,
-                                fillColor: AppColors.green50,
-                                border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color:
-                                            AppColors.grey200),
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                            12.r)),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color:
-                                            AppColors.green500),
-                                    borderRadius:
-                                        BorderRadius.circular(12.r)),
-                                enabledBorder: OutlineInputBorder(
+                              hintText: '의견을 적어주세요',
+                              hintStyle: AppFontStyles
+                                  .bodyRegular16
+                                  .copyWith(
+                                      color: AppColors.grey400),
+                              suffixIcon: _textEditingController
+                                      .text.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _deleteCheck = false;
+                                        });
+                                        _textEditingController
+                                            .clear();
+                                      },
+                                      icon: Icon(Icons.clear)),
+                              contentPadding:
+                                  EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 12.h),
+                              filled: true,
+                              fillColor: AppColors.green50,
+                              border: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       width: 1,
                                       color: AppColors.grey200),
                                   borderRadius:
                                       BorderRadius.circular(
-                                          12.r),
-                                )),
+                                          12.r)),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      width: 1,
+                                      color: AppColors.green500),
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                          12.r)),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1,
+                                    color: AppColors.grey200),
+                                borderRadius:
+                                    BorderRadius.circular(12.r),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1,
+                                    color: AppColors.grey200),
+                                borderRadius:
+                                    BorderRadius.circular(12.r),
+                              ),
+                            ),
                           )),
                       SizedBox(height: 4.h)
                     ],
@@ -203,46 +225,45 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             ),
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: 8.h,
-              left: 12.w,
-              right: 12.w,
-              bottom: MediaQuery.of(context).viewInsets.bottom >
-                      0
-                  ? MediaQuery.of(context).viewInsets.bottom +
-                      10.h
-                  : 32.h,
+        bottomNavigationBar: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            top: 8.h,
+            left: 12.w,
+            right: 12.w,
+            bottom: MediaQuery.of(context).viewInsets.bottom >
+                    56.h
+                ? MediaQuery.of(context).viewInsets.bottom + 10.h
+                : 56.h,
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(double.infinity, 52.h),
+              backgroundColor: _deleteCheck
+                  ? AppColors.green500
+                  : AppColors.grey200,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
             ),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: _selectedNum == -1
-                    ? AppColors.grey200
-                    : AppColors.green500,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              onPressed: _selectedNum == -1
-                  ? null
-                  : () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return ConfirmDialog(
-                              isDeleteAccount: true);
-                        },
-                      );
-                    },
-              child: AppText(
-                '탈퇴하기',
-                style: AppFontStyles.bodyMedium16.copyWith(
-                    color: _selectedNum == -1
-                        ? AppColors.grey500
-                        : AppColors.grey50),
-              ),
+            onPressed: _deleteCheck
+                ? () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return ConfirmDialog(
+                            isDeleteAccount: true);
+                      },
+                    );
+                  }
+                : null,
+            child: AppText(
+              '탈퇴하기',
+              style: AppFontStyles.bodyMedium16.copyWith(
+                  color: _deleteCheck
+                      ? AppColors.grey50
+                      : AppColors.grey500),
             ),
           ),
         ),
