@@ -684,50 +684,60 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
             // 닫기 버튼
             Row(
               children: [
-                Spacer(),
-                AppText(
-                  '현재 나의 감정',
-                  style: AppFontStyles.bodySemiBold16.copyWith(color: AppColors.grey900),
+                SizedBox(width: 24.w),
+                Expanded(
+                  child: Center(
+                    child: AppText(
+                      '현재 나의 감정',
+                      style: AppFontStyles.bodySemiBold16.copyWith(color: AppColors.grey900),
+                    ),
+                  ),
                 ),
-                Spacer(),
                 GestureDetector(
                   onTap: () {
                     _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                     setState(() => showEmojiBar = false);
                   },
                   child: Container(
-                    padding: EdgeInsets.all(4.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.grey200,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      size: 19.2.r,
-                      color: AppColors.grey700,
+                    padding: EdgeInsets.all(2.4.r),
+                    child: SvgPicture.asset(
+                      AppIcons.close,
+                      width: 19.2.w,
+                      height: 19.2.w,
+                      colorFilter: ColorFilter.mode(
+                        AppColors.grey400,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 8.h),
-            Row(
-              children: List.generate(emojis.length, (index) {
-                final emoji = emojis[index];
-                final start = (baseStart + step * index).clamp(0.0, 1.0);
-                final end = (start + 0.4).clamp(0.0, 1.0);
+            // Row(
+            // children: List.generate(
+            Container(
+              height: 72.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: emojis.length,
+                separatorBuilder: (context, index) => SizedBox(width: 4.w),
+                itemBuilder: (context, index) {
+                  // children: List.generate(emojis.length, (index) {
+                  final emoji = emojis[index];
+                  final start = (baseStart + step * index).clamp(0.0, 1.0);
+                  final end = (start + 0.4).clamp(0.0, 1.0);
 
-                final curved = CurvedAnimation(
-                  parent: _emojiCtrl,
-                  curve: Interval(start, end, curve: Curves.easeOutCubic),
-                );
+                  final curved = CurvedAnimation(
+                    parent: _emojiCtrl,
+                    curve: Interval(start, end, curve: Curves.easeOutCubic),
+                  );
 
-                return Expanded(
-                  child: FadeTransition(
+                  return FadeTransition(
                     opacity: curved,
                     child: SlideTransition(
                       position: Tween<Offset>(
-                        begin: const Offset(-0.2, 0),
+                        begin: Offset(-0.2, 0),
                         end: Offset.zero,
                       ).animate(curved),
                       child: GestureDetector(
@@ -738,12 +748,17 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                             } else {
                               currentSelectedEmojiKey = emoji.label;
                             }
-                            showEmojiBar = false;
+                            // showEmojiBar = false;
                           });
-                          _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
+                          // _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
                         },
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 3.1.w, vertical: 8.h),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          width: 62.2.w,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10.r),
+                            color: currentSelectedEmojiKey == emoji.label ? AppColors.grey100 : Colors.transparent,
+                          ),
                           child: Column(
                             children: [
                               Image.asset(
@@ -764,10 +779,11 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
             ),
+            // ),
           ],
         ),
       ),
@@ -834,7 +850,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                           child: Container(
                             padding: EdgeInsets.all(2.r),
                             child: Image.asset(
-                              EmojiAsset.fromString(currentSelectedEmojiKey).asset,
+                              EmojiAsset.fromString("default").asset,
                               width: 24.w,
                               height: 24.h,
                             ),
@@ -864,6 +880,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                                 _messageInputController.clear();
                                 setState(() {
                                   currentSelectedEmojiKey = 'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
+                                  showEmojiBar = false;
                                 });
                               }
                             : null,
