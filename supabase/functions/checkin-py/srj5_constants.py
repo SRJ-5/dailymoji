@@ -6,8 +6,8 @@ CLUSTERS = ["neg_low", "neg_high", "adhd", "sleep", "positive"]
 # ❤️ 1. 텍스트가 포함된 경우 사용할 기본 가중치
 # e.g. 최종 점수 = (텍스트 * 0.5) + (온보딩 * 0.2) + (이모지 * 0.3)
 FINAL_FUSION_WEIGHTS = {
-    "text": 0.45, # 사용자의 순간의 감정
-    "assessment": 0.40, # 사용자의 안정된 임상적 상태
+    "text": 0.60, # 사용자의 순간의 감정
+    "assessment": 0.25, # 사용자의 안정된 임상적 상태
     "icon": 0.15 # 보조적인 감정 신호
 }
 
@@ -25,8 +25,8 @@ ASSESSMENT_SCORE_CAP = 0.7
 
 # 3. 텍스트는 있지만 아이콘이 없을 때를 위한 가중치 (비례 배분)
 FINAL_FUSION_WEIGHTS_NO_ICON = {
-    "text": 0.40, # text + icon
-    "assessment": 0.60  # assessment + icon
+    "text": 0.70, # text + icon
+    "assessment": 0.30  # assessment + icon
 }
 
 # --- Scoring Weights & Parameters ---

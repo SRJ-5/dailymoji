@@ -21,7 +21,10 @@ from supabase import create_client, Client
 
 import uuid
 from ai_moderator import moderate_text
-from llm_prompts import ADHD_TASK_BREAKDOWN_PROMPT, ADHD_TASK_DETECTION_PROMPT, REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, call_llm, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT 
+from llm_prompts import (
+    REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, 
+    call_llm, get_adhd_breakdown_prompt, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT
+)
 from rule_based import rule_scoring
 from srj5_constants import (
     ASSESSMENT_SCORE_CAP, CLUSTER_TO_DISPLAY_NAME, CLUSTERS, DEEP_DIVE_MAX_SCORES, EMOJI_ONLY_SCORE_CAP, FINAL_FUSION_WEIGHTS_NO_ICON, ICON_TO_CLUSTER, ONBOARDING_MAPPING,
@@ -441,17 +444,24 @@ async def save_analysis_to_supabase(
 
 # RIN: ADHD 질문에 대한 사용자 답변을 처리하는 함수
 async def _handle_adhd_response(payload: AnalyzeRequest, original_text: str, debug_log: dict):
+    user_response = payload.text
     print(f"🧠 Handling ADHD follow-up. User response: '{payload.text}'")
     user_nick_nm, _ = await get_user_info(payload.user_id)
     
     # 1. 사용자의 답변이 'YES'인지 'NO'인지 LLM으로 판단
-    decision = await call_llm(ADHD_TASK_DETECTION_PROMPT, payload.text, OPENAI_KEY, expect_json=False)
-    debug_log["adhd_decision"] = decision
+    negative_keywords = ['아니', '없어', '없는데', '아닌데', '딱히', '그냥']
+    is_negative_response = any(keyword in user_response for keyword in negative_keywords) or len(user_response) < 5
 
-    if "YES" in decision:
-        # 2-1. 'YES'인 경우: 원래 텍스트를 기반으로 작업을 분할
-        print("-> Decision: YES. Breaking down the task.")
-        breakdown_prompt = ADHD_TASK_BREAKDOWN_PROMPT.format(user_nick_nm=user_nick_nm, user_message=original_text)
+    debug_log["adhd_decision"] = "NO_TASK" if is_negative_response else "HAS_TASK"
+
+    if not is_negative_response:
+        # 2-1. '할 일이 있다'고 판단: 사용자의 답변을 바탕으로 작업을 분할
+        print("-> Decision: HAS_TASK. Breaking down the user's response.")
+        breakdown_prompt = get_adhd_breakdown_prompt(
+            personality=payload.character_personality,
+            user_nick_nm=user_nick_nm,
+            user_message=user_response
+        )
         breakdown_result = await call_llm(breakdown_prompt, "", OPENAI_KEY, expect_json=True)
         
         breakdown_steps = breakdown_result.get("breakdown", ["작업을 작은 단계로 나눠보세요."])
@@ -460,22 +470,24 @@ async def _handle_adhd_response(payload: AnalyzeRequest, original_text: str, deb
         solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1).single().execute)
         solution_id = solution_res.data.get("solution_id") if solution_res.data else None
 
+        proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="pomodoro", personality=payload.character_personality)
+ 
         return {
             "intervention": {
                 "preset_id": PresetIds.ADHD_TASK_BREAKDOWN,
-                "breakdown_steps": breakdown_steps, # 분할된 작업 목록
-                "proposal_text": "좋아요! 이 작은 단계들을 하나씩 끝내보는 건 어때요? 제가 뽀모도로 타이머로 집중을 도와줄게요!",
+                "breakdown_steps": breakdown_steps,
+                "proposal_text": proposal_text,
                 "solution_id": solution_id
             }
         }
     else:
-        # 2-2. 'NO'인 경우: 집중력 훈련 영상 제안
-        print("-> Decision: NO. Proposing focus training.")
+        # 2-2. '할 일이 없다'고 판단: 집중력 훈련 영상 제안
+        print("-> Decision: NO_TASK. Proposing focus training.")
         solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, text").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1).single().execute)
         solution_data = solution_res.data or {}
 
         # 집중력 훈련 제안 멘트를 DB에서 가져옴
-        proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="focus_training")
+        proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="focus_training", personality=payload.character_personality)
         
         return {
             "intervention": {
@@ -675,6 +687,13 @@ async def analyze_emotion(payload: AnalyzeRequest):
         if await _handle_moderation(text):
             return JSONResponse(status_code=400, content={"error": "Inappropriate content detected."})
 
+        # ADHD 컨텍스트가 존재하면, 다른 모든 분석을 건너뛰고 ADHD 답변 처리 로직으로 바로 보냅니다.
+        if payload.adhd_context and payload.adhd_context.get("awaiting_response"):
+            original_text = payload.adhd_context.get("original_text", "")
+            # 이 함수는 점수를 재계산하지 않고, 오직 ADHD 시나리오에 맞는 'intervention'만 생성하여 반환합니다.
+            return await _handle_adhd_response(payload, original_text, debug_log)
+
+
         # --- 파이프라인 1: 🌸 CASE 2 - 이모지만 있는 경우 ---
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
@@ -688,12 +707,6 @@ async def analyze_emotion(payload: AnalyzeRequest):
             intervention = {"preset_id": PresetIds.SAFETY_CRISIS_MODAL, "analysis_text": "많이 힘드시군요. 지금 도움이 필요할 수 있어요.", "cluster": top_cluster,"solution_id": f"{top_cluster}_crisis_01"}
             session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores)
             return {"session_id": session_id, "intervention": intervention}
-
-        # [추가] ADHD 분기 로직 처리
-        if payload.adhd_context and payload.adhd_context.get("awaiting_response"):
-            original_text = payload.adhd_context.get("original_text", "")
-            # ADHD 질문에 대한 답변 처리 함수를 호출하고 결과를 즉시 반환
-            return await _handle_adhd_response(payload, original_text, debug_log)
 
         # --- 파이프라인 3: Triage (친구 모드 / 분석 모드 분기) ---
         rule_scores, _, _ = rule_scoring(text)
@@ -719,12 +732,10 @@ async def analyze_emotion(payload: AnalyzeRequest):
             if top_cluster == "adhd":
                 print("🧠 ADHD cluster detected. Switching to pre-solution question flow.")
                 
-                # DB에서 ADHD 질문 멘트 가져오기 (character_mentions 테이블에 mention_type='adhd_question'으로 추가 필요)
                 question_text = await get_mention_from_db(
                     mention_type="adhd_question",
                     language_code=payload.language_code,
                     personality=payload.character_personality,
-                    default_message="혹시 지금 바로 해야 할 일이 있다면 알려주세요!",
                     format_kwargs={"user_nick_nm": (await get_user_info(payload.user_id))[0]}
                 )
                 
@@ -734,7 +745,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
                     "text": question_text,
                     "adhd_context": {
                         "awaiting_response": True,
-                        "original_text": payload.text # 원래 사용자가 입력했던 텍스트
+                        "original_text": payload.text
                     }
                 }
 

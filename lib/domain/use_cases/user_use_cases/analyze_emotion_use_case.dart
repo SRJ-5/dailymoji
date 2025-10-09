@@ -1,4 +1,3 @@
-// 감정 분석 비즈니스 로직을 담당하는 UseCase
 import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/repositories/emotion_repository.dart';
