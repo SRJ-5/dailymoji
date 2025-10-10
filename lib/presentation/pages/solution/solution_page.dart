@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:dailymoji/core/providers.dart';
-import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/solution/widget/solution_bubble.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
@@ -28,41 +27,30 @@ class SolutionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _PlayerView(
-      // 테스트 끝나면  이거 없애고 밑에꺼 살려야함
-      solutionId: 'test',
-      sessionId: null,
-      isReview: false,
-      solution: Solution(
-        videoId: 'O3HZIv4ZFZM',
-        startAt: 0,
-        endAt: 60,
-      ),
-    );
-    // final solutionAsync = ref.watch(solutionProvider(solutionId));
+    final solutionAsync = ref.watch(solutionProvider(solutionId));
 
-    // return solutionAsync.when(
-    //   loading: () => const Scaffold(
-    //     backgroundColor: AppColors.black,
-    //     body: Center(child: CircularProgressIndicator()),
-    //   ),
-    //   error: (err, stack) => Scaffold(
-    //     backgroundColor: AppColors.black,
-    //     body: Center(
-    //       child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
-    //           style: const TextStyle(color: AppColors.white)),
-    //     ),
-    //   ),
-    //   data: (solution) {
-    //     // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
-    //     return _PlayerView(
-    //             solutionId: solutionId,
-    //             sessionId: sessionId,
-    //             solution: solution,
-    //             isReview: isReview,
-    //           );
-    //   },
-    // );
+    return solutionAsync.when(
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.black,
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: AppColors.black,
+        body: Center(
+          child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
+              style: const TextStyle(color: AppColors.white)),
+        ),
+      ),
+      data: (solution) {
+        // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
+        return _PlayerView(
+          solutionId: solutionId,
+          sessionId: sessionId,
+          solution: solution,
+          isReview: isReview,
+        );
+      },
+    );
   }
 }
 
@@ -97,7 +85,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   @override
   void initState() {
     super.initState();
-    // ✅ 가로 고정 + 몰입형 UI
+    // 가로 고정 + 몰입형 UI
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -213,7 +201,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     final size = MediaQuery.of(context).size;
     const ar = 16 / 9;
 
-    // 📐 화면을 좌우까지 '덮도록' 필요한 확대 배수 (BoxFit.cover 수동 구현)
+    // 화면을 좌우까지 '덮도록' 필요한 확대 배수 (BoxFit.cover 수동 구현)
     final widthAtScreenHeight = size.height * ar; // 세로 꽉 채웠을 때의 가로폭
     final coverScale = size.width / widthAtScreenHeight; // 좌우 남지 않게 만드는 배수
     const extraZoom = 1; // 더 크게 자르고 싶으면 1.05~1.2
@@ -282,14 +270,14 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                   ),
                   // 말풍선
                   const SolutionBubble(
-                    text: '제가 옆에서 함께할게요.\n깊게 숨 들이마셔요!',
+                    text: '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!',
                   ),
                 ],
               ),
             ),
           ),
 
-          // ✋ 탭으로 오버레이 표시/숨김 토글 + 첫 터치 시 음소거 해제
+          // 탭으로 오버레이 표시/숨김 토글 + 첫 터치 시 음소거 해제
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -307,7 +295,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             ),
           ),
 
-          // 🎛️ 커스텀 오버레이
+          // 커스텀 오버레이
           if (_showControls)
             Positioned.fill(
               child: Stack(
@@ -352,7 +340,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     ),
                   ),
 
-                  // ▶️/⏸ 중앙 플레이/일시정지
+                  // ▶ / ⏸ 중앙 플레이/일시정지
                   Center(
                     child: IconButton(
                       iconSize: 64.r,

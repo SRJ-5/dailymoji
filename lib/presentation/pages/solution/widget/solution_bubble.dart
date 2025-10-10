@@ -16,6 +16,7 @@ class SolutionBubble extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         margin: EdgeInsets.only(left: 8.w),
         child: Text(text,
+            textAlign: TextAlign.center,
             style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900)),
       ),
     );
