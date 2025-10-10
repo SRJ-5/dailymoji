@@ -1,4 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/pages/solution/widget/solution_bubble.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/domain/entities/solution.dart';
@@ -23,30 +28,41 @@ class SolutionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final solutionAsync = ref.watch(solutionProvider(solutionId));
-
-    return solutionAsync.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.black,
-        body: Center(child: CircularProgressIndicator()),
+    return _PlayerView(
+      // 테스트 끝나면  이거 없애고 밑에꺼 살려야함
+      solutionId: 'test',
+      sessionId: null,
+      isReview: false,
+      solution: Solution(
+        videoId: 'O3HZIv4ZFZM',
+        startAt: 0,
+        endAt: 60,
       ),
-      error: (err, stack) => Scaffold(
-        backgroundColor: AppColors.black,
-        body: Center(
-          child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
-              style: const TextStyle(color: AppColors.white)),
-        ),
-      ),
-      data: (solution) {
-        // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
-        return _PlayerView(
-          solutionId: solutionId,
-          sessionId: sessionId,
-          solution: solution,
-          isReview: isReview,
-        );
-      },
     );
+    // final solutionAsync = ref.watch(solutionProvider(solutionId));
+
+    // return solutionAsync.when(
+    //   loading: () => const Scaffold(
+    //     backgroundColor: AppColors.black,
+    //     body: Center(child: CircularProgressIndicator()),
+    //   ),
+    //   error: (err, stack) => Scaffold(
+    //     backgroundColor: AppColors.black,
+    //     body: Center(
+    //       child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
+    //           style: const TextStyle(color: AppColors.white)),
+    //     ),
+    //   ),
+    //   data: (solution) {
+    //     // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
+    //     return _PlayerView(
+    //             solutionId: solutionId,
+    //             sessionId: sessionId,
+    //             solution: solution,
+    //             isReview: isReview,
+    //           );
+    //   },
+    // );
   }
 }
 
@@ -73,6 +89,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   bool _showControls = false;
   bool _isMuted = true;
   bool _isNavigating = false;
+  bool _showCharacter = false;
+  bool _characterTimerStarted = false;
 
   String? _exitReason;
 
@@ -133,6 +151,16 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     // 플레이어 컨트롤 개선: 컨트롤러 값(재생/일시정지 상태 등)이 변경될 때마다 UI를 갱신
     if (mounted) {
       setState(() {});
+    }
+
+    // 영상이 실제 재생될 때 캐릭터 타이머 시작
+    if (_controller.value.playerState == PlayerState.playing &&
+        !_characterTimerStarted) {
+      _characterTimerStarted = true;
+      setState(() => _showCharacter = true);
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _showCharacter = false);
+      });
     }
 
     if (_controller.value.playerState == PlayerState.ended) {
@@ -228,6 +256,35 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
+
+          // 캐릭터 + 말풍선
+          Positioned(
+            left: 10.w,
+            bottom: 19.h,
+            child: AnimatedOpacity(
+              opacity: _showCharacter ? 1 : 0,
+              duration: const Duration(seconds: 1), // 1초 동안 서서히 사라짐
+              curve: Curves.easeOut,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 캐릭터 이미지
+                  Transform(
+                    alignment: Alignment.center, // 중심축 기준으로 반전
+                    transform: Matrix4.rotationY(math.pi), // 좌우 반전
+                    child: Image.asset(
+                      AppImages.cadoWalk,
+                      height: 180.h,
+                    ),
+                  ),
+                  // 말풍선
+                  const SolutionBubble(
+                    text: '제가 옆에서 함께할게요.\n깊게 숨 들이마셔요!',
+                  ),
+                ],
               ),
             ),
           ),
