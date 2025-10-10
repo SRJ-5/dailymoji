@@ -295,7 +295,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
                 selectedEmotion == null
                     ? SvgPicture.asset(AppIcons.send)
-                    : SvgPicture.asset(AppIcons.send),
+                    : SvgPicture.asset(AppIcons.sendOrange),
               ],
             ),
           ),
