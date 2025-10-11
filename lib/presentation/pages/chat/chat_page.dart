@@ -484,8 +484,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         borderRadius: BorderRadius.circular(50.r),
         child: Image.asset(
           message.imageAssetPath!,
-          width: 100.w,
-          height: 100.w,
+          width: 80.w,
+          height: 80.w,
           fit: BoxFit.cover,
         ),
       );
