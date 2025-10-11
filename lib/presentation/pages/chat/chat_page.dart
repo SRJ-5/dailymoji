@@ -43,6 +43,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
   double _inputFieldHeight = 64.h; // 기본 높이
   bool _wasKeyboardVisible = false; // 이전 키보드 상태 추적
   late AnimationController _emojiCtrl; // 이모지 바 애니메이션 컨트롤러
+  bool _isInitialLoad = true; // 초기 로딩 상태 추적
 
   // RouteObserver를 didChangeDependencies에서 지역 변수로 가져오도록 변경
   @override
@@ -80,9 +81,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
     if (_scrollController.hasClients) {
       final chatState = ref.read(chatViewModelProvider);
 
-      // reverse: true 상태에서 맨 위로 스크롤했을 때 (maxScrollExtent에 가까워졌을 때)
+      // 맨 위로 스크롤했을 때 (minScrollExtent에 가까워졌을 때)
       // 그리고 현재 로딩 중이 아니고, 더 불러올 메시지가 있을 때만 실행
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+      if (_scrollController.position.pixels <= _scrollController.position.minScrollExtent + 200 &&
           !chatState.isLoadingMore &&
           chatState.hasMore &&
           !chatState.isLoading) {
@@ -156,18 +157,44 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
-      if (!_scrollController.hasClients) return;
-      // reverse: true 상태에서 맨 아래는 스크롤 위치 0.0을 의미합니다.
-      final targetPosition = 0.0;
-
       // 위젯 렌더링이 완료된 직후에 스크롤해야 정확한 맨 아래 위치로 갈 수 있음
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
-            targetPosition,
+            _scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
+        }
+      });
+    }
+  }
+
+  // 초기 진입 시 여러 번 재시도하며 스크롤 (렌더링 지연 대응)
+  void _scrollToBottomWithRetry(int attemptCount, [double? previousMaxExtent]) {
+    if (!mounted || attemptCount > 5) return; // 최대 5번 시도
+
+    if (_scrollController.hasClients) {
+      final maxExtent = _scrollController.position.maxScrollExtent;
+
+      // 이전과 같은 위치면 더 이상 렌더링되지 않는 것이므로 중단
+      if (previousMaxExtent != null && (maxExtent - previousMaxExtent).abs() < 1.0) {
+        return;
+      }
+
+      _scrollController.jumpTo(maxExtent);
+
+      // 50ms 후 다시 시도 (렌더링이 추가로 발생할 수 있음)
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) {
+          _scrollToBottomWithRetry(attemptCount + 1, maxExtent);
+        }
+      });
+    } else {
+      // ScrollController가 아직 준비되지 않았다면 조금 기다렸다가 재시도
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) {
+          _scrollToBottomWithRetry(attemptCount + 1, previousMaxExtent);
         }
       });
     }
@@ -200,6 +227,17 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
       }
     });
 
+    // 초기 로딩 완료 시 스크롤을 맨 아래로 이동
+    ref.listen(chatViewModelProvider.select((value) => value.isLoading), (previous, next) {
+      if (previous == true && next == false && _isInitialLoad) {
+        _isInitialLoad = false;
+        // 여러 프레임에 걸쳐 여러 번 시도하여 확실하게 스크롤
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottomWithRetry(0);
+        });
+      }
+    });
+
     final chatState = ref.watch(chatViewModelProvider);
     final isArchivedView = chatState.isArchivedView;
 
@@ -211,13 +249,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
     // 봇이 입력중일 때 사용자가 입력 못하게
     final isBotTyping = chatState.isTyping;
 
-    final messages = chatState.messages.reversed.toList();
+    final messages = chatState.messages;
     // 전체 대화 목록에서 가장 마지막 메시지의 ID를 가져옵니다.
-    final originalMessages = chatState.messages;
-    final veryLastMessageId = originalMessages.isNotEmpty ? originalMessages.last.id : null;
-
-    final lastBotMessage = chatState.messages.lastWhere((m) => m.sender == Sender.bot && m.type == MessageType.solutionProposal,
-        orElse: () => Message(userId: '', sender: Sender.bot, id: ''));
+    final veryLastMessageId = messages.isNotEmpty ? messages.last.id : null;
 
     //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동 (무한 스크롤 로딩 중이 아닐 때만)
     ref.listen(chatViewModelProvider.select((state) => state.messages.length), (previous, next) {
@@ -273,11 +307,10 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                         ? const Center(child: CircularProgressIndicator())
                         : ListView.builder(
                             controller: _scrollController,
-                            reverse: true,
                             itemCount: messages.length + (chatState.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
-                              // 로딩 인디케이터 표시 (reverse: true 상태에서 맨 위에 표시됨)
-                              if (chatState.isLoadingMore && index == messages.length) {
+                              // 로딩 인디케이터 표시 (맨 위에 표시됨)
+                              if (chatState.isLoadingMore && index == 0) {
                                 return Container(
                                   padding: EdgeInsets.all(16.h),
                                   child: const Center(
@@ -289,36 +322,21 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                                   ),
                                 );
                               }
-                              //  reverse된 리스트에서 올바른 메시지 가져오기
-                              // final allMessages = chatState.messages;
-                              // final reversedIndex =
-                              //     allMessages.length - 1 - index;
-                              // final message = allMessages[reversedIndex];
 
-                              // RIN: 날짜구분선 로직 단순화 (마지막 메시지 판단에 오류가 발생할 수 있음)
-                              final message = messages[index];
+                              // 로딩 인디케이터가 있을 때는 인덱스를 1 감소
+                              final messageIndex = chatState.isLoadingMore ? index - 1 : index;
+                              final message = messages[messageIndex];
 
                               // --- 날짜 구분선 표시 로직 ---
                               bool showDateSeparator = false;
-                              // if (reversedIndex == 0) {
-                              //   showDateSeparator = true;
-                              // } else {
-                              //   // 현재 메시지와 시간상 이전 메시지의 날짜를 비교
-                              //   final prevMessageInTime =
-                              //       allMessages[reversedIndex - 1];
-                              //   if (!isSameDay(prevMessageInTime.createdAt,
-                              //       message.createdAt)) {
-                              //     showDateSeparator = true;
-                              //   }
-                              // }
 
-                              // RIN: reverse 리스트에서 현재가 마지막 아이템(시간상 가장 오래된 메시지)일 경우
-                              if (index == messages.length - 1) {
+                              // 첫 번째 메시지(시간상 가장 오래된 메시지)일 경우
+                              if (messageIndex == 0) {
                                 showDateSeparator = true;
                               } else {
-                                // 현재 메시지와 바로 다음 메시지(시간상 더 이전)의 날짜를 비교
-                                final prevMessageInList = messages[index + 1];
-                                if (!isSameDay(prevMessageInList.createdAt, message.createdAt)) {
+                                // 현재 메시지와 바로 이전 메시지의 날짜를 비교
+                                final prevMessage = messages[messageIndex - 1];
+                                if (!isSameDay(prevMessage.createdAt, message.createdAt)) {
                                   showDateSeparator = true;
                                 }
                               }
@@ -328,18 +346,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                               final messageWidget = _buildMessageWidget(
                                 message,
                                 key: ValueKey(message.tempId),
-                                // isLastProposal: message.id == lastBotMessage.id,
-                                // isLastProposal: message.id == veryLastMessageId,
                                 isLastProposal: isLastProposal,
                               );
 
-                              // reverse: true일 때는 메시지 위젯이 먼저, 구분선이 나중에 와야
-                              // 화면에서는 구분선 -> 메시지 순으로 올바르게 보인다!
+                              // 날짜 구분선이 메시지 위에 표시됨
                               if (showDateSeparator) {
                                 return Column(
                                   children: [
-                                    _DateSeparator(date: message.createdAt), // 날짜 구분선이 나중에 나옴 (reverse 효과)
-                                    messageWidget, // 메시지가 먼저 나오고
+                                    _DateSeparator(date: message.createdAt),
+                                    messageWidget,
                                   ],
                                 );
                               }
