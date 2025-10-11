@@ -4,7 +4,8 @@ import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
 import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_page.dart';
 import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
-import 'package:dailymoji/presentation/pages/my/srj5_test/srj5_test_page.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/select_srj5_test_page.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/widgets/srj5_test_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -134,12 +135,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               case AppTextStrings.privacyPolicy:
               case AppTextStrings.counselingCenter:
                 return InfoWebViewPage(title: title);
-              case AppTextStrings.negLow:
-              case AppTextStrings.negHigh:
-              case AppTextStrings.adhdHigh:
-              case AppTextStrings.sleepDysregulation:
-              case AppTextStrings.positiveRecovery:
-                return Srj5TestPage(title);
+              case AppTextStrings.srj5Test:
+                return SelectSrj5TestPage();
               default:
                 return PreparingPage(
                     AppTextStrings.pageIsPreparing);

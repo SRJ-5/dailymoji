@@ -19,6 +19,7 @@ class AppTextStrings {
   static const String privacyPolicy = '개인정보 처리방침';
   static const String counselingCenter = '상담센터 연결';
   static const String pageIsPreparing = '준비중';
+  static const String srj5Test = '감정 검사';
   static const String negLow = '우울·무기력·번아웃 집중 분석';
   static const String negHigh = '불안·긴장·분노 집중 분석';
   static const String adhdHigh = '주의산만·충동성 집중 분석';
@@ -79,7 +80,7 @@ class AppTextStrings {
   static const String editNickname = '닉네임 수정';
   static const String editCharacterName = '캐릭터 이름 수정';
   static const String nicknameLengthRule = ' • 2~10자만 사용 가능해요';
-  static const String srj5Test = '마음 점검';
+  static const String myState = '나의 상태';
 
   // Onboarding
   static const String onboarding1TitleUser = '나의 닉네임 설정';
@@ -155,6 +156,17 @@ class AppTextStrings {
   static const String monthlyReportDateFormat = 'yyyy년 MM월';
   static const String monthlyReportDayFormat =
       'M월 d일 EEEE'; // 예: 10월 7일 월요일
+
+  // select_srj5_test_page.dart 용
+  static const String negHighDescription =
+      '최근 긴장감과 짜증, 분노 빈도를 살펴봐요';
+  static const String negLowDescription =
+      '기분 저하와 의욕, 흥미 감소를 확인해요';
+  static const String sleepDescription = '산만함과 미루기 패턴을 점검해요';
+  static const String adhdDescription =
+      '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
+  static const String positiveDescription =
+      '마음의 안정감과 회복 탄력도를 확인해요';
 }
 
 // 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가

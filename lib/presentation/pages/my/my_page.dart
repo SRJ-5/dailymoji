@@ -48,16 +48,8 @@ class _MyPageState extends ConsumerState<MyPage> {
 
     // srj5 진단검사
     final Map<String, VoidCallback> srj5Test = {
-      AppTextStrings.negLow: () =>
-          context.push('/info/${AppTextStrings.negLow}'),
-      AppTextStrings.negHigh: () =>
-          context.push('/info/${AppTextStrings.negHigh}'),
-      AppTextStrings.adhdHigh: () =>
-          context.push('/info/${AppTextStrings.adhdHigh}'),
-      AppTextStrings.sleepDysregulation: () => context
-          .push('/info/${AppTextStrings.sleepDysregulation}'),
-      AppTextStrings.positiveRecovery: () => context
-          .push('/info/${AppTextStrings.positiveRecovery}'),
+      AppTextStrings.srj5Test: () =>
+          context.push('/info/${AppTextStrings.srj5Test}'),
     };
 
     return Scaffold(
@@ -107,7 +99,7 @@ class _MyPageState extends ConsumerState<MyPage> {
               ),
               SizedBox(height: 16.h),
               _buildSection(
-                title: AppTextStrings.srj5Test,
+                title: AppTextStrings.myState,
                 items: srj5Test.keys.toList(),
                 onTapList: srj5Test.values.toList(),
               ),

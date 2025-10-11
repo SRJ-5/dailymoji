@@ -1,6 +1,11 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/my/srj5_test/srj5_test_box.dart';
+import 'package:dailymoji/core/styles/icons.dart';
+import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/domain/entities/emotion_cluster.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/widgets/srj5_test_box.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part2/test_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
@@ -10,75 +15,86 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-class Srj5TestPage extends ConsumerStatefulWidget {
-  final String title;
-  Srj5TestPage(this.title);
-
+class SelectSrj5TestPage extends ConsumerStatefulWidget {
   @override
-  ConsumerState<Srj5TestPage> createState() =>
-      _Srj5TestPageState();
+  ConsumerState<SelectSrj5TestPage> createState() =>
+      _SelectSrj5TestPageState();
 }
 
-class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
-  final personalities = [
-    '지난 2주 동안, 기분이 가라앉거나, 우울했거나, 절망적이었나요?',
-    '지난 2주 동안, 일에 흥미를 잃거나 즐거움을 느끼지 못했나요?',
-    '지난 2주 동안, 초조하거나 긴장되거나 불안감을 자주 느꼈나요?',
-    '지난 2주 동안, 걱정을 멈추거나 조절하기 어려웠나요?',
-    '최근 한 달, 통제할 수 없거나 예상치 못한 일 때문에 화가 나거나 속상했나요?',
-    '지난 한 달 동안, 잠들기 어렵거나 자주 깨는 문제가 얼마나 있었나요?',
-    '전반적으로, 나는 내 자신에 대해 긍정적인 태도를 가지고 있나요?',
-    '직무/일상적인 과제 때문에 신체적, 정신적으로 지쳐 있다고 느끼나요?',
-    '자주 일상적인 일을 끝내는 것을 잊거나, 마무리 못하는 경우가 있나요?',
-  ];
+class _SelectSrj5TestPageState
+    extends ConsumerState<SelectSrj5TestPage> {
+  final clusters = EmotionClusters;
 
   int stepIndex = 0;
-  late int totalSteps = personalities.length;
+  late int totalSteps = 1;
   @override
   Widget build(BuildContext context) {
+    final user = ref.read(userViewModelProvider);
+    final userName = user.userProfile!.userNickNm;
     final isNextEnabled = true;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
-        leading: stepIndex > 0
-            ? IconButton(
-                onPressed: () {
-                  setState(() => stepIndex--);
-                },
-                icon: Icon(Icons.arrow_back))
-            : null,
-        title: stepIndex == totalSteps
-            ? null
-            : AppText(
-                widget.title,
-                style: AppFontStyles.bodyBold18
-                    .copyWith(color: AppColors.grey900),
-              ),
-        centerTitle: true,
+        actions: [
+          GestureDetector(
+              onTap: () {
+                context.pop();
+              },
+              child: Icon(Icons.clear))
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 12.w),
-        child: Column(
-          children: [
-            stepIndex == totalSteps
-                ? SizedBox.shrink()
-                : TopIndicator(
-                    width: 28,
-                    totalSteps: totalSteps - 1,
-                    stepIndex: stepIndex), // indicator 맨 위
-            Expanded(
-                child: stepIndex == totalSteps
-                    ? FinishWidget(
-                        text: '모든 준비 완료!\n함께 시작해 볼까요?',
-                      )
-                    : Srj5TestBox(
-                        key: ValueKey(stepIndex),
-                        text: personalities[stepIndex],
-                        questionIndex: stepIndex,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            children: [
+              SizedBox(height: 40.h),
+              AppText(
+                '지금 $userName님께 필요한\n감정 검사를 선택해 볼까요?',
+                textAlign: TextAlign.center,
+                style: AppFontStyles.heading2
+                    .copyWith(color: AppColors.grey900),
+              ),
+              SizedBox(height: 4.h),
+              AppText(
+                '각 검사는 약 2분 정도 소요돼요 🌱',
+                textAlign: TextAlign.center,
+                style: AppFontStyles.bodyRegular14
+                    .copyWith(color: AppColors.grey700),
+              ),
+              Expanded(
+                  child: Column(
+                children: [
+                  SizedBox(
+                      width: 237.67.w,
+                      height: 255.h,
+                      child: Image.asset(
+                        AppImages.cadoTest,
+                        fit: BoxFit.cover,
                       )),
-          ],
+                  SizedBox(height: 50.h),
+                  AppText(
+                    '총 9문항 ∙ 약 2분 소요',
+                    style: AppFontStyles.bodySemiBold18
+                        .copyWith(color: AppColors.grey900),
+                  )
+                ],
+              )
+                  // child: stepIndex == totalSteps
+                  //     ? FinishWidget(
+                  //         text: '모든 준비 완료!\n함께 시작해 볼까요?',
+                  //       )
+                  //     : Srj5TestBox(
+                  //         key: ValueKey(stepIndex),
+                  //         text: personalities[stepIndex],
+                  //         questionIndex: stepIndex,
+                  //       )
+                  ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: SafeArea(
