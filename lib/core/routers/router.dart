@@ -5,6 +5,7 @@ import 'package:dailymoji/presentation/pages/home/home_page.dart';
 import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_page.dart';
 import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
 import 'package:dailymoji/presentation/pages/my/srj5_test/assessment_page.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/widgets/srj5_test_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -195,6 +196,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               isReview: isReview);
         },
       ),
+      GoRoute(
+        path: '/srj5_test',
+        builder: (context, state) {
+          return Srj5TestPage();
+        },
+      )
     ],
   );
 });

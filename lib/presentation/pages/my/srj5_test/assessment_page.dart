@@ -26,11 +26,33 @@ class _AssessmentPageState
   late String? selectedcluster;
   late String? selectedclusterNM;
 
-  Future<void> _getQuestion(String selectedcluster) async {
-    final result = await ref
-        .read(assessmentViewModelProvider.notifier)
-        .getQuestion(selectedcluster);
-    result ? context.go('/home') : context.go('/home1');
+  Future<void> _getQuestion(
+      {required String selectedcluster,
+      required String selectedClusterNM}) async {
+    try {
+      final result = await ref
+          .read(assessmentViewModelProvider.notifier)
+          .getQuestion(
+              cluster: selectedcluster,
+              clusterNM: selectedClusterNM);
+      if (mounted) {
+        result
+            ? setState(() {
+                // isNextEnabled = false;
+                stepIndex++;
+              })
+            : ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: AppText(
+                        "감정 검사를 불러오는데 실패했습니다. 다시 시도해주세요.")));
+      }
+    } catch (e) {
+      // 예외 처리
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: AppText("오류가 발생했습니다: ${e.toString()}")));
+      }
+    }
   }
 
   @override
@@ -51,11 +73,13 @@ class _AssessmentPageState
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
         leading: GestureDetector(
-          onTap: () {
-            setState(() {
-              stepIndex = 0;
-            });
-          },
+          onTap: stepIndex == 0
+              ? null
+              : () {
+                  setState(() {
+                    stepIndex = 0;
+                  });
+                },
           child: stepIndex == 0 ? null : Icon(Icons.arrow_back),
         ),
         actions: [
@@ -167,12 +191,13 @@ class _AssessmentPageState
                   onPressed: selectedClusterNum != -1
                       ? () async {
                           if (stepIndex < totalSteps) {
-                            setState(() {
-                              // isNextEnabled = false;
-                              stepIndex++;
-                            });
+                            _getQuestion(
+                                selectedcluster:
+                                    selectedcluster!,
+                                selectedClusterNM:
+                                    selectedclusterNM!);
                           } else if (stepIndex == totalSteps) {
-                            _getQuestion(selectedcluster!);
+                            context.push('/srj5_test');
                           }
                         }
                       : null,

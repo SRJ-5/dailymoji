@@ -9,15 +9,18 @@ class AssessmentRepositoryImpl implements AssessmentRepository {
   Future<AssessmentQuestions?> getQuestion(
       String cluster) async {
     final result = await _srj5TQuestions.getQuestion(cluster);
-    final List<String> questionTextList = [];
     if (result.isNotEmpty) {
       final resultCluster = result[0]!.cluster!;
       final questionTextList =
           result.map((q) => q!.questionText!).toList();
+      final questionCode =
+          result.map((q) => q!.questionCode!).toList();
 
       return AssessmentQuestions(
-          cluster: resultCluster,
-          questionText: questionTextList);
+        cluster: resultCluster,
+        questionText: questionTextList,
+        questionCode: questionCode,
+      );
     }
     return null;
   }

@@ -33,7 +33,7 @@ class EmotionClusters {
     description: AppTextStrings.adhdDescription,
   );
   final sleepCluster = EmotionCluster(
-    cluster: AppTextStrings.sleepDescription,
+    cluster: AppTextStrings.sleep,
     clusterNM: AppTextStrings.clusterSleep,
     icon: AppImages.sleepingEmoji,
     description: AppTextStrings.sleepDescription,

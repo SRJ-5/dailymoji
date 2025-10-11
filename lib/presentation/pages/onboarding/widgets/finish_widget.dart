@@ -7,7 +7,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FinishWidget extends StatelessWidget {
   final String text;
-  const FinishWidget({required this.text});
+  final bool? srj5;
+  const FinishWidget({required this.text, this.srj5});
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +28,22 @@ class FinishWidget extends StatelessWidget {
                   .copyWith(color: AppColors.grey900),
             )),
           ),
-          Image.asset(
-            AppImages.cadoLove,
-            width: 180.w,
-            height: 270.h,
-          )
+          srj5 == null
+              ? Image.asset(
+                  AppImages.cadoLove,
+                  width: 180.w,
+                  height: 270.h,
+                )
+              : Column(
+                  children: [
+                    SizedBox(height: 40),
+                    Image.asset(
+                      AppImages.srj5TestFinish,
+                      width: 200.w,
+                      height: 189.h,
+                    ),
+                  ],
+                )
         ],
       ),
     );

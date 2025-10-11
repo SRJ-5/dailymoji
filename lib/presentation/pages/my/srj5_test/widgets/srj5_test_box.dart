@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/assessment_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
@@ -32,9 +33,9 @@ class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
   @override
   void initState() {
     super.initState();
-    // _selectedIndex = ref
-    //     .read(userViewModelProvider)
-    //     .step2Answers[widget.questionIndex];
+    _selectedIndex = ref
+        .read(assessmentViewModelProvider)
+        .questionScores![widget.questionIndex];
   }
 
   @override
@@ -42,7 +43,7 @@ class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 24.h),
+        SizedBox(height: 60.h),
         Container(
             width: double.infinity,
             height: 100.h,
@@ -50,11 +51,11 @@ class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
               alignment: Alignment.centerLeft,
               child: AppText(
                 widget.text,
-                style: AppFontStyles.heading2
+                style: AppFontStyles.heading3
                     .copyWith(color: AppColors.grey900),
               ),
             )),
-        SizedBox(height: 24.h),
+        SizedBox(height: 32.h),
         Column(
           children: List.generate(
             _answerList.length,
@@ -71,12 +72,14 @@ class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
                                   ? -1
                                   : index;
                         });
-                        // ref
-                        //     .read(userViewModelProvider.notifier)
-                        //     .setAnswer(
-                        //       index: widget.questionIndex,
-                        //       score: _selectedIndex,
-                        //     );
+                        ref
+                            .read(assessmentViewModelProvider
+                                .notifier)
+                            .setTestAnswer(
+                              questionIndex:
+                                  widget.questionIndex,
+                              score: _selectedIndex,
+                            );
                       },
                       child: SelectBox(
                           isSelected: isSelected, text: answer)),
