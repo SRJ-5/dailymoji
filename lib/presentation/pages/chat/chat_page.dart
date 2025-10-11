@@ -687,7 +687,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                 bottomRight: Radius.circular(12.r),
                 bottomLeft: Radius.circular(12.r),
               ),
-              border: Border.all(color: AppColors.yellow200, width: 1),
+              border: Border.all(color: AppColors.yellow200, width: 2),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
