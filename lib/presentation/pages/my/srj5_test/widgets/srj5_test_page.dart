@@ -115,7 +115,6 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                       ? () {
                           if (stepIndex < totalSteps) {
                             setState(() {
-                              // isNextEnabled = false;
                               stepIndex++;
                             });
                           } else if (stepIndex == totalSteps) {

@@ -1,6 +1,7 @@
 import 'package:dailymoji/domain/entities/assessment_questions.dart';
 import 'package:dailymoji/domain/entities/assessment_responses.dart';
 import 'package:dailymoji/presentation/providers/assessment_question_providers.dart';
+import 'package:dailymoji/presentation/providers/assessment_responses_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AssessmentState {
@@ -86,6 +87,24 @@ class AssessmentViewModel extends Notifier<AssessmentState> {
           responses: currentScores,
         ));
     print(state.questionScores);
+  }
+
+  Future<void> submitAssessment(
+      String userId, String clusterNM) async {
+    final assessmentResult = AssessmentResponses(
+        userId: userId,
+        clusterNM: clusterNM,
+        responses: state.responses!.responses);
+    if (assessmentResult.userId == null ||
+        assessmentResult.clusterNM == null ||
+        assessmentResult.responses == null) {
+      print(
+          "Error: assessment responses is null. Cannot save assessment responses.");
+      return;
+    }
+    await ref
+        .read(submitAssessmentUseCaseProvider)
+        .excute(assessmentResult);
   }
 }
 
