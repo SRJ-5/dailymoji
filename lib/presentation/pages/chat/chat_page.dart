@@ -406,7 +406,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         case MessageType.analysis:
           return _analysisMessage(message, key: key);
         case MessageType.solutionProposal:
-          return _solutionProposalMessage(message, key: key, isLastProposal: isLastProposal);
+          // return _solutionProposalMessage(message, key: key, isLastProposal: isLastProposal);
+          return _solutionProposalCardMessage(message, key: key);
         // --- 시스템 메시지 UI case 추가 ---
         case MessageType.system:
           return _systemMessage(message, key: key);
@@ -505,7 +506,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         children: [
           AppText(
             _formattedNow(message.createdAt),
-            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
+            style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
           ),
           SizedBox(width: 4.w),
           Container(
@@ -554,7 +555,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
           SizedBox(width: 4.w),
           AppText(
             _formattedNow(message.createdAt),
-            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900),
+            style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
           ),
         ],
       ),
@@ -607,7 +608,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _botMessage(message, key: ValueKey('${message.tempId}_text')),
-        SizedBox(height: 8.h),
+        SizedBox(height: 12.h),
         Padding(
           padding: EdgeInsets.only(left: 8.w),
           child: Row(
@@ -660,6 +661,121 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
           ),
         )
       ],
+    );
+  }
+
+  // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
+  Widget _solutionProposalCardMessage(Message message, {required Key key}) {
+    String msg = "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
+    final proposal = message.proposal!;
+    final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
+
+    return Padding(
+      key: key,
+      padding: EdgeInsets.symmetric(vertical: 6.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            constraints: BoxConstraints(maxWidth: 292.w),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(12.r),
+                bottomRight: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+              border: Border.all(color: AppColors.yellow200, width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  message.content.replaceAll(r'\n', '\n').split("\n")[0],
+                  style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900),
+                ),
+                // 본문
+                AppText(
+                  message.content.replaceAll(r'\n', '\n').split("\n")[1],
+                  style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+                ),
+                SizedBox(height: 16.h),
+                // 버튼들 (세로로 쌓기)
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        // TODO 호흡 솔루션 진행
+                      },
+                      child: Container(
+                        height: 40.h,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.yellow700,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Center(
+                          child: AppText(
+                            "호흡하러 가기",
+                            style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey50),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    GestureDetector(
+                      onTap: () {
+                        // TODO 영상 솔루션 진행
+                      },
+                      child: Container(
+                        height: 40.h,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.yellow700,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Center(
+                          child: AppText(
+                            "영상보러 가기",
+                            style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey50),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    GestureDetector(
+                      onTap: () {
+                        // TODO 미션 솔루션 진행
+                      },
+                      child: Container(
+                        height: 40.h,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.yellow700,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Center(
+                          child: AppText(
+                            "미션하러 가기",
+                            style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey50),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 4.w),
+          AppText(
+            _formattedNow(message.createdAt),
+            style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+          ),
+        ],
+      ),
     );
   }
 
