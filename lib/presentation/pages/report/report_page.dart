@@ -22,7 +22,8 @@ class ReportPage extends ConsumerWidget {
         backgroundColor: AppColors.yellow50,
         centerTitle: true,
         title: AppText('리포트',
-            style: AppFontStyles.heading3.copyWith(color: AppColors.grey900)),
+            style: AppFontStyles.heading3
+                .copyWith(color: AppColors.grey900)),
       ),
       body: DefaultTabController(
         length: 2,
@@ -32,6 +33,7 @@ class ReportPage extends ConsumerWidget {
               padding: EdgeInsets.symmetric(horizontal: 28.w),
               color: AppColors.yellow50,
               child: TabBar(
+                textScaler: TextScaler.noScaling,
                 tabs: [
                   Tab(text: '모지 달력'),
                   Tab(text: '모지 차트'),
@@ -44,22 +46,26 @@ class ReportPage extends ConsumerWidget {
                     color: AppColors.green500, // 선택된 탭 밑줄 색상
                   ),
                 ),
-                indicatorSize: TabBarIndicatorSize.tab, // 탭 너비만큼 underline
+                indicatorSize:
+                    TabBarIndicatorSize.tab, // 탭 너비만큼 underline
                 labelStyle: AppFontStyles.bodySemiBold14
                     .copyWith(color: AppColors.green500),
               ),
             ),
             Expanded(
               child: TabBarView(children: [
-                MonthlyReport(userId: UserProfile.userProfile!.id!),
+                MonthlyReport(
+                    userId: UserProfile.userProfile!.id!),
                 WeeklyReport(
-                    userId: UserProfile.userProfile!.id!), // MODIFIED: 위젯 이름 변경
+                    userId: UserProfile
+                        .userProfile!.id!), // MODIFIED: 위젯 이름 변경
               ]),
             )
           ],
         ),
       ),
-      bottomNavigationBar: BottomBar(), // 앱 전체 네비게이션은 메인 레이아웃에서 관리하는 것이 좋음
+      bottomNavigationBar:
+          BottomBar(), // 앱 전체 네비게이션은 메인 레이아웃에서 관리하는 것이 좋음
     );
   }
 }

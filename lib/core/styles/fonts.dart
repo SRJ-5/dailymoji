@@ -15,7 +15,7 @@ class AppFontStyles {
     fontSize: 26.sp,
     fontWeight: FontWeight.bold,
     letterSpacing: 0,
-    height: 1.5,
+    height: 1.4,
   );
   static TextStyle heading3 = TextStyle(
     fontFamily: 'Pretendard',

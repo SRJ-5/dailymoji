@@ -55,6 +55,7 @@ class _MyPageState extends ConsumerState<MyPage> {
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         centerTitle: true,
         backgroundColor: Colors.transparent,
         title: AppText(
