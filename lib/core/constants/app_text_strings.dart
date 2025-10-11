@@ -20,11 +20,6 @@ class AppTextStrings {
   static const String counselingCenter = '상담센터 연결';
   static const String pageIsPreparing = '준비중';
   static const String srj5Test = '감정 검사';
-  static const String negLow = '우울·무기력·번아웃 집중 분석';
-  static const String negHigh = '불안·긴장·분노 집중 분석';
-  static const String adhdHigh = '주의산만·충동성 집중 분석';
-  static const String sleepDysregulation = '수면 문제 집중 분석';
-  static const String positiveRecovery = '긍정성·회복탄력성 점검';
 
   // Breathing Solution Page
   static const String breathingTitle = '함께 차분해지는\n호흡 연습을 해볼까요?';
@@ -138,6 +133,13 @@ class AppTextStrings {
   static const String clusterAdhd = '집중력저하';
   static const String clusterPositive = '평온/회복';
   static const String clusterTotalScore = '종합 감정 점수';
+
+  // cluster name in supabase
+  static const String negLow = 'neg_low';
+  static const String negHigh = 'neg_high';
+  static const String adhd = 'adhd';
+  static const String sleep = 'sleep';
+  static const String positive = 'positive';
 
   // weekly_report.dart 용
   static const String weeklyReportError = '에러: ';
