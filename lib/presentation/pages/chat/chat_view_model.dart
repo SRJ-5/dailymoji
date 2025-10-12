@@ -134,7 +134,8 @@ class ChatViewModel extends Notifier<ChatState> {
     // RIN: 모든 진입 경로의 파라미터를 받도록 통합
     final currentUserId = _userId; // Getter를 통해 현재 ID 가져오기
     if (currentUserId == null) {
-      state = state.copyWith(isLoading: false, errorMessage: "로그인 정보가 없습니다.");
+      state = state.copyWith(
+          isLoading: false, errorMessage: AppTextStrings.loginRequiredError);
       return;
     }
     _subscribeToMessages(currentUserId);
@@ -371,7 +372,7 @@ class ChatViewModel extends Notifier<ChatState> {
 
     final userState = ref.read(userViewModelProvider);
     final userProfile = userState.userProfile;
-    final characterName = userProfile?.characterNm ?? "모지";
+    final characterName = userProfile?.characterNm ?? "MOJI";
 
 // "입력 중..." 메시지 표시
     final analyzingMessage = Message(
@@ -726,7 +727,8 @@ class ChatViewModel extends Notifier<ChatState> {
       }
     } catch (e) {
       state = state.copyWith(
-          isLoadingMore: false, errorMessage: "추가 메시지를 불러오는데 실패했어요.");
+          isLoadingMore: false,
+          errorMessage: AppTextStrings.loadMoreFailedError);
     }
   }
 
@@ -784,7 +786,7 @@ class ChatViewModel extends Notifier<ChatState> {
     if (solutionType == 'video') {
       await _addMessage(Message(
         userId: currentUserId,
-        content: "이번 영상은 어떠셨나요?",
+        content: AppTextStrings.askVideoFeedback,
         sender: Sender.bot,
         type: MessageType.solutionFeedback,
         proposal: {
@@ -873,7 +875,7 @@ class ChatViewModel extends Notifier<ChatState> {
       // 3. 사용자에게 감사 메시지 표시
       final thanksMessage = Message(
         userId: currentUserId,
-        content: "피드백을 주셔서 고마워요! 다음 솔루션에 꼭 참고할게요. 😊",
+        content: AppTextStrings.feedbackThanks,
         sender: Sender.bot,
       );
       await _addMessage(thanksMessage);

@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/domain/enums/cluster_type.dart';
 import 'package:dailymoji/domain/enums/metric.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
@@ -56,7 +57,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   final GetTodayClusterScoresUseCase _getTodayUC;
   final Get14DayClusterStatsUseCase _getAgg14UC;
 
-  ClusterScoresViewModel(this._getTodayUC, this._getAgg14UC) : super(ClusterScoresState.initial());
+  ClusterScoresViewModel(this._getTodayUC, this._getAgg14UC)
+      : super(ClusterScoresState.initial());
 
   /// 오늘 원본 리스트 로드 (기존 용도)
   Future<void> fetchTodayScores() async {
@@ -75,7 +77,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     try {
       final agg = await _getAgg14UC.execute(userId: userId);
       final emap = _buildEmotionMap(agg);
-      state = state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
+      state =
+          state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -93,7 +96,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       final mi = min[i];
       final ma = max[i];
       final allNull = (a == null && mi == null && ma == null);
-      final allZeroOrNull = ((a ?? 0) == 0) && ((mi ?? 0) == 0) && ((ma ?? 0) == 0);
+      final allZeroOrNull =
+          ((a ?? 0) == 0) && ((mi ?? 0) == 0) && ((ma ?? 0) == 0);
 
       // 세 값이 전부 null이거나 전부 0이면 => 결측으로 본다
       if (allNull || allZeroOrNull) return null;
@@ -119,7 +123,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     return one.clamp(0.0, 10.0);
   }
 
-  List<double> scaleList(Iterable<num> values) => values.map(scaleToTen).toList();
+  List<double> scaleList(Iterable<num> values) =>
+      values.map(scaleToTen).toList();
 
   List<FlSpot> _toSpotsConnected(List<double?> ys) {
     final spots = <FlSpot>[];
@@ -206,52 +211,53 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     final adMax = _applyMaskByAvg(adMax0, adAvg);
 
     return {
-      "불안/분노": EmotionData(
+      AppTextStrings.clusterNegHigh: EmotionData(
         color: AppColors.negHigh,
         spots: _toSpotsConnected(nhAvg), // ★ null은 건너뛰므로 선이 이어짐
         avg: _avgScaledOpt(nhAvg), // ★ null 제외하고 평균
         min: _minScaledOpt(nhMin), // ★ null 제외하고 최솟값
         max: _maxScaledOpt(nhMax), // ★ null 제외하고 최댓값
-        description: "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...",
+        description: AppTextStrings.descNegHigh,
       ),
-      "우울/무기력": EmotionData(
+      AppTextStrings.clusterNegLow: EmotionData(
         color: AppColors.negLow,
         spots: _toSpotsConnected(nlAvg),
         avg: _avgScaledOpt(nlAvg),
         min: _minScaledOpt(nlMin),
         max: _maxScaledOpt(nlMax),
-        description: "지쳤다는 신호가 보여요...",
+        description: AppTextStrings.descNegLow,
       ),
-      "평온/회복": EmotionData(
+      AppTextStrings.clusterPositive: EmotionData(
         color: AppColors.positive,
         spots: _toSpotsConnected(posAvg),
         avg: _avgScaledOpt(posAvg),
         min: _minScaledOpt(posMin),
         max: _maxScaledOpt(posMax),
-        description: "평온함을 느끼고 있다면...",
+        description: AppTextStrings.descPositive,
       ),
-      "불규칙 수면": EmotionData(
+      AppTextStrings.clusterSleep: EmotionData(
         color: AppColors.sleep,
         spots: _toSpotsConnected(slAvg),
         avg: _avgScaledOpt(slAvg),
         min: _minScaledOpt(slMin),
         max: _maxScaledOpt(slMax),
-        description: "잠이 오지 않거나...",
+        description: AppTextStrings.descSleep,
       ),
-      "집중력 저하": EmotionData(
+      AppTextStrings.clusterAdhd: EmotionData(
         color: AppColors.adhd,
         spots: _toSpotsConnected(adAvg),
         avg: _avgScaledOpt(adAvg),
         min: _minScaledOpt(adMin),
         max: _maxScaledOpt(adMax),
-        description: "집중이 흩어지고 마음이 산만할 때가 있죠...",
+        description: AppTextStrings.descAdhd,
       ),
     };
   }
 }
 
 /// ----- Provider (ViewModel) -----
-final clusterScoresViewModelProvider = StateNotifierProvider<ClusterScoresViewModel, ClusterScoresState>((ref) {
+final clusterScoresViewModelProvider =
+    StateNotifierProvider<ClusterScoresViewModel, ClusterScoresState>((ref) {
   final todayUC = ref.watch(getTodayClusterScoresUseCaseProvider);
   final agg14UC = ref.watch(get14DayClusterStatsUseCaseProvider);
   return ClusterScoresViewModel(todayUC, agg14UC);
