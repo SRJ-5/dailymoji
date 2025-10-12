@@ -44,7 +44,10 @@ class _SplashPageState extends State<SplashPage>
 
     // 앱을 처음 들어오는지 확인
     final prefs = await SharedPreferences.getInstance();
-    isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+    final firstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+    setState(() {
+      isFirstLaunch = firstLaunch;
+    });
   }
 
   @override

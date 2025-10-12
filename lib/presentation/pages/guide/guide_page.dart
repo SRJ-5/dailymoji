@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GuidePage extends ConsumerStatefulWidget {
   @override
@@ -16,6 +17,15 @@ class GuidePage extends ConsumerStatefulWidget {
 class _GuidePageState extends ConsumerState<GuidePage> {
   int stepIndex = 0;
   int totalSteps = 2;
+
+  Future<void> _goLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstLaunch', false);
+    if (mounted) {
+      context.go('/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,18 +64,11 @@ class _GuidePageState extends ConsumerState<GuidePage> {
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (stepIndex < totalSteps) {
-                      setState(() {
-                        // isNextEnabled = false;
-                        stepIndex++;
-                      });
+                      setState(() => stepIndex++);
                     } else if (stepIndex == totalSteps) {
-                      // ViewModel의 state를 직접 넘기지 않고, ViewModel 내부 함수를 호출
-                      // ref
-                      //     .read(userViewModelProvider.notifier)
-                      //     .fetchInsertUser();
-                      context.go('/login');
+                      await _goLogin();
                     }
                   },
                   child: AppText(
