@@ -9,8 +9,9 @@ enum PresetId {
   safetyCrisisAngerAnxiety("SAFETY_CRISIS_ANGER_ANXIETY"),
   safetyCheckIn("SAFETY_CHECK_IN"),
   emojiReaction("EMOJI_REACTION"),
-  ADHD_PRE_SOLUTION_QUESTION("ADHD_PRE_SOLUTION_QUESTION"),
-  ADHD_TASK_BREAKDOWN("ADHD_TASK_BREAKDOWN");
+  adhdPreSolutionQuestion("ADHD_PRE_SOLUTION_QUESTION"),
+  adhdAwaitingTaskDescription("ADHD_AWAITING_TASK_DESCRIPTION"),
+  adhdTaskBreakdown("ADHD_TASK_BREAKDOWN");
 
   final String value;
   const PresetId(this.value);

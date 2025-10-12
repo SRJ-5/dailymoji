@@ -37,7 +37,14 @@ class AppTextStrings {
   // Chat Page
   static const String botIsTyping =
       '%s이(가) 입력하고 있어요...'; // %s for character name
-  static const String viewSolutionAgain = '솔루션 다시 볼래!';
+  static const String viewSolutionAgainDefault = '솔루션 다시 볼래!';
+
+  // ⚽️ [추가] 유형별 다시보기 텍스트
+  static const String viewBreathingAgain = '다시 호흡하러 가기';
+  static const String viewVideoAgain = '다시 영상 보러가기';
+  static const String viewMissionAgain = '다시 미션하러 가기';
+  static const String viewPomodoroAgain = '다시 뽀모도로 하러 가기';
+
   static const String acceptSolution = '좋아, 해볼게!';
   static const String declineSolution = '아니, 더 대화할래';
   static const String getHelp = '도움받기';

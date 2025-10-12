@@ -207,7 +207,7 @@ class ChatViewModel extends Notifier<ChatState> {
       userId: currentUserId,
       content: content,
       sender: Sender.user,
-      type: MessageType.normal,
+      // type: MessageType.normal,
     );
     // final savedMessage = await _addUserMessageToChat(message);
     final savedMessage = await _addMessage(message);
@@ -222,30 +222,32 @@ class ChatViewModel extends Notifier<ChatState> {
 
 // RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
 // 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
-    EmotionalRecord? emotionalRecordFromEmojiOnly;
+    // EmotionalRecord? emotionalRecordFromEmojiOnly;
     if (_lastEmojiOnlyCluster != null &&
         _lastEmojiMessageId != null &&
         emotionForAnalysis != null) {
 // 백엔드에 _pendingEmotionForAnalysis (이모지)와 텍스트를 함께 전달하여 풀파이프라인 분석 요청
 // 이모지+텍스트 가중치를 붙여 최종 점수로 저장
-      emotionalRecordFromEmojiOnly = await _analyzeAndRespond(
+      await _analyzeAndRespond(
         userMessage: savedMessage,
         textForAnalysis: message.content,
         emotion: emotionForAnalysis,
         updateSessionIdForMessageId:
-            _lastEmojiMessageId, // 이전 이모지 메시지 ID로 세션 업데이트
+            _lastEmojiMessageId, // 이전 이모지 메시지의 세션ID를 업데이트
+        adhdContext: _adhdContextForNextRequest, // ADHD 컨텍스트도 함께 전달
       );
 // 이모지-텍스트 연계 분석이 완료되면 상태 초기화
       _lastEmojiOnlyCluster = null;
       _lastEmojiMessageId = null;
     } else {
-// 백엔드에 종합 분석 요청
+// 일반적인 텍스트 메시지 전송 로직: 백엔드에 종합 분석 요청
       await _analyzeAndRespond(
         userMessage: savedMessage,
         textForAnalysis: message.content,
         emotion: emotionForAnalysis, //이모지 키 전달
         adhdContext: _adhdContextForNextRequest,
       );
+      // 어떤 경우든, 한 번 사용된 ADHD 컨텍스트는 초기화
       _adhdContextForNextRequest = null;
     }
   }
@@ -282,10 +284,11 @@ class ChatViewModel extends Notifier<ChatState> {
         imageAssetPath: EmojiAsset.fromString(emotionKey).asset));
     // 2. 텍스트 메시지 객체를 바로 생성해서 전달
     final savedTextMessage = await _addMessage(Message(
-        userId: currentUserId,
-        content: text,
-        sender: Sender.user,
-        type: MessageType.normal));
+      userId: currentUserId,
+      content: text,
+      sender: Sender.user,
+      // type: MessageType.normal
+    ));
 
     // 3. 분석 요청
     await _analyzeAndRespond(
@@ -343,14 +346,14 @@ class ChatViewModel extends Notifier<ChatState> {
       await _addMessage(Message(
         userId: currentUserId,
         sender: Sender.bot,
-        content: reactionText ?? "어떤 일 때문에 그렇게 느끼셨나요?", // fallback 메시지
+        content: reactionText ?? AppTextStrings.fallbackEmojiQuestion,
       ));
     } catch (e) {
       print("RIN: 🚨 Failed to start conversation with emoji: $e");
       await _addMessage(Message(
           userId: currentUserId,
           sender: Sender.bot,
-          content: "어떤 일 때문에 그렇게 느끼셨나요?"));
+          content: AppTextStrings.fallbackEmojiQuestion));
     }
   }
 
@@ -373,7 +376,7 @@ class ChatViewModel extends Notifier<ChatState> {
 // "입력 중..." 메시지 표시
     final analyzingMessage = Message(
         userId: currentUserId,
-        content: "$characterName이(가) 입력하고 있어요...",
+        content: AppTextStrings.botIsTyping.replaceAll('%s', characterName),
         sender: Sender.bot,
         type: MessageType.analysis);
     state = state.copyWith(
@@ -413,9 +416,10 @@ class ChatViewModel extends Notifier<ChatState> {
       switch (preset) {
         // Rin: 칭긔칭긔모드
         case PresetId.friendlyReply:
-          // 2. intervention 안에서 'text'를 찾음
-          final botMessageContent =
-              intervention['text'] as String? ?? "음.. 잠깐 생각 좀 해볼게! 🤔";
+          // 2. intervention 안에서 botMessageContent를 찾음
+          final botMessageContent = intervention['text'] as String? ??
+              AppTextStrings.fallbackAnalysisError;
+
           final botMessage = Message(
               userId: currentUserId,
               content: botMessageContent,
@@ -436,7 +440,7 @@ class ChatViewModel extends Notifier<ChatState> {
                 userId: currentUserId,
                 content: empathyText,
                 sender: Sender.bot));
-            await Future.delayed(const Duration(milliseconds: 1000));
+            await Future.delayed(const Duration(milliseconds: 200));
           }
 
 // 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
@@ -445,12 +449,59 @@ class ChatViewModel extends Notifier<ChatState> {
                 userId: currentUserId,
                 content: analysisText,
                 sender: Sender.bot));
-            await Future.delayed(const Duration(milliseconds: 1200));
+            await Future.delayed(const Duration(milliseconds: 200));
           }
 
 // 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
           if (sessionId != null && topCluster != null) {
             await _proposeSolution(sessionId, topCluster, currentUserId);
+          }
+          break;
+
+        // RIN: ADHD 질문 처리 케이스
+        case PresetId.adhdPreSolutionQuestion:
+          await _addMessage(Message(
+            userId: currentUserId,
+            content: intervention['text'] as String,
+            sender: Sender.bot,
+            type: MessageType.solutionProposal,
+            proposal: {'options': intervention['options']},
+          ));
+          _adhdContextForNextRequest =
+              intervention['adhd_context'] as Map<String, dynamic>?;
+          break;
+
+        case PresetId.adhdAwaitingTaskDescription:
+          await _addMessage(Message(
+            userId: currentUserId,
+            content: intervention['text'] as String,
+            sender: Sender.bot,
+          ));
+          _adhdContextForNextRequest =
+              intervention['adhd_context'] as Map<String, dynamic>?;
+          break;
+
+        case PresetId.adhdTaskBreakdown:
+          final coachingText = intervention['coaching_text'] as String?;
+          final missionText = intervention['mission_text'] as String?;
+          if (coachingText != null) {
+            await _addMessage(Message(
+                userId: currentUserId,
+                content: coachingText,
+                sender: Sender.bot));
+            await Future.delayed(const Duration(milliseconds: 200));
+          }
+          if (missionText != null) {
+            await _addMessage(Message(
+              userId: currentUserId,
+              content: missionText,
+              sender: Sender.bot,
+              type: MessageType.solutionProposal,
+              proposal: {
+                'options': intervention['options'],
+                'session_id': sessionId
+              },
+            ));
           }
           break;
 
@@ -499,61 +550,10 @@ class ChatViewModel extends Notifier<ChatState> {
           }
           break;
 
-        // RIN: ADHD 질문 처리 케이스
-        case PresetId.ADHD_PRE_SOLUTION_QUESTION:
-          final text =
-              intervention['text'] as String? ?? "지금 바로 해야 할 일이 있으신가요?";
-          await _addMessage(Message(
-              userId: currentUserId, content: text, sender: Sender.bot));
-          // 다음 요청을 위해 컨텍스트 저장
-          _adhdContextForNextRequest =
-              intervention['adhd_context'] as Map<String, dynamic>?;
-          break;
-
-        // RIN: ADHD 작업 분할 결과 처리 케이스
-        case PresetId.ADHD_TASK_BREAKDOWN:
-          final steps =
-              (intervention['breakdown_steps'] as List).cast<String>();
-          final proposalText = intervention['proposal_text'] as String;
-          final solutionId = intervention['solution_id'] as String?;
-
-          // 분할된 작업을 순차적으로 메시지로 표시
-          for (final step in steps) {
-            await _addMessage(Message(
-                userId: currentUserId, content: step, sender: Sender.bot));
-            await Future.delayed(const Duration(milliseconds: 1200));
-          }
-
-          // 최종적으로 뽀모도로 솔루션 제안
-          if (solutionId != null) {
-            final proposalMessage = Message(
-              userId: currentUserId,
-              content: proposalText,
-              sender: Sender.bot,
-              type: MessageType.solutionProposal,
-              proposal: {
-                "solution_id": solutionId,
-                "session_id": emotionalRecord.sessionId,
-                "options": [
-                  {
-                    "label": AppTextStrings.acceptSolution,
-                    "action": "accept_solution"
-                  },
-                  {
-                    "label": AppTextStrings.declineSolution,
-                    "action": "decline_solution_and_talk"
-                  }
-                ]
-              },
-            );
-            await _addMessage(proposalMessage);
-          }
-          break;
-
         default:
           final errorMessage = Message(
             userId: currentUserId,
-            content: "죄송해요, 응답을 이해할 수 없었어요.",
+            content: AppTextStrings.fallbackAnalysisError,
             sender: Sender.bot,
           );
           await _addMessage(errorMessage);
@@ -580,7 +580,7 @@ class ChatViewModel extends Notifier<ChatState> {
         messages: state.messages
             .where((m) => m.type != MessageType.analysis)
             .toList(),
-        errorMessage: "감정 분석에 실패했어요. 😥",
+        errorMessage: AppTextStrings.fallbackAnalysisError,
       );
     } finally {
       state = state.copyWith(isTyping: false);
@@ -609,10 +609,7 @@ class ChatViewModel extends Notifier<ChatState> {
         proposal: {
           "solution_id": proposalResponse['solution_id'],
           "session_id": sessionId,
-          "options": [
-            {"label": "좋아, 해볼게!", "action": "accept_solution"},
-            {"label": "아니, 더 대화할래", "action": "decline_solution_and_talk"}
-          ]
+          "options": proposalResponse['options'],
         },
       );
       await _addMessage(proposalMessage);
@@ -622,7 +619,7 @@ class ChatViewModel extends Notifier<ChatState> {
       _lastProposedSolutionCluster = null;
       final errorMessage = Message(
           userId: currentUserId,
-          content: "솔루션을 제안하는 중에 문제가 발생했어요.",
+          content: AppTextStrings.fallbackSolutionError,
           sender: Sender.bot);
       await _addMessage(errorMessage);
     }
@@ -764,15 +761,14 @@ class ChatViewModel extends Notifier<ChatState> {
     if (currentUserId == null) return;
 
 // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
-    final userProfile = ref.read(userViewModelProvider).userProfile;
-    final personality = userProfile?.characterPersonality;
-    final personalityDbValue = personality != null
+    final userVM = ref.read(userViewModelProvider.notifier);
+    final userProfile = userVM.state.userProfile;
+    final personalityDbValue = userProfile?.characterPersonality != null
         ? CharacterPersonality.values
-            .firstWhere((e) => e.myLabel == personality,
+            .firstWhere((e) => e.myLabel == userProfile!.characterPersonality,
                 orElse: () => CharacterPersonality.probSolver)
             .dbValue
         : null;
-    final userNickNm = userProfile?.userNickNm;
 
 // chat 페이지로 넘어가는 reason에 따라 다른 메시지를 선택
 // API를 통해 성향에 맞는 후속 질문 멘트 가져오기
@@ -780,46 +776,74 @@ class ChatViewModel extends Notifier<ChatState> {
         await ref.read(homeDialogueRepositoryProvider).fetchFollowUpDialogue(
               reason: reason,
               personality: personalityDbValue,
-              userNickNm: userNickNm,
+              userNickNm: userProfile?.userNickNm,
             );
+    await _addMessage(
+        Message(userId: currentUserId, content: content, sender: Sender.bot));
 
-    // 1. 일반 후속 메시지 전송
-    final followUpMessage = Message(
-      userId: currentUserId,
-      content: content,
-      sender: Sender.bot,
-      type: MessageType.normal,
-    );
-    await _addMessage(followUpMessage);
+    if (solutionType == 'video') {
+      await _addMessage(Message(
+        userId: currentUserId,
+        content: "이번 영상은 어떠셨나요?",
+        sender: Sender.bot,
+        type: MessageType.solutionFeedback,
+        proposal: {
+          'solution_id': solutionId,
+          'session_id': sessionId,
+          'solution_type': solutionType
+        },
+      ));
+    }
 
-    // 2. 피드백 요청 메시지 전송
-    final feedbackMessage = Message(
-      userId: currentUserId,
-      content: AppTextStrings.solutionFeedbackQuestion,
-      sender: Sender.bot,
-      type: MessageType.solutionFeedback,
-      proposal: {
-        'solution_id': solutionId,
-        'session_id': sessionId,
-        'solution_type': solutionType,
-      },
-    );
-    await _addMessage(feedbackMessage);
-
-    // RIN: 클러스터별 추가 솔루션 제공 로직
     if (topCluster == 'sleep') {
-      final userVM = ref.read(userViewModelProvider.notifier);
       final tip = await userVM.fetchSleepHygieneTip();
       await _addMessage(
           Message(userId: currentUserId, content: tip, sender: Sender.bot));
     } else if (topCluster == 'neg_low') {
-      final userVM = ref.read(userViewModelProvider.notifier);
       final mission = await userVM.fetchActionMission();
       await _addMessage(
           Message(userId: currentUserId, content: mission, sender: Sender.bot));
     }
     _lastProposedSolutionCluster = null;
   }
+
+  //   // 1. 일반 후속 메시지 전송
+  //   final followUpMessage = Message(
+  //     userId: currentUserId,
+  //     content: content,
+  //     sender: Sender.bot,
+  //     type: MessageType.normal,
+  //   );
+  //   await _addMessage(followUpMessage);
+
+  //   // 2. 피드백 요청 메시지 전송
+  //   final feedbackMessage = Message(
+  //     userId: currentUserId,
+  //     content: AppTextStrings.solutionFeedbackQuestion,
+  //     sender: Sender.bot,
+  //     type: MessageType.solutionFeedback,
+  //     proposal: {
+  //       'solution_id': solutionId,
+  //       'session_id': sessionId,
+  //       'solution_type': solutionType,
+  //     },
+  //   );
+  //   await _addMessage(feedbackMessage);
+
+  //   // RIN: 클러스터별 추가 솔루션 제공 로직
+  //   if (topCluster == 'sleep') {
+  //     final userVM = ref.read(userViewModelProvider.notifier);
+  //     final tip = await userVM.fetchSleepHygieneTip();
+  //     await _addMessage(
+  //         Message(userId: currentUserId, content: tip, sender: Sender.bot));
+  //   } else if (topCluster == 'neg_low') {
+  //     final userVM = ref.read(userViewModelProvider.notifier);
+  //     final mission = await userVM.fetchActionMission();
+  //     await _addMessage(
+  //         Message(userId: currentUserId, content: mission, sender: Sender.bot));
+  //   }
+  //   _lastProposedSolutionCluster = null;
+  // }
 
   //RIN: 사용자의 피드백 응답 처리
   Future<void> respondToSolutionFeedback({
@@ -859,7 +883,32 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
+// RIN: ADHD 초기 질문에 대한 사용자의 버튼 선택을 처리
+  Future<void> respondToAdhdChoice(
+      String choiceAction, String choiceLabel) async {
+    final currentUserId = _userId;
+    if (currentUserId == null) return;
+
+    // 1. 사용자의 선택을 채팅창에 메시지로 표시
+    await _addMessage(Message(
+      userId: currentUserId,
+      content: choiceLabel,
+      sender: Sender.user,
+    ));
+
+    // 2. adhd_context와 함께 백엔드에 다시 분석 요청
+    await _analyzeAndRespond(
+      userMessage: state.messages.last,
+      textForAnalysis: choiceAction,
+      emotion: null,
+      adhdContext: _adhdContextForNextRequest,
+    );
+
+    _adhdContextForNextRequest = null;
+  }
+
   /// 솔루션 제안에 대한 사용자 응답 처리
+
   Future<void> respondToSolution(
       Map<String, dynamic> proposalData, String action,
       {bool isReview = false}) async {
@@ -867,11 +916,30 @@ class ChatViewModel extends Notifier<ChatState> {
     if (currentUserId == null) return;
 
     final String solutionId = proposalData['solution_id'] as String;
+    final String solutionType = proposalData['solution_type'] as String;
     final String? sessionId = proposalData['session_id'] as String?;
-    final String solutionType =
-        proposalData['solution_type'] as String? ?? 'video'; // 기본값으로 'video'
 
-    if (action == "decline_solution_and_talk") {
+    if (action == "accept_solution") {
+      if (solutionType == 'action') {
+        final missionText = await ref
+            .read(solutionRepositoryProvider)
+            .fetchSolutionTextById(solutionId);
+        if (missionText != null) {
+          await _addMessage(Message(
+              userId: currentUserId, content: missionText, sender: Sender.bot));
+        }
+      } else {
+        SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+        String path = (solutionType == 'breathing')
+            ? '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview'
+            : '/solution/$solutionId?sessionId=$sessionId&isReview=$isReview';
+        final result = await navigatorkey.currentContext
+            ?.push(path, extra: {'solution_type': solutionType});
+        if (result is Map<String, dynamic>) {
+          processSolutionResult(result);
+        }
+      }
+    } else if (action == "decline_solution_and_talk") {
       // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
       final userProfile = ref.read(userViewModelProvider).userProfile;
       final personality = userProfile?.characterPersonality;
@@ -895,30 +963,6 @@ class ChatViewModel extends Notifier<ChatState> {
           Message(userId: currentUserId, content: content, sender: Sender.bot);
       await _addMessage(message);
       return;
-    }
-
-    // RIN: 솔루션 페이지로 이동하기 직전에, 돌아왔을 때를 대비해 sessionId를 저장
-    if (action == "accept_solution") {
-      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-
-      final result = await navigatorkey.currentContext?.push(
-          '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview',
-          extra: {'solution_type': solutionType});
-
-      if (result is Map<String, dynamic>) {
-        final reason = result['reason'] as String? ?? 'video_ended';
-        final returnedSessionId = result['sessionId'] as String?;
-        final returnedSolutionType = result['solution_type'] as String?;
-
-        if (returnedSessionId != null && returnedSolutionType != null) {
-          await sendFollowUpMessageAfterSolution(
-            reason: reason,
-            solutionId: solutionId,
-            sessionId: returnedSessionId,
-            solutionType: returnedSolutionType,
-          );
-        }
-      }
     } else if (action == "safety_crisis") {
       String title = AppTextStrings.counselingCenter;
       navigatorkey.currentContext?.push('/info/$title');

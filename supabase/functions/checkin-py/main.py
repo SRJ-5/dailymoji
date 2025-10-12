@@ -19,10 +19,9 @@ import numpy as np
 from pydantic import BaseModel
 from supabase import create_client, Client
 
-import uuid
 from ai_moderator import moderate_text
 from llm_prompts import (
-    REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO, 
+    REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO,
     call_llm, get_adhd_breakdown_prompt, get_system_prompt, TRIAGE_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT
 )
 from rule_based import rule_scoring
@@ -98,6 +97,14 @@ class SolutionRequest(BaseModel):
     top_cluster: str
     language_code: str = 'ko'
 
+      
+class FeedbackRequest(BaseModel):
+    user_id: str
+    solution_id: str
+    session_id: Optional[str] = None
+    solution_type: str
+    feedback: str
+
 
 # /assessment/submit 엔드포인트의 입력 모델
 class AssessmentSubmitRequest(BaseModel):
@@ -112,8 +119,10 @@ class PresetIds:
     SOLUTION_PROPOSAL = "SOLUTION_PROPOSAL"
     SAFETY_CRISIS_MODAL = "SAFETY_CRISIS_MODAL"
     EMOJI_REACTION = "EMOJI_REACTION"
-    ADHD_PRE_SOLUTION_QUESTION = "ADHD_PRE_SOLUTION_QUESTION" # 질문 상태
-    ADHD_TASK_BREAKDOWN = "ADHD_TASK_BREAKDOWN" # 작업 분할 결과
+    ADHD_PRE_SOLUTION_QUESTION = "ADHD_PRE_SOLUTION_QUESTION"
+    ADHD_AWAITING_TASK_DESCRIPTION = "ADHD_AWAITING_TASK_DESCRIPTION"
+    ADHD_TASK_BREAKDOWN = "ADHD_TASK_BREAKDOWN"
+
 
 
 # ======================================================================
@@ -443,59 +452,85 @@ async def save_analysis_to_supabase(
 
 
 # RIN: ADHD 질문에 대한 사용자 답변을 처리하는 함수
-async def _handle_adhd_response(payload: AnalyzeRequest, original_text: str, debug_log: dict):
+async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
     user_response = payload.text
-    print(f"🧠 Handling ADHD follow-up. User response: '{payload.text}'")
-    user_nick_nm, _ = await get_user_info(payload.user_id)
-    
-    # 1. 사용자의 답변이 'YES'인지 'NO'인지 LLM으로 판단
-    negative_keywords = ['아니', '없어', '없는데', '아닌데', '딱히', '그냥']
-    is_negative_response = any(keyword in user_response for keyword in negative_keywords) or len(user_response) < 5
+    adhd_context = payload.adhd_context or {}
+    current_step = adhd_context.get("step")
 
-    debug_log["adhd_decision"] = "NO_TASK" if is_negative_response else "HAS_TASK"
-
-    if not is_negative_response:
-        # 2-1. '할 일이 있다'고 판단: 사용자의 답변을 바탕으로 작업을 분할
-        print("-> Decision: HAS_TASK. Breaking down the user's response.")
-        breakdown_prompt = get_adhd_breakdown_prompt(
-            personality=payload.character_personality,
-            user_nick_nm=user_nick_nm,
-            user_message=user_response
+    if current_step == "awaiting_choice":
+        # "있어!" / "없어!" 버튼에 대한 응답 처리
+        if "adhd_has_task" in user_response:
+            # 다음 단계: 할 일이 무엇인지 물어보기
+            question_text = await get_mention_from_db(
+                mention_type="adhd_ask_task",
+                language_code=payload.language_code,
+                personality=payload.character_personality,
+                format_kwargs={"user_nick_nm": (await get_user_info(payload.user_id))[0]}
+            )
+            return {
+                "intervention": {
+                    "preset_id": PresetIds.ADHD_AWAITING_TASK_DESCRIPTION,
+                    "text": question_text,
+                    "adhd_context": {"step": "awaiting_task_description"}
+                }
+            }
+        else: # "adhd_no_task"
+            solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, text, solution_type").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1).single().execute)
+            solution_data = solution_res.data or {}
+            
+            proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="focus_training", personality=payload.character_personality)
+            final_text = f"{proposal_text} {solution_data.get('text', '')}".strip()
+            
+            return {
+                "intervention": {
+                    "preset_id": PresetIds.SOLUTION_PROPOSAL,
+                    "proposal_text": final_text,
+                    "options": [{
+                        "label": "집중력 훈련하기", "action": "accept_solution",
+                        "solution_id": solution_data.get("solution_id"), "solution_type": solution_data.get("solution_type")
+                    }]
+                }
+            }
+        
+    elif current_step == "awaiting_task_description":
+        # 사용자가 입력한 할 일 내용을 받아 처리
+        user_nick_nm, _ = await get_user_info(payload.user_id)
+        
+        # 성격에 맞는 프롬프트 템플릿을 가져옵니다.
+        prompt_template = get_adhd_breakdown_prompt(payload.character_personality)
+        
+        # 가져온 템플릿에 변수를 채워 최종 프롬프트를 완성합니다.
+        final_prompt = prompt_template.format(user_nick_nm=user_nick_nm, user_message=user_response)
+        
+        breakdown_result = await call_llm(
+            system_prompt=final_prompt, # 완성된 프롬프트를 system_prompt로 사용
+            user_content="", # user_content는 비워두기
+            openai_key=OPENAI_KEY, 
+            expect_json=True
         )
-        breakdown_result = await call_llm(breakdown_prompt, "", OPENAI_KEY, expect_json=True)
         
-        breakdown_steps = breakdown_result.get("breakdown", ["작업을 작은 단계로 나눠보세요."])
+        coaching_text = breakdown_result.get("coaching_text", "좋아요, 함께 시작해봐요!")
+        mission_text = breakdown_result.get("mission_text", "가장 작은 일부터 시작해보세요.")
         
-        # 뽀모도로 솔루션 제안 멘트와 솔루션 ID를 DB에서 조회
-        solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1).single().execute)
-        solution_id = solution_res.data.get("solution_id") if solution_res.data else None
+         # 뽀모도로 솔루션 정보 조회
+        solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1).single().execute)
+        solution_data = solution_res.data or {}
 
-        proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="pomodoro", personality=payload.character_personality)
- 
         return {
             "intervention": {
                 "preset_id": PresetIds.ADHD_TASK_BREAKDOWN,
-                "breakdown_steps": breakdown_steps,
-                "proposal_text": proposal_text,
-                "solution_id": solution_id
+                "coaching_text": coaching_text,
+                "mission_text": mission_text,
+                "options": [{
+                    "label": "뽀모도로와 함께 미션하러 가기",
+                    "action": "accept_solution",
+                    "solution_id": solution_data.get("solution_id"),
+                    "solution_type": solution_data.get("solution_type")
+                }]
             }
         }
-    else:
-        # 2-2. '할 일이 없다'고 판단: 집중력 훈련 영상 제안
-        print("-> Decision: NO_TASK. Proposing focus training.")
-        solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, text").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1).single().execute)
-        solution_data = solution_res.data or {}
-
-        # 집중력 훈련 제안 멘트를 DB에서 가져옴
-        proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="focus_training", personality=payload.character_personality)
-        
-        return {
-            "intervention": {
-                "preset_id": PresetIds.SOLUTION_PROPOSAL,
-                "proposal_text": f"{proposal_text} {solution_data.get('text', '')}".strip(),
-                "solution_id": solution_data.get("solution_id")
-            }
-        }
+    
+    return {"intervention": {"preset_id": PresetIds.FRIENDLY_REPLY, "text": "앗, 잠시 오류가 있었어요. 다시 말씀해주시겠어요?"}}
 
 
 # ---------- API Endpoints (분리된 구조) ----------
@@ -688,10 +723,8 @@ async def analyze_emotion(payload: AnalyzeRequest):
             return JSONResponse(status_code=400, content={"error": "Inappropriate content detected."})
 
         # ADHD 컨텍스트가 존재하면, 다른 모든 분석을 건너뛰고 ADHD 답변 처리 로직으로 바로 보냅니다.
-        if payload.adhd_context and payload.adhd_context.get("awaiting_response"):
-            original_text = payload.adhd_context.get("original_text", "")
-            # 이 함수는 점수를 재계산하지 않고, 오직 ADHD 시나리오에 맞는 'intervention'만 생성하여 반환합니다.
-            return await _handle_adhd_response(payload, original_text, debug_log)
+        if payload.adhd_context and "step" in payload.adhd_context:
+            return await _handle_adhd_response(payload, debug_log)
 
 
         # --- 파이프라인 1: 🌸 CASE 2 - 이모지만 있는 경우 ---
@@ -727,26 +760,33 @@ async def analyze_emotion(payload: AnalyzeRequest):
             
             intervention = analysis_result.get("intervention", {})
             top_cluster = intervention.get("top_cluster")
+            empathy_text = intervention.get("empathy_text", "")
+            user_nick_nm, _ = await get_user_info(payload.user_id)
+            
             
             # 만약 분석 결과 top_cluster가 ADHD라면, 솔루션을 바로 제안하지 않고 질문을 던짐
             if top_cluster == "adhd":
                 print("🧠 ADHD cluster detected. Switching to pre-solution question flow.")
                 
-                question_text = await get_mention_from_db(
+                question_text_template = await get_mention_from_db(
                     mention_type="adhd_question",
                     language_code=payload.language_code,
                     personality=payload.character_personality,
-                    format_kwargs={"user_nick_nm": (await get_user_info(payload.user_id))[0]}
+                    format_kwargs={"user_nick_nm": user_nick_nm}
                 )
+
+                final_question_text = f"{empathy_text} {question_text_template}"
+
                 
                 # 프론트엔드로 질문과 다음 요청에 필요한 컨텍스트를 전달
                 analysis_result["intervention"] = {
                     "preset_id": PresetIds.ADHD_PRE_SOLUTION_QUESTION,
-                    "text": question_text,
-                    "adhd_context": {
-                        "awaiting_response": True,
-                        "original_text": payload.text
-                    }
+                    "text": final_question_text.strip(), # 최종 조합된 텍스트
+                    "options": [
+                        {"label": "있어! 뭐부터 하면 좋을까?", "action": "adhd_has_task"},
+                        {"label": "없어! 집중력 훈련 할래", "action": "adhd_no_task"}
+                    ],
+                    "adhd_context": { "step": "awaiting_choice" }
                 }
 
             return analysis_result
@@ -794,61 +834,96 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
 
 @app.post("/solutions/propose")
 async def propose_solution(payload: SolutionRequest): 
-    """분석 결과(top_cluster)를 바탕으로 사용자에게 맞는 솔루션을 제안하는 로직"""
+    """
+    분석 결과(top_cluster)에 맞는 '호흡', '영상', '행동' 솔루션을 각각 하나씩 찾아
+    사용자가 선택할 수 있는 옵션 목록과, 대표 제안 텍스트를 함께 반환합니다.
+    """    
     if not supabase: raise HTTPException(status_code=500, detail="Supabase client not initialized")
         
     try:
         user_nick_nm, _ = await get_user_info(payload.user_id)
+        top_cluster = payload.top_cluster
 
-        solutions_res = await run_in_threadpool(
-            supabase.table("solutions")
-            .select("solution_id, text, context, solution_variant")
-            .eq("cluster", payload.top_cluster)
-            .execute
-            )
-
-        
-        if not solutions_res.data:
-            return {"proposal_text": "지금은 제안해드릴 특별한 활동이 없네요.", "solution_id": None}
-                  
-        # 가져온 솔루션 목록 중 하나를 랜덤으로 선택
-        solution_data = random.choice(solutions_res.data)
-        solution_id = solution_data.get("solution_id")
-        solution_variant = solution_data.get("solution_variant") 
-
-
-        # 솔루션 ID가 없는 경우에 대한 예외 처리 
-        if not solution_id:
-            return {
-                "proposal_text": "편안하게 대화를 이어갈까요?", 
-                "solution_id": None,
-                "solution_details": None
-            }
-        
-        # 선택된 솔루션 정보를 바탕으로, 'propose'타입의 멘트를 DB에서 조회
-        #    이때 solution_variant를 함께 넘겨 필터링
-        proposal_script = await get_mention_from_db(
-            "propose",
-            payload.language_code,
-            cluster=payload.top_cluster,
-            user_nick_nm=user_nick_nm,
-            solution_variant=solution_variant 
+        # 1. 사용자의 거부 태그 목록 가져오기
+        profile_res = await run_in_threadpool(
+            supabase.table("user_profiles")
+            .select("negative_tags")
+            .eq("id", payload.user_id)
+            .single().execute
         )
+        negative_tags = (profile_res.data or {}).get("negative_tags", [])
 
-       # 최종 제안 텍스트를 조합 (멘트 + 솔루션 자체 텍스트)
-        final_text = f"{proposal_script} {solution_data.get('text', '')}".strip()
+        # 2. 제안할 후보 솔루션 전체를 DB에서 가져오기
+        all_candidates_res = await run_in_threadpool(
+            supabase.table("solutions")
+            .select("*")
+            .eq("cluster", top_cluster)
+            .execute
+        )
+        all_candidates = all_candidates_res.data
+        
+        if not all_candidates:
+            return {"proposal_text": "지금은 제안해드릴 특별한 활동이 없네요.", "options": []}
+
+        # 3. 거부 태그가 포함된 솔루션은 후보에서 제외
+        if negative_tags:
+            filtered_candidates = [
+                sol for sol in all_candidates
+                if not any(tag in (sol.get("tags") or []) for tag in negative_tags)
+            ]
+        else:
+            filtered_candidates = all_candidates
+
+        # 4. 각 솔루션 타입별로 대표 솔루션을 하나씩 랜덤 선택
+        options = []
+        solution_types = ["breathing", "video", "action"]
+        labels = {"breathing": "호흡하러 가기", "video": "영상 보러가기", "action": "미션 하러가기"}
+        
+        # 텍스트 조합을 위해 첫 번째 솔루션의 설명을 저장할 변수
+        first_solution_text = ""
+
+        for sol_type in solution_types:
+            type_candidates = [s for s in filtered_candidates if s.get("solution_type") == sol_type]
+            if type_candidates:
+                chosen_solution = random.choice(type_candidates)
+                
+                # 4-1. 프론트엔드에 전달할 버튼 옵션 목록
+                options.append({
+                    "label": labels.get(sol_type, "솔루션 보기"),
+                    "action": "accept_solution",
+                    "solution_id": chosen_solution["solution_id"],
+                    "solution_type": chosen_solution["solution_type"]
+                })
+
+                # 4-2. 첫 번째로 선택된 솔루션의 설명 텍스트 저장 
+                if not first_solution_text:
+                    first_solution_text = chosen_solution.get("text", "")
+
+        if not options:
+            return {"proposal_text": "지금 제안해드릴 만한 맞춤 활동이 없네요. 대화를 더 나눠볼까요?", "options": []}
+
+        # 5. 제안 멘트와 대표 솔루션 설명을 조합하여 최종 제안 텍스트 생성
+        proposal_script = await get_mention_from_db(
+            mention_type="propose",
+            language_code=payload.language_code,
+            cluster=top_cluster,
+            user_nick_nm=user_nick_nm
+        )
+        final_text = f"{proposal_script} {first_solution_text}".strip()
       
-
-        # 제안 이력을 로그로 저장
-        log_entry = {"session_id": payload.session_id, "type": "propose", "solution_id": solution_id}
+        # 6. 로그 저장 및 최종 결과 반환
+        log_entry = {
+            "session_id": payload.session_id, 
+            "type": "propose", 
+            "solution_id": f"multiple_options_{top_cluster}"
+        }
         await run_in_threadpool(supabase.table("interventions_log").insert(log_entry).execute)
 
-        return {"proposal_text": final_text, "solution_id": solution_id, "solution_details": solution_data}
+        return {"proposal_text": final_text, "options": options}
 
     except Exception as e:
         tb = traceback.format_exc()
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
-
 
 # ======================================================================
 # ===          솔루션 영상 엔드포인트         ===
