@@ -84,6 +84,7 @@ flutter:
     - assets/images/emojis/
     - assets/images/app_icon/
     - assets/images/character_cado/
+    - assets/images/character_carrot/
     - assets/images/logo/
     - .env
   
