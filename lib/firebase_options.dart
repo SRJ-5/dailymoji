@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'dailymoji-push.firebasestorage.app',
     iosBundleId: 'com.srj5.dailymoji',
   );
+
 }
