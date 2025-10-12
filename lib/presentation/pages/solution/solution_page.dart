@@ -44,6 +44,15 @@ class SolutionPage extends ConsumerWidget {
       ),
       data: (solution) {
         // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
+        if (solution.videoId == null) {
+          return const Scaffold(
+            backgroundColor: AppColors.black,
+            body: Center(
+              child: AppText("재생할 수 없는 솔루션 유형입니다.",
+                  style: TextStyle(color: AppColors.white)),
+            ),
+          );
+        }
         return _PlayerView(
           solutionId: solutionId,
           sessionId: sessionId,
@@ -96,14 +105,14 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
     // Provider로부터 받은 solution 데이터로 컨트롤러 초기화
     _controller = YoutubePlayerController(
-      initialVideoId: widget.solution.videoId,
+      initialVideoId: widget.solution.videoId!,
       flags: YoutubePlayerFlags(
         autoPlay: true, // 페이지 진입 시 자동 재생
         hideControls: true, // 기본 컨트롤 숨김
         disableDragSeek: true, // 드래그 시킹 비활성화(원하면 false)
         enableCaption: false,
         mute: true, // 자동재생 정책 회피하려면 true로 시작 후 첫 탭에서 unMute()
-        startAt: widget.solution.startAt,
+        startAt: widget.solution.startAt ?? 0,
         endAt: widget.solution.endAt,
       ),
     );

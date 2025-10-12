@@ -835,14 +835,31 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
 @app.post("/solutions/propose")
 async def propose_solution(payload: SolutionRequest): 
     """
-    분석 결과(top_cluster)에 맞는 '호흡', '영상', '행동' 솔루션을 각각 하나씩 찾아
+    분석 결과(top_cluster)에 맞는 클러스터별로 제안할 솔루션 타입 목록을 명확히 정의하고, 해당 타입의 솔루션만 찾아 
     사용자가 선택할 수 있는 옵션 목록과, 대표 제안 텍스트를 함께 반환합니다.
+    neg_low, sleep: 호흡, 영상, 행동미션
+    neg_high, positive: 호흡, 영상만
+    adhd는 할거 있냐없냐 물어보고 있으면 뽀모도로, 없으면 호흡, 영상
     """    
     if not supabase: raise HTTPException(status_code=500, detail="Supabase client not initialized")
         
     try:
         user_nick_nm, _ = await get_user_info(payload.user_id)
         top_cluster = payload.top_cluster
+
+         # 0. 클러스터별로 제안할 솔루션 타입 목록을 정의해야함
+        solution_types_by_cluster = {
+            "neg_low": ["breathing", "video", "action"],
+            "sleep": ["breathing", "video", "action"],
+            "neg_high": ["breathing", "video"],
+            "positive": ["breathing", "video"],
+            # ADHD는 별도 흐름을 타므로 여기서는 기본값만 정의
+            "adhd": ["breathing", "video"] 
+        }
+        
+        # 현재 top_cluster에 해당하는 솔루션 타입 목록 가져오기
+        target_solution_types = solution_types_by_cluster.get(top_cluster, ["video"])
+
 
         # 1. 사용자의 거부 태그 목록 가져오기
         profile_res = await run_in_threadpool(
@@ -876,13 +893,12 @@ async def propose_solution(payload: SolutionRequest):
 
         # 4. 각 솔루션 타입별로 대표 솔루션을 하나씩 랜덤 선택
         options = []
-        solution_types = ["breathing", "video", "action"]
         labels = {"breathing": "호흡하러 가기", "video": "영상 보러가기", "action": "미션 하러가기"}
         
         # 텍스트 조합을 위해 첫 번째 솔루션의 설명을 저장할 변수
         first_solution_text = ""
 
-        for sol_type in solution_types:
+        for sol_type in target_solution_types:
             type_candidates = [s for s in filtered_candidates if s.get("solution_type") == sol_type]
             if type_candidates:
                 chosen_solution = random.choice(type_candidates)
@@ -942,7 +958,7 @@ async def get_solution_details(solution_id: str):
         # solutions 테이블에서 필요한 데이터를 조회
         response = await run_in_threadpool(
             supabase.table("solutions")
-            .select("url, start_at, end_at")
+            .select("url, start_at, end_at, text") 
             .eq("solution_id", solution_id)
             .single()
             .execute
@@ -957,7 +973,8 @@ async def get_solution_details(solution_id: str):
         return {
             'url': response.data.get('url'), 
             'startAt': response.data.get('start_at'), 
-            'endAt': response.data.get('end_at')
+            'endAt': response.data.get('end_at'),
+            'text': response.data.get('text')
             }
         
     except Exception as e:

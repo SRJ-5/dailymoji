@@ -915,24 +915,44 @@ class ChatViewModel extends Notifier<ChatState> {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    final String solutionId = proposalData['solution_id'] as String;
-    final String solutionType = proposalData['solution_type'] as String;
+    // 다시보기의 경우, options 배열 안에서 찾아야 합니다.
+    Map<String, dynamic> solutionInfo = {};
+    if (isReview) {
+      final options = proposalData['options'] as List?;
+      if (options != null && options.isNotEmpty) {
+// 다시보기는 보통 하나의 옵션만 가짐
+        solutionInfo = options.firstWhere(
+          (opt) => opt['action'] == 'accept_solution',
+          orElse: () => options.first,
+        );
+      }
+    } else {
+      // 일반 제안 시에는 버튼에 해당하는 proposalData가 바로 전달됨
+      solutionInfo = proposalData;
+    }
+
+    final String? solutionId = solutionInfo['solution_id'] as String?;
+    final String? solutionType = solutionInfo['solution_type'] as String?;
     final String? sessionId = proposalData['session_id'] as String?;
+
+    if (solutionId == null || solutionType == null) {
+      print("Error: solutionId or solutionType is null.");
+      return;
+    }
 
     if (action == "accept_solution") {
       if (solutionType == 'action') {
-        final missionText = await ref
+        final solution = await ref
             .read(solutionRepositoryProvider)
-            .fetchSolutionTextById(solutionId);
-        if (missionText != null) {
-          await _addMessage(Message(
-              userId: currentUserId, content: missionText, sender: Sender.bot));
-        }
+            .fetchSolutionById(solutionId);
+        await _addMessage(Message(
+            userId: currentUserId, content: solution.text, sender: Sender.bot));
       } else {
         SystemChrome.setPreferredOrientations(DeviceOrientation.values);
         String path = (solutionType == 'breathing')
             ? '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview'
             : '/solution/$solutionId?sessionId=$sessionId&isReview=$isReview';
+
         final result = await navigatorkey.currentContext
             ?.push(path, extra: {'solution_type': solutionType});
         if (result is Map<String, dynamic>) {

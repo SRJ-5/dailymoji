@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/routers/router.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -250,8 +251,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
     });
 
     final chatState = ref.watch(chatViewModelProvider);
-    // final isArchivedView = chatState.isArchivedView;
-
     // 캐릭터 이름 연동
     final userState = ref.watch(userViewModelProvider);
     final characterName = userState.userProfile?.characterNm ?? "모지";
@@ -344,6 +343,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
                               // 로딩 인디케이터가 있을 때는 인덱스를 1 감소
                               final messageIndex =
                                   chatState.isLoadingMore ? index - 1 : index;
+                              if (messageIndex < 0) {
+                                return const SizedBox
+                                    .shrink(); // 로딩 인디케이터만 있을 경우 방지
+                              }
+
                               final message = messages[messageIndex];
 
                               // --- 날짜 구분선 표시 로직 ---
@@ -423,7 +427,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  // (따로 뺌) --- 메시지 종류에 따라 위젯을 분기하는 Helper 함수 ---
+  //  --- 메시지 종류에 따라 위젯을 분기하는 Helper 함수 ---
   Widget _buildMessageWidget(Message message,
       {required Key key, required bool isLastProposal}) {
     if (message.sender == Sender.user) {
@@ -433,9 +437,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
         case MessageType.analysis:
           return _analysisMessage(message, key: key);
         case MessageType.solutionProposal:
-          // return _solutionProposalMessage(message, key: key, isLastProposal: isLastProposal);
-          return _solutionProposalCardMessage(message, key: key);
-        // --- 시스템 메시지 UI case 추가 ---
+          return _solutionProposalCardMessage(message,
+              key: key, isLastProposal: isLastProposal);
+        case MessageType.solutionFeedback:
+          return _solutionFeedbackMessage(message, key: key);
         case MessageType.system:
           return _systemMessage(message, key: key);
         default:
@@ -444,7 +449,82 @@ class _ChatPageState extends ConsumerState<ChatPage>
     }
   }
 
-  // (새로 추가) --- 시스템 메시지 위젯 ---
+  Widget _solutionFeedbackMessage(Message message, {required Key key}) {
+    final proposal = message.proposal!;
+    final solutionId = proposal['solution_id'] as String;
+    final sessionId = proposal['session_id'] as String?;
+    final solutionType = proposal['solution_type'] as String;
+
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _botMessage(message, key: ValueKey('${message.tempId}_text')),
+        SizedBox(height: 8.h),
+        Padding(
+          padding: EdgeInsets.only(left: 8.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              ElevatedButton.icon(
+                icon: const Text('👍'),
+                label: const AppText(AppTextStrings.solutionHelpful),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green50,
+                  foregroundColor: AppColors.grey900,
+                  padding:
+                      EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                    side: const BorderSide(color: AppColors.grey200, width: 1),
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(chatViewModelProvider.notifier)
+                      .respondToSolutionFeedback(
+                        solutionId: solutionId,
+                        sessionId: sessionId,
+                        solutionType: solutionType,
+                        feedback: 'helpful',
+                        messageIdToRemove: message.id!,
+                      );
+                },
+              ),
+              SizedBox(width: 12.w),
+              ElevatedButton.icon(
+                icon: const Text('👎'),
+                label: const AppText(AppTextStrings.solutionNotHelpful),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green50,
+                  foregroundColor: AppColors.grey900,
+                  padding:
+                      EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                    side: const BorderSide(color: AppColors.grey200, width: 1),
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(chatViewModelProvider.notifier)
+                      .respondToSolutionFeedback(
+                        solutionId: solutionId,
+                        sessionId: sessionId,
+                        solutionType: solutionType,
+                        feedback: 'not_helpful',
+                        messageIdToRemove: message.id!,
+                      );
+                },
+              ),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  // --- 시스템 메시지 위젯 ---
   Widget _systemMessage(Message message, {required Key key}) {
     return Padding(
       key: key,
@@ -503,9 +583,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
 // branching: 메시지 타입이 'image'이고 이미지 경로가 있으면 Image 위젯을, 아니면 Text 위젯을 표시
     if (message.type == MessageType.image && message.imageAssetPath != null) {
-      // print(
-      //     "RIN: ✅ [ChatPage] Rendering image with path: ${message.imageAssetPath}");
-
       // 동그랗게 만들기! (--> 그래야 하얀 박스안에 들어가지 않음)
       messageContent = ClipRRect(
         borderRadius: BorderRadius.circular(50.r),
@@ -596,124 +673,154 @@ class _ChatPageState extends ConsumerState<ChatPage>
     );
   }
 
-  Widget _solutionProposalMessage(Message message,
-      {required Key key, required bool isLastProposal}) {
-    final proposal = message.proposal!;
-    final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
-    // debugPrint("RIN: Rendering solution proposal text: ${message.content}");
+  // Widget _solutionProposalMessage(Message message,
+  //     {required Key key, required bool isLastProposal}) {
+  //   final proposal = message.proposal;
+  //   if (proposal == null || (proposal['options'] as List?)?.isEmpty == true) {
+  //     return _botMessage(message, key: key);
+  //   }
+  //   final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
 
-// 과거의 솔루션이면 다시보기로!
-    if (!isLastProposal) {
-      return Column(
-        key: key,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _botMessage(message, key: ValueKey('${message.tempId}_text')),
-          SizedBox(height: 8.h),
-          Padding(
-            padding: EdgeInsets.only(left: 8.w),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.green50,
-                foregroundColor: AppColors.grey900,
-                padding:
-                    EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  side: BorderSide(color: AppColors.grey200, width: 1),
-                ),
-                textStyle: AppFontStyles.bodyRegular14,
-              ),
-              onPressed: () {
-                ref.read(chatViewModelProvider.notifier).respondToSolution(
-                      message.proposal!,
-                      'accept_solution',
-                      isReview: true, // 다시보기 모드임을 알림
-                    );
-              },
-              child: AppText("솔루션 다시 볼래!"),
-            ),
-          ),
-        ],
-      );
-    }
+  //   // 1. 다시보기 버튼 로직
+  //   final adhdContext = proposal['adhd_context'] as Map<String, dynamic>?;
+  //   if (!isLastProposal && adhdContext == null) {
+  //     String reviewButtonText = AppTextStrings.viewSolutionAgainDefault;
+  //     final solutionInfo = options.first; // 다시보기는 항상 옵션이 하나
+  //     final solutionType = solutionInfo['solution_type'] as String?;
+  //     final solutionId = solutionInfo['solution_id'] as String?;
 
-    // 상황 결정 버튼 UI 전체 수정
-    return Column(
-      key: key,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _botMessage(message, key: ValueKey('${message.tempId}_text')),
-        SizedBox(height: 12.h),
-        Padding(
-          padding: EdgeInsets.only(left: 8.w),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: options.asMap().entries.map((entry) {
-              final int index = entry.key;
-              final Map<String, dynamic> option = entry.value;
-              final String action = option['action'] as String;
-              final String label = option['label'] as String;
+  //     if (solutionId != null && solutionId.contains('pomodoro')) {
+  //       reviewButtonText = AppTextStrings.viewPomodoroAgain;
+  //     } else {
+  //       switch (solutionType) {
+  //         case 'breathing':
+  //           reviewButtonText = AppTextStrings.viewBreathingAgain;
+  //           break;
+  //         case 'video':
+  //           reviewButtonText = AppTextStrings.viewVideoAgain;
+  //           break;
+  //         case 'action':
+  //           reviewButtonText = AppTextStrings.viewMissionAgain;
+  //           break;
+  //       }
+  //     }
+  //     return Column(
+  //       key: key,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         _botMessage(message, key: ValueKey('${message.tempId}_text')),
+  //         SizedBox(height: 8.h),
+  //         Padding(
+  //           padding: EdgeInsets.only(left: 8.w),
+  //           child: ElevatedButton(
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: AppColors.green50,
+  //               foregroundColor: AppColors.grey900,
+  //               padding:
+  //                   EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(10.r),
+  //                 side: const BorderSide(color: AppColors.grey200, width: 1),
+  //               ),
+  //               textStyle: AppFontStyles.bodyRegular14,
+  //             ),
+  //             onPressed: () => ref
+  //                 .read(chatViewModelProvider.notifier)
+  //                 .respondToSolution(proposal, 'accept_solution',
+  //                     isReview: true),
+  //             child: AppText(reviewButtonText),
+  //           ),
+  //         ),
+  //       ],
+  //     );
+  //   }
 
-              // 좋아요, 싫어요 버튼 스타일 다르게
-              final bool isPositiveAction =
-                  action == 'accept_solution' || action == 'safety_crisis';
-              final double buttonWidth = isPositiveAction ? 104.w : 128.w;
+  //   // 상황 결정 버튼 UI 전체 수정
+  //   return Column(
+  //     key: key,
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _botMessage(message, key: ValueKey('${message.tempId}_text')),
+  //       SizedBox(height: 12.h),
+  //       Padding(
+  //         padding: EdgeInsets.only(left: 8.w),
+  //         child: Row(
+  //           mainAxisAlignment: MainAxisAlignment.start,
+  //           children: options.asMap().entries.map((entry) {
+  //             final int index = entry.key;
+  //             final Map<String, dynamic> option = entry.value;
+  //             final String action = option['action'] as String;
+  //             final String label = option['label'] as String;
 
-              final buttonStyle = ElevatedButton.styleFrom(
-                backgroundColor:
-                    isPositiveAction ? AppColors.yellow700 : AppColors.green50,
-                foregroundColor:
-                    isPositiveAction ? AppColors.grey50 : AppColors.grey900,
-                padding:
-                    EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  side: BorderSide(
-                      color: AppColors.grey200,
-                      width: isPositiveAction ? 0 : 1), // 테두리
-                ),
-                textStyle: AppFontStyles.bodyRegular14,
-              );
+  //             // 좋아요, 싫어요 버튼 스타일 다르게
+  //             final bool isPositiveAction =
+  //                 action == 'accept_solution' || action == 'safety_crisis';
+  //             final double buttonWidth = isPositiveAction ? 104.w : 128.w;
 
-              return Padding(
-                // 첫 번째 버튼이 아닐 경우에만 왼쪽에 간격을 줌
-                padding: EdgeInsets.only(left: index > 0 ? 12.w : 0),
-                child: SizedBox(
-                  width: buttonWidth,
-                  height: 40.h,
-                  child: ElevatedButton(
-                    style: buttonStyle,
-                    onPressed: () {
-                      // 각 답변에 맞는 action
-                      ref
-                          .read(chatViewModelProvider.notifier)
-                          .respondToSolution(
-                            message.proposal!,
-                            action,
-                          );
-                    },
-                    child: AppText(
-                      // 좋아, 싫어 레이블
-                      label,
-                      // style: AppFontStyles.bodyMedium14,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        )
-      ],
-    );
-  }
+  //             final buttonStyle = ElevatedButton.styleFrom(
+  //               backgroundColor:
+  //                   isPositiveAction ? AppColors.yellow700 : AppColors.green50,
+  //               foregroundColor:
+  //                   isPositiveAction ? AppColors.grey50 : AppColors.grey900,
+  //               padding:
+  //                   EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(10.r),
+  //                 side: BorderSide(
+  //                     color: AppColors.grey200,
+  //                     width: isPositiveAction ? 0 : 1), // 테두리
+  //               ),
+  //               textStyle: AppFontStyles.bodyRegular14,
+  //             );
+
+  //             return Padding(
+  //               // 첫 번째 버튼이 아닐 경우에만 왼쪽에 간격을 줌
+  //               padding: EdgeInsets.only(left: index > 0 ? 12.w : 0),
+  //               child: SizedBox(
+  //                 width: buttonWidth,
+  //                 height: 40.h,
+  //                 child: ElevatedButton(
+  //                   style: buttonStyle,
+  //                   onPressed: () {
+  //                     // 각 답변에 맞는 action
+  //                     ref
+  //                         .read(chatViewModelProvider.notifier)
+  //                         .respondToSolution(
+  //                           message.proposal!,
+  //                           action,
+  //                         );
+  //                   },
+  //                   child: AppText(
+  //                     // 좋아, 싫어 레이블
+  //                     label,
+  //                     // style: AppFontStyles.bodyMedium14,
+  //                   ),
+  //                 ),
+  //               ),
+  //             );
+  //           }).toList(),
+  //         ),
+  //       )
+  //     ],
+  //   );
+  // }
 
   // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
-  Widget _solutionProposalCardMessage(Message message, {required Key key}) {
-    String msg =
-        "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
+  Widget _solutionProposalCardMessage(Message message,
+      {required Key key, required bool isLastProposal}) {
+    // String msg =
+    //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
     final proposal = message.proposal!;
+    // proposal 데이터가 없거나 options가 비어있으면 일반 봇 메시지로 처리
+    if (proposal == null || (proposal['options'] as List?)?.isEmpty == true) {
+      return message.content.isNotEmpty
+          ? _botMessage(message, key: key)
+          : const SizedBox.shrink();
+    }
     final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
+    final adhdContext = proposal['adhd_context'] as Map<String, dynamic>?;
+    final bool isAdhdQuestion =
+        adhdContext != null && adhdContext['step'] == 'awaiting_choice';
 
     return Padding(
       key: key,
@@ -737,88 +844,154 @@ class _ChatPageState extends ConsumerState<ChatPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppText(
-                  message.content.replaceAll(r'\n', '\n').split("\n")[0],
-                  style: AppFontStyles.bodyMedium14
-                      .copyWith(color: AppColors.grey900),
-                ),
+                // AppText(
+                //   message.content.replaceAll(r'\n', '\n').split("\n")[0],
+                //   style: AppFontStyles.bodyMedium14
+                //       .copyWith(color: AppColors.grey900),
+                // ),
                 // 본문
-                AppText(
-                  message.content.replaceAll(r'\n', '\n').split("\n")[1],
-                  style: AppFontStyles.bodyRegular14
-                      .copyWith(color: AppColors.grey900),
-                ),
-                SizedBox(height: 16.h),
+                if (message.content.isNotEmpty)
+                  AppText(
+                    message.content.replaceAll(r'\n', '\n'),
+                    style: AppFontStyles.bodyRegular14
+                        .copyWith(color: AppColors.grey900),
+                  ),
+                if (message.content.isNotEmpty) SizedBox(height: 16.h),
                 // 버튼들 (세로로 쌓기)
                 Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        // TODO 호흡 솔루션 진행
-                      },
-                      child: Container(
-                        height: 40.h,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
+                  children: options.map((option) {
+                    final String label = option['label'] as String;
+                    final String action = option['action'] as String;
+
+                    // 2-1. [다시보기]일 경우 버튼 텍스트 수정
+                    String buttonLabel = label;
+                    if (!isLastProposal) {
+                      if (label.contains("뽀모도로")) {
+                        buttonLabel = AppTextStrings.viewPomodoroAgain;
+                      } else if (label.contains("호흡")) {
+                        buttonLabel = AppTextStrings.viewBreathingAgain;
+                      } else if (label.contains("영상")) {
+                        buttonLabel = AppTextStrings.viewVideoAgain;
+                      } else if (label.contains("미션")) {
+                        buttonLabel = AppTextStrings.viewMissionAgain;
+                      } else {
+                        buttonLabel = "다시 " + label;
+                      }
+                    }
+
+                    // 2-2. 다시보기일 경우 버튼 스타일 변경
+                    final BoxDecoration decoration;
+                    final TextStyle textStyle;
+                    if (isLastProposal) {
+                      // 새로운 제안
+                      decoration = BoxDecoration(
                           color: AppColors.yellow700,
-                          borderRadius: BorderRadius.circular(10.r),
+                          borderRadius: BorderRadius.circular(10.r));
+                      textStyle = AppFontStyles.bodyMedium14
+                          .copyWith(color: AppColors.grey50);
+                    } else {
+                      // 다시보기 버튼
+                      decoration = BoxDecoration(
+                        color: AppColors.grey50,
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: AppColors.grey200,
+                          width: 1,
                         ),
-                        child: Center(
-                          child: AppText(
-                            "호흡하러 가기",
-                            style: AppFontStyles.bodyMedium14
-                                .copyWith(color: AppColors.grey50),
+                      );
+                      textStyle = AppFontStyles.bodyMedium14
+                          .copyWith(color: AppColors.grey900);
+                    }
+
+                    // 2-3. 버튼 위젯 렌더링
+                    return Padding(
+                      padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (isAdhdQuestion) {
+                            ref
+                                .read(chatViewModelProvider.notifier)
+                                .respondToAdhdChoice(action, label);
+                          } else {
+                            final proposalDataForAction = {
+                              'solution_id': option['solution_id'],
+                              'solution_type': option['solution_type'],
+                              'session_id': proposal['session_id'],
+                            };
+                            ref
+                                .read(chatViewModelProvider.notifier)
+                                .respondToSolution(
+                                  proposalDataForAction,
+                                  action,
+                                  isReview: !isLastProposal,
+                                );
+                          }
+                        },
+                        child: Container(
+                          height: 40.h,
+                          width: double.infinity,
+                          decoration: decoration,
+                          child: Center(
+                            child: AppText(
+                              buttonLabel,
+                              style: textStyle,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 4.h),
-                    GestureDetector(
-                      onTap: () {
-                        // TODO 영상 솔루션 진행
-                      },
-                      child: Container(
-                        height: 40.h,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.yellow700,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Center(
-                          child: AppText(
-                            "영상보러 가기",
-                            style: AppFontStyles.bodyMedium14
-                                .copyWith(color: AppColors.grey50),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    GestureDetector(
-                      onTap: () {
-                        // TODO 미션 솔루션 진행
-                      },
-                      child: Container(
-                        height: 40.h,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.yellow700,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Center(
-                          child: AppText(
-                            "미션하러 가기",
-                            style: AppFontStyles.bodyMedium14
-                                .copyWith(color: AppColors.grey50),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               ],
             ),
           ),
+          //           SizedBox(height: 4.h),
+          //           GestureDetector(
+          //             onTap: () {
+          //               // TODO 영상 솔루션 진행
+          //             },
+          //             child: Container(
+          //               height: 40.h,
+          //               width: double.infinity,
+          //               decoration: BoxDecoration(
+          //                 color: AppColors.yellow700,
+          //                 borderRadius: BorderRadius.circular(10.r),
+          //               ),
+          //               child: Center(
+          //                 child: AppText(
+          //                   "영상보러 가기",
+          //                   style: AppFontStyles.bodyMedium14
+          //                       .copyWith(color: AppColors.grey50),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //           SizedBox(height: 4.h),
+          //           GestureDetector(
+          //             onTap: () {
+          //               // TODO 미션 솔루션 진행
+          //             },
+          //             child: Container(
+          //               height: 40.h,
+          //               width: double.infinity,
+          //               decoration: BoxDecoration(
+          //                 color: AppColors.yellow700,
+          //                 borderRadius: BorderRadius.circular(10.r),
+          //               ),
+          //               child: Center(
+          //                 child: AppText(
+          //                   "미션하러 가기",
+          //                   style: AppFontStyles.bodyMedium14
+          //                       .copyWith(color: AppColors.grey50),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // ),
           SizedBox(width: 4.w),
           AppText(
             _formattedNow(message.createdAt),
