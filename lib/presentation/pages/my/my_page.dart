@@ -25,14 +25,10 @@ class _MyPageState extends ConsumerState<MyPage> {
 
 // onTap 동작을 위한 라우팅 맵 정의
     final Map<String, VoidCallback> infoTapActions = {
-      AppTextStrings.notice: () =>
-          context.push('/info/${AppTextStrings.notice}'),
-      AppTextStrings.languageSettings: () =>
-          context.push('/info/${AppTextStrings.languageSettings}'),
-      AppTextStrings.termsOfService: () =>
-          context.push('/info/${AppTextStrings.termsOfService}'),
-      AppTextStrings.privacyPolicy: () =>
-          context.push('/info/${AppTextStrings.privacyPolicy}'),
+      AppTextStrings.notice: () => context.push('/info/${AppTextStrings.notice}'),
+      AppTextStrings.languageSettings: () => context.push('/info/${AppTextStrings.languageSettings}'),
+      AppTextStrings.termsOfService: () => context.push('/info/${AppTextStrings.termsOfService}'),
+      AppTextStrings.privacyPolicy: () => context.push('/info/${AppTextStrings.privacyPolicy}'),
     };
 
     final Map<String, VoidCallback> etcTapActions = {
@@ -46,6 +42,7 @@ class _MyPageState extends ConsumerState<MyPage> {
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         centerTitle: true,
         backgroundColor: Colors.transparent,
         title: AppText(

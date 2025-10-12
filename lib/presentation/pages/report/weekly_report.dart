@@ -4,8 +4,7 @@ import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/presentation/pages/report/view_model/cluster_scores_view_model.dart';
-import 'package:dailymoji/presentation/pages/report/data/gscore_service.dart'
-    as gs; // ★ alias
+import 'package:dailymoji/presentation/pages/report/data/gscore_service.dart' as gs; // ★ alias
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -60,30 +59,22 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(clusterScoresViewModelProvider.notifier)
-          .load14DayChart(widget.userId);
+      ref.read(clusterScoresViewModelProvider.notifier).load14DayChart(widget.userId);
     });
 
     final svc = gs.GScoreService(Supabase.instance.client);
     _gFuture = svc.fetch14DaysAsEmotionData(
       userId: widget.userId,
       color: AppColors.totalScore,
-      description:
-          "종합 감정 점수는 최근의 감정을 모아 보여주는 지표예요. 완벽히 좋은 점수일 필요는 없고, 그때그때의 마음을 솔직히 드러낸 기록이면 충분합니다. 수치보다 중요한 건, 당신이 꾸준히 스스로를 돌아보고 있다는 사실이에요.",
+      description: "종합 감정 점수는 최근의 감정을 모아 보여주는 지표예요. 완벽히 좋은 점수일 필요는 없고, 그때그때의 마음을 솔직히 드러낸 기록이면 충분합니다. 수치보다 중요한 건, 당신이 꾸준히 스스로를 돌아보고 있다는 사실이에요.",
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(clusterScoresViewModelProvider);
-    if (state.isLoading)
-      return const Center(
-          child:
-              CircularProgressIndicator(backgroundColor: AppColors.yellow50));
-    if (state.error != null)
-      return Center(
-          child: AppText('${AppTextStrings.weeklyReportError}${state.error}'));
+    if (state.isLoading) return const Center(child: CircularProgressIndicator(backgroundColor: AppColors.yellow50));
+    if (state.error != null) return Center(child: AppText('${AppTextStrings.weeklyReportError}${state.error}'));
 
     // 기존 5개 감정 + 날짜
     final baseDays = state.days;
@@ -111,20 +102,15 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
         // 2) 디버그(임시) — 실제로 값이 들어왔는지 바로 확인
         //    빌드 중 1~2회만 찍히면 정상
         // ignore: avoid_print
-        print(
-            '[gscore] hasData=${snap.hasData} emotion=${snap.data?.emotion != null}');
+        print('[gscore] hasData=${snap.hasData} emotion=${snap.data?.emotion != null}');
         // ignore: avoid_print
         print('[gscore] days=${baseDays.length}');
         // ignore: avoid_print
-        print(
-            '[gscore] lineYs=${mergedMap["종합 감정 점수"]?.spots.map((e) => e.y).toList()}');
+        print('[gscore] lineYs=${mergedMap["종합 감정 점수"]?.spots.map((e) => e.y).toList()}');
 
         // 3) 필터(오버레이용) — 종합은 항상 별도로 그릴 거라 제외
         final filters = ref.watch(filterProvider);
-        final selectedEmotions = filters.entries
-            .where((e) => e.value && mergedMap.containsKey(e.key))
-            .map((e) => e.key)
-            .toList();
+        final selectedEmotions = filters.entries.where((e) => e.value && mergedMap.containsKey(e.key)).map((e) => e.key).toList();
 
         return Container(
           color: AppColors.yellow50,
@@ -172,9 +158,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                       children: filters.keys.map((key) {
                                         return InkWell(
                                           onTap: () {
-                                            ref
-                                                .read(filterProvider.notifier)
-                                                .state = {
+                                            ref.read(filterProvider.notifier).state = {
                                               ...filters,
                                               key: !(filters[key] ?? false),
                                             };
@@ -186,10 +170,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                                 activeColor: AppColors.green400,
                                                 checkColor: AppColors.white,
                                                 onChanged: (value) {
-                                                  ref
-                                                      .read(filterProvider
-                                                          .notifier)
-                                                      .state = {
+                                                  ref.read(filterProvider.notifier).state = {
                                                     ...filters,
                                                     key: value ?? false,
                                                   };
@@ -200,10 +181,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                                 key,
                                                 style: TextStyle(
                                                   fontSize: 14,
-                                                  fontWeight:
-                                                      filters[key] == true
-                                                          ? FontWeight.bold
-                                                          : FontWeight.normal,
+                                                  fontWeight: filters[key] == true ? FontWeight.bold : FontWeight.normal,
                                                 ),
                                               ),
                                             ],
@@ -240,20 +218,16 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                   showTitles: true,
                                   interval: 2,
                                   getTitlesWidget: (value, meta) {
-                                    if (value.toInt() == 0)
-                                      return const SizedBox.shrink();
+                                    if (value.toInt() == 0) return const SizedBox.shrink();
                                     return AppText(
                                       value.toInt().toString(),
-                                      style: AppFontStyles.bodyRegular12
-                                          .copyWith(color: AppColors.grey600),
+                                      style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey600),
                                     );
                                   },
                                 ),
                               ),
-                              rightTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false)),
-                              topTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false)),
+                              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
@@ -266,8 +240,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                     final d = baseDays[index];
                                     return AppText(
                                       "${d.month}.${d.day}",
-                                      style: AppFontStyles.bodyRegular12
-                                          .copyWith(color: AppColors.grey600),
+                                      style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey600),
                                     );
                                   },
                                 ),
@@ -284,8 +257,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                 LineChartBarData(
                                   color: mergedMap["종합 감정 점수"]!.color,
                                   barWidth: 2,
-                                  dotData:
-                                      FlDotData(show: false), // 보기 쉽게 점 보이기
+                                  dotData: FlDotData(show: false), // 보기 쉽게 점 보이기
                                   spots: mergedMap["종합 감정 점수"]!.spots,
                                 ),
 
@@ -313,9 +285,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                           spacing: 8.r, // 칩 간 가로 간격
                           runSpacing: 6.r, // 줄바꿈 시 세로 간격
                           children: [
-                            if (mergedMap["종합 감정 점수"] != null)
-                              _legendChip(
-                                  "종합 감정 점수", mergedMap["종합 감정 점수"]!.color),
+                            if (mergedMap["종합 감정 점수"] != null) _legendChip("종합 감정 점수", mergedMap["종합 감정 점수"]!.color),
                             ...selectedEmotions.map(
                               (key) => _legendChip(key, mergedMap[key]!.color),
                             ),
@@ -335,10 +305,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                 ),
                 Column(
                   children: [
-                    if (mergedMap["종합 감정 점수"] != null)
-                      _buildEmotionCard("종합 감정 점수", mergedMap["종합 감정 점수"]!),
-                    ...selectedEmotions
-                        .map((key) => _buildEmotionCard(key, mergedMap[key]!)),
+                    if (mergedMap["종합 감정 점수"] != null) _buildEmotionCard("종합 감정 점수", mergedMap["종합 감정 점수"]!),
+                    ...selectedEmotions.map((key) => _buildEmotionCard(key, mergedMap[key]!)),
                   ],
                 ),
                 SizedBox(
@@ -362,17 +330,14 @@ class _ScoreBox extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _ScoreBox(
-      {required this.label, required this.value, required this.color});
+  const _ScoreBox({required this.label, required this.value, required this.color});
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         AppText(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
         SizedBox(height: 2.h),
-        AppText(value,
-            style:
-                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
+        AppText(value, style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
       ],
     );
   }
@@ -424,8 +389,7 @@ Widget _buildEmotionCard(String key, EmotionData data) {
             ),
             AppText(
               key,
-              style:
-                  AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
             ),
           ],
         ),
@@ -442,27 +406,17 @@ Widget _buildEmotionCard(String key, EmotionData data) {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _ScoreBox(
-                      label: "평균 감정 점수",
-                      value: "${avg14.toStringAsFixed(1)}점",
-                      color: AppColors.green700),
+                  _ScoreBox(label: "평균 감정 점수", value: "${avg14.toStringAsFixed(1)}점", color: AppColors.green700),
                   separator(),
-                  _ScoreBox(
-                      label: "최고 감정 점수",
-                      value: "${max14.toStringAsFixed(1)}점",
-                      color: AppColors.noti100),
+                  _ScoreBox(label: "최고 감정 점수", value: "${max14.toStringAsFixed(1)}점", color: AppColors.noti100),
                   separator(),
-                  _ScoreBox(
-                      label: "최저 감정 점수",
-                      value: "${min14.toStringAsFixed(1)}점",
-                      color: AppColors.noti200),
+                  _ScoreBox(label: "최저 감정 점수", value: "${min14.toStringAsFixed(1)}점", color: AppColors.noti200),
                 ],
               ),
               SizedBox(height: 8.h),
               AppText(
                 data.description,
-                style: AppFontStyles.bodyRegular12_180
-                    .copyWith(color: AppColors.grey900),
+                style: AppFontStyles.bodyRegular12_180.copyWith(color: AppColors.grey900),
               ),
             ],
           ),
