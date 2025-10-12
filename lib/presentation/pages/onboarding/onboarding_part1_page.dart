@@ -46,7 +46,7 @@ class _OnboardingPart1PageState
         backgroundColor: AppColors.yellow50,
         appBar: AppBar(
           backgroundColor: AppColors.yellow50,
-          leading: stepIndex > 0
+          leading: stepIndex > 0 && stepIndex != totalSteps
               ? IconButton(
                   onPressed: () {
                     setState(() => stepIndex--);
