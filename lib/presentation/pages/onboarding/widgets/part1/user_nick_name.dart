@@ -40,7 +40,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
   Widget build(BuildContext context) {
     final _state = ref.read(userViewModelProvider);
     return SizedBox(
-      height: 566.h,
+      height: 558.4.h,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -157,6 +157,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                 width: 120.w,
                 height: 180.h,
               )),
+          SizedBox(height: 10.4.h),
         ],
       ),
     );

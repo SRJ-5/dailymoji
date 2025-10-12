@@ -87,6 +87,7 @@ class _OnboardingPart2PageState
           height: 100.h,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
+            // .copyWith(top: 5.h),
             child: Column(
               children: [
                 ElevatedButton(
