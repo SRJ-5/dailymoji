@@ -1,6 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/guide/widgets/guide_indicator.dart';
 import 'package:dailymoji/presentation/pages/guide/widgets/guide_widget_box.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';

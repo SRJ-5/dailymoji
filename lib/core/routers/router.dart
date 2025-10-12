@@ -1,5 +1,4 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
-import 'package:dailymoji/presentation/pages/guide/guide_page.dart';
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
@@ -32,7 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     observers: [routeObserver],
     routes: [
       GoRoute(
-          path: '/', builder: (context, state) => GuidePage()),
+          path: '/', builder: (context, state) => SplashPage()),
       GoRoute(
           path: '/login',
           builder: (context, state) => LoginPage()),
