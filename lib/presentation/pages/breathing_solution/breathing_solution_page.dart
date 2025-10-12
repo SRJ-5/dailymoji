@@ -370,7 +370,7 @@ class TimerPainter extends CustomPainter {
       textPainter.layout();
       textPainter.paint(
         canvas,
-        center - Offset(textPainter.width / 2, textPainter.height / 2),
+        center - Offset(textPainter.width / 2, textPainter.height / 2 + 2),
       );
     }
   }

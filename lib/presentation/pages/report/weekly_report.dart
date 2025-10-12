@@ -77,13 +77,15 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(clusterScoresViewModelProvider);
-    if (state.isLoading)
+    if (state.isLoading) {
       return const Center(
           child:
               CircularProgressIndicator(backgroundColor: AppColors.yellow50));
-    if (state.error != null)
+    }
+    if (state.error != null) {
       return Center(
           child: AppText('${AppTextStrings.weeklyReportError}${state.error}'));
+    }
 
     // 기존 5개 감정 + 날짜
     final baseDays = state.days;
@@ -229,7 +231,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 200,
+                        height: 200.h,
                         child: LineChart(
                           LineChartData(
                             lineTouchData: LineTouchData(enabled: false),
@@ -240,8 +242,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                   showTitles: true,
                                   interval: 2,
                                   getTitlesWidget: (value, meta) {
-                                    if (value.toInt() == 0)
+                                    if (value.toInt() == 0) {
                                       return const SizedBox.shrink();
+                                    }
                                     return AppText(
                                       value.toInt().toString(),
                                       style: AppFontStyles.bodyRegular12
@@ -341,9 +344,27 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                         .map((key) => _buildEmotionCard(key, mergedMap[key]!)),
                   ],
                 ),
-                SizedBox(
-                  height: 40.h,
-                ),
+
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  child: GestureDetector(
+                    onTap: () {
+                      //TODO : 진단페이지로 이동
+                    },
+                    child: Container(
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                          color: AppColors.green500,
+                          borderRadius: BorderRadius.circular(12.r)),
+                      alignment: Alignment.center,
+                      child: Text(
+                        AppTextStrings.checkEmotions,
+                        style: AppFontStyles.bodyMedium16
+                            .copyWith(color: AppColors.grey50),
+                      ),
+                    ),
+                  ),
+                )
               ],
             ),
           ),
@@ -443,17 +464,17 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _ScoreBox(
-                      label: "평균 감정 점수",
+                      label: AppTextStrings.averageEmotionalScore,
                       value: "${avg14.toStringAsFixed(1)}점",
                       color: AppColors.green700),
                   separator(),
                   _ScoreBox(
-                      label: "최고 감정 점수",
+                      label: AppTextStrings.highestEmotionalScore,
                       value: "${max14.toStringAsFixed(1)}점",
                       color: AppColors.noti100),
                   separator(),
                   _ScoreBox(
-                      label: "최저 감정 점수",
+                      label: AppTextStrings.lowestEmotionalScore,
                       value: "${min14.toStringAsFixed(1)}점",
                       color: AppColors.noti200),
                 ],

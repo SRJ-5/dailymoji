@@ -119,12 +119,16 @@ class AppTextStrings {
   static const String clusterNegHigh = '불안/분노';
   static const String clusterNegLow = '우울/무기력';
   static const String clusterSleep = '불규칙 수면';
-  static const String clusterAdhd = '집중력저하';
+  static const String clusterAdhd = '집중력 저하';
   static const String clusterPositive = '평온/회복';
   static const String clusterTotalScore = '종합 감정 점수';
 
   // weekly_report.dart 용
   static const String weeklyReportError = '에러: ';
+  static const String averageEmotionalScore = "평균 감정 점수";
+  static const String highestEmotionalScore = "최고 감정 점수";
+  static const String lowestEmotionalScore = "최저 감정 점수";
+  static const String checkEmotions = "감정 검사하기";
 
   // monthly_report.dart 용
   static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
