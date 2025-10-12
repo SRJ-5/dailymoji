@@ -25,6 +25,7 @@ class ChatState {
   final bool hasMore; // 더 불러올 메시지가 있는지
   final bool clearPendingEmoji; // RIN : UI의 이모지 상태를 초기화하기 위해 추가
   final bool isArchivedView;
+  final Set<String> completedSolutionIds;
 
   ChatState({
     this.messages = const [],
@@ -35,6 +36,7 @@ class ChatState {
     this.hasMore = true,
     this.clearPendingEmoji = false,
     this.isArchivedView = false,
+    this.completedSolutionIds = const {},
   });
 
   ChatState copyWith({
@@ -46,6 +48,7 @@ class ChatState {
     bool? hasMore,
     bool? clearPendingEmoji,
     bool? isArchivedView,
+    Set<String>? completedSolutionIds,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -56,6 +59,7 @@ class ChatState {
       hasMore: hasMore ?? this.hasMore,
       clearPendingEmoji: clearPendingEmoji ?? this.clearPendingEmoji,
       isArchivedView: isArchivedView ?? this.isArchivedView,
+      completedSolutionIds: completedSolutionIds ?? this.completedSolutionIds,
     );
   }
 }
@@ -150,8 +154,11 @@ class ChatViewModel extends Notifier<ChatState> {
       final solutionType = navigationData['solution_type'] as String?;
 
       if (solutionId != null && sessionId != null && solutionType != null) {
-        // 후속 메시지 요청 후, 새로운 로직이 중복 실행되지 않도록 상태를 초기화합니다.
-        // _pendingSessionIdForFollowUp = null;
+        // 솔루션이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
+        final newSet = Set<String>.from(state.completedSolutionIds)
+          ..add(solutionId);
+        state = state.copyWith(completedSolutionIds: newSet);
+
         await sendFollowUpMessageAfterSolution(
           reason: reason,
           solutionId: solutionId,
@@ -796,16 +803,17 @@ class ChatViewModel extends Notifier<ChatState> {
         },
       ));
     }
-
-    if (topCluster == 'sleep') {
-      final tip = await userVM.fetchSleepHygieneTip();
-      await _addMessage(
-          Message(userId: currentUserId, content: tip, sender: Sender.bot));
-    } else if (topCluster == 'neg_low') {
-      final mission = await userVM.fetchActionMission();
-      await _addMessage(
-          Message(userId: currentUserId, content: mission, sender: Sender.bot));
-    }
+    // [BUG FIX] 솔루션 완료 후 자동으로 다른 미션을 제안하던 복잡한 로직 제거
+    // 이로 인해 불필요한 메시지가 추가되어 '다시 ~하기' 버튼이 잘못 표시되던 문제 해결
+    //   if (topCluster == 'sleep') {
+    //     final tip = await userVM.fetchSleepHygieneTip();
+    //     await _addMessage(
+    //         Message(userId: currentUserId, content: tip, sender: Sender.bot));
+    //   } else if (topCluster == 'neg_low') {
+    //     final mission = await userVM.fetchActionMission();
+    //     await _addMessage(
+    //         Message(userId: currentUserId, content: mission, sender: Sender.bot));
+    //   }
     _lastProposedSolutionCluster = null;
   }
 
@@ -910,90 +918,77 @@ class ChatViewModel extends Notifier<ChatState> {
   }
 
   /// 솔루션 제안에 대한 사용자 응답 처리
-
-  Future<void> respondToSolution(
-      Map<String, dynamic> proposalData, String action,
-      {bool isReview = false}) async {
+  Future<void> respondToSolution({
+    required String action,
+    String? solutionId,
+    String? solutionType,
+    String? sessionId,
+  }) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 다시보기의 경우, options 배열 안에서 찾아야 합니다.
-    Map<String, dynamic> solutionInfo = {};
-    if (isReview) {
-      final options = proposalData['options'] as List?;
-      if (options != null && options.isNotEmpty) {
-// 다시보기는 보통 하나의 옵션만 가짐
-        solutionInfo = options.firstWhere(
-          (opt) => opt['action'] == 'accept_solution',
-          orElse: () => options.first,
-        );
-      }
-    } else {
-      // 일반 제안 시에는 버튼에 해당하는 proposalData가 바로 전달됨
-      solutionInfo = proposalData;
-    }
-
-    final String? solutionId = solutionInfo['solution_id'] as String?;
-    final String? solutionType = solutionInfo['solution_type'] as String?;
-    final String? sessionId = proposalData['session_id'] as String?;
-
-    if (solutionId == null || solutionType == null) {
-      print("Error: solutionId or solutionType is null.");
-      return;
-    }
-
-    if (action == "accept_solution") {
-      if (solutionType == 'action') {
-        final solution = await ref
-            .read(solutionRepositoryProvider)
-            .fetchSolutionById(solutionId);
-        await _addMessage(Message(
-            userId: currentUserId, content: solution.text, sender: Sender.bot));
-      } else {
-        SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-        String path = (solutionType == 'breathing')
-            ? '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview'
-            : '/solution/$solutionId?sessionId=$sessionId&isReview=$isReview';
-
-        final result = await navigatorkey.currentContext
-            ?.push(path, extra: {'solution_type': solutionType});
-        if (result is Map<String, dynamic>) {
-          processSolutionResult(result);
+    // 사용자가 누른 버튼의 'action' 종류에 따라 분기 처리
+    switch (action) {
+      case 'accept_solution':
+        // 솔루션 수락 (호흡/영상/미션)
+        if (solutionId == null || solutionType == null) {
+          print(
+              "Error: solutionId or solutionType is null for 'accept_solution'.");
+          return;
         }
-      }
-    } else if (action == "decline_solution_and_talk") {
-      // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
-      final userProfile = ref.read(userViewModelProvider).userProfile;
-      final personality = userProfile?.characterPersonality;
-      final personalityDbValue = personality != null
-          ? CharacterPersonality.values
-              .firstWhere((e) => e.myLabel == personality,
-                  orElse: () => CharacterPersonality.probSolver)
-              .dbValue
-          : null;
-      final userNickNm = userProfile?.userNickNm;
 
-      // API를 통해 성향에 맞는 거절 멘트 가져오기
-      final content = await ref
-          .read(homeDialogueRepositoryProvider)
-          .fetchDeclineSolutionDialogue(
-            personality: personalityDbValue,
-            userNickNm: userNickNm,
-          );
+        if (solutionType == 'action') {
+          final solution = await ref
+              .read(solutionRepositoryProvider)
+              .fetchSolutionById(solutionId);
+          await _addMessage(Message(
+              userId: currentUserId,
+              content: solution.text,
+              sender: Sender.bot));
+        } else if (solutionType == 'breathing' || solutionType == 'video') {
+          SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+          String path = (solutionType == 'breathing')
+              ? '/breathing/$solutionId?sessionId=$sessionId'
+              : '/solution/$solutionId?sessionId=$sessionId';
 
-      final message =
-          Message(userId: currentUserId, content: content, sender: Sender.bot);
-      await _addMessage(message);
-      return;
-    } else if (action == "safety_crisis") {
-      String title = AppTextStrings.counselingCenter;
-      navigatorkey.currentContext?.push('/info/$title');
+          final result = await navigatorkey.currentContext
+              ?.push(path, extra: {'solution_type': solutionType});
+          if (result is Map<String, dynamic>) {
+            processSolutionResult(result);
+          }
+        }
+        break;
+
+      case 'decline_solution_and_talk':
+        // 대화 더하기
+        final userProfile = ref.read(userViewModelProvider).userProfile;
+        final personality = userProfile?.characterPersonality;
+        final personalityDbValue = personality != null
+            ? CharacterPersonality.values
+                .firstWhere((e) => e.myLabel == personality,
+                    orElse: () => CharacterPersonality.probSolver)
+                .dbValue
+            : null;
+        final userNickNm = userProfile?.userNickNm;
+        final content = await ref
+            .read(homeDialogueRepositoryProvider)
+            .fetchDeclineSolutionDialogue(
+              personality: personalityDbValue,
+              userNickNm: userNickNm,
+            );
+        await _addMessage(Message(
+            userId: currentUserId, content: content, sender: Sender.bot));
+        break;
+
+      case 'safety_crisis':
+        // 도움받기
+        String title = AppTextStrings.counselingCenter;
+        navigatorkey.currentContext?.push('/info/$title');
+        break;
+
+      default:
+        print("Error: Unknown proposal action: $action");
     }
-  }
-
-  /// 에러 메시지 초기화
-  void clearError() {
-    state = state.copyWith(errorMessage: null);
   }
 }
 

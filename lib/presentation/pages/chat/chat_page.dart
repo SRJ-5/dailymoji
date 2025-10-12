@@ -437,8 +437,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
         case MessageType.analysis:
           return _analysisMessage(message, key: key);
         case MessageType.solutionProposal:
-          return _solutionProposalCardMessage(message,
-              key: key, isLastProposal: isLastProposal);
+          return _solutionProposalCardMessage(message, key: key);
         case MessageType.solutionFeedback:
           return _solutionFeedbackMessage(message, key: key);
         case MessageType.system:
@@ -806,13 +805,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
   // }
 
   // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
-  Widget _solutionProposalCardMessage(Message message,
-      {required Key key, required bool isLastProposal}) {
+  Widget _solutionProposalCardMessage(Message message, {required Key key}) {
     // String msg =
     //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
     final proposal = message.proposal!;
+    final chatState = ref.watch(chatViewModelProvider);
+
     // proposal 데이터가 없거나 options가 비어있으면 일반 봇 메시지로 처리
-    if (proposal == null || (proposal['options'] as List?)?.isEmpty == true) {
+    if ((proposal['options'] as List?)?.isEmpty == true) {
       return message.content.isNotEmpty
           ? _botMessage(message, key: key)
           : const SizedBox.shrink();
@@ -862,10 +862,19 @@ class _ChatPageState extends ConsumerState<ChatPage>
                   children: options.map((option) {
                     final String label = option['label'] as String;
                     final String action = option['action'] as String;
+                    final String? solutionId = option['solution_id'] as String?;
+
+                    // 😎 3. 이 버튼의 솔루션 ID가 '완료 목록'에 있는지 확인
+                    final bool isCompleted = solutionId != null &&
+                        chatState.completedSolutionIds.contains(solutionId);
+
+                    // 😎 4. isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
+                    final String buttonLabel;
+                    final BoxDecoration decoration;
+                    final TextStyle textStyle;
 
                     // 2-1. [다시보기]일 경우 버튼 텍스트 수정
-                    String buttonLabel = label;
-                    if (!isLastProposal) {
+                    if (isCompleted) {
                       if (label.contains("뽀모도로")) {
                         buttonLabel = AppTextStrings.viewPomodoroAgain;
                       } else if (label.contains("호흡")) {
@@ -877,30 +886,22 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       } else {
                         buttonLabel = "다시 " + label;
                       }
-                    }
 
-                    // 2-2. 다시보기일 경우 버튼 스타일 변경
-                    final BoxDecoration decoration;
-                    final TextStyle textStyle;
-                    if (isLastProposal) {
-                      // 새로운 제안
+                      decoration = BoxDecoration(
+                        color: AppColors.grey50,
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(color: AppColors.grey200, width: 1),
+                      );
+                      textStyle = AppFontStyles.bodyMedium14
+                          .copyWith(color: AppColors.grey900);
+                    } else {
+                      // 아직 완료되지 않은 솔루션일 경우 -> '새 제안' 스타일 (노란색)
+                      buttonLabel = label;
                       decoration = BoxDecoration(
                           color: AppColors.yellow700,
                           borderRadius: BorderRadius.circular(10.r));
                       textStyle = AppFontStyles.bodyMedium14
                           .copyWith(color: AppColors.grey50);
-                    } else {
-                      // 다시보기 버튼
-                      decoration = BoxDecoration(
-                        color: AppColors.grey50,
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(
-                          color: AppColors.grey200,
-                          width: 1,
-                        ),
-                      );
-                      textStyle = AppFontStyles.bodyMedium14
-                          .copyWith(color: AppColors.grey900);
                     }
 
                     // 2-3. 버튼 위젯 렌더링
@@ -908,22 +909,24 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
                       child: GestureDetector(
                         onTap: () {
+                          final solutionId = option['solution_id'] as String?;
+                          final solutionType =
+                              option['solution_type'] as String?;
+                          final sessionId = proposal['session_id'] as String?;
+
                           if (isAdhdQuestion) {
                             ref
                                 .read(chatViewModelProvider.notifier)
                                 .respondToAdhdChoice(action, label);
                           } else {
-                            final proposalDataForAction = {
-                              'solution_id': option['solution_id'],
-                              'solution_type': option['solution_type'],
-                              'session_id': proposal['session_id'],
-                            };
                             ref
                                 .read(chatViewModelProvider.notifier)
                                 .respondToSolution(
-                                  proposalDataForAction,
-                                  action,
-                                  isReview: !isLastProposal,
+                                  action:
+                                      action, // 'accept_solution', 'decline_solution' 등
+                                  solutionId: solutionId,
+                                  solutionType: solutionType,
+                                  sessionId: sessionId,
                                 );
                           }
                         },
