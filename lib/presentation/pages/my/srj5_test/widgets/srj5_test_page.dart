@@ -15,7 +15,8 @@ class Srj5TestPage extends ConsumerStatefulWidget {
   Srj5TestPage({super.key});
 
   @override
-  ConsumerState<Srj5TestPage> createState() => _Srj5TestPageState();
+  ConsumerState<Srj5TestPage> createState() =>
+      _Srj5TestPageState();
 }
 
 class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
@@ -30,26 +31,31 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
     final questionList = clusterState.questionText;
     totalSteps = questionList.length;
     final isNextEnabled =
-        testState.questionScores?[stepIndex] == -1 ? false : true;
+        testState.questionScores?[stepIndex] == -1
+            ? false
+            : true;
+    final isLastPage = stepIndex == totalSteps;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
-        leading: GestureDetector(
-          onTap: stepIndex == 0
-              ? null
-              : () {
+        leading: stepIndex > 0 && stepIndex != totalSteps
+            ? GestureDetector(
+                onTap: () {
                   setState(() => stepIndex--);
                 },
-          child: stepIndex == 0 ? null : Icon(Icons.arrow_back),
-        ),
+                child: stepIndex == 0
+                    ? null
+                    : Icon(Icons.arrow_back),
+              )
+            : null,
         title: stepIndex == totalSteps
             ? null
             : AppText(
                 '${clusterState.clusterNM!} 감정 검사',
-                style:
-                    AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
+                style: AppFontStyles.bodyBold18
+                    .copyWith(color: AppColors.grey900),
               ),
         centerTitle: true,
         actions: [
@@ -69,16 +75,17 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: Column(
           children: [
-            stepIndex == totalSteps
+            isLastPage
                 ? SizedBox.shrink()
                 : TopIndicator(
                     width: 28,
                     totalSteps: totalSteps - 1,
                     stepIndex: stepIndex), // indicator 맨 위
             Expanded(
-                child: stepIndex == totalSteps
+                child: isLastPage
                     ? FinishWidget(
-                        text: '좋아요!\n${user.userNickNm}님을 좀 더 이해하게 됐어요',
+                        text:
+                            '좋아요!\n${user.userNickNm}님을 좀 더 이해하게 됐어요',
                         srj5: true,
                       )
                     : Srj5TestBox(
@@ -100,8 +107,9 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 52.h),
-                    backgroundColor:
-                        isNextEnabled ? AppColors.green500 : AppColors.grey200,
+                    backgroundColor: isNextEnabled
+                        ? AppColors.green500
+                        : AppColors.grey200,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -112,19 +120,20 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                             setState(() {
                               stepIndex++;
                             });
-                          } else if (stepIndex == totalSteps) {
+                          } else if (isLastPage) {
                             // ViewModel의 state를 직접 넘기지 않고, ViewModel 내부 함수를 호출
                             //TODO: RIN: supabase 저장 로직이 없는거같아서??
                             ref
-                                .read(assessmentViewModelProvider.notifier)
-                                .submitAssessment(
-                                    user.id!, clusterState.clusterNM!);
+                                .read(assessmentViewModelProvider
+                                    .notifier)
+                                .submitAssessment(user.id!,
+                                    clusterState.clusterNM!);
 
                             context.go('/home');
                           }
                         }
                       : null,
-                  child: AppText(stepIndex == totalSteps ? '완료' : '다음으로',
+                  child: AppText(isLastPage ? '완료' : '다음으로',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
                             ? AppColors.grey50
