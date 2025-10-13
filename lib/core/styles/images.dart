@@ -13,10 +13,6 @@ class AppImages {
       'assets/images/bubble_under.png';
   static const String bubbleLeft =
       'assets/images/bubble_left.png';
-  static const String srj5TestStart =
-      'assets/images/srj5_test_start.png';
-  static const String srj5TestFinish =
-      'assets/images/srj5_test_finish.png';
 
   // images - logo
   static const String dailymojiLogoBlack =
@@ -53,4 +49,26 @@ class AppImages {
       'assets/images/character_cado/cado_walk.png';
   static const String cadoTest =
       'assets/images/character_cado/cado_test.png';
+  static const String cadoCalender =
+      'assets/images/character_cado/cado_calender.png';
+  static const String cadoRecord =
+      'assets/images/character_cado/cado_record.png';
+
+  // images - character_carrot
+  static const String carrotChat =
+      'assets/images/character_carrot/carrot_chat.png';
+  static const String carrotLove =
+      'assets/images/character_carrot/carrot_love.png';
+  static const String carrotProfile =
+      'assets/images/character_carrot/carrot_profile.png';
+
+  // images - characterList
+  static const List<String> characterListProfile = [
+    AppImages.cadoProfile,
+    AppImages.carrotProfile
+  ];
+  static const List<String> characterListLove = [
+    AppImages.cadoLove,
+    AppImages.carrotLove,
+  ];
 }

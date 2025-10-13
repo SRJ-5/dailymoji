@@ -169,6 +169,23 @@ class AppTextStrings {
       '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
   static const String positiveDescription =
       '마음의 안정감과 회복 탄력도를 확인해요';
+
+  // guide Page RichText 용
+  static const List<String> startGuideText = [
+    '하루 감정을 기록하고\n',
+    '감정 점수를 기반으로\n',
+    '캘린더의'
+  ];
+  static const List<String> middleGuideText = [
+    'AI 분석 리포트',
+    '맞춤형 솔루션',
+    '감정 히스토리'
+  ];
+  static const List<String> endGuideText = [
+    '를 받아보세요',
+    '을 추천해 드려요',
+    '를 통해\n변화를 한눈에 확인하세요'
+  ];
 }
 
 // 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가
