@@ -266,19 +266,33 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                     if (index < 0 || index >= baseDays.length) {
                                       return const SizedBox.shrink();
                                     }
-                                    final d = baseDays[index];
-                                    return AppText(
-                                      "${d.month}.${d.day}",
-                                      style: AppFontStyles.bodyRegular12
-                                          .copyWith(color: AppColors.grey600),
-                                    );
+                                    // 마지막 인덱스(오늘 날짜)는 무조건 표시
+                                    if (index == baseDays.length - 1) {
+                                      final d = baseDays[index];
+                                      return AppText(
+                                        "${d.month}.${d.day}",
+                                        style: AppFontStyles.bodyRegular12
+                                            .copyWith(color: AppColors.grey900),
+                                      );
+                                    }
+                                    // 나머지는 2일 간격으로만 표시
+                                    if (index % 2 == 0) {
+                                      final d = baseDays[index];
+                                      return AppText(
+                                        "${d.month}.${d.day}",
+                                        style: AppFontStyles.bodyRegular12
+                                            .copyWith(color: AppColors.grey600),
+                                      );
+                                    } else {
+                                      return const SizedBox.shrink();
+                                    }
                                   },
                                 ),
                               ),
                             ),
                             borderData: FlBorderData(show: false),
                             minX: 0,
-                            maxX: (baseDays.length - 1).toDouble(),
+                            maxX: (baseDays.length - 0.5).toDouble(),
                             minY: 0,
                             maxY: 10,
                             lineBarsData: [
