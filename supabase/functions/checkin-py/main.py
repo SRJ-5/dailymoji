@@ -494,14 +494,20 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
                 payload.language_code, 
                 cluster="adhd", 
                 personality=payload.character_personality
-            )       
+            )     
+
+            # 솔루션 제안 시점에 session 생성
+            intervention_for_db = { "preset_id": PresetIds.SOLUTION_PROPOSAL, "coaching_text": coaching_text}
+            session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
+  
 
             return {
                 "intervention": { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text,
-                    "options": [
-                        { "label": "호흡하러 가기", "action": "accept_solution", "solution_id": breathing_solution_data.get("solution_id"), "solution_type": "breathing" },
-                        { "label": "집중력 훈련하기", "action": "accept_solution", "solution_id": focus_solution_data.get("solution_id"), "solution_type": focus_solution_data.get("solution_type") }
-                    ]
+                "options": [
+                    { "label": "호흡하러 가기", "action": "accept_solution", "solution_id": breathing_solution_data.get("solution_id"), "solution_type": "breathing" },
+                    { "label": "집중력 훈련하기", "action": "accept_solution", "solution_id": focus_solution_data.get("solution_id"), "solution_type": focus_solution_data.get("solution_type") },
+                ],
+                "session_id": session_id 
                 }
             }
 
@@ -532,10 +538,15 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         solution_res = await run_in_threadpool(solution_query.execute)
         solution_data = solution_res.data[0] if solution_res.data else {}
 
-        return { "intervention": { "preset_id": PresetIds.ADHD_TASK_BREAKDOWN, "coaching_text": coaching_text, "mission_text": mission_text,
-                "options": [{ "label": "뽀모도로와 함께 미션하러 가기", "action": "accept_solution", "solution_id": solution_data.get("solution_id"), "solution_type": solution_data.get("solution_type") }]
+        # 뽀모도로 제안 시점에 session 생성
+        intervention_for_db = { "preset_id": PresetIds.ADHD_TASK_BREAKDOWN, "coaching_text": coaching_text, "mission_text": mission_text }
+        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
+
+        return { "intervention": intervention_for_db,
+                "options": [{ "label": "뽀모도로와 함께 미션하러 가기", "action": "accept_solution", "solution_id": solution_data.get("solution_id"), "solution_type": solution_data.get("solution_type") }],
+                "session_id": session_id 
             }
-        }
+        
     
     return {"intervention": {"preset_id": PresetIds.FRIENDLY_REPLY, "text": "앗, 잠시 오류가 있었어요."}}
 
