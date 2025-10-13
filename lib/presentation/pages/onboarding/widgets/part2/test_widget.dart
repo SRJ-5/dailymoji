@@ -23,10 +23,6 @@ class TestWidget extends ConsumerStatefulWidget {
 
 class _TestWidgetState extends ConsumerState<TestWidget> {
   late int _selectedIndex;
-  final characterList = [
-    AppImages.cadoProfile,
-    AppImages.carrotProfile
-  ];
 
   final List<String> _answerList = [
     '전혀 없었어요',
@@ -59,7 +55,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             children: [
               SizedBox(width: 2.w),
               Image.asset(
-                characterList[characterIndex],
+                AppImages.characterListProfile[characterIndex],
                 width: 120.w,
                 height: 129.h,
               ),

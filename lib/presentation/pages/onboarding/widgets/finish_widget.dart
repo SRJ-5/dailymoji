@@ -15,10 +15,7 @@ class FinishWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final characterIndex =
         ref.read(userViewModelProvider).step11;
-    final characterList = [
-      AppImages.cadoLove,
-      AppImages.carrotLove
-    ];
+
     return SizedBox(
       height: 566.h,
       child: Column(
@@ -37,7 +34,7 @@ class FinishWidget extends ConsumerWidget {
           ),
           SizedBox(height: 40.r),
           Image.asset(
-            characterList[characterIndex],
+            AppImages.characterListLove[characterIndex],
             width: 180.w,
             height: 180.h,
           )

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
-class character_box extends StatelessWidget {
+class CharacterBox extends StatelessWidget {
   final double viewportFraction;
   final String personality;
   final String characterImage;
@@ -15,7 +15,7 @@ class character_box extends StatelessWidget {
   final Function(
       {required int selectNum,
       required String aiPersonality}) onSelect;
-  character_box(
+  CharacterBox(
       {super.key,
       required this.viewportFraction,
       required this.personality,
@@ -25,7 +25,7 @@ class character_box extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _personalitiesMy = CharacterPersonality.values
+    final personalitiesMy = CharacterPersonality.values
         .map((e) => e.myLabel)
         .toList();
     return Container(
@@ -68,7 +68,7 @@ class character_box extends StatelessWidget {
             onTap: () {
               onSelect(
                   selectNum: index,
-                  aiPersonality: _personalitiesMy[index]);
+                  aiPersonality: personalitiesMy[index]);
             },
             child: Center(
               child: Container(

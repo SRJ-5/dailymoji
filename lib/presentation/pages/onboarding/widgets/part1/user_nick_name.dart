@@ -20,11 +20,6 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
   TextEditingController _textEditingController =
       TextEditingController();
 
-  final characterList = [
-    AppImages.cadoProfile,
-    AppImages.carrotProfile
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -163,7 +158,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
           Align(
               alignment: Alignment.bottomRight,
               child: Image.asset(
-                characterList[characterIndex],
+                AppImages.characterListProfile[characterIndex],
                 width: 120.w,
                 height: 129.h,
               )),

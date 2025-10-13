@@ -4,7 +4,6 @@ import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/ai_name_setting.dart';
-import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai_personality.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/user_nick_name.dart';
@@ -27,7 +26,6 @@ class _OnboardingPart1PageState
 
   void selectCharacter(
       {required int selectNum, required String aiPersonality}) {
-    print('야호');
     ref.read(userViewModelProvider.notifier).setAiPersonality(
         selectNum: selectNum, aiPersonality: aiPersonality);
     setState(() {
@@ -38,8 +36,6 @@ class _OnboardingPart1PageState
   @override
   Widget build(BuildContext context) {
     final isNextEnabled = switch (stepIndex) {
-      // 캐릭터 선택창이 생기면 아래 step.11 활성화 해야하고 case 0~4로 해야함
-      // 0 => ref.watch(userViewModelProvider).step11,
       0 => ref.watch(userViewModelProvider).step11 == -1
           ? false
           : true,
@@ -89,8 +85,6 @@ class _OnboardingPart1PageState
               Expanded(
                   child: SingleChildScrollView(
                 child: [
-                  // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
-                  // SelectAi(),
                   SelectAiPersonality(onSelect: selectCharacter),
                   AiNameSetting(),
                   UserNickName(),

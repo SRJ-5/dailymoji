@@ -30,10 +30,6 @@ class _SelectAiPersonalityState
   final _personalitiesOnboarding = CharacterPersonality.values
       .map((e) => e.onboardingLabel)
       .toList();
-  final _characterImages = [
-    AppImages.cadoProfile,
-    AppImages.carrotProfile
-  ];
 
   @override
   void initState() {
@@ -86,7 +82,7 @@ class _SelectAiPersonalityState
               scrollDirection: Axis.horizontal,
               controller: pageController,
               clipBehavior: Clip.none,
-              itemCount: _characterImages.length,
+              itemCount: AppImages.characterListProfile.length,
               itemBuilder: (context, index) {
                 // ✨ 1. AnimatedBuilder로 감싸기
                 return AnimatedBuilder(
@@ -112,12 +108,12 @@ class _SelectAiPersonalityState
                       child: Align(
                         // Align은 그대로 유지하여 중앙 정렬
                         alignment: Alignment.center,
-                        child: character_box(
+                        child: CharacterBox(
                           viewportFraction: viewportFraction,
                           personality:
                               _personalitiesOnboarding[index],
-                          characterImage:
-                              _characterImages[index],
+                          characterImage: AppImages
+                              .characterListProfile[index],
                           onSelect: widget.onSelect,
                           index: index,
                         ), // 원래의 캐릭터 박스 위젯
