@@ -40,15 +40,10 @@ class FinishWidget extends ConsumerWidget {
                   width: 180.w,
                   height: 180.h,
                 )
-              : Column(
-                  children: [
-                    SizedBox(height: 40),
-                    Image.asset(
-                      AppImages.srj5TestFinish,
-                      width: 200.w,
-                      height: 189.h,
-                    ),
-                  ],
+              : Image.asset(
+                  AppImages.srj5TestFinish,
+                  width: 200.w,
+                  height: 189.h,
                 )
         ],
       ),

@@ -13,6 +13,10 @@ class AppImages {
       'assets/images/bubble_under.png';
   static const String bubbleLeft =
       'assets/images/bubble_left.png';
+  static const String srj5TestStart =
+      'assets/images/srj5_test_start.png';
+  static const String srj5TestFinish =
+      'assets/images/srj5_test_finish.png';
 
   // images - logo
   static const String dailymojiLogoBlack =
