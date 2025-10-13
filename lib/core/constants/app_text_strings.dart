@@ -44,9 +44,12 @@ class AppTextStrings {
   static const String itsOkay = '괜찮아요';
 
   // Chat ViewModel Fallbacks
-  static const String fallbackEmojiQuestion = '어떤 일 때문에 그렇게 느끼셨나요?';
-  static const String fallbackAnalysisError = '죄송해요, 응답을 이해할 수 없었어요.';
-  static const String fallbackSolutionError = '솔루션을 제안하는 중에 문제가 발생했어요.';
+  static const String fallbackEmojiQuestion =
+      '어떤 일 때문에 그렇게 느끼셨나요?';
+  static const String fallbackAnalysisError =
+      '죄송해요, 응답을 이해할 수 없었어요.';
+  static const String fallbackSolutionError =
+      '솔루션을 제안하는 중에 문제가 발생했어요.';
 
   // Login Page
   static const String loginFailed = '로그인에 실패했습니다. 다시 시도해주세요.';
@@ -75,9 +78,12 @@ class AppTextStrings {
   // Onboarding
   static const String onboarding1TitleUser = '나의 닉네임 설정';
   static const String onboarding1TitleAI = '캐릭터 설정';
-  static const String onboarding1Finish = '좋아요!\n이제 다음 단계로 가볼까요?';
-  static const String onboarding2Title = '현재 %s의 감정 기록'; // %s for user name
-  static const String onboarding2Finish = '모든 준비 완료!\n함께 시작해 볼까요?';
+  static const String onboarding1Finish =
+      '좋아요!\n이제 다음 단계로 가볼까요?';
+  static const String onboarding2Title =
+      '현재 %s의 감정 기록'; // %s for user name
+  static const String onboarding2Finish =
+      '모든 준비 완료!\n함께 시작해 볼까요?';
   static const List<String> onboardingQuestions = [
     '지난 2주 동안, 기분이\n가라앉거나, 우울했거나,\n절망적이었나요?',
     '지난 2주 동안, 일에 흥미를 잃거나 즐거움을 느끼지 못했나요?',
@@ -94,9 +100,12 @@ class AppTextStrings {
   static const String reportTitle = '리포트';
   static const String mojiCalendar = '모지 달력';
   static const String mojiChart = '모지 차트';
-  static const String monthlyReportDefaultSummary = '날짜를 선택하면 감정 요약을 볼 수 있어요.';
-  static const String monthlyReportLoadingSummary = '감정 기록을 요약하고 있어요...';
-  static const String monthlyReportFailedSummary = '요약을 불러오는 데 실패했어요.';
+  static const String monthlyReportDefaultSummary =
+      '날짜를 선택하면 감정 요약을 볼 수 있어요.';
+  static const String monthlyReportLoadingSummary =
+      '감정 기록을 요약하고 있어요...';
+  static const String monthlyReportFailedSummary =
+      '요약을 불러오는 데 실패했어요.';
   static const String monthlyReportErrorSummary =
       '오류가 발생했어요: %s'; // %s for error
   static const String monthlyReportNoRecord = '이 날은 기록이 없는 하루예요';
@@ -127,10 +136,36 @@ class AppTextStrings {
   static const String weeklyReportError = '에러: ';
 
   // monthly_report.dart 용
-  static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  static const List<String> weekdays = [
+    '일',
+    '월',
+    '화',
+    '수',
+    '목',
+    '금',
+    '토'
+  ];
   static const String monthlyReportLoadFailed = '로드 실패: ';
   static const String monthlyReportDateFormat = 'yyyy년 MM월';
-  static const String monthlyReportDayFormat = 'M월 d일 EEEE'; // 예: 10월 7일 월요일
+  static const String monthlyReportDayFormat =
+      'M월 d일 EEEE'; // 예: 10월 7일 월요일
+
+  // guide Page RichText 용
+  static const List<String> startGuideText = [
+    '하루 감정을 기록하고\n',
+    '감정 점수를 기반으로\n',
+    '캘린더의'
+  ];
+  static const List<String> middleGuideText = [
+    'AI 분석 리포트',
+    '맞춤형 솔루션',
+    '감정 히스토리'
+  ];
+  static const List<String> endGuideText = [
+    '를 받아보세요',
+    '을 추천해 드려요',
+    '를 통해\n변화를 한눈에 확인하세요'
+  ];
 }
 
 // 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가

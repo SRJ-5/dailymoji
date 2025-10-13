@@ -11,7 +11,7 @@ class UserState {
 
   UserState({
     required this.userProfile,
-    this.step11 = -1,
+    this.step11 = 0,
     this.step12 = false,
     this.step13 = false,
     List<int>? step2Answers,

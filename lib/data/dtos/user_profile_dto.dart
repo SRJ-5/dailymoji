@@ -27,11 +27,18 @@ class UserProfileDto {
           userNickNm: map["user_nick_nm"],
           aiCharacter: map["ai_character"],
           characterNm: map["character_nm"],
-          characterPersonality: CharacterPersonality.values
-              .firstWhere(
-                (e) => e.dbValue == map["character_personality"],
-              )
-              .myLabel,
+          characterPersonality:
+              map["character_personality"] != null
+                  ? CharacterPersonality.values
+                      .firstWhere(
+                        (e) =>
+                            e.dbValue ==
+                            map["character_personality"],
+                        orElse: () =>
+                            CharacterPersonality.probSolver,
+                      )
+                      .myLabel
+                  : null,
           onboardingScores: map['onboarding_scores'] ?? {},
         );
 
@@ -65,8 +72,10 @@ class UserProfileDto {
         userNickNm: userNickNm ?? this.userNickNm,
         aiCharacter: aiCharacter ?? this.aiCharacter,
         characterNm: characterNm ?? this.characterNm,
-        characterPersonality: characterPersonality ?? this.characterPersonality,
-        onboardingScores: onboardingScores ?? this.onboardingScores);
+        characterPersonality:
+            characterPersonality ?? this.characterPersonality,
+        onboardingScores:
+            onboardingScores ?? this.onboardingScores);
   }
 
   UserProfile toEntity() {
@@ -87,7 +96,8 @@ class UserProfileDto {
           userNickNm: surveyResponse.userNickNm,
           aiCharacter: surveyResponse.aiCharacter,
           characterNm: surveyResponse.characterNm,
-          characterPersonality: surveyResponse.characterPersonality,
+          characterPersonality:
+              surveyResponse.characterPersonality,
           onboardingScores: surveyResponse.onboardingScores,
         );
 }
