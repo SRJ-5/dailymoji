@@ -403,7 +403,10 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      AppText(AppTextStrings.checkChatHistory),
+                                      Text(AppTextStrings.checkChatHistory,
+                                          style: AppFontStyles.bodyMedium14
+                                              .copyWith(
+                                                  color: AppColors.grey900)),
                                       SizedBox(width: 6.w),
                                       Icon(Icons.arrow_forward,
                                           color: AppColors.grey900, size: 18.r),
