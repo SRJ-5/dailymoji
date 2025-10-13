@@ -25,7 +25,7 @@ class ChatState {
   final bool hasMore; // 더 불러올 메시지가 있는지
   final bool clearPendingEmoji; // RIN : UI의 이모지 상태를 초기화하기 위해 추가
   final bool isArchivedView;
-  final Set<String> completedSolutionIds;
+  final Set<String> completedSolutionTypes;
 
   ChatState({
     this.messages = const [],
@@ -36,7 +36,7 @@ class ChatState {
     this.hasMore = true,
     this.clearPendingEmoji = false,
     this.isArchivedView = false,
-    this.completedSolutionIds = const {},
+    this.completedSolutionTypes = const {},
   });
 
   ChatState copyWith({
@@ -48,7 +48,7 @@ class ChatState {
     bool? hasMore,
     bool? clearPendingEmoji,
     bool? isArchivedView,
-    Set<String>? completedSolutionIds,
+    Set<String>? completedSolutionTypes,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -59,7 +59,8 @@ class ChatState {
       hasMore: hasMore ?? this.hasMore,
       clearPendingEmoji: clearPendingEmoji ?? this.clearPendingEmoji,
       isArchivedView: isArchivedView ?? this.isArchivedView,
-      completedSolutionIds: completedSolutionIds ?? this.completedSolutionIds,
+      completedSolutionTypes:
+          completedSolutionTypes ?? this.completedSolutionTypes,
     );
   }
 }
@@ -129,7 +130,7 @@ class ChatViewModel extends Notifier<ChatState> {
   Future<void> enterChatRoom({
     String? emotionFromHome,
     DateTime? specificDate,
-    Map<String, dynamic>? navigationData,
+    // Map<String, dynamic>? navigationData,
   }) async {
     // 리포트 페이지에서 특정 날짜를 통해 들어온 경우 '과거 기록 보기' 모드로 설정
     final bool isArchived = specificDate != null;
@@ -146,28 +147,43 @@ class ChatViewModel extends Notifier<ChatState> {
 
     // RIN: 1. 어떤 경로로 진입하든, 가장 먼저 이전 대화 기록을 불러옴
     await _loadMessages(currentUserId, targetDate: specificDate);
-    //[로직 변경] SolutionPage에서 직접 데이터를 보내는 방식은 유지하되, 만약을 대비합니다.
-    if (navigationData != null && navigationData['from'] == 'solution_page') {
-      final reason = navigationData['reason'] as String? ?? 'video_ended';
-      final solutionId = navigationData['solutionId'] as String?;
-      final sessionId = navigationData['sessionId'] as String?;
-      final solutionType = navigationData['solution_type'] as String?;
 
-      if (solutionId != null && sessionId != null && solutionType != null) {
-        // 솔루션이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
-        final newSet = Set<String>.from(state.completedSolutionIds)
-          ..add(solutionId);
-        state = state.copyWith(completedSolutionIds: newSet);
+    //   //[로직 변경] SolutionPage에서 직접 데이터를 보내는 방식은 유지하되, 만약을 대비합니다.
+    //   if (navigationData != null && navigationData['from'] == 'solution_page') {
+    //     final reason = navigationData['reason'] as String? ?? 'video_ended';
+    //     final solutionId = navigationData['solutionId'] as String?;
+    //     final sessionId = navigationData['sessionId'] as String?;
+    //     final solutionType = navigationData['solution_type'] as String?;
 
-        await sendFollowUpMessageAfterSolution(
-          reason: reason,
-          solutionId: solutionId,
-          sessionId: sessionId,
-          solutionType: solutionType,
-          topCluster: _lastProposedSolutionCluster,
-        );
-      }
-    } else if (emotionFromHome != null) {
+    //     if (solutionId != null && sessionId != null && solutionType != null) {
+    //       // 솔루션이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
+    //       final newSet = Set<String>.from(state.completedSolutionIds)
+    //         ..add(solutionId);
+    //       state = state.copyWith(completedSolutionIds: newSet);
+
+    //       await sendFollowUpMessageAfterSolution(
+    //         reason: reason,
+    //         solutionId: solutionId,
+    //         sessionId: sessionId,
+    //         solutionType: solutionType,
+    //         topCluster: _lastProposedSolutionCluster,
+    //       );
+    //     }
+    //   } else if (emotionFromHome != null) {
+    //     final emojiMessage = Message(
+    //       userId: currentUserId,
+    //       sender: Sender.user,
+    //       type: MessageType.image,
+    //       imageAssetPath: EmojiAsset.fromString(emotionFromHome).asset,
+    //     );
+    //     final savedMessage = await _addMessage(emojiMessage);
+    //     await _startConversationWithEmoji(savedMessage, emotionFromHome);
+    //     state = state.copyWith(clearPendingEmoji: true);
+    //   }
+    // }
+
+// 2. 홈 화면에서 새로운 대화를 시작하는 경우에만 이 로직을 실행합니다.
+    if (emotionFromHome != null) {
       final emojiMessage = Message(
         userId: currentUserId,
         sender: Sender.user,
@@ -180,11 +196,12 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-// RIN ♥ : UI에서 초기화 신호를 확인한 후, 다시 false로 돌려놓는 함수
+  // 홈 화면에서 선택한 이모지 사용 후 상태를 초기화
   void consumeClearPendingEmojiSignal() {
     state = state.copyWith(clearPendingEmoji: false);
   }
 
+  // --- 솔루션이 끝나고 '돌아왔을 때' 결과 처리를 하는 함수 ---
   Future<void> processSolutionResult(Map<String, dynamic> result) async {
     final reason = result['reason'] as String? ?? 'video_ended';
     final solutionId = result['solutionId'] as String?;
@@ -192,6 +209,12 @@ class ChatViewModel extends Notifier<ChatState> {
     final solutionType = result['solution_type'] as String?;
 
     if (solutionId != null && sessionId != null && solutionType != null) {
+      // 솔루션이 끝나고 돌아오면, 여기서 ID를 '완료 목록'에 추가합니다.
+      final newSet = Set<String>.from(state.completedSolutionTypes)
+        ..add(solutionType);
+      state = state.copyWith(completedSolutionTypes: newSet);
+
+      // 그 다음에 후속 메시지를 보냅니다.
       await sendFollowUpMessageAfterSolution(
         reason: reason,
         solutionId: solutionId,
@@ -201,6 +224,32 @@ class ChatViewModel extends Notifier<ChatState> {
       );
     }
   }
+
+// // RIN ♥ : UI에서 초기화 신호를 확인한 후, 다시 false로 돌려놓는 함수
+//   void consumeClearPendingEmojiSignal() {
+//     state = state.copyWith(clearPendingEmoji: false);
+//   }
+
+  // Future<void> processSolutionResult(Map<String, dynamic> result) async {
+  //   final reason = result['reason'] as String? ?? 'video_ended';
+  //   final solutionId = result['solutionId'] as String?;
+  //   final sessionId = result['sessionId'] as String?;
+  //   final solutionType = result['solution_type'] as String?;
+
+  //   if (solutionId != null && sessionId != null && solutionType != null) {
+  //    //솔루션이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
+  //     final newSet = Set<String>.from(state.completedSolutionIds)..add(solutionId);
+  //     state = state.copyWith(completedSolutionIds: newSet);
+
+  //     await sendFollowUpMessageAfterSolution(
+  //       reason: reason,
+  //       solutionId: solutionId,
+  //       sessionId: sessionId,
+  //       solutionType: solutionType,
+  //       topCluster: _lastProposedSolutionCluster,
+  //     );
+  //   }
+  // }
 
 // // ---------------------------------------------------------------------------
 // // 메시지 로드 & 구독
@@ -600,6 +649,7 @@ class ChatViewModel extends Notifier<ChatState> {
   Future<void> _proposeSolution(
       String sessionId, String topCluster, String currentUserId) async {
     _lastProposedSolutionCluster = topCluster;
+    state = state.copyWith(completedSolutionTypes: {});
 
     try {
       final proposalResponse =
@@ -615,7 +665,6 @@ class ChatViewModel extends Notifier<ChatState> {
         sender: Sender.bot,
         type: MessageType.solutionProposal,
         proposal: {
-          "solution_id": proposalResponse['solution_id'],
           "session_id": sessionId,
           "options": proposalResponse['options'],
         },
@@ -769,6 +818,20 @@ class ChatViewModel extends Notifier<ChatState> {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
+    if (solutionType == 'video') {
+      await _addMessage(Message(
+        userId: currentUserId,
+        content: AppTextStrings.askVideoFeedback,
+        sender: Sender.bot,
+        type: MessageType.solutionFeedback,
+        proposal: {
+          'solution_id': solutionId,
+          'session_id': sessionId,
+          'solution_type': solutionType
+        },
+      ));
+    }
+
 // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
     final userVM = ref.read(userViewModelProvider.notifier);
     final userProfile = userVM.state.userProfile;
@@ -789,31 +852,6 @@ class ChatViewModel extends Notifier<ChatState> {
             );
     await _addMessage(
         Message(userId: currentUserId, content: content, sender: Sender.bot));
-
-    if (solutionType == 'video') {
-      await _addMessage(Message(
-        userId: currentUserId,
-        content: AppTextStrings.askVideoFeedback,
-        sender: Sender.bot,
-        type: MessageType.solutionFeedback,
-        proposal: {
-          'solution_id': solutionId,
-          'session_id': sessionId,
-          'solution_type': solutionType
-        },
-      ));
-    }
-    // [BUG FIX] 솔루션 완료 후 자동으로 다른 미션을 제안하던 복잡한 로직 제거
-    // 이로 인해 불필요한 메시지가 추가되어 '다시 ~하기' 버튼이 잘못 표시되던 문제 해결
-    //   if (topCluster == 'sleep') {
-    //     final tip = await userVM.fetchSleepHygieneTip();
-    //     await _addMessage(
-    //         Message(userId: currentUserId, content: tip, sender: Sender.bot));
-    //   } else if (topCluster == 'neg_low') {
-    //     final mission = await userVM.fetchActionMission();
-    //     await _addMessage(
-    //         Message(userId: currentUserId, content: mission, sender: Sender.bot));
-    //   }
     _lastProposedSolutionCluster = null;
   }
 
@@ -945,6 +983,9 @@ class ChatViewModel extends Notifier<ChatState> {
               userId: currentUserId,
               content: solution.text,
               sender: Sender.bot));
+          final newSet = Set<String>.from(state.completedSolutionTypes)
+            ..add(solutionType);
+          state = state.copyWith(completedSolutionTypes: newSet);
         } else if (solutionType == 'breathing' || solutionType == 'video') {
           SystemChrome.setPreferredOrientations(DeviceOrientation.values);
           String path = (solutionType == 'breathing')

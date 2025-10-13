@@ -127,7 +127,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
       ref.read(chatViewModelProvider.notifier).enterChatRoom(
             emotionFromHome: widget.emotionFromHome,
             specificDate: widget.targetDate,
-            navigationData: widget.navigationData,
+            // navigationData: widget.navigationData,
           );
     });
   }
@@ -862,30 +862,31 @@ class _ChatPageState extends ConsumerState<ChatPage>
                   children: options.map((option) {
                     final String label = option['label'] as String;
                     final String action = option['action'] as String;
-                    final String? solutionId = option['solution_id'] as String?;
+                    final String? solutionType = option['solution_type']
+                        as String?; // 😎 solutionId 대신 Type을 가져옴
 
-                    // 😎 3. 이 버튼의 솔루션 ID가 '완료 목록'에 있는지 확인
-                    final bool isCompleted = solutionId != null &&
-                        chatState.completedSolutionIds.contains(solutionId);
+                    // 이 버튼의 '타입'이 '완료 목록'에 있는지 확인
+                    final bool isCompleted = solutionType != null &&
+                        chatState.completedSolutionTypes.contains(solutionType);
 
-                    // 😎 4. isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
+                    // isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
                     final String buttonLabel;
                     final BoxDecoration decoration;
                     final TextStyle textStyle;
 
                     // 2-1. [다시보기]일 경우 버튼 텍스트 수정
                     if (isCompleted) {
-                      if (label.contains("뽀모도로")) {
-                        buttonLabel = AppTextStrings.viewPomodoroAgain;
-                      } else if (label.contains("호흡")) {
-                        buttonLabel = AppTextStrings.viewBreathingAgain;
-                      } else if (label.contains("영상")) {
-                        buttonLabel = AppTextStrings.viewVideoAgain;
-                      } else if (label.contains("미션")) {
-                        buttonLabel = AppTextStrings.viewMissionAgain;
-                      } else {
-                        buttonLabel = "다시 " + label;
-                      }
+                      // if (label.contains("뽀모도로")) {
+                      //   buttonLabel = AppTextStrings.viewPomodoroAgain;
+                      // } else if (label.contains("호흡")) {
+                      //   buttonLabel = AppTextStrings.viewBreathingAgain;
+                      // } else if (label.contains("영상")) {
+                      //   buttonLabel = AppTextStrings.viewVideoAgain;
+                      // } else if (label.contains("미션")) {
+                      //   buttonLabel = AppTextStrings.viewMissionAgain;
+                      // } else {
+                      buttonLabel = "다시 " + label;
+                      // }
 
                       decoration = BoxDecoration(
                         color: AppColors.grey50,
@@ -895,7 +896,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       textStyle = AppFontStyles.bodyMedium14
                           .copyWith(color: AppColors.grey900);
                     } else {
-                      // 아직 완료되지 않은 솔루션일 경우 -> '새 제안' 스타일 (노란색)
+                      // 아직 완료되지 않은 솔루션일 경우 -> '새 제안' 스타일
                       buttonLabel = label;
                       decoration = BoxDecoration(
                           color: AppColors.yellow700,
@@ -909,21 +910,18 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
                       child: GestureDetector(
                         onTap: () {
-                          final solutionId = option['solution_id'] as String?;
-                          final solutionType =
-                              option['solution_type'] as String?;
-                          final sessionId = proposal['session_id'] as String?;
-
                           if (isAdhdQuestion) {
                             ref
                                 .read(chatViewModelProvider.notifier)
                                 .respondToAdhdChoice(action, label);
                           } else {
+                            final solutionId = option['solution_id'] as String?;
+                            final sessionId = proposal['session_id'] as String?;
+
                             ref
                                 .read(chatViewModelProvider.notifier)
                                 .respondToSolution(
-                                  action:
-                                      action, // 'accept_solution', 'decline_solution' 등
+                                  action: action,
                                   solutionId: solutionId,
                                   solutionType: solutionType,
                                   sessionId: sessionId,
