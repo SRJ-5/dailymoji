@@ -11,4 +11,6 @@ class AppIcons {
   static const String unfoldMore = 'assets/icons/unfold_more.svg';
   static const String close = 'assets/icons/close.svg';
   static const String send_orange = 'assets/icons/send_orange.svg';
+  static const String arrowForward =
+      'assets/icons/arrow_forward.svg';
 }
