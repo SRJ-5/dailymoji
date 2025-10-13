@@ -23,6 +23,10 @@ class TestWidget extends ConsumerStatefulWidget {
 
 class _TestWidgetState extends ConsumerState<TestWidget> {
   late int _selectedIndex;
+  final characterList = [
+    AppImages.cadoProfile,
+    AppImages.carrotProfile
+  ];
 
   final List<String> _answerList = [
     '전혀 없었어요',
@@ -41,6 +45,9 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final characterIndex =
+        ref.read(userViewModelProvider).step11;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -52,7 +59,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             children: [
               SizedBox(width: 2.w),
               Image.asset(
-                AppImages.cadoProfile,
+                characterList[characterIndex],
                 width: 120.w,
                 height: 129.h,
               ),

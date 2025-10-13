@@ -25,6 +25,16 @@ class _OnboardingPart1PageState
   // 캐릭터 선택창이 생기면 totalSteps +1 해야함
   int totalSteps = 3;
 
+  void selectCharacter(
+      {required int selectNum, required String aiPersonality}) {
+    print('야호');
+    ref.read(userViewModelProvider.notifier).setAiPersonality(
+        selectNum: selectNum, aiPersonality: aiPersonality);
+    setState(() {
+      stepIndex++;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isNextEnabled = switch (stepIndex) {
@@ -81,7 +91,7 @@ class _OnboardingPart1PageState
                 child: [
                   // 캐릭터가 여러개여서 선택하게 되면 SelectAi 추가
                   // SelectAi(),
-                  SelectAiPersonality(),
+                  SelectAiPersonality(onSelect: selectCharacter),
                   AiNameSetting(),
                   UserNickName(),
                   FinishWidget(

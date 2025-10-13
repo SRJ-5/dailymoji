@@ -22,6 +22,11 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
   TextEditingController _textEditingController =
       TextEditingController();
 
+  final characterList = [
+    AppImages.cadoProfile,
+    AppImages.carrotProfile
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +45,8 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
 
   @override
   Widget build(BuildContext context) {
+    final characterIndex =
+        ref.read(userViewModelProvider).step11;
     return SizedBox(
       height: 558.4.h,
       child: Column(
@@ -157,7 +164,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           Align(
               alignment: Alignment.bottomRight,
               child: Image.asset(
-                AppImages.cadoProfile,
+                characterList[characterIndex],
                 width: 120.w,
                 height: 129.h,
               )),

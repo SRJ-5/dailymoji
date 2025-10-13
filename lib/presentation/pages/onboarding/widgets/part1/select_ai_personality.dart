@@ -1,21 +1,19 @@
 import 'package:dailymoji/core/styles/colors.dart';
-import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/character_box.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
-import 'package:dailymoji/presentation/pages/onboarding/widgets/select_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class SelectAiPersonality extends ConsumerStatefulWidget {
-  const SelectAiPersonality({
-    super.key,
-  });
+  final Function(
+      {required int selectNum,
+      required String aiPersonality}) onSelect;
+  SelectAiPersonality({super.key, required this.onSelect});
 
   @override
   ConsumerState<SelectAiPersonality> createState() =>
@@ -24,15 +22,18 @@ class SelectAiPersonality extends ConsumerStatefulWidget {
 
 class _SelectAiPersonalityState
     extends ConsumerState<SelectAiPersonality> {
-  final PageController pageController =
-      PageController(initialPage: 0, viewportFraction: 0.75);
-  // late int _selectedIndex;
+  int _selectedIndex = 0;
 
-  // final _personalitiesOnboarding = CharacterPersonality.values
-  //     .map((e) => e.onboardingLabel)
-  //     .toList();
-  // final _personalitiesMy =
-  //     CharacterPersonality.values.map((e) => e.myLabel).toList();
+  PageController pageController =
+      PageController(initialPage: 0, viewportFraction: 0.75);
+
+  final _personalitiesOnboarding = CharacterPersonality.values
+      .map((e) => e.onboardingLabel)
+      .toList();
+  final _characterImages = [
+    AppImages.cadoProfile,
+    AppImages.carrotProfile
+  ];
 
   @override
   void initState() {
@@ -40,7 +41,7 @@ class _SelectAiPersonalityState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {}); // 첫 빌드 이후 pageController.page 값이 정확히 들어옴
     });
-    // _selectedIndex = ref.read(userViewModelProvider).step11;
+    _selectedIndex = ref.read(userViewModelProvider).step11;
   }
 
   @override
@@ -85,7 +86,7 @@ class _SelectAiPersonalityState
               scrollDirection: Axis.horizontal,
               controller: pageController,
               clipBehavior: Clip.none,
-              itemCount: 2,
+              itemCount: _characterImages.length,
               itemBuilder: (context, index) {
                 // ✨ 1. AnimatedBuilder로 감싸기
                 return AnimatedBuilder(
@@ -113,6 +114,12 @@ class _SelectAiPersonalityState
                         alignment: Alignment.center,
                         child: character_box(
                           viewportFraction: viewportFraction,
+                          personality:
+                              _personalitiesOnboarding[index],
+                          characterImage:
+                              _characterImages[index],
+                          onSelect: widget.onSelect,
+                          index: index,
                         ), // 원래의 캐릭터 박스 위젯
                       ),
                     );
