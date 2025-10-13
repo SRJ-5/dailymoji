@@ -40,23 +40,25 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
 
   @override
   Widget build(BuildContext context) {
+    final characterIndex =
+        ref.read(userViewModelProvider).step11;
     return SizedBox(
-      height: 566.h,
+      height: 558.4.h,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 24.r,
+            height: 16.h,
           ),
           Container(
             width: double.infinity,
-            height: 94.h,
+            height: 88.h,
             padding: EdgeInsets.symmetric(
                 horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: AppText(
-                '캐릭터에게\n멋진 이름을 지어주세요',
+                '도우미에게\n멋진 이름을 지어주세요',
                 style: AppFontStyles.heading2,
               ),
             ),
@@ -157,10 +159,11 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
           Align(
               alignment: Alignment.bottomRight,
               child: Image.asset(
-                AppImages.cadoProfile,
+                AppImages.characterListProfile[characterIndex],
                 width: 120.w,
-                height: 180.h,
+                height: 129.h,
               )),
+          SizedBox(height: 10.4.h),
         ],
       ),
     );
