@@ -862,70 +862,73 @@ class _ChatPageState extends ConsumerState<ChatPage>
                   children: options.map((option) {
                     final String label = option['label'] as String;
                     final String action = option['action'] as String;
-                    final String? solutionType = option['solution_type']
-                        as String?; // 😎 solutionId 대신 Type을 가져옴
+                    final String? solutionType =
+                        option['solution_type'] as String?;
 
-                    // 이 버튼의 '타입'이 '완료 목록'에 있는지 확인
+                    // isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
                     final bool isCompleted = solutionType != null &&
                         chatState.completedSolutionTypes.contains(solutionType);
 
-                    // isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
-                    final String buttonLabel;
-                    final BoxDecoration decoration;
-                    final TextStyle textStyle;
-
-                    // 2-1. [다시보기]일 경우 버튼 텍스트 수정
-                    if (isCompleted) {
-                      // if (label.contains("뽀모도로")) {
-                      //   buttonLabel = AppTextStrings.viewPomodoroAgain;
-                      // } else if (label.contains("호흡")) {
-                      //   buttonLabel = AppTextStrings.viewBreathingAgain;
-                      // } else if (label.contains("영상")) {
-                      //   buttonLabel = AppTextStrings.viewVideoAgain;
-                      // } else if (label.contains("미션")) {
-                      //   buttonLabel = AppTextStrings.viewMissionAgain;
-                      // } else {
-                      buttonLabel = "다시 " + label;
-                      // }
-
-                      decoration = BoxDecoration(
-                        color: AppColors.grey50,
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: AppColors.grey200, width: 1),
-                      );
-                      textStyle = AppFontStyles.bodyMedium14
-                          .copyWith(color: AppColors.grey900);
-                    } else {
-                      // 아직 완료되지 않은 솔루션일 경우 -> '새 제안' 스타일
-                      buttonLabel = label;
-                      decoration = BoxDecoration(
-                          color: AppColors.yellow700,
-                          borderRadius: BorderRadius.circular(10.r));
-                      textStyle = AppFontStyles.bodyMedium14
-                          .copyWith(color: AppColors.grey50);
-                    }
+                    final String buttonLabel =
+                        isCompleted ? "다시 " + label : label;
+                    final BoxDecoration decoration = isCompleted
+                        ? BoxDecoration(
+                            color: AppColors.grey50,
+                            borderRadius: BorderRadius.circular(10.r),
+                            border:
+                                Border.all(color: AppColors.grey200, width: 1),
+                          )
+                        : BoxDecoration(
+                            color: AppColors.yellow700,
+                            borderRadius: BorderRadius.circular(10.r));
+                    final TextStyle textStyle = isCompleted
+                        ? AppFontStyles.bodyMedium14
+                            .copyWith(color: AppColors.grey900)
+                        : AppFontStyles.bodyMedium14
+                            .copyWith(color: AppColors.grey50);
 
                     // 2-3. 버튼 위젯 렌더링
                     return Padding(
                       padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
                       child: GestureDetector(
                         onTap: () {
-                          if (isAdhdQuestion) {
-                            ref
-                                .read(chatViewModelProvider.notifier)
-                                .respondToAdhdChoice(action, label);
-                          } else {
-                            final solutionId = option['solution_id'] as String?;
-                            final sessionId = proposal['session_id'] as String?;
+                          switch (action) {
+                            case 'accept_solution':
+                              final solutionId =
+                                  option['solution_id'] as String?;
+                              final solutionType =
+                                  option['solution_type'] as String?;
+                              final sessionId =
+                                  proposal['session_id'] as String?;
+                              if (solutionId != null && solutionType != null) {
+                                ref
+                                    .read(chatViewModelProvider.notifier)
+                                    .respondToSolution(
+                                      solutionId: solutionId,
+                                      solutionType: solutionType,
+                                      sessionId: sessionId,
+                                    );
+                              }
+                              break;
 
-                            ref
-                                .read(chatViewModelProvider.notifier)
-                                .respondToSolution(
-                                  action: action,
-                                  solutionId: solutionId,
-                                  solutionType: solutionType,
-                                  sessionId: sessionId,
-                                );
+                            case 'adhd_has_task':
+                            case 'adhd_no_task':
+                              final String label = option['label'] as String;
+                              ref
+                                  .read(chatViewModelProvider.notifier)
+                                  .respondToAdhdChoice(action, label);
+                              break;
+
+                            case 'decline_solution_and_talk':
+                            case 'safety_crisis':
+                              ref
+                                  .read(chatViewModelProvider.notifier)
+                                  .handleProposalAction(action);
+                              break;
+
+                            default:
+                              print(
+                                  "Error: Tapped unknown action in UI: $action");
                           }
                         },
                         child: Container(

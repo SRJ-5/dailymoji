@@ -90,7 +90,7 @@ ONBOARDING_MAPPING = {
 DEEP_DIVE_MAX_SCORES = {
     "neg_low": 24,  # 8문항 * 3점
     "neg_high": 18, # 6문항 * 3점
-    "adhd_high": 18,# 6문항 * 3점
+    "adhd": 18,# 6문항 * 3점
     "sleep": 15,    # 5문항 * 3점
     "positive": 15  # 5문항 * 3점
 }

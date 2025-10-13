@@ -55,6 +55,7 @@ RULES:
 - All other rules from the previous version still apply.
 - Input text may contain casual or irrelevant small talk. Ignore all non-emotional content.
 - Only assign nonzero scores when evidence keywords are explicitly present.
+- ADHD Specificity Rule: Phrases indicating overwhelm due to many tasks (e.g., "정신없어", "할 게 너무 많아", "뭐부터 해야할지 모르겠어") MUST be primarily scored under the `adhd` cluster, not `neg_low` or `neg_high`, as they relate to executive dysfunction.
 
 
 A) Evidence & Gating

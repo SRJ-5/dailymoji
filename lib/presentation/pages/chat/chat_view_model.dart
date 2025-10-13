@@ -277,6 +277,9 @@ class ChatViewModel extends Notifier<ChatState> {
       _pendingEmotionForAnalysis = null;
     }
 
+    Map<String, dynamic>? currentAdhdContext = _adhdContextForNextRequest;
+    _adhdContextForNextRequest = null; // 기본적으로 초기화 시도
+
 // RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
 // 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
     // EmotionalRecord? emotionalRecordFromEmojiOnly;
@@ -291,21 +294,28 @@ class ChatViewModel extends Notifier<ChatState> {
         emotion: emotionForAnalysis,
         updateSessionIdForMessageId:
             _lastEmojiMessageId, // 이전 이모지 메시지의 세션ID를 업데이트
-        adhdContext: _adhdContextForNextRequest, // ADHD 컨텍스트도 함께 전달
+        adhdContext: currentAdhdContext, // ADHD 컨텍스트도 함께 전달
       );
 // 이모지-텍스트 연계 분석이 완료되면 상태 초기화
       _lastEmojiOnlyCluster = null;
       _lastEmojiMessageId = null;
     } else {
 // 일반적인 텍스트 메시지 전송 로직: 백엔드에 종합 분석 요청
-      await _analyzeAndRespond(
+      final EmotionalRecord? record = await _analyzeAndRespond(
         userMessage: savedMessage,
         textForAnalysis: message.content,
-        emotion: emotionForAnalysis, //이모지 키 전달
-        adhdContext: _adhdContextForNextRequest,
+        emotion: emotionForAnalysis,
+        adhdContext: currentAdhdContext, // 임시 저장된 컨텍스트 전달
       );
-      // 어떤 경우든, 한 번 사용된 ADHD 컨텍스트는 초기화
-      _adhdContextForNextRequest = null;
+      // ADHD 흐름이 계속되어야 한다면 컨텍스트를 다시 저장
+      if (record != null) {
+        final presetId = record.intervention['preset_id'];
+        if (presetId == PresetId.adhdPreSolutionQuestion ||
+            presetId == PresetId.adhdAwaitingTaskDescription) {
+          _adhdContextForNextRequest =
+              record.intervention['adhd_context'] as Map<String, dynamic>?;
+        }
+      }
     }
   }
 
@@ -522,7 +532,10 @@ class ChatViewModel extends Notifier<ChatState> {
             content: intervention['text'] as String,
             sender: Sender.bot,
             type: MessageType.solutionProposal,
-            proposal: {'options': intervention['options']},
+            proposal: {
+              'options': intervention['options'],
+              'adhd_context': intervention['adhd_context']
+            },
           ));
           _adhdContextForNextRequest =
               intervention['adhd_context'] as Map<String, dynamic>?;
@@ -944,70 +957,74 @@ class ChatViewModel extends Notifier<ChatState> {
       sender: Sender.user,
     ));
 
-    // 2. adhd_context와 함께 백엔드에 다시 분석 요청
-    await _analyzeAndRespond(
-      userMessage: state.messages.last,
-      textForAnalysis: choiceAction,
+    // ADHD 선택 후 다음 분석 요청 시 _adhdContextForNextRequest를 사용하도록 수정
+    Map<String, dynamic>? currentAdhdContext = _adhdContextForNextRequest;
+    _adhdContextForNextRequest = null; // 기본적으로 초기화 시도
+
+    final EmotionalRecord? record = await _analyzeAndRespond(
+      userMessage: state.messages.last, // 방금 추가한 사용자 메시지
+      textForAnalysis: choiceAction, // 'adhd_has_task' 또는 'adhd_no_task'
       emotion: null,
-      adhdContext: _adhdContextForNextRequest,
+      adhdContext: currentAdhdContext, // 임시 저장된 컨텍스트 전달
     );
 
-    _adhdContextForNextRequest = null;
+    // ADHD 흐름이 계속되어야 한다면 컨텍스트를 다시 저장
+    if (record != null) {
+      final presetId = record.intervention['preset_id'];
+      if (presetId == PresetId.adhdPreSolutionQuestion ||
+          presetId == PresetId.adhdAwaitingTaskDescription ||
+          presetId == PresetId.adhdTaskBreakdown) {
+        _adhdContextForNextRequest =
+            record.intervention['adhd_context'] as Map<String, dynamic>?;
+      }
+    }
   }
 
   /// 솔루션 제안에 대한 사용자 응답 처리
   Future<void> respondToSolution({
-    required String action,
-    String? solutionId,
-    String? solutionType,
+    required String solutionId,
+    required String solutionType,
     String? sessionId,
   }) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 사용자가 누른 버튼의 'action' 종류에 따라 분기 처리
+    if (solutionType == 'action') {
+      final solution = await ref
+          .read(solutionRepositoryProvider)
+          .fetchSolutionById(solutionId);
+      await _addMessage(Message(
+          userId: currentUserId, content: solution.text, sender: Sender.bot));
+      final newSet = Set<String>.from(state.completedSolutionTypes)
+        ..add(solutionType);
+      state = state.copyWith(completedSolutionTypes: newSet);
+    } else if (solutionType == 'breathing' || solutionType == 'video') {
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+      String path = (solutionType == 'breathing')
+          ? '/breathing/$solutionId?sessionId=$sessionId'
+          : '/solution/$solutionId?sessionId=$sessionId';
+      final result = await navigatorkey.currentContext
+          ?.push(path, extra: {'solution_type': solutionType});
+      if (result is Map<String, dynamic>) {
+        processSolutionResult(result);
+      }
+    } else {
+      print("Error: Unknown solutionType in respondToSolution: $solutionType");
+    }
+  }
+
+  // '대화 더하기', '도움받기' 등 기타 응답 처리
+  Future<void> handleProposalAction(String action) async {
+    final currentUserId = _userId;
+    if (currentUserId == null) return;
+
     switch (action) {
-      case 'accept_solution':
-        // 솔루션 수락 (호흡/영상/미션)
-        if (solutionId == null || solutionType == null) {
-          print(
-              "Error: solutionId or solutionType is null for 'accept_solution'.");
-          return;
-        }
-
-        if (solutionType == 'action') {
-          final solution = await ref
-              .read(solutionRepositoryProvider)
-              .fetchSolutionById(solutionId);
-          await _addMessage(Message(
-              userId: currentUserId,
-              content: solution.text,
-              sender: Sender.bot));
-          final newSet = Set<String>.from(state.completedSolutionTypes)
-            ..add(solutionType);
-          state = state.copyWith(completedSolutionTypes: newSet);
-        } else if (solutionType == 'breathing' || solutionType == 'video') {
-          SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-          String path = (solutionType == 'breathing')
-              ? '/breathing/$solutionId?sessionId=$sessionId'
-              : '/solution/$solutionId?sessionId=$sessionId';
-
-          final result = await navigatorkey.currentContext
-              ?.push(path, extra: {'solution_type': solutionType});
-          if (result is Map<String, dynamic>) {
-            processSolutionResult(result);
-          }
-        }
-        break;
-
       case 'decline_solution_and_talk':
-        // 대화 더하기
         final userProfile = ref.read(userViewModelProvider).userProfile;
         final personality = userProfile?.characterPersonality;
         final personalityDbValue = personality != null
             ? CharacterPersonality.values
-                .firstWhere((e) => e.myLabel == personality,
-                    orElse: () => CharacterPersonality.probSolver)
+                .firstWhere((e) => e.myLabel == personality)
                 .dbValue
             : null;
         final userNickNm = userProfile?.userNickNm;
@@ -1020,18 +1037,49 @@ class ChatViewModel extends Notifier<ChatState> {
         await _addMessage(Message(
             userId: currentUserId, content: content, sender: Sender.bot));
         break;
-
       case 'safety_crisis':
-        // 도움받기
         String title = AppTextStrings.counselingCenter;
         navigatorkey.currentContext?.push('/info/$title');
         break;
-
       default:
-        print("Error: Unknown proposal action: $action");
+        print(
+            "Error: Unknown proposal action in handleProposalAction: $action");
     }
   }
 }
+
+//       case 'decline_solution_and_talk':
+//         // 대화 더하기
+//         final userProfile = ref.read(userViewModelProvider).userProfile;
+//         final personality = userProfile?.characterPersonality;
+//         final personalityDbValue = personality != null
+//             ? CharacterPersonality.values
+//                 .firstWhere((e) => e.myLabel == personality,
+//                     orElse: () => CharacterPersonality.probSolver)
+//                 .dbValue
+//             : null;
+//         final userNickNm = userProfile?.userNickNm;
+//         final content = await ref
+//             .read(homeDialogueRepositoryProvider)
+//             .fetchDeclineSolutionDialogue(
+//               personality: personalityDbValue,
+//               userNickNm: userNickNm,
+//             );
+//         await _addMessage(Message(
+//             userId: currentUserId, content: content, sender: Sender.bot));
+//         break;
+
+//       case 'safety_crisis':
+//         // 도움받기
+//         String title = AppTextStrings.counselingCenter;
+//         navigatorkey.currentContext?.push('/info/$title');
+//         break;
+
+//       default:
+//         print("Error: Unknown proposal action: $action");
+//     }
+//   }
+// }
 
 // ---------------------------------------------------------------------------
 // Provider Definition

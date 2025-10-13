@@ -457,6 +457,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
     adhd_context = payload.adhd_context or {}
     current_step = adhd_context.get("step")
 
+    # --- 시나리오 1: "있어!" / "없어!" 버튼을 눌렀을 때 ---
     if current_step == "awaiting_choice":
         # "있어!" / "없어!" 버튼에 대한 응답 처리
         if "adhd_has_task" in user_response:
@@ -475,23 +476,37 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
                 }
             }
         else: # "adhd_no_task"
-            solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, text, solution_type").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1).single().execute)
-            solution_data = solution_res.data or {}
+         # "없어!"를 누른 경우 -> 호흡 및 집중력 훈련 솔루션 제안
             
-            proposal_text = await get_mention_from_db("propose", payload.language_code, cluster="adhd", solution_variant="focus_training", personality=payload.character_personality)
-            final_text = f"{proposal_text} {solution_data.get('text', '')}".strip()
+            # 1. '집중력 훈련' 솔루션을 DB에서 찾습니다.
+            focus_solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1)
+            focus_solution_res = await run_in_threadpool(focus_solution_query.execute)
+            focus_solution_data = focus_solution_res.data[0] if focus_solution_res.data else {}
+
+            # 2. '호흡' 솔루션을 DB에서 찾습니다.
+            breathing_solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_type", "breathing").limit(1)
+            breathing_solution_res = await run_in_threadpool(breathing_solution_query.execute)
+            breathing_solution_data = breathing_solution_res.data[0] if breathing_solution_res.data else {}
             
+              # 3. 제안 멘트를 가져옵니다.
+            proposal_text = await get_mention_from_db(
+                "propose", 
+                payload.language_code, 
+                cluster="adhd", 
+                personality=payload.character_personality
+            )       
+
             return {
-                "intervention": {
-                    "preset_id": PresetIds.SOLUTION_PROPOSAL,
-                    "proposal_text": final_text,
-                    "options": [{
-                        "label": "집중력 훈련하기", "action": "accept_solution",
-                        "solution_id": solution_data.get("solution_id"), "solution_type": solution_data.get("solution_type")
-                    }]
+                "intervention": { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text,
+                    "options": [
+                        { "label": "호흡하러 가기", "action": "accept_solution", "solution_id": breathing_solution_data.get("solution_id"), "solution_type": "breathing" },
+                        { "label": "집중력 훈련하기", "action": "accept_solution", "solution_id": focus_solution_data.get("solution_id"), "solution_type": focus_solution_data.get("solution_type") }
+                    ]
                 }
             }
+
         
+            # --- 시나리오 2: 사용자가 할 일을 입력했을 때 ---
     elif current_step == "awaiting_task_description":
         # 사용자가 입력한 할 일 내용을 받아 처리
         user_nick_nm, _ = await get_user_info(payload.user_id)
@@ -513,24 +528,16 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         mission_text = breakdown_result.get("mission_text", "가장 작은 일부터 시작해보세요.")
         
          # 뽀모도로 솔루션 정보 조회
-        solution_res = await run_in_threadpool(supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1).single().execute)
-        solution_data = solution_res.data or {}
+        solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1)
+        solution_res = await run_in_threadpool(solution_query.execute)
+        solution_data = solution_res.data[0] if solution_res.data else {}
 
-        return {
-            "intervention": {
-                "preset_id": PresetIds.ADHD_TASK_BREAKDOWN,
-                "coaching_text": coaching_text,
-                "mission_text": mission_text,
-                "options": [{
-                    "label": "뽀모도로와 함께 미션하러 가기",
-                    "action": "accept_solution",
-                    "solution_id": solution_data.get("solution_id"),
-                    "solution_type": solution_data.get("solution_type")
-                }]
+        return { "intervention": { "preset_id": PresetIds.ADHD_TASK_BREAKDOWN, "coaching_text": coaching_text, "mission_text": mission_text,
+                "options": [{ "label": "뽀모도로와 함께 미션하러 가기", "action": "accept_solution", "solution_id": solution_data.get("solution_id"), "solution_type": solution_data.get("solution_type") }]
             }
         }
     
-    return {"intervention": {"preset_id": PresetIds.FRIENDLY_REPLY, "text": "앗, 잠시 오류가 있었어요. 다시 말씀해주시겠어요?"}}
+    return {"intervention": {"preset_id": PresetIds.FRIENDLY_REPLY, "text": "앗, 잠시 오류가 있었어요."}}
 
 
 # ---------- API Endpoints (분리된 구조) ----------
