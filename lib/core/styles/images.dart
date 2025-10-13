@@ -38,7 +38,14 @@ class AppImages {
   static const String cadoWalk =
       'assets/images/character_cado/cado_walk.png';
 
+  static const String cadoCalender =
+      'assets/images/character_cado/cado_calender.png';
+  static const String cadoRecord =
+      'assets/images/character_cado/cado_record.png';
+
   // images - character_carrot
+  static const String carrotChat =
+      'assets/images/character_carrot/carrot_chat.png';
   static const String carrotLove =
       'assets/images/character_carrot/carrot_love.png';
   static const String carrotProfile =
