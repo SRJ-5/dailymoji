@@ -1,72 +1,94 @@
-import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
-import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/assessment_view_model.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/widgets/srj5_test_box.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
-import 'package:dailymoji/presentation/pages/onboarding/widgets/part2/test_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-class OnboardingPart2Page extends ConsumerStatefulWidget {
+class Srj5TestPage extends ConsumerStatefulWidget {
+  Srj5TestPage({super.key});
+
   @override
-  ConsumerState<OnboardingPart2Page> createState() =>
-      _OnboardingPart2PageState();
+  ConsumerState<Srj5TestPage> createState() =>
+      _Srj5TestPageState();
 }
 
-class _OnboardingPart2PageState
-    extends ConsumerState<OnboardingPart2Page> {
-  final onBoardingQuestion = AppTextStrings.onboardingQuestions;
-
+class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
   int stepIndex = 0;
-  late int totalSteps = onBoardingQuestion.length;
+  late int totalSteps;
+
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(userViewModelProvider);
+    final user = ref.read(userViewModelProvider).userProfile!;
+    final testState = ref.watch(assessmentViewModelProvider);
+    final clusterState = testState.questionsList!;
+    final questionList = clusterState.questionText;
+    totalSteps = questionList.length;
     final isNextEnabled =
-        state.step2Answers[stepIndex] == -1 ? false : true;
+        testState.questionScores?[stepIndex] == -1
+            ? false
+            : true;
+    final isLastPage = stepIndex == totalSteps;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
         leading: stepIndex > 0 && stepIndex != totalSteps
-            ? IconButton(
-                onPressed: () {
+            ? GestureDetector(
+                onTap: () {
                   setState(() => stepIndex--);
                 },
-                icon: Icon(Icons.arrow_back))
-            : null,
+                child: Icon(Icons.arrow_back),
+              )
+            : SizedBox.shrink(),
         title: stepIndex == totalSteps
             ? null
             : AppText(
-                '현재 ${state.userProfile!.userNickNm}의 감정 기록',
+                '${clusterState.clusterNM!} 감정 검사',
                 style: AppFontStyles.bodyBold18
                     .copyWith(color: AppColors.grey900),
               ),
         centerTitle: true,
+        actions: [
+          GestureDetector(
+              onTap: () {
+                context.pop();
+                context.pop();
+              },
+              child: Icon(
+                Icons.clear,
+                size: 24.r,
+              )),
+          SizedBox(width: 12.h)
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: Column(
           children: [
-            stepIndex == totalSteps
+            isLastPage
                 ? SizedBox.shrink()
                 : TopIndicator(
                     width: 28,
                     totalSteps: totalSteps - 1,
                     stepIndex: stepIndex), // indicator 맨 위
             Expanded(
-                child: stepIndex == totalSteps
+                child: isLastPage
                     ? FinishWidget(
-                        text: '모든 준비 완료!\n함께 시작해 볼까요?',
+                        text:
+                            '좋아요!\n${user.userNickNm}님을 좀 더 이해하게 됐어요',
+                        srj5: true,
                       )
-                    : TestWidget(
+                    : Srj5TestBox(
                         key: ValueKey(stepIndex),
-                        text: onBoardingQuestion[stepIndex],
+                        text: questionList[stepIndex],
                         questionIndex: stepIndex,
                       )),
           ],
@@ -78,7 +100,6 @@ class _OnboardingPart2PageState
           height: 100.h,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            // .copyWith(top: 5.h),
             child: Column(
               children: [
                 ElevatedButton(
@@ -95,21 +116,22 @@ class _OnboardingPart2PageState
                       ? () {
                           if (stepIndex < totalSteps) {
                             setState(() {
-                              // isNextEnabled = false;
                               stepIndex++;
                             });
-                          } else if (stepIndex == totalSteps) {
+                          } else if (isLastPage) {
                             // ViewModel의 state를 직접 넘기지 않고, ViewModel 내부 함수를 호출
+                            //TODO: RIN: supabase 저장 로직이 없는거같아서??
                             ref
-                                .read(userViewModelProvider
+                                .read(assessmentViewModelProvider
                                     .notifier)
-                                .fetchInsertUser();
+                                .submitAssessment(user.id!,
+                                    clusterState.cluster);
+
                             context.go('/home');
                           }
                         }
                       : null,
-                  child: AppText(
-                      stepIndex == totalSteps ? '시작하기' : '계속하기',
+                  child: AppText(isLastPage ? '완료' : '다음으로',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
                             ? AppColors.grey50

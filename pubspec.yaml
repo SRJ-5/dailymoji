@@ -52,6 +52,7 @@ dependencies:
   fl_chart: ^1.1.1
   flutter_keyboard_visibility: ^6.0.0
   webview_flutter: ^4.13.0
+  shared_preferences: ^2.5.3
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
 
@@ -85,6 +86,7 @@ flutter:
     - assets/images/emojis/
     - assets/images/app_icon/
     - assets/images/character_cado/
+    - assets/images/character_carrot/
     - assets/images/logo/
     - .env
   
