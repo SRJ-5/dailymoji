@@ -7,8 +7,7 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
-import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart'
-    show MonthParams, dailyMaxByMonthProvider;
+import 'package:dailymoji/presentation/providers/month_cluster_scores_provider.dart' show MonthParams, dailyMaxByMonthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,9 +18,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 // RIN: 날짜(년,월,일)만 비교하기 위한 유틸리티 함수
 bool isSameDate(DateTime date1, DateTime date2) {
-  return date1.year == date2.year &&
-      date1.month == date2.month &&
-      date1.day == date2.day;
+  return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
 }
 
 class MonthlyReport extends ConsumerStatefulWidget {
@@ -63,15 +60,12 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 // RIN: _fetchDailySummary 갈아엎음
   Future<void> _fetchDailySummary(DateTime selectedDay) async {
     // provider로부터 해당 월의 데이터를 읽어옴
-    final asyncRows = ref.read(dailyMaxByMonthProvider(
-        (widget.userId, selectedDay.year, selectedDay.month)));
+    final asyncRows = ref.read(dailyMaxByMonthProvider((widget.userId, selectedDay.year, selectedDay.month)));
     final rows = asyncRows.asData?.value ?? [];
-    final bool hasRecord =
-        rows.any((r) => isSameDate(r.createdAt.toLocal(), selectedDay));
+    final bool hasRecord = rows.any((r) => isSameDate(r.createdAt.toLocal(), selectedDay));
 
     final now = DateTime.now();
-    final bool isPastDate =
-        !isSameDate(selectedDay, now) && selectedDay.isBefore(now);
+    final bool isPastDate = !isSameDate(selectedDay, now) && selectedDay.isBefore(now);
 
     // 1. 기록이 없는 '과거' 날짜인 경우
     if (!hasRecord && isPastDate) {
@@ -113,8 +107,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _dailySummary =
-              "${AppTextStrings.monthlyReportErrorSummary.split('%s')[0]}$e";
+          _dailySummary = "${AppTextStrings.monthlyReportErrorSummary.split('%s')[0]}$e";
         });
       }
     } finally {
@@ -214,16 +207,12 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 headerStyle: HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
-                  titleTextFormatter: (date, locale) => DateFormat(
-                          AppTextStrings.monthlyReportDateFormat, 'ko_KR')
-                      .format(date),
+                  titleTextFormatter: (date, locale) => DateFormat(AppTextStrings.monthlyReportDateFormat, 'ko_KR').format(date),
                   titleTextStyle: AppFontStyles.bodyMedium14.copyWith(
                     color: AppColors.grey900,
                   ),
-                  leftChevronIcon:
-                      const Icon(Icons.chevron_left, color: AppColors.grey900),
-                  rightChevronIcon:
-                      const Icon(Icons.chevron_right, color: AppColors.grey900),
+                  leftChevronIcon: const Icon(Icons.chevron_left, color: AppColors.grey900),
+                  rightChevronIcon: const Icon(Icons.chevron_right, color: AppColors.grey900),
                 ),
 
                 // 기본 스타일
@@ -242,8 +231,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                     return Center(
                       child: AppText(
                         DateFormat('E', 'ko_KR').format(day),
-                        style: AppFontStyles.bodyMedium14
-                            .copyWith(color: AppColors.grey900),
+                        style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900),
                       ),
                     );
                   },
@@ -255,9 +243,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                       return SizedBox(
                         width: 40.w,
                         height: 40.h,
-                        child: Center(
-                            child:
-                                Image.asset(path, width: 36.w, height: 36.h)),
+                        child: Center(child: Image.asset(path, width: 36.w, height: 36.h)),
                       );
                     }
                     return SizedBox(
@@ -279,8 +265,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                       ),
                       child: AppText(
                         '${day.day}',
-                        style: AppFontStyles.bodySemiBold14
-                            .copyWith(color: AppColors.grey50),
+                        style: AppFontStyles.bodySemiBold14.copyWith(color: AppColors.grey50),
                       ),
                     );
                   },
@@ -296,14 +281,12 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.orange100,
-                              border: Border.all(
-                                  color: AppColors.orange600, width: 1),
+                              border: Border.all(color: AppColors.orange600, width: 1),
                             ),
                             child: Center(
                               child: AppText(
                                 '${day.day}',
-                                style: AppFontStyles.bodySemiBold14
-                                    .copyWith(color: AppColors.orange600),
+                                style: AppFontStyles.bodySemiBold14.copyWith(color: AppColors.orange600),
                               ),
                             ),
                           )
@@ -341,10 +324,8 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: AppText(
-                    DateFormat(AppTextStrings.monthlyReportDayFormat, 'ko_KR')
-                        .format(_selectedDay!),
-                    style: AppFontStyles.bodyBold16
-                        .copyWith(color: AppColors.grey900),
+                    DateFormat(AppTextStrings.monthlyReportDayFormat, 'ko_KR').format(_selectedDay!),
+                    style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
                   ),
                 ),
 
@@ -363,9 +344,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AppText(summaryTitle,
-                                style: AppFontStyles.bodyBold14
-                                    .copyWith(color: AppColors.green700)),
+                            AppText(summaryTitle, style: AppFontStyles.bodyBold14.copyWith(color: AppColors.green700)),
                             SizedBox(height: 6.h),
                             if (_isSummaryLoading)
                               Center(
@@ -376,8 +355,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                             else
                               AppText(
                                 _dailySummary,
-                                style: AppFontStyles.bodyRegular12_180
-                                    .copyWith(color: AppColors.grey900),
+                                style: AppFontStyles.bodyRegular12_180.copyWith(color: AppColors.grey900),
                               ),
                             Align(
                                 alignment: Alignment.bottomRight,
@@ -385,27 +363,21 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                                   style: OutlinedButton.styleFrom(
                                     minimumSize: Size(133, 40),
                                     backgroundColor: AppColors.grey50,
-                                    side: BorderSide(
-                                        color: AppColors.grey200), // 테두리 색
+                                    side: BorderSide(color: AppColors.grey200), // 테두리 색
                                     shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12), // 모서리 둥글게
+                                      borderRadius: BorderRadius.circular(12), // 모서리 둥글게
                                     ),
-                                    padding:
-                                        EdgeInsets.symmetric(vertical: 9.5.h)
-                                            .copyWith(left: 16.w, right: 10.w),
+                                    padding: EdgeInsets.symmetric(vertical: 9.5.h).copyWith(left: 16.w, right: 10.w),
                                   ),
                                   onPressed: () {
-                                    context.go("/report/chat",
-                                        extra: _selectedDay);
+                                    context.go("/report/chat", extra: _selectedDay);
                                   },
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      AppText(AppTextStrings.checkChatHistory),
+                                      Text(AppTextStrings.checkChatHistory, style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900)),
                                       SizedBox(width: 6.w),
-                                      Icon(Icons.arrow_forward,
-                                          color: AppColors.grey900, size: 18.r),
+                                      Icon(Icons.arrow_forward, color: AppColors.grey900, size: 18.r),
                                     ],
                                   ),
                                 ))
