@@ -12,7 +12,7 @@ class AssessmentResponseRepositoryImpl
   Future<void> submitAssessment(
       AssessmentResponses assessmentResponses) async {
     final assessmentResponsesDto = AssessmentResponsesDto(
-      clusterNM: assessmentResponses.clusterNM,
+      cluster: assessmentResponses.cluster,
       responses: assessmentResponses.responses,
       userId: assessmentResponses.userId,
     );

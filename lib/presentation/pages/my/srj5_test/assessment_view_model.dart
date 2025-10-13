@@ -90,13 +90,13 @@ class AssessmentViewModel extends Notifier<AssessmentState> {
   }
 
   Future<void> submitAssessment(
-      String userId, String clusterNM) async {
+      String userId, String cluster) async {
     final assessmentResult = AssessmentResponses(
         userId: userId,
-        clusterNM: clusterNM,
+        cluster: cluster,
         responses: state.responses!.responses);
     if (assessmentResult.userId == null ||
-        assessmentResult.clusterNM == null ||
+        assessmentResult.cluster == null ||
         assessmentResult.responses == null) {
       print(
           "Error: assessment responses is null. Cannot save assessment responses.");

@@ -1,7 +1,7 @@
 class AssessmentResponses {
   final String? userId;
-  final String? clusterNM;
+  final String? cluster;
   final Map<String, dynamic>? responses;
   AssessmentResponses(
-      {this.userId, this.clusterNM, this.responses});
+      {this.userId, this.cluster, this.responses});
 }

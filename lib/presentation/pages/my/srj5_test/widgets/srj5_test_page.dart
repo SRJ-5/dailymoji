@@ -125,7 +125,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                                 .read(assessmentViewModelProvider
                                     .notifier)
                                 .submitAssessment(user.id!,
-                                    clusterState.clusterNM!);
+                                    clusterState.cluster);
 
                             context.go('/home');
                           }

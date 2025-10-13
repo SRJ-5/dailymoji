@@ -14,7 +14,7 @@ class AssessmentResponseRemoteDataSourceImpl
     final response = await http.post(Uri.parse(url),
         body: jsonEncode({
           'user_id': assessmentResponses.userId,
-          'cluster': assessmentResponses.clusterNM,
+          'cluster': assessmentResponses.cluster,
           'responses': assessmentResponses.responses,
         }));
 
