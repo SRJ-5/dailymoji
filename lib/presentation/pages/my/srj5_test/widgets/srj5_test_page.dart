@@ -45,11 +45,9 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                 onTap: () {
                   setState(() => stepIndex--);
                 },
-                child: stepIndex == 0
-                    ? null
-                    : Icon(Icons.arrow_back),
+                child: Icon(Icons.arrow_back),
               )
-            : null,
+            : SizedBox.shrink(),
         title: stepIndex == totalSteps
             ? null
             : AppText(

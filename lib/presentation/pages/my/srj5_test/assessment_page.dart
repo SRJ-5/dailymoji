@@ -72,18 +72,7 @@ class _AssessmentPageState
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
         backgroundColor: AppColors.yellow50,
-        leading: stepIndex != totalSteps
-            ? GestureDetector(
-                onTap: () {
-                  setState(() {
-                    stepIndex = 0;
-                  });
-                },
-                child: stepIndex == 0
-                    ? null
-                    : Icon(Icons.arrow_back),
-              )
-            : null,
+        leading: SizedBox.shrink(),
         actions: [
           GestureDetector(
               onTap: () {
