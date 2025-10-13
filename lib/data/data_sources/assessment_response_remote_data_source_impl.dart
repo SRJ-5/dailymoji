@@ -12,6 +12,7 @@ class AssessmentResponseRemoteDataSourceImpl
       AssessmentResponsesDto assessmentResponses) async {
     final url = "${ApiConfig.baseUrl}/assessment/submit";
     final response = await http.post(Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           'user_id': assessmentResponses.userId,
           'cluster': assessmentResponses.cluster,

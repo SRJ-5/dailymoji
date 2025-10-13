@@ -75,8 +75,8 @@ class AssessmentViewModel extends Notifier<AssessmentState> {
     newAnswers[questionIndex] = score;
 
     print(newAnswers);
-    final currentScores = Map<String, dynamic>.from(
-        state.responses?.responses ?? {});
+    final currentScores =
+        Map<String, int>.from(state.responses?.responses ?? {});
     currentScores[state
         .questionsList!.questionCode[questionIndex]] = score;
 
