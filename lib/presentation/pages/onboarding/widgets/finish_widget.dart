@@ -9,7 +9,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FinishWidget extends ConsumerWidget {
   final String text;
-  const FinishWidget({required this.text});
+  final bool? srj5;
+  const FinishWidget({required this.text, this.srj5});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,11 +34,17 @@ class FinishWidget extends ConsumerWidget {
             )),
           ),
           SizedBox(height: 40.r),
-          Image.asset(
-            AppImages.characterListLove[characterIndex],
-            width: 180.w,
-            height: 180.h,
-          )
+          srj5 == null
+              ? Image.asset(
+                  AppImages.characterListLove[characterIndex],
+                  width: 180.w,
+                  height: 180.h,
+                )
+              : Image.asset(
+                  AppImages.srj5TestFinish,
+                  width: 200.w,
+                  height: 189.h,
+                )
         ],
       ),
     );
