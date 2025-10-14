@@ -53,7 +53,8 @@ dependencies:
   flutter_keyboard_visibility: ^6.0.0
   webview_flutter: ^4.13.0
   shared_preferences: ^2.5.3
-  
+  firebase_core: ^3.0.0
+  firebase_messaging: ^15.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,10 @@
+//firebase notification 때문에 추가된 plugins
+plugins {
+    id("com.android.application") apply false
+    id("org.jetbrains.kotlin.android") apply false
+    id("com.google.gms.google-services") apply false
+}
+
 allprojects {
     repositories {
         google()
