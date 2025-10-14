@@ -7,7 +7,7 @@ import 'package:dailymoji/domain/enums/metric.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:dailymoji/domain/entities/cluster_score.dart';
-import 'package:dailymoji/domain/use_cases/cluster_use_case/get_today_cluster_scores_use_case.dart';
+import 'package:dailymoji/domain/use_cases/cluster_use_case/get_14day_cluster_scores_use_case.dart';
 import 'package:dailymoji/domain/models/cluster_stats_models.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/providers/today_cluster_scores_provider.dart';
@@ -64,22 +64,10 @@ class ClusterScoresState {
 
 /// ----- ViewModel -----
 class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
-  final GetTodayClusterScoresUseCase _getTodayUC;
   final Get14DayClusterStatsUseCase _getAgg14UC;
 
-  ClusterScoresViewModel(this._getTodayUC, this._getAgg14UC)
+  ClusterScoresViewModel(this._getAgg14UC)
       : super(ClusterScoresState.initial());
-
-  /// 오늘 원본 리스트 로드 (기존 용도)
-  Future<void> fetchTodayScores() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final result = await _getTodayUC.execute();
-      state = state.copyWith(isLoading: false, scores: result);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
 
   /// 주간 요약을 받아오는 private 메서드 추가
   Future<WeeklySummary?> _fetchWeeklySummary(String userId) async {
@@ -340,7 +328,6 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
 /// ----- Provider (ViewModel) -----
 final clusterScoresViewModelProvider =
     StateNotifierProvider<ClusterScoresViewModel, ClusterScoresState>((ref) {
-  final todayUC = ref.watch(getTodayClusterScoresUseCaseProvider);
-  final agg14UC = ref.watch(get14DayClusterStatsUseCaseProvider);
-  return ClusterScoresViewModel(todayUC, agg14UC);
+  final chart14Data = ref.watch(get14DayClusterStatsUseCaseProvider);
+  return ClusterScoresViewModel(chart14Data);
 });
