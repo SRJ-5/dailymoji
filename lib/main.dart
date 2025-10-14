@@ -20,20 +20,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 // Supabase user_tokens 테이블에 FCM 토큰 저장
-Future<void> _saveFcmToken(String userId, String token) async {
-  final supabase = Supabase.instance.client;
+// Future<void> _saveFcmToken(String userId, String token) async {
+//   final supabase = Supabase.instance.client;
 
-  try {
-    await supabase.from('user_tokens').upsert({
-      'user_id': userId,
-      'token': token,
-      'updated_at': DateTime.now().toIso8601String(),
-    });
-    print("✅ FCM 토큰 저장 완료: $token");
-  } catch (e) {
-    print("⚠️ FCM 토큰 저장 실패: $e");
-  }
-}
+//   try {
+//     await supabase.from('user_tokens').upsert({
+//       'user_id': userId,
+//       'token': token,
+//       'updated_at': DateTime.now().toIso8601String(),
+//     });
+//     print("✅ FCM 토큰 저장 완료: $token");
+//   } catch (e) {
+//     print("⚠️ FCM 토큰 저장 실패: $e");
+//   }
+// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,23 +52,35 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
+    // 알림 권한 요청 (iOS용)
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   // 백그라운드 알림 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // FCM 인스턴스 생성 및 설정
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-  // 🔑 사용자 기기 토큰 받기
-  String? token = await messaging.getToken();
+
+  // 🔑 사용자 기기 토큰 받기 안드로이드
+  String? token = await messaging.getAPNSToken();
   print("🔑 FCM Token: $token");
 
+  // // 🔑 사용자 기기 토큰 받기 안드로이드
+  // String? token = await messaging.getToken();
+  // print("🔑 FCM Token: $token");
+
   // ❗ 로그인된 사용자 ID로 교체
-  final user = Supabase.instance.client.auth.currentUser;
-  if (user != null && token != null) {
-    await _saveFcmToken(user.id, token);
-  } else {
-    print("⚠️ 로그인 정보 없음 or 토큰 없음");
-  }
+  // final user = Supabase.instance.client.auth.currentUser;
+  // if (user != null && token != null) {
+  //   await _saveFcmToken(user.id, token);
+  // } else {
+  //   print("⚠️ 로그인 정보 없음 or 토큰 없음");
+  // }
 
   // 포그라운드 알림 수신 (앱 켜져 있을 때)
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -100,9 +112,6 @@ void main() async {
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
   });
-
-  // 알림 권한 요청 (iOS용)
-  await FirebaseMessaging.instance.requestPermission();
 
   await initializeDateFormatting('ko_KR', null);
 
