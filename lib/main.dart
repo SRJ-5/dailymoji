@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/routers/router.dart';
+import 'package:dailymoji/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -40,14 +41,16 @@ void main() async {
   // .env 불러오기
   await dotenv.load(fileName: ".env");
 
-  // Supabase 초기화 (Firebase 초기화보다 먼저)
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Supabase 초기화
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-
-  // Firebase 초기화
-  await Firebase.initializeApp();
 
   // 백그라운드 알림 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
