@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:dailymoji/core/providers.dart';
+import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/pages/solution/widget/solution_bubble.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/domain/entities/solution.dart';
@@ -73,13 +77,15 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   bool _showControls = false;
   bool _isMuted = true;
   bool _isNavigating = false;
+  bool _showCharacter = false;
+  bool _characterTimerStarted = false;
 
   String? _exitReason;
 
   @override
   void initState() {
     super.initState();
-    // ✅ 가로 고정 + 몰입형 UI
+    // 가로 고정 + 몰입형 UI
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -135,6 +141,16 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
       setState(() {});
     }
 
+    // 영상이 실제 재생될 때 캐릭터 타이머 시작
+    if (_controller.value.playerState == PlayerState.playing &&
+        !_characterTimerStarted) {
+      _characterTimerStarted = true;
+      setState(() => _showCharacter = true);
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _showCharacter = false);
+      });
+    }
+
     if (_controller.value.playerState == PlayerState.ended) {
       // "나가는 이유"를 'video_ended'로 확정하고
       _exitReason = 'video_ended';
@@ -185,7 +201,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     final size = MediaQuery.of(context).size;
     const ar = 16 / 9;
 
-    // 📐 화면을 좌우까지 '덮도록' 필요한 확대 배수 (BoxFit.cover 수동 구현)
+    // 화면을 좌우까지 '덮도록' 필요한 확대 배수 (BoxFit.cover 수동 구현)
     final widthAtScreenHeight = size.height * ar; // 세로 꽉 채웠을 때의 가로폭
     final coverScale = size.width / widthAtScreenHeight; // 좌우 남지 않게 만드는 배수
     const extraZoom = 1; // 더 크게 자르고 싶으면 1.05~1.2
@@ -232,7 +248,36 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             ),
           ),
 
-          // ✋ 탭으로 오버레이 표시/숨김 토글 + 첫 터치 시 음소거 해제
+          // 캐릭터 + 말풍선
+          Positioned(
+            left: 10.w,
+            bottom: 19.h,
+            child: AnimatedOpacity(
+              opacity: _showCharacter ? 1 : 0,
+              duration: const Duration(seconds: 1), // 1초 동안 서서히 사라짐
+              curve: Curves.easeOut,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 캐릭터 이미지
+                  Transform(
+                    alignment: Alignment.center, // 중심축 기준으로 반전
+                    transform: Matrix4.rotationY(math.pi), // 좌우 반전
+                    child: Image.asset(
+                      AppImages.cadoWalk,
+                      height: 180.h,
+                    ),
+                  ),
+                  // 말풍선
+                  const SolutionBubble(
+                    text: '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!',
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 탭으로 오버레이 표시/숨김 토글 + 첫 터치 시 음소거 해제
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -250,7 +295,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             ),
           ),
 
-          // 🎛️ 커스텀 오버레이
+          // 커스텀 오버레이
           if (_showControls)
             Positioned.fill(
               child: Stack(
@@ -295,7 +340,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     ),
                   ),
 
-                  // ▶️/⏸ 중앙 플레이/일시정지
+                  // ▶ / ⏸ 중앙 플레이/일시정지
                   Center(
                     child: IconButton(
                       iconSize: 64.r,

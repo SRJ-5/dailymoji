@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"dailymoji-push","appId":"1:86959046633:android:7809cde1c37ae7bcf79578","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"dailymoji-push","configurations":{"android":"1:86959046633:android:7809cde1c37ae7bcf79578","ios":"1:86959046633:ios:8df68d61d6e497aef79578"}}}}}}
