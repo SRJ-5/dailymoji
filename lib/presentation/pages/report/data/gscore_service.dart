@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // EmotionData는 네 UI 파일에 이미 있는 모델 그대로 import 해와도 되고,
-// 여기서 재정의해도 됨. (아래는 네 모델 시그니처에 맞춘 것)
+// 여기서 재정의해도 됨.
 class EmotionData {
   final Color color;
   final List<FlSpot> spots;

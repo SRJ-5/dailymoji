@@ -121,6 +121,9 @@ app.*.symbols
 # .env file 업로드 제외
 .env
 
+# firebase 서비스 계정 key
+service-account.json
+
 # Flutter generated plugin files
 **/GeneratedPluginRegistrant.*
 **/generated_plugin_registrant.*
