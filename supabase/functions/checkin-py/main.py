@@ -497,9 +497,9 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
             )     
 
             # 솔루션 제안 시점에 session 생성
-            intervention_for_db = { "preset_id": PresetIds.SOLUTION_PROPOSAL, "coaching_text": coaching_text}
+            intervention_for_db = { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text}
             session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
-  
+        
 
             return {
                 "intervention": { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text,
@@ -539,17 +539,19 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         solution_data = solution_res.data[0] if solution_res.data else {}
 
         # 뽀모도로 제안 시점에 session 생성
-        intervention_for_db = { "preset_id": PresetIds.ADHD_TASK_BREAKDOWN, "coaching_text": coaching_text, "mission_text": mission_text }
-        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
-
-        return { "intervention": intervention_for_db,
-                "options": [{ "label": "뽀모도로와 함께 미션하러 가기", "action": "accept_solution", "solution_id": solution_data.get("solution_id"), "solution_type": solution_data.get("solution_type") }],
-                "session_id": session_id 
+        # intervention 객체 안에 options와 session_id를 포함시켜 한번에 반환합니다.
+        intervention_for_client = intervention_for_db.copy()
+        intervention_for_client["options"] = [
+            { 
+                "label": "뽀모도로와 함께 미션하러 가기", 
+                "action": "accept_solution", 
+                "solution_id": solution_data.get("solution_id"), 
+                "solution_type": solution_data.get("solution_type") 
             }
-        
-    
-    return {"intervention": {"preset_id": PresetIds.FRIENDLY_REPLY, "text": "앗, 잠시 오류가 있었어요."}}
+        ]
+        intervention_for_client["session_id"] = session_id
 
+        return { "intervention": intervention_for_client }
 
 # ---------- API Endpoints (분리된 구조) ----------
 

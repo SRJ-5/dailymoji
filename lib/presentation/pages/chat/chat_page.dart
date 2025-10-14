@@ -372,7 +372,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
                               final messageWidget = _buildMessageWidget(
                                 message,
                                 key: ValueKey(message.tempId),
-                                isLastProposal: isLastProposal,
+                                isLastMessage: !chatState.isArchivedView &&
+                                    (message.id == veryLastMessageId),
                               );
 
                               // 날짜 구분선이 메시지 위에 표시됨
@@ -429,7 +430,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   //  --- 메시지 종류에 따라 위젯을 분기하는 Helper 함수 ---
   Widget _buildMessageWidget(Message message,
-      {required Key key, required bool isLastProposal}) {
+      {required Key key, required bool isLastMessage}) {
     if (message.sender == Sender.user) {
       return _userMessage(message, key: key);
     } else {
@@ -437,7 +438,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
         case MessageType.analysis:
           return _analysisMessage(message, key: key);
         case MessageType.solutionProposal:
-          return _solutionProposalCardMessage(message, key: key);
+          return _solutionProposalCardMessage(message,
+              key: key, isLastMessage: isLastMessage);
         case MessageType.solutionFeedback:
           return _solutionFeedbackMessage(message, key: key);
         case MessageType.system:
@@ -805,22 +807,41 @@ class _ChatPageState extends ConsumerState<ChatPage>
   // }
 
   // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
-  Widget _solutionProposalCardMessage(Message message, {required Key key}) {
+  Widget _solutionProposalCardMessage(Message message,
+      {required Key key, required bool isLastMessage}) {
     // String msg =
     //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
     final proposal = message.proposal!;
     final chatState = ref.watch(chatViewModelProvider);
 
-    // proposal 데이터가 없거나 options가 비어있으면 일반 봇 메시지로 처리
-    if ((proposal['options'] as List?)?.isEmpty == true) {
+    // --- 안전장치 1: proposal 데이터가 없는 경우 ---
+    if (proposal == null) {
       return message.content.isNotEmpty
           ? _botMessage(message, key: key)
           : const SizedBox.shrink();
     }
-    final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
-    final adhdContext = proposal['adhd_context'] as Map<String, dynamic>?;
-    final bool isAdhdQuestion =
-        adhdContext != null && adhdContext['step'] == 'awaiting_choice';
+
+    // --- 안전장치 2: options 데이터가 없는 경우 ---
+    final optionsData = proposal['options'];
+    if (optionsData is! List || optionsData.isEmpty) {
+      return message.content.isNotEmpty
+          ? _botMessage(message, key: key)
+          : const SizedBox.shrink();
+    }
+    final options = optionsData.cast<Map<String, dynamic>>();
+
+    // // --- 분기 처리: ADHD 질문인지, 일반 솔루션 제안인지 확인 ---
+    // final adhdContext = proposal['adhd_context'] as Map<String, dynamic>?;
+    // final bool isAdhdQuestion =
+    //     adhdContext != null && adhdContext['step'] == 'awaiting_choice';
+
+    bool isAdhdChoiceMessage = false;
+    if (options.isNotEmpty) {
+      final firstAction = options.first['action'] as String?;
+      if (firstAction == 'adhd_has_task' || firstAction == 'adhd_no_task') {
+        isAdhdChoiceMessage = true;
+      }
+    }
 
     return Padding(
       key: key,
@@ -844,18 +865,21 @@ class _ChatPageState extends ConsumerState<ChatPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // AppText(
-                //   message.content.replaceAll(r'\n', '\n').split("\n")[0],
-                //   style: AppFontStyles.bodyMedium14
-                //       .copyWith(color: AppColors.grey900),
-                // ),
-                // 본문
-                if (message.content.isNotEmpty)
+                if (message.content.replaceAll(r"\n", "\n").contains("\n"))
                   AppText(
-                    message.content.replaceAll(r'\n', '\n'),
-                    style: AppFontStyles.bodyRegular14
+                    message.content.replaceAll(r'\n', '\n').split("\n")[0],
+                    style: AppFontStyles.bodyMedium14
                         .copyWith(color: AppColors.grey900),
                   ),
+                // 본문
+                AppText(
+                  message.content.replaceAll(r'\n', '\n').split("\n")[
+                      message.content.replaceAll(r"\n", "\n").contains("\n")
+                          ? 1
+                          : 0],
+                  style: AppFontStyles.bodyRegular14
+                      .copyWith(color: AppColors.grey900),
+                ),
                 if (message.content.isNotEmpty) SizedBox(height: 16.h),
                 // 버튼들 (세로로 쌓기)
                 Column(
@@ -869,68 +893,87 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     final bool isCompleted = solutionType != null &&
                         chatState.completedSolutionTypes.contains(solutionType);
 
+                    final bool isEnabled =
+                        isLastMessage || !isAdhdChoiceMessage;
+
                     final String buttonLabel =
                         isCompleted ? "다시 " + label : label;
-                    final BoxDecoration decoration = isCompleted
-                        ? BoxDecoration(
-                            color: AppColors.grey50,
-                            borderRadius: BorderRadius.circular(10.r),
-                            border:
-                                Border.all(color: AppColors.grey200, width: 1),
-                          )
+
+                    final BoxDecoration decoration = isEnabled
+                        ? (isCompleted
+                            ? BoxDecoration(
+                                color: AppColors.grey50,
+                                borderRadius: BorderRadius.circular(10.r),
+                                border: Border.all(
+                                    color: AppColors.grey200, width: 1),
+                              )
+                            : BoxDecoration(
+                                color: AppColors.yellow700,
+                                borderRadius: BorderRadius.circular(10.r)))
                         : BoxDecoration(
-                            color: AppColors.yellow700,
-                            borderRadius: BorderRadius.circular(10.r));
-                    final TextStyle textStyle = isCompleted
-                        ? AppFontStyles.bodyMedium14
-                            .copyWith(color: AppColors.grey900)
+                            // 비활성화 스타일
+                            color: AppColors.grey200,
+                            borderRadius: BorderRadius.circular(10.r),
+                          );
+
+                    final TextStyle textStyle = isEnabled
+                        ? (isCompleted
+                            ? AppFontStyles.bodyMedium14
+                                .copyWith(color: AppColors.grey900)
+                            : AppFontStyles.bodyMedium14
+                                .copyWith(color: AppColors.grey50))
                         : AppFontStyles.bodyMedium14
-                            .copyWith(color: AppColors.grey50);
+                            .copyWith(color: AppColors.grey600);
 
                     // 2-3. 버튼 위젯 렌더링
                     return Padding(
                       padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
                       child: GestureDetector(
-                        onTap: () {
-                          switch (action) {
-                            case 'accept_solution':
-                              final solutionId =
-                                  option['solution_id'] as String?;
-                              final solutionType =
-                                  option['solution_type'] as String?;
-                              final sessionId =
-                                  proposal['session_id'] as String?;
-                              if (solutionId != null && solutionType != null) {
-                                ref
-                                    .read(chatViewModelProvider.notifier)
-                                    .respondToSolution(
-                                      solutionId: solutionId,
-                                      solutionType: solutionType,
-                                      sessionId: sessionId,
-                                    );
+                        onTap: isEnabled
+                            ? () {
+                                // isEnabled일 때만 onTap 활성화
+                                switch (action) {
+                                  case 'accept_solution':
+                                    final solutionId =
+                                        option['solution_id'] as String?;
+                                    final solutionType =
+                                        option['solution_type'] as String?;
+                                    final sessionId =
+                                        proposal['session_id'] as String?;
+                                    if (solutionId != null &&
+                                        solutionType != null) {
+                                      ref
+                                          .read(chatViewModelProvider.notifier)
+                                          .respondToSolution(
+                                            solutionId: solutionId,
+                                            solutionType: solutionType,
+                                            sessionId: sessionId,
+                                          );
+                                    }
+                                    break;
+
+                                  case 'adhd_has_task':
+                                  case 'adhd_no_task':
+                                    final String label =
+                                        option['label'] as String;
+                                    ref
+                                        .read(chatViewModelProvider.notifier)
+                                        .respondToAdhdChoice(action, label);
+                                    break;
+
+                                  case 'decline_solution_and_talk':
+                                  case 'safety_crisis':
+                                    ref
+                                        .read(chatViewModelProvider.notifier)
+                                        .handleProposalAction(action);
+                                    break;
+
+                                  default:
+                                    print(
+                                        "Error: Tapped unknown action in UI: $action");
+                                }
                               }
-                              break;
-
-                            case 'adhd_has_task':
-                            case 'adhd_no_task':
-                              final String label = option['label'] as String;
-                              ref
-                                  .read(chatViewModelProvider.notifier)
-                                  .respondToAdhdChoice(action, label);
-                              break;
-
-                            case 'decline_solution_and_talk':
-                            case 'safety_crisis':
-                              ref
-                                  .read(chatViewModelProvider.notifier)
-                                  .handleProposalAction(action);
-                              break;
-
-                            default:
-                              print(
-                                  "Error: Tapped unknown action in UI: $action");
-                          }
-                        },
+                            : null,
                         child: Container(
                           height: 40.h,
                           width: double.infinity,

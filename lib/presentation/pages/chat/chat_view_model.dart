@@ -73,8 +73,7 @@ class ChatViewModel extends Notifier<ChatState> {
 // 페이지네이션 상수
   static const int _pageSize = 50;
 
-// UserViewModel에서 실제 ID를 가져오고, 없으면 임시 ID 사용(개발용)
-
+// UserViewModel에서 실제 ID가져옴
   String? get _userId => ref.read(userViewModelProvider).userProfile?.id;
 
 //사용자의 텍스트 답변을 기다리는 이모지 상태
@@ -264,9 +263,7 @@ class ChatViewModel extends Notifier<ChatState> {
       userId: currentUserId,
       content: content,
       sender: Sender.user,
-      // type: MessageType.normal,
     );
-    // final savedMessage = await _addUserMessageToChat(message);
     final savedMessage = await _addMessage(message);
 
 // 대기 중인 이모지가 있으면 그것을 분석에 사용하고, 없으면 현재 입력창의 이모지를 사용
@@ -277,8 +274,9 @@ class ChatViewModel extends Notifier<ChatState> {
       _pendingEmotionForAnalysis = null;
     }
 
+// 다음 분석 요청에 ADHD 컨텍스트를 포함시키기 위해 변수에 저장 후 초기화
     Map<String, dynamic>? currentAdhdContext = _adhdContextForNextRequest;
-    _adhdContextForNextRequest = null; // 기본적으로 초기화 시도
+    _adhdContextForNextRequest = null;
 
 // RIN ♥ : 이모지-텍스트 연계 분석 로직 추가!
 // 이모지만 보낸 직후에 텍스트가 입력되었고, 두 메시지의 클러스터가 같을 경우
@@ -481,77 +479,32 @@ class ChatViewModel extends Notifier<ChatState> {
       final preset = PresetId.fromString(presetId ?? '');
 
       switch (preset) {
-        // Rin: 칭긔칭긔모드
-        case PresetId.friendlyReply:
-          // 2. intervention 안에서 botMessageContent를 찾음
-          final botMessageContent = intervention['text'] as String? ??
-              AppTextStrings.fallbackAnalysisError;
-
-          final botMessage = Message(
-              userId: currentUserId,
-              content: botMessageContent,
-              sender: Sender.bot);
-          await _addMessage(botMessage);
-          break; // 여기서 대화 흐름이 한번 끝남
-
-// 솔루션 제안 모드
-        case PresetId.solutionProposal:
-          // 3. intervention 안에서 필요한 모든 텍스트를 찾음
-          final empathyText = intervention['empathy_text'] as String?;
-          final analysisText = intervention['analysis_text'] as String?;
-          final topCluster = intervention['top_cluster'] as String?;
-
-// 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
-          if (empathyText != null && empathyText.isNotEmpty) {
-            await _addMessage(Message(
-                userId: currentUserId,
-                content: empathyText,
-                sender: Sender.bot));
-            await Future.delayed(const Duration(milliseconds: 200));
-          }
-
-// 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
-          if (analysisText != null && analysisText.isNotEmpty) {
-            await _addMessage(Message(
-                userId: currentUserId,
-                content: analysisText,
-                sender: Sender.bot));
-            await Future.delayed(const Duration(milliseconds: 200));
-          }
-
-// 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
-          if (sessionId != null && topCluster != null) {
-            await _proposeSolution(sessionId, topCluster, currentUserId);
-          }
-          break;
-
         // RIN: ADHD 질문 처리 케이스
-        case PresetId.adhdPreSolutionQuestion:
+        case PresetId.adhdPreSolutionQuestion: // "할 일이 있나요?" 질문 단계
           await _addMessage(Message(
             userId: currentUserId,
             content: intervention['text'] as String,
             sender: Sender.bot,
             type: MessageType.solutionProposal,
-            proposal: {
-              'options': intervention['options'],
-              'adhd_context': intervention['adhd_context']
-            },
+            proposal: intervention, // 백엔드 데이터 그대로 전달
           ));
           _adhdContextForNextRequest =
               intervention['adhd_context'] as Map<String, dynamic>?;
+
           break;
 
-        case PresetId.adhdAwaitingTaskDescription:
+        case PresetId.adhdAwaitingTaskDescription: // "어떤 일인가요?" 질문 단계
           await _addMessage(Message(
             userId: currentUserId,
             content: intervention['text'] as String,
             sender: Sender.bot,
           ));
+          // 다음 메시지가 '할 일'에 대한 답변임을 기억하도록 컨텍스트 저장
           _adhdContextForNextRequest =
               intervention['adhd_context'] as Map<String, dynamic>?;
           break;
 
-        case PresetId.adhdTaskBreakdown:
+        case PresetId.adhdTaskBreakdown: // 작업 분할 제시 + 뽀모도로 제안 단계
           final coachingText = intervention['coaching_text'] as String?;
           final missionText = intervention['mission_text'] as String?;
           if (coachingText != null) {
@@ -575,58 +528,105 @@ class ChatViewModel extends Notifier<ChatState> {
           }
           break;
 
-// 안전 위기 모드
-        case PresetId.safetyCrisisModal:
-        case PresetId.safetyCrisisSelfHarm:
-        case PresetId.safetyCrisisAngerAnxiety:
-        case PresetId.safetyCheckIn:
-          // 4. intervention 안에서 위기 관련 정보를 찾음
-          final cluster = intervention['cluster'] as String?;
-          final solutionId = intervention['solution_id'] as String?;
-          final safetyText = intervention['analysis_text'] as String? ??
-              SolutionProposal.fromString(cluster ?? '')?.scripts.first ??
-              "많이 힘드시군요. 지금 도움이 필요할 수 있어요.";
+        default:
+          switch (preset) {
+            // Rin: 칭긔칭긔모드
+            case PresetId.friendlyReply:
+              // 2. intervention 안에서 botMessageContent를 찾음
+              final botMessageContent = intervention['text'] as String? ??
+                  AppTextStrings.fallbackAnalysisError;
 
-          if (cluster != null && solutionId != null) {
-            final botMessage = Message(
-              userId: currentUserId,
-              content: safetyText,
-              sender: Sender.bot,
-              type: MessageType.solutionProposal,
-              proposal: {
-                "solution_id": solutionId,
-                "options": [
-                  {"label": "도움받기", "action": "safety_crisis"},
-                  {"label": "괜찮아요", "action": "decline_solution_and_talk"}
-                ]
-              },
-            );
-            await _addMessage(botMessage);
-          }
-          break;
+              final botMessage = Message(
+                  userId: currentUserId,
+                  content: botMessageContent,
+                  sender: Sender.bot);
+              await _addMessage(botMessage);
+              break; // 여기서 대화 흐름이 한번 끝남
+
+// 솔루션 제안 모드
+            case PresetId.solutionProposal:
+              // 3. intervention 안에서 필요한 모든 텍스트를 찾음
+              final empathyText = intervention['empathy_text'] as String?;
+              final analysisText = intervention['analysis_text'] as String?;
+              final topCluster = intervention['top_cluster'] as String?;
+
+// 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
+              if (empathyText != null && empathyText.isNotEmpty) {
+                await _addMessage(Message(
+                    userId: currentUserId,
+                    content: empathyText,
+                    sender: Sender.bot));
+                await Future.delayed(const Duration(milliseconds: 200));
+              }
+
+// 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
+              if (analysisText != null && analysisText.isNotEmpty) {
+                await _addMessage(Message(
+                    userId: currentUserId,
+                    content: analysisText,
+                    sender: Sender.bot));
+                await Future.delayed(const Duration(milliseconds: 200));
+              }
+
+// 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
+              if (sessionId != null && topCluster != null) {
+                await _proposeSolution(sessionId, topCluster, currentUserId);
+              }
+              break;
+
+// 안전 위기 모드
+            case PresetId.safetyCrisisModal:
+            case PresetId.safetyCrisisSelfHarm:
+            case PresetId.safetyCrisisAngerAnxiety:
+            case PresetId.safetyCheckIn:
+              // 4. intervention 안에서 위기 관련 정보를 찾음
+              final cluster = intervention['cluster'] as String?;
+              final solutionId = intervention['solution_id'] as String?;
+              final safetyText = intervention['analysis_text'] as String? ??
+                  SolutionProposal.fromString(cluster ?? '')?.scripts.first ??
+                  "많이 힘드시군요. 지금 도움이 필요할 수 있어요.";
+
+              if (cluster != null && solutionId != null) {
+                final botMessage = Message(
+                  userId: currentUserId,
+                  content: safetyText,
+                  sender: Sender.bot,
+                  type: MessageType.solutionProposal,
+                  proposal: {
+                    "solution_id": solutionId,
+                    "options": [
+                      {"label": "도움받기", "action": "safety_crisis"},
+                      {"label": "괜찮아요", "action": "decline_solution_and_talk"}
+                    ]
+                  },
+                );
+                await _addMessage(botMessage);
+              }
+              break;
 
 // RIN ♥ : 이모지 단독 입력 시의 응답 처리 (백엔드에서 EMOJI_REACTION presetId로 옴)
-        case PresetId.emojiReaction:
-          // 5. intervention 안에서 'empathy_text' 찾기
+            case PresetId.emojiReaction:
+              // 5. intervention 안에서 'empathy_text' 찾기
 
-          final reactionText = intervention['empathy_text'] as String?;
-          if (reactionText != null) {
-            final botMessage = Message(
-              userId: currentUserId,
-              content: reactionText,
-              sender: Sender.bot,
-            );
-            await _addMessage(botMessage);
+              final reactionText = intervention['empathy_text'] as String?;
+              if (reactionText != null) {
+                final botMessage = Message(
+                  userId: currentUserId,
+                  content: reactionText,
+                  sender: Sender.bot,
+                );
+                await _addMessage(botMessage);
+              }
+              break;
+
+            default:
+              final errorMessage = Message(
+                userId: currentUserId,
+                content: AppTextStrings.fallbackAnalysisError,
+                sender: Sender.bot,
+              );
+              await _addMessage(errorMessage);
           }
-          break;
-
-        default:
-          final errorMessage = Message(
-            userId: currentUserId,
-            content: AppTextStrings.fallbackAnalysisError,
-            sender: Sender.bot,
-          );
-          await _addMessage(errorMessage);
       }
 
 // 세션 ID 업데이트

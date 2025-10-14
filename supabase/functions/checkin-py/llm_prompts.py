@@ -56,7 +56,8 @@ RULES:
 - Input text may contain casual or irrelevant small talk. Ignore all non-emotional content.
 - Only assign nonzero scores when evidence keywords are explicitly present.
 - ADHD Specificity Rule: Phrases indicating overwhelm due to many tasks (e.g., "정신없어", "할 게 너무 많아", "뭐부터 해야할지 모르겠어") MUST be primarily scored under the `adhd` cluster, not `neg_low` or `neg_high`, as they relate to executive dysfunction.
-
+# === CRUCIAL SCORING DIRECTIVES ===
+# - **ADHD Dominance Rule**: This is the most important rule. If the user expresses being overwhelmed by having too many tasks, feeling scattered, or not knowing where to start (e.g., "할 게 너무 많아", "뭐부터 해야할지 모르겠어", "정신없어", "산만해"), you MUST assign the highest score to the `adhd` cluster. These phrases describe executive dysfunction, NOT depression. Do NOT score `neg_low` or `neg_high` highly in this context unless explicit sadness or anger words are also present.
 
 A) Evidence & Gating
 - If you were to generate 'evidence_spans', they MUST copy exact words/phrases from the input text.
