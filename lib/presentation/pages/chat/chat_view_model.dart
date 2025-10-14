@@ -522,7 +522,7 @@ class ChatViewModel extends Notifier<ChatState> {
               type: MessageType.solutionProposal,
               proposal: {
                 'options': intervention['options'],
-                'session_id': sessionId
+                'session_id': intervention['session_id'],
               },
             ));
           }
@@ -543,38 +543,58 @@ class ChatViewModel extends Notifier<ChatState> {
               await _addMessage(botMessage);
               break; // 여기서 대화 흐름이 한번 끝남
 
-// 솔루션 제안 모드
+            // 솔루션 제안 모드
             case PresetId.solutionProposal:
-              // 3. intervention 안에서 필요한 모든 텍스트를 찾음
-              final empathyText = intervention['empathy_text'] as String?;
-              final analysisText = intervention['analysis_text'] as String?;
-              final topCluster = intervention['top_cluster'] as String?;
+              // ADHD '없어'와 같이, 이미 제안 내용이 완성되어 온 경우
+              final proposalText = intervention['proposal_text'] as String?;
+              if (proposalText != null) {
+                // 새로운 솔루션 제안을 표시하기 전에 완료 기록을 초기화합니다.
+                state = state.copyWith(completedSolutionTypes: {});
 
-// 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
-              if (empathyText != null && empathyText.isNotEmpty) {
                 await _addMessage(Message(
-                    userId: currentUserId,
-                    content: empathyText,
-                    sender: Sender.bot));
-                await Future.delayed(const Duration(milliseconds: 200));
-              }
+                  userId: currentUserId,
+                  content: proposalText,
+                  sender: Sender.bot,
+                  type: MessageType.solutionProposal,
+                  proposal: {
+                    "session_id": intervention['session_id'],
+                    "options": intervention['options'],
+                  },
+                ));
+              } else {
+                // 기존 로직: 분석 후, 솔루션을 새로 제안해야 하는 경우
 
-// 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
-              if (analysisText != null && analysisText.isNotEmpty) {
-                await _addMessage(Message(
-                    userId: currentUserId,
-                    content: analysisText,
-                    sender: Sender.bot));
-                await Future.delayed(const Duration(milliseconds: 200));
-              }
+                // 3. intervention 안에서 필요한 모든 텍스트를 찾음
+                final empathyText = intervention['empathy_text'] as String?;
+                final analysisText = intervention['analysis_text'] as String?;
+                final topCluster = intervention['top_cluster'] as String?;
 
-// 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
-              if (sessionId != null && topCluster != null) {
-                await _proposeSolution(sessionId, topCluster, currentUserId);
+                // 1. [공감] 메시지 먼저 보내기 (null이 아닐 때만)
+                if (empathyText != null && empathyText.isNotEmpty) {
+                  await _addMessage(Message(
+                      userId: currentUserId,
+                      content: empathyText,
+                      sender: Sender.bot));
+                  await Future.delayed(const Duration(milliseconds: 200));
+                }
+
+                // 2. [분석 결과] 메시지 보내기 (null이 아닐 때만)
+                if (analysisText != null && analysisText.isNotEmpty) {
+                  await _addMessage(Message(
+                      userId: currentUserId,
+                      content: analysisText,
+                      sender: Sender.bot));
+                  await Future.delayed(const Duration(milliseconds: 200));
+                }
+
+                // 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
+                if (sessionId != null && topCluster != null) {
+                  await _proposeSolution(sessionId, topCluster, currentUserId);
+                }
               }
               break;
 
-// 안전 위기 모드
+            // 안전 위기 모드
             case PresetId.safetyCrisisModal:
             case PresetId.safetyCrisisSelfHarm:
             case PresetId.safetyCrisisAngerAnxiety:
@@ -999,9 +1019,8 @@ class ChatViewModel extends Notifier<ChatState> {
         ..add(solutionType);
       state = state.copyWith(completedSolutionTypes: newSet);
     } else if (solutionType == 'breathing' || solutionType == 'video') {
-      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
       String path = (solutionType == 'breathing')
-          ? '/breathing/$solutionId?sessionId=$sessionId'
+          ? '/breathing/default?sessionId=$sessionId'
           : '/solution/$solutionId?sessionId=$sessionId';
       final result = await navigatorkey.currentContext
           ?.push(path, extra: {'solution_type': solutionType});

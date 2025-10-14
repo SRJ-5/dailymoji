@@ -850,146 +850,171 @@ class _ChatPageState extends ConsumerState<ChatPage>
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            constraints: BoxConstraints(maxWidth: 292.w),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(12.r),
-                bottomRight: Radius.circular(12.r),
-                bottomLeft: Radius.circular(12.r),
-              ),
-              border: Border.all(color: AppColors.yellow200, width: 2),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.content.replaceAll(r"\n", "\n").contains("\n"))
-                  AppText(
-                    message.content.replaceAll(r'\n', '\n').split("\n")[0],
-                    style: AppFontStyles.bodyMedium14
-                        .copyWith(color: AppColors.grey900),
-                  ),
-                // 본문
-                AppText(
-                  message.content.replaceAll(r'\n', '\n').split("\n")[
-                      message.content.replaceAll(r"\n", "\n").contains("\n")
-                          ? 1
-                          : 0],
-                  style: AppFontStyles.bodyRegular14
-                      .copyWith(color: AppColors.grey900),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              constraints: BoxConstraints(maxWidth: 292.w),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
+                  bottomLeft: Radius.circular(12.r),
                 ),
-                if (message.content.isNotEmpty) SizedBox(height: 16.h),
-                // 버튼들 (세로로 쌓기)
-                Column(
-                  children: options.map((option) {
-                    final String label = option['label'] as String;
-                    final String action = option['action'] as String;
-                    final String? solutionType =
-                        option['solution_type'] as String?;
+                border: Border.all(color: AppColors.yellow200, width: 2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Builder(
+                    builder: (context) {
+                      // 1. 전체 메시지를 줄바꿈 기준으로 나눕니다.
+                      final lines =
+                          message.content.replaceAll(r'\n', '\n').split('\n');
 
-                    // isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
-                    final bool isCompleted = solutionType != null &&
-                        chatState.completedSolutionTypes.contains(solutionType);
+                      // 2. 첫 번째 줄을 제목으로 사용합니다.
+                      final title = lines.first;
 
-                    final bool isEnabled =
-                        isLastMessage || !isAdhdChoiceMessage;
+                      // 3. 나머지 줄들을 다시 하나의 문자열로 합쳐 본문을 만듭니다.
+                      final body =
+                          lines.length > 1 ? lines.sublist(1).join('\n') : '';
 
-                    final String buttonLabel =
-                        isCompleted ? "다시 " + label : label;
+                      // 4. 제목과 본문을 각각 AppText 위젯으로 표시합니다.
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText(
+                            title,
+                            style: AppFontStyles.bodyMedium14
+                                .copyWith(color: AppColors.grey900),
+                          ),
+                          if (body.isNotEmpty)
+                            // 본문
+                            AppText(
+                              body,
+                              style: AppFontStyles.bodyRegular14
+                                  .copyWith(color: AppColors.grey900),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  if (message.content.isNotEmpty) SizedBox(height: 16.h),
+                  // 버튼들 (세로로 쌓기)
+                  Column(
+                    children: options.map((option) {
+                      final String label = option['label'] as String;
+                      final String action = option['action'] as String;
+                      final String? solutionType =
+                          option['solution_type'] as String?;
 
-                    final BoxDecoration decoration = isEnabled
-                        ? (isCompleted
-                            ? BoxDecoration(
-                                color: AppColors.grey50,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(
-                                    color: AppColors.grey200, width: 1),
-                              )
-                            : BoxDecoration(
-                                color: AppColors.yellow700,
-                                borderRadius: BorderRadius.circular(10.r)))
-                        : BoxDecoration(
-                            // 비활성화 스타일
-                            color: AppColors.grey200,
-                            borderRadius: BorderRadius.circular(10.r),
-                          );
+                      // isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
+                      final bool isCompleted = solutionType != null &&
+                          chatState.completedSolutionTypes
+                              .contains(solutionType);
 
-                    final TextStyle textStyle = isEnabled
-                        ? (isCompleted
-                            ? AppFontStyles.bodyMedium14
-                                .copyWith(color: AppColors.grey900)
-                            : AppFontStyles.bodyMedium14
-                                .copyWith(color: AppColors.grey50))
-                        : AppFontStyles.bodyMedium14
-                            .copyWith(color: AppColors.grey600);
+                      final bool isEnabled =
+                          isLastMessage || !isAdhdChoiceMessage;
 
-                    // 2-3. 버튼 위젯 렌더링
-                    return Padding(
-                      padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
-                      child: GestureDetector(
-                        onTap: isEnabled
-                            ? () {
-                                // isEnabled일 때만 onTap 활성화
-                                switch (action) {
-                                  case 'accept_solution':
-                                    final solutionId =
-                                        option['solution_id'] as String?;
-                                    final solutionType =
-                                        option['solution_type'] as String?;
-                                    final sessionId =
-                                        proposal['session_id'] as String?;
-                                    if (solutionId != null &&
-                                        solutionType != null) {
+                      final String buttonLabel =
+                          isCompleted ? "다시 " + label : label;
+
+                      final BoxDecoration decoration = isEnabled
+                          ? (isCompleted
+                              ? BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                      color: AppColors.grey200, width: 1),
+                                )
+                              : BoxDecoration(
+                                  color: AppColors.grey50,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                      color: AppColors.grey200, width: 1),
+                                ))
+                          : BoxDecoration(
+                              // 비활성화 스타일
+                              color: AppColors.grey200,
+                              borderRadius: BorderRadius.circular(10.r),
+                            );
+
+                      final TextStyle textStyle = isEnabled
+                          ? (isCompleted
+                              ? AppFontStyles.bodyMedium14
+                                  .copyWith(color: AppColors.grey900)
+                              : AppFontStyles.bodyMedium14
+                                  .copyWith(color: AppColors.grey900))
+                          : AppFontStyles.bodyMedium14
+                              .copyWith(color: AppColors.grey600);
+
+                      // 2-3. 버튼 위젯 렌더링
+                      return Padding(
+                        padding: EdgeInsets.only(top: 4.h, bottom: 4.h),
+                        child: GestureDetector(
+                          onTap: isEnabled
+                              ? () {
+                                  // isEnabled일 때만 onTap 활성화
+                                  switch (action) {
+                                    case 'accept_solution':
+                                      final solutionId =
+                                          option['solution_id'] as String?;
+                                      final solutionType =
+                                          option['solution_type'] as String?;
+                                      final sessionId =
+                                          proposal['session_id'] as String?;
+                                      if (solutionId != null &&
+                                          solutionType != null) {
+                                        ref
+                                            .read(
+                                                chatViewModelProvider.notifier)
+                                            .respondToSolution(
+                                              solutionId: solutionId,
+                                              solutionType: solutionType,
+                                              sessionId: sessionId,
+                                            );
+                                      }
+                                      break;
+
+                                    case 'adhd_has_task':
+                                    case 'adhd_no_task':
+                                      final String label =
+                                          option['label'] as String;
                                       ref
                                           .read(chatViewModelProvider.notifier)
-                                          .respondToSolution(
-                                            solutionId: solutionId,
-                                            solutionType: solutionType,
-                                            sessionId: sessionId,
-                                          );
-                                    }
-                                    break;
+                                          .respondToAdhdChoice(action, label);
+                                      break;
 
-                                  case 'adhd_has_task':
-                                  case 'adhd_no_task':
-                                    final String label =
-                                        option['label'] as String;
-                                    ref
-                                        .read(chatViewModelProvider.notifier)
-                                        .respondToAdhdChoice(action, label);
-                                    break;
+                                    case 'decline_solution_and_talk':
+                                    case 'safety_crisis':
+                                      ref
+                                          .read(chatViewModelProvider.notifier)
+                                          .handleProposalAction(action);
+                                      break;
 
-                                  case 'decline_solution_and_talk':
-                                  case 'safety_crisis':
-                                    ref
-                                        .read(chatViewModelProvider.notifier)
-                                        .handleProposalAction(action);
-                                    break;
-
-                                  default:
-                                    print(
-                                        "Error: Tapped unknown action in UI: $action");
+                                    default:
+                                      print(
+                                          "Error: Tapped unknown action in UI: $action");
+                                  }
                                 }
-                              }
-                            : null,
-                        child: Container(
-                          height: 40.h,
-                          width: double.infinity,
-                          decoration: decoration,
-                          child: Center(
-                            child: AppText(
-                              buttonLabel,
-                              style: textStyle,
+                              : null,
+                          child: Container(
+                            height: 40.h,
+                            width: double.infinity,
+                            decoration: decoration,
+                            child: Center(
+                              child: AppText(
+                                buttonLabel,
+                                style: textStyle,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
           ),
           //           SizedBox(height: 4.h),

@@ -25,15 +25,15 @@ ASSESSMENT_SCORE_CAP = 0.7
 
 # 3. 텍스트는 있지만 아이콘이 없을 때를 위한 가중치 (비례 배분)
 FINAL_FUSION_WEIGHTS_NO_ICON = {
-    "text": 0.70, # text + icon
-    "assessment": 0.30  # assessment + icon
+    "text": 0.80, # text + icon
+    "assessment": 0.20  # assessment + icon
 }
 
 # --- Scoring Weights & Parameters ---
 # ❤️ Rule-based와 LLM 텍스트 분석 결과를 융합할 때의 가중치
 # 나중에 앱 운영 데이터가 쌓이고 LLM의 성능에 대한 확신이 들었을 때, 점진적으로 LLM의 비중을 50%까지 높여보는 것을 고려할 수 있습니다.
-W_RULE = 0.6 #Rule-based (60%): 명확한 키워드("너무 우울해")를 빠르고 정확하게 잡아내는 장점이 있습니다. 예측 가능성이 높아 안정적입니다.
-W_LLM = 0.4 #LLM (40%): 직접적인 단어는 없지만 미묘한 뉘앙스("요즘은 웃는 게 웃는 게 아닌 것 같아")를 파악하는 데 강점이 있습니다.
+W_RULE = 0.5 #Rule-based (60%->50%): 명확한 키워드("너무 우울해")를 빠르고 정확하게 잡아내는 장점이 있습니다. 예측 가능성이 높아 안정적입니다.
+W_LLM = 0.5 #LLM (40%->50%): 직접적인 단어는 없지만 미묘한 뉘앙스("요즘은 웃는 게 웃는 게 아닌 것 같아")를 파악하는 데 강점이 있습니다.
 
 # ❤️ 이모지-클러스터 매핑
 ICON_TO_CLUSTER = {

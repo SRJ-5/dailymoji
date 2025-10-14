@@ -483,10 +483,11 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
             focus_solution_res = await run_in_threadpool(focus_solution_query.execute)
             focus_solution_data = focus_solution_res.data[0] if focus_solution_res.data else {}
 
-            # 2. '호흡' 솔루션을 DB에서 찾습니다.
-            breathing_solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_type", "breathing").limit(1)
-            breathing_solution_res = await run_in_threadpool(breathing_solution_query.execute)
-            breathing_solution_data = breathing_solution_res.data[0] if breathing_solution_res.data else {}
+            # 2. '호흡' 솔루션 - 프론트엔드 라우팅을 위해서!
+            breathing_solution_data = {
+            "solution_id": "breathing_default", 
+            "solution_type": "breathing"
+            }
             
               # 3. 제안 멘트를 가져옵니다.
             proposal_text = await get_mention_from_db(
@@ -538,7 +539,16 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         solution_res = await run_in_threadpool(solution_query.execute)
         solution_data = solution_res.data[0] if solution_res.data else {}
 
+        # DB에 저장할 intervention 객체 먼저 생성
+        intervention_for_db = { 
+            "preset_id": PresetIds.ADHD_TASK_BREAKDOWN, 
+            "coaching_text": coaching_text, 
+            "mission_text": mission_text 
+        }
+
         # 뽀모도로 제안 시점에 session 생성
+        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
+
         # intervention 객체 안에 options와 session_id를 포함시켜 한번에 반환합니다.
         intervention_for_client = intervention_for_db.copy()
         intervention_for_client["options"] = [
