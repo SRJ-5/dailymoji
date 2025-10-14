@@ -127,7 +127,8 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                                 .submitAssessment(user.id!,
                                     clusterState.cluster);
 
-                            context.go('/home');
+                            context.pop();
+                            context.pop();
                           }
                         }
                       : null,
