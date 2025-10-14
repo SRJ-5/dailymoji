@@ -87,10 +87,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       print('[weekly-summary] status=${resp.statusCode}');
 
       if (resp.statusCode != 200) {
-        print('ggggggggggggggggg${resp.statusCode}');
         return null;
       }
-      print('qqqqqqqqqqqqqqqq${resp.statusCode}');
       final decoded = utf8.decode(resp.bodyBytes);
       // ignore: avoid_print
       print('[weekly-summary] body=$decoded');
@@ -115,7 +113,6 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       final agg = await fAgg;
 
       final emap = _buildEmotionMap(agg, summary); // ← 시그니처 변경
-      print("dfjkshldkfjsldkfj${summary?.negLowSummary}");
       state =
           state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
     } catch (e, st) {
@@ -261,7 +258,6 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
 
     String pick(String fallback, String? fromApi) {
       final t = fromApi?.trim();
-      print("dfjkshldkfjsldkfj$t");
       return (t != null && t.isNotEmpty) ? t : fallback;
     }
 
