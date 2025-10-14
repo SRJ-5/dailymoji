@@ -63,7 +63,7 @@ class CharacterBox extends StatelessWidget {
             style: AppFontStyles.bodySemiBold16
                 .copyWith(color: AppColors.grey900),
           ),
-          SizedBox(height: 20.r),
+          SizedBox(height: 18.r),
           GestureDetector(
             onTap: () {
               onSelect(
