@@ -2,6 +2,7 @@ import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
+import 'package:flutter/src/foundation/platform.dart';
 
 class UserProfileRepositoryImpl
     implements UserProfileRepository {
@@ -71,5 +72,11 @@ class UserProfileRepositoryImpl
   @override
   Future<void> deleteAccount(String userId) async {
     await _userDataSource.deleteAccount(userId);
+  }
+
+  @override
+  Future<void> saveFcmTokenToSupabase(
+      TargetPlatform platform) async {
+    await _userDataSource.saveFcmTokenToSupabase(platform);
   }
 }
