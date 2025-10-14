@@ -451,10 +451,18 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Widget _solutionFeedbackMessage(Message message, {required Key key}) {
+    if (message.proposal == null) {
+      // proposal 데이터가 null인 경우에 대한 방어 코드
+      return message.content.isNotEmpty
+          // 만약 텍스트 내용이 있다면 일반 봇 메시지로 표시하고, 없다면 아무것도 표시하지 않음
+          ? _botMessage(message, key: key)
+          : const SizedBox.shrink();
+    }
+
     final proposal = message.proposal!;
-    final solutionId = proposal['solution_id'] as String;
-    final sessionId = proposal['session_id'] as String?;
-    final solutionType = proposal['solution_type'] as String;
+    // final solutionId = proposal['solution_id'] as String;
+    // final sessionId = proposal['session_id'] as String?;
+    // final solutionType = proposal['solution_type'] as String;
 
     return Column(
       key: key,
@@ -462,68 +470,73 @@ class _ChatPageState extends ConsumerState<ChatPage>
       children: [
         _botMessage(message, key: ValueKey('${message.tempId}_text')),
         SizedBox(height: 8.h),
-        Padding(
-          padding: EdgeInsets.only(left: 8.w),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              ElevatedButton.icon(
-                icon: const Text('👍'),
-                label: const AppText(AppTextStrings.solutionHelpful),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.green50,
-                  foregroundColor: AppColors.grey900,
-                  padding:
-                      EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    side: const BorderSide(color: AppColors.grey200, width: 1),
-                  ),
-                ),
-                onPressed: () {
-                  ref
-                      .read(chatViewModelProvider.notifier)
-                      .respondToSolutionFeedback(
-                        solutionId: solutionId,
-                        sessionId: sessionId,
-                        solutionType: solutionType,
-                        feedback: 'helpful',
-                        messageIdToRemove: message.id!,
-                      );
-                },
-              ),
-              SizedBox(width: 12.w),
-              ElevatedButton.icon(
-                icon: const Text('👎'),
-                label: const AppText(AppTextStrings.solutionNotHelpful),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.green50,
-                  foregroundColor: AppColors.grey900,
-                  padding:
-                      EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    side: const BorderSide(color: AppColors.grey200, width: 1),
-                  ),
-                ),
-                onPressed: () {
-                  ref
-                      .read(chatViewModelProvider.notifier)
-                      .respondToSolutionFeedback(
-                        solutionId: solutionId,
-                        sessionId: sessionId,
-                        solutionType: solutionType,
-                        feedback: 'not_helpful',
-                        messageIdToRemove: message.id!,
-                      );
-                },
-              ),
-            ],
-          ),
-        )
+        _FeedbackButtons(message: message),
       ],
     );
   }
+
+//         Padding(
+//           padding: EdgeInsets.only(left: 8.w),
+//           child: Row(
+//             mainAxisAlignment: MainAxisAlignment.start,
+//             children: [
+//               ElevatedButton.icon(
+//                 icon: const Text('👍'),
+//                 label: const AppText(AppTextStrings.solutionHelpful),
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: AppColors.green50,
+//                   foregroundColor: AppColors.grey900,
+//                   padding:
+//                       EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(10.r),
+//                     side: const BorderSide(color: AppColors.grey200, width: 1),
+//                   ),
+//                 ),
+//                 onPressed: () {
+//                   ref
+//                       .read(chatViewModelProvider.notifier)
+//                       .respondToSolutionFeedback(
+//                         solutionId: solutionId,
+//                         sessionId: sessionId,
+//                         solutionType: solutionType,
+//                         feedback: 'helpful',
+//                         messageIdToRemove: message.id!,
+//                       );
+//                 },
+//               ),
+//               SizedBox(width: 12.w),
+//               ElevatedButton.icon(
+//                 icon: const Text('👎'),
+//                 label: const AppText(AppTextStrings.solutionNotHelpful),
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: AppColors.green50,
+//                   foregroundColor: AppColors.grey900,
+//                   padding:
+//                       EdgeInsets.symmetric(vertical: 9.5.h, horizontal: 16.w),
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(10.r),
+//                     side: const BorderSide(color: AppColors.grey200, width: 1),
+//                   ),
+//                 ),
+//                 onPressed: () {
+//                   ref
+//                       .read(chatViewModelProvider.notifier)
+//                       .respondToSolutionFeedback(
+//                         solutionId: solutionId,
+//                         sessionId: sessionId,
+//                         solutionType: solutionType,
+//                         feedback: 'not_helpful',
+//                         messageIdToRemove: message.id!,
+//                       );
+//                 },
+//               ),
+//             ],
+//           ),
+//         )
+//       ],
+//     );
+  // }
 
   // --- 시스템 메시지 위젯 ---
   Widget _systemMessage(Message message, {required Key key}) {
@@ -811,30 +824,18 @@ class _ChatPageState extends ConsumerState<ChatPage>
       {required Key key, required bool isLastMessage}) {
     // String msg =
     //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
-    final proposal = message.proposal!;
+    final proposal = message.proposal;
     final chatState = ref.watch(chatViewModelProvider);
 
-    // --- 안전장치 1: proposal 데이터가 없는 경우 ---
-    if (proposal == null) {
-      return message.content.isNotEmpty
-          ? _botMessage(message, key: key)
-          : const SizedBox.shrink();
+    // --- proposal 데이터나 options가 없는 경우는 일반 봇 메시지로 처리 ---
+    if (proposal == null || (proposal['options'] as List?)?.isEmpty == true) {
+      if (message.content.isNotEmpty) {
+        return _botMessage(message, key: key);
+      }
+      return const SizedBox.shrink(); // 내용도 없으면 아무것도 그리지 않음
     }
 
-    // --- 안전장치 2: options 데이터가 없는 경우 ---
-    final optionsData = proposal['options'];
-    if (optionsData is! List || optionsData.isEmpty) {
-      return message.content.isNotEmpty
-          ? _botMessage(message, key: key)
-          : const SizedBox.shrink();
-    }
-    final options = optionsData.cast<Map<String, dynamic>>();
-
-    // // --- 분기 처리: ADHD 질문인지, 일반 솔루션 제안인지 확인 ---
-    // final adhdContext = proposal['adhd_context'] as Map<String, dynamic>?;
-    // final bool isAdhdQuestion =
-    //     adhdContext != null && adhdContext['step'] == 'awaiting_choice';
-
+    final options = (proposal['options'] as List).cast<Map<String, dynamic>>();
     bool isAdhdChoiceMessage = false;
     if (options.isNotEmpty) {
       final firstAction = options.first['action'] as String?;
@@ -1064,12 +1065,13 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //     ],
           //   ),
           // ),
-          SizedBox(width: 4.w),
-          AppText(
-            _formattedNow(message.createdAt),
-            style:
-                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
-          ),
+          if (message.content.isNotEmpty) SizedBox(width: 4.w),
+          if (message.content.isNotEmpty)
+            AppText(
+              _formattedNow(message.createdAt),
+              style: AppFontStyles.bodyRegular14
+                  .copyWith(color: AppColors.grey900),
+            ),
         ],
       ),
     );
@@ -1387,6 +1389,89 @@ class _DateSeparator extends StatelessWidget {
               style: AppFontStyles.bodyRegular12
                   .copyWith(color: AppColors.grey900)),
         ),
+      ),
+    );
+  }
+}
+
+// 피드백 버튼의 상태를 자체적으로 관리하는 새로운 위젯!
+class _FeedbackButtons extends ConsumerWidget {
+  final Message message;
+
+  const _FeedbackButtons({required this.message});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final proposal = message.proposal!;
+    final solutionId = proposal['solution_id'] as String;
+    final sessionId = proposal['session_id'] as String?;
+    final solutionType = proposal['solution_type'] as String;
+
+    // 로컬 state(_selectedFeedback) 대신 message.feedbackState를 직접 사용합니다.
+    final String? _selectedFeedback = message.feedbackState;
+
+    // 피드백 버튼을 만드는 Helper 함수
+    Widget buildFeedbackButton(
+        String feedbackType, String iconPath, String filledIconPath) {
+      bool isSelected = _selectedFeedback == feedbackType;
+      bool isUnselected = _selectedFeedback != null && !isSelected;
+
+      // 다른 버튼이 선택되었다면, 이 버튼은 보이지 않게 처리
+      if (isUnselected) {
+        return const SizedBox.shrink();
+      }
+
+      return GestureDetector(
+        onTap: () {
+          // 이미 피드백을 보냈다면 아무것도 하지 않음
+          if (_selectedFeedback != null) return;
+
+          ref.read(chatViewModelProvider.notifier).respondToSolutionFeedback(
+                solutionId: solutionId,
+                sessionId: sessionId,
+                solutionType: solutionType,
+                feedback: feedbackType,
+                messageIdToUpdate: message.id!, // 파라미터 이름 변경
+              );
+        },
+        child: Container(
+          width: 40.w,
+          height: 40.h,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.grey50,
+            border: Border.all(color: AppColors.grey200),
+          ),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(
+                isSelected && filledIconPath == AppIcons.thumbsUpFilled
+                    ? 6.w
+                    : (iconPath == AppIcons.thumbsUp ? 10.w : 8.w),
+              ),
+              child: SvgPicture.asset(
+                isSelected ? filledIconPath : iconPath,
+                // width: 20.w,
+                // height: 20.h,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(left: 8.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          buildFeedbackButton(
+              'helpful', AppIcons.thumbsUp, AppIcons.thumbsUpFilled),
+          SizedBox(width: 8.w),
+          buildFeedbackButton(
+              'not_helpful', AppIcons.thumbsDown, AppIcons.thumbsDownFilled),
+        ],
       ),
     );
   }

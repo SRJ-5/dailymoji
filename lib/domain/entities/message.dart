@@ -14,6 +14,9 @@ class Message {
 
   final String tempId; // 로컬 - DB 연동을 위해 로컬에 일단 uuid 부여
 
+  final String? feedbackState; // "helpful" 또는 "not_helpful"
+  final String? solutionIdForFeedback;
+
   Message({
     this.id,
     required this.userId,
@@ -24,6 +27,8 @@ class Message {
     DateTime? createdAt,
     this.imageAssetPath,
     String? tempId,
+    this.feedbackState,
+    this.solutionIdForFeedback,
   })  : createdAt = createdAt ?? DateTime.now(),
         tempId = tempId ?? const Uuid().v4();
 
@@ -39,6 +44,8 @@ class Message {
     Map<String, dynamic>? proposal,
     String? imageAssetPath,
     String? tempId,
+    String? feedbackState,
+    String? solutionIdForFeedback,
   }) {
     return Message(
       id: id ?? this.id,
@@ -50,6 +57,9 @@ class Message {
       proposal: proposal ?? this.proposal,
       imageAssetPath: imageAssetPath ?? this.imageAssetPath,
       tempId: tempId ?? this.tempId,
+      feedbackState: feedbackState ?? this.feedbackState,
+      solutionIdForFeedback:
+          solutionIdForFeedback ?? this.solutionIdForFeedback, // ⭐️ 로직 추가
     );
   }
 

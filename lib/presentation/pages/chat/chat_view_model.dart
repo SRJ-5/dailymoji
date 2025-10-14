@@ -481,16 +481,28 @@ class ChatViewModel extends Notifier<ChatState> {
       switch (preset) {
         // RIN: ADHD 질문 처리 케이스
         case PresetId.adhdPreSolutionQuestion: // "할 일이 있나요?" 질문 단계
+          // 1. 텍스트 부분은 일반 봇 메시지로 먼저 보내기
           await _addMessage(Message(
             userId: currentUserId,
             content: intervention['text'] as String,
             sender: Sender.bot,
-            type: MessageType.solutionProposal,
-            proposal: intervention, // 백엔드 데이터 그대로 전달
+            type: MessageType.normal,
           ));
+
+          // 잠시 딜레이를 주어 메시지가 순서대로 보이게
+          await Future.delayed(const Duration(milliseconds: 200));
+
+          // 2. 버튼 부분만 별도의 solutionProposal 메시지로 보냅니다. (content는 비워둡니다)
+          await _addMessage(Message(
+            userId: currentUserId,
+            content: "", // content는 비워둡니다.
+            sender: Sender.bot,
+            type: MessageType.solutionProposal,
+            proposal: intervention,
+          ));
+
           _adhdContextForNextRequest =
               intervention['adhd_context'] as Map<String, dynamic>?;
-
           break;
 
         case PresetId.adhdAwaitingTaskDescription: // "어떤 일인가요?" 질문 단계
@@ -505,6 +517,8 @@ class ChatViewModel extends Notifier<ChatState> {
           break;
 
         case PresetId.adhdTaskBreakdown: // 작업 분할 제시 + 뽀모도로 제안 단계
+          state = state.copyWith(completedSolutionTypes: {});
+
           final coachingText = intervention['coaching_text'] as String?;
           final missionText = intervention['mission_text'] as String?;
           if (coachingText != null) {
@@ -760,6 +774,48 @@ class ChatViewModel extends Notifier<ChatState> {
 // DB에서 가져온 메시지를 createdAt(생성 시간) 기준으로 정렬해야함!
       filteredMsgs.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
+// ⭐️ 피드백 상태를 가져와서 메시지에 반영하는 로직
+      // 1. 피드백 질문 메시지들의 solution_id 목록을 추출합니다.
+      final solutionIds = filteredMsgs
+          .where((msg) =>
+              msg.type == MessageType.solutionFeedback &&
+              msg.solutionIdForFeedback != null)
+          .map((msg) => msg.solutionIdForFeedback!)
+          .toSet()
+          .toList();
+
+      if (solutionIds.isNotEmpty) {
+        // 2. Supabase에서 해당 solution_id들에 대한 최신 피드백 기록을 가져옵니다.
+        final feedbackResponse = await ref
+            .read(supabaseClientProvider)
+            .from('solution_feedback')
+            .select('solution_id, feedback')
+            .inFilter('solution_id', solutionIds)
+            .eq('user_id', userId)
+            .order('created_at', ascending: false);
+
+        // 3. solution_id를 키로 하는 최신 피드백 맵을 만듭니다.
+        final feedbackMap = <String, String>{};
+        for (var row in feedbackResponse) {
+          final solutionId = row['solution_id'] as String;
+          if (!feedbackMap.containsKey(solutionId)) {
+            feedbackMap[solutionId] = row['feedback'] as String;
+          }
+        }
+
+        // 4. 기존 메시지 목록을 순회하며 피드백 상태를 업데이트합니다.
+        filteredMsgs = filteredMsgs.map((msg) {
+          if (msg.type == MessageType.solutionFeedback &&
+              msg.solutionIdForFeedback != null) {
+            final feedback = feedbackMap[msg.solutionIdForFeedback];
+            if (feedback != null) {
+              return msg.copyWith(feedbackState: feedback);
+            }
+          }
+          return msg;
+        }).toList();
+      }
+
 // 특정 날짜 모드에서는 무한 스크롤 비활성화, 일반 모드에서는 페이지 사이즈로 판단
       final hasMore = _targetDate != null ? false : (msgs.length >= _pageSize);
       state = state.copyWith(
@@ -857,6 +913,7 @@ class ChatViewModel extends Notifier<ChatState> {
         content: AppTextStrings.askVideoFeedback,
         sender: Sender.bot,
         type: MessageType.solutionFeedback,
+        solutionIdForFeedback: solutionId,
         proposal: {
           'solution_id': solutionId,
           'session_id': sessionId,
@@ -932,17 +989,23 @@ class ChatViewModel extends Notifier<ChatState> {
     String? sessionId,
     required String solutionType,
     required String feedback,
-    required String messageIdToRemove,
+    required String messageIdToUpdate,
   }) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    // 1. UI에서 피드백 메시지(버튼) 제거 (Optimistic UI)
-    state = state.copyWith(
-      messages: state.messages.where((m) => m.id != messageIdToRemove).toList(),
-    );
+    // 1. UI에서 피드백 메시지 찾아 상태 업데이트
+    final updatedMessages = state.messages.map((msg) {
+      if (msg.id == messageIdToUpdate) {
+        return msg.copyWith(feedbackState: feedback);
+      }
+      return msg;
+    }).toList();
+
+    state = state.copyWith(messages: updatedMessages);
 
     // 2. ViewModel을 통해 Repository -> DataSource -> Backend API 호출
+    // 수퍼베이스에 저장
     try {
       await ref.read(userViewModelProvider.notifier).submitSolutionFeedback(
             solutionId: solutionId,
