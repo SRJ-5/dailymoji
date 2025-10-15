@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/src/foundation/platform.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -173,5 +175,33 @@ class UserProfileDataSourceImpl
     final user = Supabase
         .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
     print("오오오오오오$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
+  }
+
+  @override
+  Future<void> saveFcmTokenToSupabase(
+      TargetPlatform platform) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        print("⚠️ 유저가 로그인되지 않았습니다. FCM 토큰 저장 스킵");
+        return;
+      }
+
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) {
+        print("⚠️ FCM 토큰을 가져올 수 없습니다.");
+        return;
+      }
+
+      await supabase.from('user_tokens').upsert({
+        'user_id': user.id,
+        'token': token,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id');
+
+      print("✅ Supabase에 FCM 토큰 저장 완료: $token");
+    } catch (e) {
+      print("⚠️ FCM 토큰 저장 실패: $e");
+    }
   }
 }
