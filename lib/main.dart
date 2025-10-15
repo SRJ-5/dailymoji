@@ -12,28 +12,12 @@ import 'package:intl/date_symbol_data_local.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// // 앱이 백그라운드일 때 도착한 알림을 처리하는 함수
-// @pragma('vm:entry-point')
-// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-//   await Firebase.initializeApp();
-//   print("📩 백그라운드 알림 수신: ${message.notification?.title}");
-// }
-
-// // Supabase user_tokens 테이블에 FCM 토큰 저장
-// Future<void> _saveFcmToken(String userId, String token) async {
-//   final supabase = Supabase.instance.client;
-
-//   try {
-//     await supabase.from('user_tokens').upsert({
-//       'user_id': userId,
-//       'token': token,
-//       'updated_at': DateTime.now().toIso8601String(),
-//     });
-//     print("✅ FCM 토큰 저장 완료: $token");
-//   } catch (e) {
-//     print("⚠️ FCM 토큰 저장 실패: $e");
-//   }
-// }
+// 앱이 백그라운드일 때 도착한 알림을 처리하는 함수
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("📩 백그라운드 알림 수신: ${message.notification?.title}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,62 +36,23 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  // // 백그라운드 알림 핸들러 등록
-  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Firebase 초기화
+  await Firebase.initializeApp();
 
-//   // FCM 인스턴스 생성 및 설정
-//   FirebaseMessaging messaging = FirebaseMessaging.instance;
+  // 백그라운드 알림 핸들러 등록
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-//   // 🔑 사용자 기기 토큰 받기
-//   String? token = await messaging.getToken();
-//   print("🔑 FCM Token: $token");
+  // 포그라운드 알림 수신 (앱 켜져 있을 때)
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("📨 포그라운드 알림 수신!");
+    print("제목: ${message.notification?.title}");
+    print("내용: ${message.notification?.body}");
+  });
 
-//   // ❗ 로그인된 사용자 ID로 교체
-//   final user = Supabase.instance.client.auth.currentUser;
-//   if (user != null && token != null) {
-//     await _saveFcmToken(user.id, token);
-//   } else {
-//     print("⚠️ 로그인 정보 없음 or 토큰 없음");
-//   }
-
-// // RIN: 토큰이 갱신될 때마다 Supabase DB에도 업데이트하는 리스너 추가
-//   messaging.onTokenRefresh.listen((newToken) {
-//     final updatedUser = Supabase.instance.client.auth.currentUser;
-//     if (updatedUser != null) {
-//       _saveFcmToken(updatedUser.id, newToken);
-//     }
-//   });
-
-  // // 포그라운드 알림 수신 (앱 켜져 있을 때)
-  // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  //   print("📨 포그라운드 알림 수신!");
-  //   print("제목: ${message.notification?.title}");
-  //   print("내용: ${message.notification?.body}");
-
-  //   // 간단히 스낵바로 표시
-  //   if (message.notification != null) {
-  //     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       final context = navigatorKey.currentContext;
-  //       if (context != null) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(
-  //             content: Text(
-  //               "${message.notification!.title}\n${message.notification!.body}",
-  //               style: const TextStyle(color: Colors.white),
-  //             ),
-  //             backgroundColor: Colors.black87,
-  //             duration: const Duration(seconds: 3),
-  //           ),
-  //         );
-  //       }
-  //     });
-  //   }
-  // });
-
-  // // 앱이 종료된 상태에서 클릭으로 열릴 때
-  // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-  //   print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
-  // });
+  // 앱이 종료된 상태에서 클릭으로 열릴 때
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
+  });
 
   // // 알림 권한 요청 (iOS용)
   // await FirebaseMessaging.instance.requestPermission();
@@ -153,13 +98,7 @@ class MyApp extends ConsumerWidget {
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-          child: Navigator(
-            key: navigatorKey,
-            onGenerateRoute: (settings) => MaterialPageRoute(
-              builder: (context) => child!,
-            ),
-            // child: child!,
-          ),
+          child: child!,
         );
       },
     );
