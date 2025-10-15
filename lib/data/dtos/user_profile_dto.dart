@@ -67,7 +67,7 @@ class UserProfileDto {
       "character_personality": CharacterPersonality.values
           .firstWhere(
             (e) => e.myLabel == characterPersonality,
-            orElse: () => CharacterPersonality.warmHeart,
+            orElse: () => CharacterPersonality.probSolver,
           )
           .dbValue,
       "onboarding_scores": onboardingScores,
