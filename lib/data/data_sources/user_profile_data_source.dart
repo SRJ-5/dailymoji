@@ -1,4 +1,5 @@
 import 'package:dailymoji/data/dtos/user_profile_dto.dart';
+import 'package:flutter/material.dart';
 
 abstract class UserProfileDataSource {
   Future<String?> googleLogin();
@@ -14,4 +15,5 @@ abstract class UserProfileDataSource {
       required String characterPersonality});
   Future<void> logOut();
   Future<void> deleteAccount(String userId);
+  Future<void> saveFcmTokenToSupabase(TargetPlatform platform);
 }

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/routers/router.dart';
+import 'package:dailymoji/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -24,14 +25,23 @@ void main() async {
   // .env 불러오기
   await dotenv.load(fileName: ".env");
 
-  // Supabase 초기화 (Firebase 초기화보다 먼저)
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Supabase 초기화
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  // Firebase 초기화
-  await Firebase.initializeApp();
+  // 알림 권한 요청 (iOS용)
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   // 백그라운드 알림 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -47,9 +57,6 @@ void main() async {
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
   });
-
-  // 알림 권한 요청 (iOS용)
-  await FirebaseMessaging.instance.requestPermission();
 
   await initializeDateFormatting('ko_KR', null);
 
