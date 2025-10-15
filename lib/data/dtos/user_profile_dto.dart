@@ -8,6 +8,7 @@ class UserProfileDto {
   final String? aiCharacter;
   final String? characterNm;
   final String? characterPersonality;
+  final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
 
   UserProfileDto({
@@ -17,6 +18,7 @@ class UserProfileDto {
     this.aiCharacter,
     this.characterNm,
     this.characterPersonality,
+    this.characterNum,
     this.onboardingScores,
   });
 
@@ -39,6 +41,17 @@ class UserProfileDto {
                       )
                       .myLabel
                   : null,
+          characterNum: map["character_personality"] != null
+              ? CharacterPersonality.values
+                  .firstWhere(
+                    (e) =>
+                        e.dbValue ==
+                        map["character_personality"],
+                    orElse: () =>
+                        CharacterPersonality.probSolver,
+                  )
+                  .assetLabel
+              : null,
           onboardingScores: map['onboarding_scores'] ?? {},
         );
 
@@ -65,6 +78,7 @@ class UserProfileDto {
       String? aiCharacter,
       String? characterNm,
       String? characterPersonality,
+      int? characterNum,
       Map<String, dynamic>? onboardingScores}) {
     return UserProfileDto(
         id: id ?? this.id,
@@ -86,6 +100,7 @@ class UserProfileDto {
         aiCharacter: aiCharacter,
         characterNm: characterNm,
         characterPersonality: characterPersonality,
+        characterNum: characterNum,
         onboardingScores: onboardingScores);
   }
 
@@ -98,6 +113,7 @@ class UserProfileDto {
           characterNm: surveyResponse.characterNm,
           characterPersonality:
               surveyResponse.characterPersonality,
+          characterNum: surveyResponse.characterNum,
           onboardingScores: surveyResponse.onboardingScores,
         );
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
@@ -26,7 +27,8 @@ class BreathingSolutionPage extends ConsumerStatefulWidget {
       _BreathingSolutionPageState();
 }
 
-class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
+class _BreathingSolutionPageState
+    extends ConsumerState<BreathingSolutionPage>
     with TickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
@@ -99,7 +101,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     // RIN: 타이머 추가
     _timerController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1), // duration은 나중에 동적으로 변경됩니다.
+      duration: const Duration(
+          seconds: 1), // duration은 나중에 동적으로 변경됩니다.
     );
 
     _timerController.addListener(() {
@@ -107,7 +110,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       final duration = _steps[_step]["duration"];
       if (duration != null) {
         // 애니메이션 진행률(0.0~1.0)에 따라 초를 계산 (ceil로 올림처리하여 1부터 시작)
-        final newSeconds = (_timerController.value * duration).ceil();
+        final newSeconds =
+            (_timerController.value * duration).ceil();
         if (_timerSeconds != newSeconds) {
           setState(() {
             _timerSeconds = newSeconds;
@@ -129,7 +133,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       if (mounted) {
         setState(() {
           // _steps의 마지막 항목을 실제 데이터로 업데이트
-          _steps[4]["text"] = "잘 했어요!\n이제 $solutionContext에 가서도\n호흡을 이어가 보세요";
+          _steps[4]["text"] =
+              "잘 했어요!\n이제 $solutionContext에 가서도\n호흡을 이어가 보세요";
         });
       }
     } catch (e) {
@@ -190,6 +195,10 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum = ref
+        .read(userViewModelProvider)
+        .userProfile!
+        .characterNum;
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
@@ -219,13 +228,14 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                       if (_steps[_step]["title"] != null)
                         AppText(
                           _steps[_step]["title"],
-                          style: AppFontStyles.heading2
-                              .copyWith(color: AppColors.grey100),
+                          style: AppFontStyles.heading2.copyWith(
+                              color: AppColors.grey100),
                           textAlign: TextAlign.center,
                         ),
                       AppText(
                         _steps[_step]["text"],
-                        style: (_steps[_step]["font"] as TextStyle)
+                        style: (_steps[_step]["font"]
+                                as TextStyle)
                             .copyWith(color: AppColors.grey100),
                         textAlign: TextAlign.center,
                       ),
@@ -242,7 +252,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 width: 240.w,
                 height: 360.h,
                 child: Image(
-                  image: AssetImage(AppImages.cadoProfile),
+                  image: AssetImage(
+                      AppImages.characterListProfile[
+                          selectedCharacterNum!]),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -272,7 +284,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
             ),
 
             // '건너뛰기' 텍스트 버튼 추가
-            if (!_showFinalHint && _step > 0 && _step < _steps.length - 1)
+            if (!_showFinalHint &&
+                _step > 0 &&
+                _step < _steps.length - 1)
               Positioned(
                 top: 700.h, // 타이머보다 살짝 아래 위치
                 child: AnimatedOpacity(
@@ -290,7 +304,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: AppColors.grey400,
                         decoration: TextDecoration.underline,
-                        decorationColor: AppColors.grey400, // ✅ 밑줄 색을 강제로 지정
+                        decorationColor:
+                            AppColors.grey400, // ✅ 밑줄 색을 강제로 지정
                       ),
                     ),
                   ),
@@ -364,19 +379,23 @@ class TimerPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
             text: '$seconds',
-            style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
+            style: AppFontStyles.heading2
+                .copyWith(color: AppColors.white)),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
       textPainter.paint(
         canvas,
-        center - Offset(textPainter.width / 2, textPainter.height / 2 + 2),
+        center -
+            Offset(textPainter.width / 2,
+                textPainter.height / 2 + 2),
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant TimerPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.seconds != seconds;
+    return oldDelegate.progress != progress ||
+        oldDelegate.seconds != seconds;
   }
 }

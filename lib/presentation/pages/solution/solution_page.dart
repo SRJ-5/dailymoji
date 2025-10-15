@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/solution/widget/solution_bubble.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
@@ -27,7 +28,12 @@ class SolutionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final solutionAsync = ref.watch(solutionProvider(solutionId));
+    final selectedCharacterNum = ref
+        .read(userViewModelProvider)
+        .userProfile!
+        .characterNum;
+    final solutionAsync =
+        ref.watch(solutionProvider(solutionId));
 
     return solutionAsync.when(
       loading: () => const Scaffold(
@@ -90,7 +96,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.immersiveSticky);
 
     // Provider로부터 받은 solution 데이터로 컨트롤러 초기화
     _controller = YoutubePlayerController(
@@ -168,7 +175,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     if (!widget.isReview) {
       // `_exitReason`이 설정되지 않았다면 비정상적인 경우이므로, 안전하게 'user_closed'로 처리합니다.
       final reason = _exitReason ?? 'user_closed';
-      debugPrint("RIN: Setting result and navigating with reason: $reason");
+      debugPrint(
+          "RIN: Setting result and navigating with reason: $reason");
 
       ref.read(solutionResultProvider.notifier).state = {
         'reason': reason,
@@ -176,7 +184,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
         'sessionId': widget.sessionId,
       };
     } else {
-      debugPrint("RIN: This is a review. Skipping follow-up message.");
+      debugPrint(
+          "RIN: This is a review. Skipping follow-up message.");
     }
 
     // Go back to using `context.go` which is more stable.
@@ -198,12 +207,18 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum = ref
+        .read(userViewModelProvider)
+        .userProfile!
+        .characterNum;
     final size = MediaQuery.of(context).size;
     const ar = 16 / 9;
 
     // 화면을 좌우까지 '덮도록' 필요한 확대 배수 (BoxFit.cover 수동 구현)
-    final widthAtScreenHeight = size.height * ar; // 세로 꽉 채웠을 때의 가로폭
-    final coverScale = size.width / widthAtScreenHeight; // 좌우 남지 않게 만드는 배수
+    final widthAtScreenHeight =
+        size.height * ar; // 세로 꽉 채웠을 때의 가로폭
+    final coverScale =
+        size.width / widthAtScreenHeight; // 좌우 남지 않게 만드는 배수
     const extraZoom = 1; // 더 크게 자르고 싶으면 1.05~1.2
     final zoom = coverScale * extraZoom;
 
@@ -231,7 +246,9 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                         controller: _controller,
                         onReady: () {
                           // 플레이어 준비 완료 후 자동으로 음소거 해제
-                          Future.delayed(const Duration(milliseconds: 500), () {
+                          Future.delayed(
+                              const Duration(milliseconds: 500),
+                              () {
                             if (mounted) {
                               _controller.unMute();
                               setState(() {
@@ -254,7 +271,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             bottom: 19.h,
             child: AnimatedOpacity(
               opacity: _showCharacter ? 1 : 0,
-              duration: const Duration(seconds: 1), // 1초 동안 서서히 사라짐
+              duration:
+                  const Duration(seconds: 1), // 1초 동안 서서히 사라짐
               curve: Curves.easeOut,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -262,9 +280,11 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                   // 캐릭터 이미지
                   Transform(
                     alignment: Alignment.center, // 중심축 기준으로 반전
-                    transform: Matrix4.rotationY(math.pi), // 좌우 반전
+                    transform:
+                        Matrix4.rotationY(math.pi), // 좌우 반전
                     child: Image.asset(
-                      AppImages.cadoWalk,
+                      AppImages.characterListWalk[
+                          selectedCharacterNum!],
                       height: 180.h,
                     ),
                   ),
@@ -325,7 +345,9 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     top: 16.h,
                     child: IconButton(
                       icon: Icon(
-                        _isMuted ? Icons.volume_off : Icons.volume_up,
+                        _isMuted
+                            ? Icons.volume_off
+                            : Icons.volume_up,
                         color: AppColors.white,
                         size: 28.r,
                       ),

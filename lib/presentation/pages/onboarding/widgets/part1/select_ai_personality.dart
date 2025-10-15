@@ -37,7 +37,8 @@ class _SelectAiPersonalityState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {}); // 첫 빌드 이후 pageController.page 값이 정확히 들어옴
     });
-    _selectedIndex = ref.read(userViewModelProvider).step11;
+    _selectedIndex =
+        ref.read(userViewModelProvider).characterNum;
   }
 
   @override
