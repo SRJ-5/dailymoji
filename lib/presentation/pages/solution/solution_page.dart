@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/pages/solution/widget/solution_bubble.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
@@ -27,6 +28,8 @@ class SolutionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     final solutionAsync = ref.watch(solutionProvider(solutionId));
 
     return solutionAsync.when(
@@ -198,6 +201,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     final size = MediaQuery.of(context).size;
     const ar = 16 / 9;
 
@@ -264,7 +269,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                     alignment: Alignment.center, // 중심축 기준으로 반전
                     transform: Matrix4.rotationY(math.pi), // 좌우 반전
                     child: Image.asset(
-                      AppImages.cadoWalk,
+                      AppImages.characterListWalk[selectedCharacterNum!],
                       height: 180.h,
                     ),
                   ),

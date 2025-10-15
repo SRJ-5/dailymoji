@@ -131,6 +131,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
     // final dialogueAsync = ref.watch(homeDialogueProvider);
 
@@ -169,7 +171,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 Image.asset(
                   // 없애기
-                  AppImages.cadoProfile, // 중앙 캐릭터 이미지
+                  AppImages.characterListProfile[
+                      selectedCharacterNum!], // 중앙 캐릭터 이미지
                   height: 240.h,
                   width: 160.w,
                 ),

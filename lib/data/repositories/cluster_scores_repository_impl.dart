@@ -8,28 +8,6 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
 
   ClusterScoresRepositoryImpl(this.dataSource);
 
-  // 하루치 데이터
-  @override
-  Future<List<ClusterScore>> fetchTodayClusters() async {
-    try {
-      final List<ClusterScoreDto> dtos = await dataSource.fetchTodayClusters();
-
-      final entities = dtos.map((dto) {
-        return ClusterScore(
-          createdAt: dto.createdAt ?? DateTime.now(),
-          userId: dto.userId ?? '',
-          cluster: dto.cluster ?? '',
-          score: dto.score ?? 0.0,
-        );
-      }).toList();
-
-      return entities;
-    } catch (e) {
-      throw Exception(
-          "ClusterScoresRepositoryImpl fetchTodayClusters error: $e");
-    }
-  }
-
 // 14일 집계용 범위 조회
   @override
   Future<List<ClusterScore>> fetchRangeByUser({
@@ -41,6 +19,14 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
       userId: userId,
       startInclusive: startInclusive,
       endExclusive: endExclusive,
+    );
+    // 테스트 후 삭제 바람
+    dtos.forEach(
+      (e) {
+        if (e.cluster == "adhd") {
+          print("${e.id}, ${e.cluster}, ${e.score}");
+        }
+      },
     );
     return _toEntities(dtos);
   }
