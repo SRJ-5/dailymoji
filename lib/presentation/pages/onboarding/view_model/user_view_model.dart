@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UserState {
   final UserProfile? userProfile;
-  final int step11;
+  final int characterNum;
   final bool step12;
   final bool step13;
   final List<int> step2Answers;
 
   UserState({
     required this.userProfile,
-    this.step11 = 0,
+    this.characterNum = 0,
     this.step12 = false,
     this.step13 = false,
     List<int>? step2Answers,
@@ -23,14 +23,14 @@ class UserState {
 
   UserState copyWith({
     UserProfile? userProfile,
-    int? step11,
+    int? characterNum,
     bool? step12,
     bool? step13,
     List<int>? step2Answers,
   }) {
     return UserState(
       userProfile: userProfile ?? this.userProfile,
-      step11: step11 ?? this.step11,
+      characterNum: characterNum ?? this.characterNum,
       step12: step12 ?? this.step12,
       step13: step13 ?? this.step13,
       step2Answers: step2Answers ?? List.from(this.step2Answers),
@@ -77,7 +77,8 @@ class UserViewModel extends Notifier<UserState> {
     final userProfile = await ref
         .read(getUserProfileUseCaseProvider)
         .execute(userId);
-    if (userProfile?.userNickNm != null) {
+    if (userProfile?.userNickNm != null &&
+        userProfile?.characterNum != null) {
       state = state.copyWith(userProfile: userProfile);
       return true;
     } else {
@@ -109,9 +110,10 @@ class UserViewModel extends Notifier<UserState> {
   void setAiPersonality(
       {required int selectNum, required String aiPersonality}) {
     state = state.copyWith(
-        step11: selectNum,
-        userProfile: state.userProfile
-            ?.copyWith(characterPersonality: aiPersonality));
+        characterNum: selectNum,
+        userProfile: state.userProfile?.copyWith(
+            characterPersonality: aiPersonality,
+            characterNum: selectNum));
   }
 
   void setUserNickName(

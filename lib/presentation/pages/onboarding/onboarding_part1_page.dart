@@ -2,6 +2,7 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/disclaimer_dialog.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/finish_widget.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/ai_name_setting.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/select_ai_personality.dart';
@@ -24,6 +25,19 @@ class _OnboardingPart1PageState
   // 캐릭터 선택창이 생기면 totalSteps +1 해야함
   int totalSteps = 3;
 
+  @override
+  void initState() {
+    super.initState();
+    // 페이지 로드 후 팝업 표시
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, // 배경 터치로 닫기 방지
+        builder: (context) => DisclaimerDialog(),
+      );
+    });
+  }
+
   void selectCharacter(
       {required int selectNum, required String aiPersonality}) {
     ref.read(userViewModelProvider.notifier).setAiPersonality(
@@ -36,7 +50,7 @@ class _OnboardingPart1PageState
   @override
   Widget build(BuildContext context) {
     final isNextEnabled = switch (stepIndex) {
-      0 => ref.watch(userViewModelProvider).step11 == -1
+      0 => ref.watch(userViewModelProvider).characterNum == -1
           ? false
           : true,
       1 => ref.watch(userViewModelProvider).step12,

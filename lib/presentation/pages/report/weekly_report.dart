@@ -327,9 +327,6 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                               // 선택된 감정들 오버레이
                               ...selectedEmotions.map((key) {
                                 final data = mergedMap[key]!;
-                                if (key == "우울/무기력") {
-                                  print("ㅂㅈㄷㅂㅈㄷㅂㅈㄷ${mergedMap[key]!.spots}");
-                                }
                                 return LineChartBarData(
                                   color: data.color,
                                   barWidth: 2,
