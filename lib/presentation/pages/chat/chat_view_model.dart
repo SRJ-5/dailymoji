@@ -907,21 +907,6 @@ class ChatViewModel extends Notifier<ChatState> {
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
-    if (solutionType == 'video') {
-      await _addMessage(Message(
-        userId: currentUserId,
-        content: AppTextStrings.askVideoFeedback,
-        sender: Sender.bot,
-        type: MessageType.solutionFeedback,
-        solutionIdForFeedback: solutionId,
-        proposal: {
-          'solution_id': solutionId,
-          'session_id': sessionId,
-          'solution_type': solutionType
-        },
-      ));
-    }
-
 // 사용자 프로필에서 캐릭터 성향과 닉네임 가져오기
     final userVM = ref.read(userViewModelProvider.notifier);
     final userProfile = userVM.state.userProfile;
@@ -942,6 +927,21 @@ class ChatViewModel extends Notifier<ChatState> {
             );
     await _addMessage(
         Message(userId: currentUserId, content: content, sender: Sender.bot));
+
+    if (solutionType == 'video') {
+      await _addMessage(Message(
+        userId: currentUserId,
+        content: AppTextStrings.askVideoFeedback,
+        sender: Sender.bot,
+        type: MessageType.solutionFeedback,
+        solutionIdForFeedback: solutionId,
+        proposal: {
+          'solution_id': solutionId,
+          'session_id': sessionId,
+          'solution_type': solutionType
+        },
+      ));
+    }
     _lastProposedSolutionCluster = null;
   }
 
@@ -1073,11 +1073,26 @@ class ChatViewModel extends Notifier<ChatState> {
     if (currentUserId == null) return;
 
     if (solutionType == 'action') {
+      // 1. 솔루션 데이터를 가져옵니다.
       final solution = await ref
           .read(solutionRepositoryProvider)
           .fetchSolutionById(solutionId);
+      final rawMissionText = solution.text;
+
+      // 2. UserViewModel에서 현재 사용자 닉네임을 가져옵니다.
+      final userNickNm =
+          ref.read(userViewModelProvider).userProfile?.userNickNm ?? "친구";
+
+      // 3. String의 replaceAll 메서드로 플레이스홀더를 실제 닉네임으로 교체합니다.
+      final formattedMissionText =
+          rawMissionText.replaceAll('{user_nick_nm}', userNickNm);
+
+      // 4. 포맷팅이 완료된 텍스트로 메시지를 생성합니다.
       await _addMessage(Message(
-          userId: currentUserId, content: solution.text, sender: Sender.bot));
+          userId: currentUserId,
+          content: formattedMissionText,
+          sender: Sender.bot));
+
       final newSet = Set<String>.from(state.completedSolutionTypes)
         ..add(solutionType);
       state = state.copyWith(completedSolutionTypes: newSet);
