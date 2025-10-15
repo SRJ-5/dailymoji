@@ -9,14 +9,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-class UserProfileDataSourceImpl
-    implements UserProfileDataSource {
+class UserProfileDataSourceImpl implements UserProfileDataSource {
   final supabase = Supabase.instance.client;
   final auth = Supabase.instance.client.auth;
   final google = GoogleSignIn(
-      clientId: Platform.isIOS
-          ? dotenv.env['GOOGLE_IOS_CLIENT_ID']
-          : null,
+      clientId: Platform.isIOS ? dotenv.env['GOOGLE_IOS_CLIENT_ID'] : null,
       serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
 
   @override
@@ -36,11 +33,10 @@ class UserProfileDataSourceImpl
       if (idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth
-          .signInWithIdToken(
-              provider: OAuthProvider.apple,
-              idToken: idToken,
-              accessToken: accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: idToken,
+          accessToken: accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(OAuthProvider.apple,
       //     authScreenLaunchMode: LaunchMode.externalApplication,
@@ -61,11 +57,10 @@ class UserProfileDataSourceImpl
       if (auth?.idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth
-          .signInWithIdToken(
-              provider: OAuthProvider.google,
-              idToken: auth!.idToken!,
-              accessToken: auth.accessToken);
+      final result = await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: auth!.idToken!,
+          accessToken: auth.accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(
       //   OAuthProvider.google,
@@ -96,11 +91,8 @@ class UserProfileDataSourceImpl
   }
 
   @override
-  Future<void> insertUserProfile(
-      UserProfileDto userProfileDto) async {
-    await supabase
-        .from('user_profiles')
-        .insert(userProfileDto.toJson());
+  Future<void> insertUserProfile(UserProfileDto userProfileDto) async {
+    await supabase.from('user_profiles').insert(userProfileDto.toJson());
   }
 
   @override
@@ -119,8 +111,7 @@ class UserProfileDataSourceImpl
 
   @override
   Future<UserProfileDto> updateCharacterNM(
-      {required String uuid,
-      required String characterNM}) async {
+      {required String uuid, required String characterNM}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({'character_nm': characterNM})
@@ -132,8 +123,7 @@ class UserProfileDataSourceImpl
 
   @override
   Future<UserProfileDto> updateCharacterPersonality(
-      {required String uuid,
-      required String characterPersonality}) async {
+      {required String uuid, required String characterPersonality}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({
@@ -155,8 +145,7 @@ class UserProfileDataSourceImpl
     await google.signOut();
     // 실제 로그아웃 처리
     await supabase.auth.signOut();
-    final user = Supabase
-        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
+    final user = Supabase.instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
     print("아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
   }
 
@@ -165,19 +154,14 @@ class UserProfileDataSourceImpl
     print("확인");
     await google.signOut();
     // 실제 로그아웃 처리
-    await supabase
-        .from('user_profiles')
-        .delete()
-        .eq('id', userId);
+    await supabase.from('user_profiles').delete().eq('id', userId);
     await supabase.auth.signOut();
-    final user = Supabase
-        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
+    final user = Supabase.instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
     print("오오오오오오$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
   }
 
   @override
-  Future<void> saveFcmTokenToSupabase(
-      TargetPlatform platform) async {
+  Future<void> saveFcmTokenToSupabase(TargetPlatform platform) async {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) {
@@ -186,22 +170,22 @@ class UserProfileDataSourceImpl
       }
       late String token;
       if (platform == TargetPlatform.iOS) {
-        final iosToken =
-            await FirebaseMessaging.instance.getAPNSToken();
+        final iosToken = await FirebaseMessaging.instance.getToken();
         if (iosToken == null) {
           print("⚠️ FCM ios 토큰을 가져올 수 없습니다.");
           return;
         }
         token = iosToken;
       } else if (platform == TargetPlatform.android) {
-        final androidToken =
-            await FirebaseMessaging.instance.getToken();
+        final androidToken = await FirebaseMessaging.instance.getToken();
         if (androidToken == null) {
           print("⚠️ FCM android 토큰을 가져올 수 없습니다.");
           return;
         }
         token = androidToken;
       }
+
+      print("❤️ FCM tocken!! : ${token}");
 
       await supabase.from('user_tokens').upsert({
         'user_id': user.id,
