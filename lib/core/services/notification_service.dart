@@ -21,7 +21,7 @@ Future<void> saveFcmTokenToSupabase() async {
     'user_id': user.id,
     'token': token,
     'updated_at': DateTime.now().toIso8601String(),
-  });
+  }, onConflict: 'user_id');
 
   print("✅ Supabase에 FCM 토큰 저장 완료: $token");
 }
