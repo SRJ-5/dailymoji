@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ===== EmotionData (UI에서 사용하는 모델) =====
@@ -77,14 +78,31 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(clusterScoresViewModelProvider);
+
+    // 로딩 확인
     if (state.isLoading) {
-      return const Center(
-          child:
-              CircularProgressIndicator(backgroundColor: AppColors.yellow50));
+      return Container(
+        height: double.infinity,
+        width: double.infinity,
+        color: AppColors.yellow50,
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.green400,
+          ),
+        ),
+      );
     }
+
+    // 에러 확인
     if (state.error != null) {
-      return Center(
-          child: AppText('${AppTextStrings.weeklyReportError}${state.error}'));
+      return Container(
+        height: double.infinity,
+        width: double.infinity,
+        color: AppColors.yellow50,
+        child: Center(
+          child: AppText('${AppTextStrings.weeklyReportError}${state.error}'),
+        ),
+      );
     }
 
     // 기존 5개 감정 + 날짜
@@ -363,7 +381,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                   padding: EdgeInsets.symmetric(vertical: 8.h),
                   child: GestureDetector(
                     onTap: () {
-                      //TODO : 진단페이지로 이동
+                      context.push('/info/${AppTextStrings.srj5Test}');
                     },
                     child: Container(
                       height: 52.h,

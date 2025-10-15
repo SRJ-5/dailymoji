@@ -229,7 +229,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
                 // 기본 스타일
                 calendarStyle: const CalendarStyle(
-                  outsideDaysVisible: true,
+                  outsideDaysVisible: false,
                   todayDecoration: BoxDecoration(
                     color: AppColors.orange600,
                     shape: BoxShape.circle,

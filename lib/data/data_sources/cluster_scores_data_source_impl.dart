@@ -7,33 +7,7 @@ class ClusterScoresDataSourceImpl implements ClusterScoresDataSource {
 
   ClusterScoresDataSourceImpl(this.client);
 
-  @override
-  Future<List<ClusterScoreDto>> fetchTodayClusters() async {
-    try {
-      // 오늘 00:00:00
-      final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day);
-
-      // 내일 00:00:00 (오늘의 끝)
-      final endOfDay = startOfDay.add(const Duration(days: 1));
-
-      final response = await client
-          .from('cluster_scores')
-          .select() // select all
-          .gte('created_at', startOfDay.toIso8601String()) // 오늘 이상
-          .lt('created_at', endOfDay.toIso8601String()); // 내일 미만
-
-      final data = (response as List)
-          .map((json) => ClusterScoreDto.fromJson(json))
-          .toList();
-
-      return data;
-    } catch (e) {
-      throw Exception("ClusterDataSourceImpl fetchMovies error: $e");
-    }
-  }
-
-  // 2주데이터 가져오기
+  // 2주간의 데이터 가져오기
   @override
   Future<List<ClusterScoreDto>> fetchByUserAndRange({
     required String userId,

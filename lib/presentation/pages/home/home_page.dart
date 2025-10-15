@@ -104,8 +104,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    final selectedNotifier =
-        ref.read(selectedEmotionProvider.notifier);
+    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
 
     if (selectedNotifier.state == emotionKey) {
       selectedNotifier.state = null;
@@ -132,10 +131,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedCharacterNum = ref
-        .read(userViewModelProvider)
-        .userProfile!
-        .characterNum;
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
     // final dialogueAsync = ref.watch(homeDialogueProvider);
 
@@ -284,8 +281,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: Container(
             height: 40.h,
             margin: EdgeInsets.all(12.r),
-            padding: EdgeInsets.symmetric(
-                horizontal: 16.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
@@ -374,19 +370,16 @@ class _Imoge extends StatelessWidget {
               Positioned(
                 bottom: -37.h,
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                       color: AppColors.white,
-                      border: Border.all(
-                          color: AppColors.orange200,
-                          width: 2.r),
+                      border:
+                          Border.all(color: AppColors.orange200, width: 2.r),
                       borderRadius: BorderRadius.circular(20.r)),
                   child: Center(
                     child: Text(
                       emotionLabel,
-                      style:
-                          AppFontStyles.bodyRegular12.copyWith(
+                      style: AppFontStyles.bodyRegular12.copyWith(
                         color: AppColors.grey900,
                       ),
                     ),
