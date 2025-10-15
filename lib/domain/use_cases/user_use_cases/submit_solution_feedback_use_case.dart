@@ -1,8 +1,8 @@
-import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
+import 'package:dailymoji/domain/repositories/emotion_repository.dart';
 
 // RIN: 솔루션 피드백 제출을 위한 UseCase
 class SubmitSolutionFeedbackUseCase {
-  final UserProfileRepository repository;
+  final EmotionRepository repository;
 
   SubmitSolutionFeedbackUseCase(this.repository);
 

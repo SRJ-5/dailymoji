@@ -57,36 +57,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     return result.toEntity();
   }
 
-// RIN: 솔루션 피드백 제출 Repository
-  @override
-  Future<void> submitSolutionFeedback({
-    required String userId,
-    required String solutionId,
-    String? sessionId,
-    required String solutionType,
-    required String feedback,
-  }) {
-    return _userDataSource.submitSolutionFeedback(
-      userId: userId,
-      solutionId: solutionId,
-      sessionId: sessionId,
-      solutionType: solutionType,
-      feedback: feedback,
-    );
-  }
-
-  // RIN: 부정적 태그 추가 Repository
-  @override
-  Future<void> addNegativeTags({
-    required String userId,
-    required List<String> tags,
-  }) {
-    return _userDataSource.addNegativeTags(
-      userId: userId,
-      tags: tags,
-    );
-  }
-
   @override
   Future<String> fetchSleepHygieneTip(
       {String? personality, String? userNickNm}) {

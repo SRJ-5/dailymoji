@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source_impl.dart';
 import 'package:dailymoji/data/repositories/user_profile_repository_impl.dart';
@@ -85,12 +86,6 @@ final fetchSleepHygieneTipUseCaseProvider = Provider(
 final fetchActionMissionUseCaseProvider = Provider(
   (ref) {
     return FetchActionMissionUseCase(ref.read(_userRepositoryProvider));
-  },
-);
-
-final submitSolutionFeedbackUseCaseProvider = Provider(
-  (ref) {
-    return SubmitSolutionFeedbackUseCase(ref.read(_userRepositoryProvider));
   },
 );
 

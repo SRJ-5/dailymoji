@@ -114,44 +114,6 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
     return UserProfileDto.fromJson(updated);
   }
 
-  // RIN: 솔루션 피드백을 백엔드로 전송하는 함수
-  @override
-  Future<void> submitSolutionFeedback({
-    required String userId,
-    required String solutionId,
-    String? sessionId,
-    required String solutionType,
-    required String feedback,
-  }) async {
-    try {
-      await supabase.rpc('handle_solution_feedback', params: {
-        'p_user_id': userId,
-        'p_solution_id': solutionId,
-        'p_session_id': sessionId,
-        'p_solution_type': solutionType,
-        'p_feedback': feedback,
-      });
-    } catch (e) {
-      print('Error submitting solution feedback: $e');
-      rethrow;
-    }
-  }
-
-  // RIN: '이런 종류 그만 보기' 태그를 백엔드로 전송하는 함수
-  @override
-  Future<void> addNegativeTags(
-      {required String userId, required List<String> tags}) async {
-    try {
-      await supabase.rpc('add_negative_tags', params: {
-        'p_user_id': userId,
-        'p_tags_to_add': tags,
-      });
-    } catch (e) {
-      print('Error adding negative tags: $e');
-      rethrow;
-    }
-  }
-
   @override
   Future<UserProfileDto> updateCharacterNM(
       {required String uuid, required String characterNM}) async {

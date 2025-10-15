@@ -21,6 +21,7 @@ import 'package:dailymoji/domain/use_cases/propose_solution_usecase.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/update_message_session_id_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/submit_solution_feedback_use_case.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -112,6 +113,12 @@ final updateMessageSessionIdUseCaseProvider =
 // 솔루션 제안
 final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
   return ProposeSolutionUseCase(ref.watch(solutionRepositoryProvider));
+});
+
+// 솔루션 피드백 처리
+final submitSolutionFeedbackUseCaseProvider =
+    Provider<SubmitSolutionFeedbackUseCase>((ref) {
+  return SubmitSolutionFeedbackUseCase(ref.watch(emotionRepositoryProvider));
 });
 
 // -----------------------------------------------------------------------------
