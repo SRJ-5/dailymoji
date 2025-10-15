@@ -39,7 +39,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
   @override
   Widget build(BuildContext context) {
     final state = ref.read(userViewModelProvider);
-    final characterIndex = state.step11;
+    final characterIndex = state.characterNum;
     return SizedBox(
       height: 558.4.h,
       child: Column(

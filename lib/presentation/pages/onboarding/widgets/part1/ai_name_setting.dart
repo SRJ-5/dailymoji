@@ -41,7 +41,7 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
   @override
   Widget build(BuildContext context) {
     final characterIndex =
-        ref.read(userViewModelProvider).step11;
+        ref.read(userViewModelProvider).characterNum;
     return SizedBox(
       height: 558.4.h,
       child: Column(

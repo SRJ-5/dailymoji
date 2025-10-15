@@ -15,7 +15,7 @@ class FinishWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final characterIndex =
-        ref.read(userViewModelProvider).step11;
+        ref.read(userViewModelProvider).characterNum;
 
     return SizedBox(
       height: 566.h,

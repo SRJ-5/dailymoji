@@ -42,7 +42,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
   @override
   Widget build(BuildContext context) {
     final characterIndex =
-        ref.read(userViewModelProvider).step11;
+        ref.read(userViewModelProvider).characterNum;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -15,10 +15,12 @@ import 'package:go_router/go_router.dart';
 
 class OnboardingPart1Page extends ConsumerStatefulWidget {
   @override
-  ConsumerState<OnboardingPart1Page> createState() => _OnboardingPart1PageState();
+  ConsumerState<OnboardingPart1Page> createState() =>
+      _OnboardingPart1PageState();
 }
 
-class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
+class _OnboardingPart1PageState
+    extends ConsumerState<OnboardingPart1Page> {
   int stepIndex = 0;
   // 캐릭터 선택창이 생기면 totalSteps +1 해야함
   int totalSteps = 3;
@@ -36,8 +38,10 @@ class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
     });
   }
 
-  void selectCharacter({required int selectNum, required String aiPersonality}) {
-    ref.read(userViewModelProvider.notifier).setAiPersonality(selectNum: selectNum, aiPersonality: aiPersonality);
+  void selectCharacter(
+      {required int selectNum, required String aiPersonality}) {
+    ref.read(userViewModelProvider.notifier).setAiPersonality(
+        selectNum: selectNum, aiPersonality: aiPersonality);
     setState(() {
       stepIndex++;
     });
@@ -46,7 +50,9 @@ class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
   @override
   Widget build(BuildContext context) {
     final isNextEnabled = switch (stepIndex) {
-      0 => ref.watch(userViewModelProvider).step11 == -1 ? false : true,
+      0 => ref.watch(userViewModelProvider).characterNum == -1
+          ? false
+          : true,
       1 => ref.watch(userViewModelProvider).step12,
       2 => ref.watch(userViewModelProvider).step13,
       _ => true,
@@ -75,7 +81,8 @@ class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
               ? null
               : AppText(
                   stepIndex == 2 ? '나의 닉네임 설정' : '도우미 설정',
-                  style: AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
+                  style: AppFontStyles.bodyBold18
+                      .copyWith(color: AppColors.grey900),
                 ),
           centerTitle: true,
         ),
@@ -85,7 +92,10 @@ class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
             children: [
               stepIndex == totalSteps
                   ? SizedBox.shrink()
-                  : TopIndicator(width: 51, totalSteps: totalSteps - 1, stepIndex: stepIndex), // indicator 맨 위
+                  : TopIndicator(
+                      width: 51,
+                      totalSteps: totalSteps - 1,
+                      stepIndex: stepIndex), // indicator 맨 위
               Expanded(
                   child: SingleChildScrollView(
                 child: [
@@ -109,12 +119,21 @@ class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
                   top: 8.h,
                   left: 12.w,
                   right: 12.w,
-                  bottom: MediaQuery.of(context).viewInsets.bottom > 66.h ? MediaQuery.of(context).viewInsets.bottom + 10.h : 66.h,
+                  bottom:
+                      MediaQuery.of(context).viewInsets.bottom >
+                              66.h
+                          ? MediaQuery.of(context)
+                                  .viewInsets
+                                  .bottom +
+                              10.h
+                          : 66.h,
                 ),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 52.h),
-                    backgroundColor: isNextEnabled ? AppColors.green500 : AppColors.grey200,
+                    backgroundColor: isNextEnabled
+                        ? AppColors.green500
+                        : AppColors.grey200,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -133,7 +152,9 @@ class _OnboardingPart1PageState extends ConsumerState<OnboardingPart1Page> {
                       : null,
                   child: AppText('계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
-                        color: isNextEnabled ? AppColors.grey50 : AppColors.grey500,
+                        color: isNextEnabled
+                            ? AppColors.grey50
+                            : AppColors.grey500,
                       )),
                 ),
               ),
