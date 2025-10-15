@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
@@ -190,6 +191,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
@@ -242,7 +245,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 width: 240.w,
                 height: 360.h,
                 child: Image(
-                  image: AssetImage(AppImages.cadoProfile),
+                  image: AssetImage(
+                      AppImages.characterListProfile[selectedCharacterNum!]),
                   fit: BoxFit.cover,
                 ),
               ),

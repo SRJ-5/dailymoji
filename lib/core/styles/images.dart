@@ -5,14 +5,6 @@ class AppImages {
       'assets/images/splash_image.png';
   static const String preparingImage =
       'assets/images/preparing_image.png';
-  static const String bubbleRightUnder3D =
-      'assets/images/bubble_right_under_3d.png';
-  static const String bubbleUnder3D =
-      'assets/images/bubble_under_3d.png';
-  static const String bubbleUnder =
-      'assets/images/bubble_under.png';
-  static const String bubbleLeft =
-      'assets/images/bubble_left.png';
   static const String srj5TestStart =
       'assets/images/srj5_test_start.png';
   static const String srj5TestFinish =
@@ -65,6 +57,8 @@ class AppImages {
       'assets/images/character_carrot/carrot_love.png';
   static const String carrotProfile =
       'assets/images/character_carrot/carrot_profile.png';
+  static const String carrotFace =
+      'assets/images/character_carrot/carrot_face.png';
 
   // images - characterList
   static const List<String> characterListProfile = [
@@ -74,5 +68,13 @@ class AppImages {
   static const List<String> characterListLove = [
     AppImages.cadoLove,
     AppImages.carrotLove,
+  ];
+  static const List<String> characterListFace = [
+    AppImages.cadoFace,
+    AppImages.carrotFace,
+  ];
+  static const List<String> characterListWalk = [
+    AppImages.cadoWalk,
+    AppImages.cadoWalk,
   ];
 }

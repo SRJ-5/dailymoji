@@ -5,6 +5,7 @@ class UserProfile {
   final String? aiCharacter;
   final String? characterNm;
   final String? characterPersonality;
+  final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
 
   UserProfile({
@@ -14,6 +15,7 @@ class UserProfile {
     this.aiCharacter,
     this.characterNm,
     this.characterPersonality,
+    this.characterNum,
     this.onboardingScores,
   });
 
@@ -24,6 +26,7 @@ class UserProfile {
     String? aiCharacter,
     String? characterNm,
     String? characterPersonality,
+    int? characterNum,
     Map<String, dynamic>? onboardingScores,
   }) {
     return UserProfile(
@@ -34,6 +37,7 @@ class UserProfile {
       characterNm: characterNm ?? this.characterNm,
       characterPersonality:
           characterPersonality ?? this.characterPersonality,
+      characterNum: characterNum ?? this.characterNum,
       onboardingScores:
           onboardingScores ?? this.onboardingScores,
     );

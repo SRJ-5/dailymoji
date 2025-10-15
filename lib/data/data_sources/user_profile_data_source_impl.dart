@@ -92,7 +92,11 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
 
   @override
   Future<void> insertUserProfile(UserProfileDto userProfileDto) async {
-    await supabase.from('user_profiles').insert(userProfileDto.toJson());
+    print(userProfileDto.id!);
+    await supabase
+        .from('user_profiles')
+        .update(userProfileDto.toJson())
+        .match({'id': userProfileDto.id!});
   }
 
   @override
