@@ -933,7 +933,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                       color: AppColors.grey200, width: 1),
                                 )
                               : BoxDecoration(
-                                  color: AppColors.grey50,
+                                  color: AppColors.green50,
                                   borderRadius: BorderRadius.circular(10.r),
                                   border: Border.all(
                                       color: AppColors.grey200, width: 1),
@@ -1443,7 +1443,7 @@ class _FeedbackButtons extends ConsumerWidget {
           height: 40.h,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.grey50,
+            color: AppColors.green50,
             border: Border.all(color: AppColors.grey200),
           ),
           child: Center(
