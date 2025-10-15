@@ -225,6 +225,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   Widget build(BuildContext context) {
+    final seletedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 디폴트 이미지로 돌려놓기
     ref.listen(chatViewModelProvider.select((value) => value.clearPendingEmoji),
         (previous, next) {
@@ -295,10 +297,12 @@ class _ChatPageState extends ConsumerState<ChatPage>
             children: [
               CircleAvatar(
                 radius: 16.r,
-                backgroundImage:
-                    (characterImageUrl != null && characterImageUrl.isNotEmpty)
-                        ? NetworkImage(characterImageUrl)
-                        : const AssetImage(AppImages.cadoFace) as ImageProvider,
+                backgroundImage: (characterImageUrl != null &&
+                        characterImageUrl.isNotEmpty)
+                    ? NetworkImage(characterImageUrl)
+                    : AssetImage(
+                            AppImages.characterListFace[seletedCharacterNum!])
+                        as ImageProvider,
               ),
               SizedBox(width: 12.r),
               AppText(

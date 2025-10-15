@@ -41,19 +41,23 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final characterIndex =
+        ref.read(userViewModelProvider).characterNum;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(height: 30.h),
         Container(
           width: double.infinity,
-          height: 180.h,
+          height: 129.h,
           child: Row(
             children: [
               SizedBox(width: 2.w),
               Image.asset(
-                AppImages.cadoProfile,
+                AppImages.characterListProfile[characterIndex],
                 width: 120.w,
-                height: 180.h,
+                height: 129.h,
               ),
               Container(
                 width: 206.17.w,
@@ -85,7 +89,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             ],
           ),
         ),
-        SizedBox(height: 24.h),
+        SizedBox(height: 56.h),
         Column(
           children: List.generate(
             _answerList.length,

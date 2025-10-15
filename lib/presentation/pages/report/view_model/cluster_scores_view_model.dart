@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:dailymoji/core/config/api_config.dart';
+import 'package:dailymoji/domain/entities/weekly_summary.dart';
 import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/domain/enums/cluster_type.dart';
 import 'package:dailymoji/domain/enums/metric.dart';
@@ -9,6 +13,7 @@ import 'package:dailymoji/domain/models/cluster_stats_models.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/providers/today_cluster_scores_provider.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:http/http.dart' as http;
 
 /// ----- State -----
 class ClusterScoresState {
@@ -20,11 +25,14 @@ class ClusterScoresState {
   final List<DateTime> days; // x축(오래된 → 최신)
   final Map<String, EmotionData> emotionMap; // "불안/분노" 등 → EmotionData
 
+  final WeeklySummary? weeklySummary;
+
   ClusterScoresState({
     required this.isLoading,
     required this.scores,
     required this.days,
     required this.emotionMap,
+    this.weeklySummary,
     this.error,
   });
 
@@ -33,6 +41,7 @@ class ClusterScoresState {
         scores: const [],
         days: const [],
         emotionMap: const {},
+        weeklySummary: null,
       );
 
   ClusterScoresState copyWith({
@@ -41,6 +50,7 @@ class ClusterScoresState {
     String? error,
     List<DateTime>? days,
     Map<String, EmotionData>? emotionMap,
+    WeeklySummary? weeklySummary,
   }) {
     return ClusterScoresState(
       isLoading: isLoading ?? this.isLoading,
@@ -48,6 +58,7 @@ class ClusterScoresState {
       error: error,
       days: days ?? this.days,
       emotionMap: emotionMap ?? this.emotionMap,
+      weeklySummary: weeklySummary ?? this.weeklySummary,
     );
   }
 }
@@ -71,17 +82,67 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     }
   }
 
+  /// 주간 요약을 받아오는 private 메서드 추가
+  Future<WeeklySummary?> _fetchWeeklySummary(String userId) async {
+    // ignore: avoid_print
+    print('[weekly-summary] start userId=$userId');
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}/report/weekly-summary');
+    try {
+      final resp = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'user_id': userId}),
+          )
+          .timeout(const Duration(milliseconds: 5000));
+      // ignore: avoid_print
+      print('[weekly-summary] status=${resp.statusCode}');
+
+      if (resp.statusCode != 200) {
+        print('ggggggggggggggggg${resp.statusCode}');
+        return null;
+      }
+      print('qqqqqqqqqqqqqqqq${resp.statusCode}');
+      final decoded = utf8.decode(resp.bodyBytes);
+      // ignore: avoid_print
+      print('[weekly-summary] body=$decoded');
+      final data = jsonDecode(decoded) as Map<String, dynamic>;
+      return WeeklySummary.fromJson(data);
+    } catch (e) {
+      // 네트워크/타임아웃/JSON 에러 시 조용히 null 반환 -> 기본 문구로 대체
+      // ignore: avoid_print
+      print('[weekly-summary] error=$e');
+      return null;
+    }
+  }
+
   /// 14일 집계 로드 → EmotionData로 변환(차트/카드 용도)
   Future<void> load14DayChart(String userId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final agg = await _getAgg14UC.execute(userId: userId);
-      final emap = _buildEmotionMap(agg);
+      final fSummary = _fetchWeeklySummary(userId);
+      final fAgg = _getAgg14UC.execute(userId: userId);
+
+      final summary = await fSummary;
+      final agg = await fAgg;
+
+      final emap = _buildEmotionMap(agg, summary); // ← 시그니처 변경
+      print("dfjkshldkfjsldkfj${summary?.negLowSummary}");
       state =
           state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
-    } catch (e) {
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('[load14DayChart] error=$e\n$st');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+    // try {
+    //   final agg = await _getAgg14UC.execute(userId: userId);
+    //   final emap = _buildEmotionMap(agg);
+    //   state = state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
+    // } catch (e) {
+    //   state = state.copyWith(isLoading: false, error: e.toString());
+    // }
   }
 
   /// 모든 지표(avg/min/max)가 동시에 0 또는 null이면 -> null로 간주
@@ -165,7 +226,8 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     return scaleToTen(vals.reduce((a, b) => a > b ? a : b));
   }
 
-  Map<String, EmotionData> _buildEmotionMap(FourteenDayAgg agg) {
+  Map<String, EmotionData> _buildEmotionMap(FourteenDayAgg agg,
+      [WeeklySummary? s]) {
     // 원본(도메인) 리스트: List<double?> 라고 가정
     final nhAvg0 = agg.series[ClusterType.negHigh]![Metric.avg]!;
     final nhMin0 = agg.series[ClusterType.negHigh]![Metric.min]!;
@@ -210,6 +272,12 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     final adMin = _applyMaskByAvg(adMin0, adAvg);
     final adMax = _applyMaskByAvg(adMax0, adAvg);
 
+    String pick(String fallback, String? fromApi) {
+      final t = fromApi?.trim();
+      print("dfjkshldkfjsldkfj$t");
+      return (t != null && t.isNotEmpty) ? t : fallback;
+    }
+
     return {
       AppTextStrings.clusterNegHigh: EmotionData(
         color: AppColors.negHigh,
@@ -217,7 +285,10 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(nhAvg), // ★ null 제외하고 평균
         min: _minScaledOpt(nhMin), // ★ null 제외하고 최솟값
         max: _maxScaledOpt(nhMax), // ★ null 제외하고 최댓값
-        description: AppTextStrings.descNegHigh,
+        description: pick(
+          "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...",
+          s?.negHighSummary,
+        ),
       ),
       AppTextStrings.clusterNegLow: EmotionData(
         color: AppColors.negLow,
@@ -225,7 +296,10 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(nlAvg),
         min: _minScaledOpt(nlMin),
         max: _maxScaledOpt(nlMax),
-        description: AppTextStrings.descNegLow,
+        description: pick(
+          "지쳤다는 신호가 보여요...",
+          s?.negLowSummary,
+        ),
       ),
       AppTextStrings.clusterPositive: EmotionData(
         color: AppColors.positive,
@@ -233,7 +307,10 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(posAvg),
         min: _minScaledOpt(posMin),
         max: _maxScaledOpt(posMax),
-        description: AppTextStrings.descPositive,
+        description: pick(
+          "평온함을 느끼고 있다면...",
+          s?.positiveSummary,
+        ),
       ),
       AppTextStrings.clusterSleep: EmotionData(
         color: AppColors.sleep,
@@ -241,7 +318,10 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(slAvg),
         min: _minScaledOpt(slMin),
         max: _maxScaledOpt(slMax),
-        description: AppTextStrings.descSleep,
+        description: pick(
+          "잠이 오지 않거나...",
+          s?.sleepSummary,
+        ),
       ),
       AppTextStrings.clusterAdhd: EmotionData(
         color: AppColors.adhd,
@@ -249,7 +329,10 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         avg: _avgScaledOpt(adAvg),
         min: _minScaledOpt(adMin),
         max: _maxScaledOpt(adMax),
-        description: AppTextStrings.descAdhd,
+        description: pick(
+          "집중이 흩어지고 마음이 산만할 때가 있죠...",
+          s?.adhdSummary,
+        ),
       ),
     };
   }

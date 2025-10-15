@@ -5,6 +5,7 @@ class UserProfile {
   final String? aiCharacter;
   final String? characterNm;
   final String? characterPersonality;
+  final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
   // RIN: 솔루션 유형별 가중치. Map<유형, 가중치> 형태.
   final Map<String, double>? solutionTypeWeights;
@@ -18,6 +19,7 @@ class UserProfile {
     this.aiCharacter,
     this.characterNm,
     this.characterPersonality,
+    this.characterNum,
     this.onboardingScores,
     this.solutionTypeWeights,
     this.negativeTags,
@@ -30,6 +32,7 @@ class UserProfile {
     String? aiCharacter,
     String? characterNm,
     String? characterPersonality,
+    int? characterNum,
     Map<String, dynamic>? onboardingScores,
     Map<String, double>? solutionTypeWeights,
     List<String>? negativeTags,
@@ -41,6 +44,7 @@ class UserProfile {
       aiCharacter: aiCharacter ?? this.aiCharacter,
       characterNm: characterNm ?? this.characterNm,
       characterPersonality: characterPersonality ?? this.characterPersonality,
+      characterNum: characterNum ?? this.characterNum,
       onboardingScores: onboardingScores ?? this.onboardingScores,
       solutionTypeWeights: solutionTypeWeights ?? this.solutionTypeWeights,
       negativeTags: negativeTags ?? this.negativeTags,

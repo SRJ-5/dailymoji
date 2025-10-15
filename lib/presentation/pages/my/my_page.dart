@@ -21,22 +21,35 @@ class _MyPageState extends ConsumerState<MyPage> {
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
     // 상태 초기화 시 userNickNm이 널이 되어서 화면이 깨지는 현상 때문에 ''를 넣음
-    final String userNickname = userState.userProfile?.userNickNm ?? '';
+    final String userNickname =
+        userState.userProfile?.userNickNm ?? '';
 
 // onTap 동작을 위한 라우팅 맵 정의
     final Map<String, VoidCallback> infoTapActions = {
-      AppTextStrings.notice: () => context.push('/info/${AppTextStrings.notice}'),
-      AppTextStrings.languageSettings: () => context.push('/info/${AppTextStrings.languageSettings}'),
-      AppTextStrings.termsOfService: () => context.push('/info/${AppTextStrings.termsOfService}'),
-      AppTextStrings.privacyPolicy: () => context.push('/info/${AppTextStrings.privacyPolicy}'),
+      AppTextStrings.notice: () =>
+          context.push('/info/${AppTextStrings.notice}'),
+      AppTextStrings.languageSettings: () => context
+          .push('/info/${AppTextStrings.languageSettings}'),
+      AppTextStrings.termsOfService: () =>
+          context.push('/info/${AppTextStrings.termsOfService}'),
+      AppTextStrings.privacyPolicy: () =>
+          context.push('/info/${AppTextStrings.privacyPolicy}'),
     };
 
     final Map<String, VoidCallback> etcTapActions = {
       AppTextStrings.logout: () => showDialog(
             context: context,
-            builder: (context) => ConfirmDialog(isDeleteAccount: false),
+            builder: (context) =>
+                ConfirmDialog(isDeleteAccount: false),
           ),
-      AppTextStrings.deleteAccount: () => context.push('/deleteAccount'),
+      AppTextStrings.deleteAccount: () =>
+          context.push('/deleteAccount'),
+    };
+
+    // srj5 진단검사
+    final Map<String, VoidCallback> srj5Test = {
+      AppTextStrings.srj5Test: () =>
+          context.push('/info/${AppTextStrings.srj5Test}'),
     };
 
     return Scaffold(
@@ -81,7 +94,15 @@ class _MyPageState extends ConsumerState<MyPage> {
               _buildSection(
                 title: AppTextStrings.customSettings,
                 items: [AppTextStrings.characterSettings],
-                onTapList: [() => context.push('/characterSetting')],
+                onTapList: [
+                  () => context.push('/characterSetting')
+                ],
+              ),
+              SizedBox(height: 16.h),
+              _buildSection(
+                title: AppTextStrings.myState,
+                items: srj5Test.keys.toList(),
+                onTapList: srj5Test.values.toList(),
               ),
               SizedBox(height: 16.h),
               _buildSection(
@@ -112,7 +133,8 @@ class _MyPageState extends ConsumerState<MyPage> {
     Widget? widget,
   }) {
     return Container(
-      padding: EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
+      padding:
+          EdgeInsets.only(top: 16.h, left: 16.w, right: 16.w),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12.r),

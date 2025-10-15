@@ -1,9 +1,12 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/presentation/pages/counseling/counseling_page.dart';
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';
 import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_page.dart';
 import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/assessment_page.dart';
+import 'package:dailymoji/presentation/pages/my/srj5_test/widgets/srj5_test_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -19,8 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final navigatorkey = GlobalKey<NavigatorState>();
-final routeObserverProvider =
-    Provider((_) => RouteObserver<ModalRoute<void>>());
+final routeObserverProvider = Provider((_) => RouteObserver<ModalRoute<void>>());
 
 final routerProvider = Provider<GoRouter>((ref) {
   final routeObserver = ref.watch(routeObserverProvider);
@@ -32,79 +34,67 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (context, state) => SplashPage()),
       GoRoute(path: '/login', builder: (context, state) => LoginPage()),
-      GoRoute(
-          path: '/onboarding1',
-          builder: (context, state) => OnboardingPart1Page()),
-      GoRoute(
-          path: '/onboarding2',
-          builder: (context, state) => OnboardingPart2Page()),
-      GoRoute(
-          path: '/home',
-          pageBuilder: (context, state) =>
-              const PortraitPage(child: HomePage()),
-          routes: [
-            GoRoute(
-              path: 'chat',
-              pageBuilder: (context, state) {
-                // extra를 Object?로 받아 유연하게 처리
-                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
-                final extraData = state.extra as Object?;
-                String? emotion;
-                Map<String, dynamic>? navData;
-                DateTime? targetDate;
+      GoRoute(path: '/onboarding1', builder: (context, state) => OnboardingPart1Page()),
+      GoRoute(path: '/onboarding2', builder: (context, state) => OnboardingPart2Page()),
+      GoRoute(path: '/home', pageBuilder: (context, state) => const PortraitPage(child: HomePage()), routes: [
+        GoRoute(
+          path: 'chat',
+          pageBuilder: (context, state) {
+            // extra를 Object?로 받아 유연하게 처리
+            // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+            final extraData = state.extra as Object?;
+            String? emotion;
+            Map<String, dynamic>? navData;
+            DateTime? targetDate;
 
-                if (extraData is String) {
-                  emotion = extraData;
-                } else if (extraData is Map<String, dynamic>) {
-                  navData = extraData;
-                } else if (extraData is DateTime) {
-                  targetDate = extraData;
-                }
+            if (extraData is String) {
+              emotion = extraData;
+            } else if (extraData is Map<String, dynamic>) {
+              navData = extraData;
+            } else if (extraData is DateTime) {
+              targetDate = extraData;
+            }
 
-                return PortraitPage(
-                  child: ChatPage(
-                    emotionFromHome: emotion,
-                    navigationData: navData,
-                    targetDate: targetDate,
-                  ),
-                );
-              },
-            ),
-          ]),
+            return PortraitPage(
+              child: ChatPage(
+                emotionFromHome: emotion,
+                navigationData: navData,
+                targetDate: targetDate,
+              ),
+            );
+          },
+        ),
+      ]),
 
-      GoRoute(
-          path: '/report',
-          pageBuilder: (context, state) =>
-              const PortraitPage(child: ReportPage()),
-          routes: [
-            GoRoute(
-              path: 'chat',
-              pageBuilder: (context, state) {
-                // extra를 Object?로 받아 유연하게 처리
-                // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
-                final extraData = state.extra as Object?;
-                String? emotion;
-                Map<String, dynamic>? navData;
-                DateTime? targetDate;
+      GoRoute(path: '/report', pageBuilder: (context, state) => const PortraitPage(child: ReportPage()), routes: [
+        GoRoute(
+          path: 'chat',
+          pageBuilder: (context, state) {
+            // extra를 Object?로 받아 유연하게 처리
+            // 이모지(이미지)데이터 (홈), 텍스트 데이터 (솔루션)
+            final extraData = state.extra as Object?;
+            String? emotion;
+            Map<String, dynamic>? navData;
+            DateTime? targetDate;
 
-                if (extraData is String) {
-                  emotion = extraData;
-                } else if (extraData is Map<String, dynamic>) {
-                  navData = extraData;
-                } else if (extraData is DateTime) {
-                  targetDate = extraData;
-                }
+            if (extraData is String) {
+              emotion = extraData;
+            } else if (extraData is Map<String, dynamic>) {
+              navData = extraData;
+            } else if (extraData is DateTime) {
+              targetDate = extraData;
+            }
 
-                return PortraitPage(
-                  child: ChatPage(
-                    emotionFromHome: emotion,
-                    navigationData: navData,
-                    targetDate: targetDate,
-                  ),
-                );
-              },
-            ),
-          ]),
+            return PortraitPage(
+              child: ChatPage(
+                emotionFromHome: emotion,
+                navigationData: navData,
+                targetDate: targetDate,
+              ),
+            );
+          },
+        ),
+      ]),
       GoRoute(
         path: '/my',
         pageBuilder: (context, state) => PortraitPage(child: MyPage()),
@@ -127,8 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               case AppTextStrings.notice:
               case AppTextStrings.termsOfService:
               case AppTextStrings.privacyPolicy:
-              case AppTextStrings.counselingCenter:
                 return InfoWebViewPage(title: title);
+              case AppTextStrings.counselingCenter:
+                return CounselingPage();
+              case AppTextStrings.srj5Test:
+                return AssessmentPage();
               default:
                 return PreparingPage(AppTextStrings.pageIsPreparing);
             }
@@ -152,9 +145,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           return PreparingPage(title);
         },
       ),
-      GoRoute(
-          path: '/characterSetting',
-          builder: (context, state) => CharacterSettingPage()),
+      GoRoute(path: '/characterSetting', builder: (context, state) => CharacterSettingPage()),
       GoRoute(
         path: '/breathing/:solutionId',
         pageBuilder: (context, state) {
@@ -162,11 +153,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           final sessionId = state.uri.queryParameters['sessionId'];
           final isReview = state.uri.queryParameters['isReview'] == 'true';
 
-          return PortraitPage(
-              child: BreathingSolutionPage(
-                  solutionId: solutionId,
-                  sessionId: sessionId,
-                  isReview: isReview));
+          return PortraitPage(child: BreathingSolutionPage(solutionId: solutionId, sessionId: sessionId, isReview: isReview));
         },
       ),
       // SolutionPage는 가로모드를 사용하므로 PortraitPage를 적용하지 않습니다.
@@ -177,10 +164,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           final sessionId = state.uri.queryParameters['sessionId'];
 
           final isReview = state.uri.queryParameters['isReview'] == 'true';
-          return SolutionPage(
-              solutionId: solutionId, sessionId: sessionId, isReview: isReview);
+          return SolutionPage(solutionId: solutionId, sessionId: sessionId, isReview: isReview);
         },
       ),
+      GoRoute(
+        path: '/srj5_test',
+        builder: (context, state) {
+          return Srj5TestPage();
+        },
+      )
     ],
   );
 });

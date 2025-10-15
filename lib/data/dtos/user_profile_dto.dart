@@ -8,6 +8,7 @@ class UserProfileDto {
   final String? aiCharacter;
   final String? characterNm;
   final String? characterPersonality;
+  final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
   final Map<String, dynamic>? solutionTypeWeights; //RIN: 솔루션 유형 가중치
   final List<String>? negativeTags; // RIN: 부정적 태그
@@ -19,6 +20,7 @@ class UserProfileDto {
     this.aiCharacter,
     this.characterNm,
     this.characterPersonality,
+    this.characterNum,
     this.onboardingScores,
     this.solutionTypeWeights,
     this.negativeTags,
@@ -31,12 +33,22 @@ class UserProfileDto {
           userNickNm: map["user_nick_nm"],
           aiCharacter: map["ai_character"],
           characterNm: map["character_nm"],
-          characterPersonality: CharacterPersonality.values
-              .firstWhere(
-                (e) => e.dbValue == map["character_personality"],
-                orElse: () => CharacterPersonality.warmHeart,
-              )
-              .myLabel,
+          characterPersonality: map["character_personality"] != null
+              ? CharacterPersonality.values
+                  .firstWhere(
+                    (e) => e.dbValue == map["character_personality"],
+                    orElse: () => CharacterPersonality.probSolver,
+                  )
+                  .myLabel
+              : null,
+          characterNum: map["character_personality"] != null
+              ? CharacterPersonality.values
+                  .firstWhere(
+                    (e) => e.dbValue == map["character_personality"],
+                    orElse: () => CharacterPersonality.probSolver,
+                  )
+                  .assetLabel
+              : null,
           onboardingScores: map['onboarding_scores'] ?? {},
           solutionTypeWeights:
               map['solution_type_weights'] as Map<String, dynamic>? ??
@@ -71,6 +83,7 @@ class UserProfileDto {
     String? aiCharacter,
     String? characterNm,
     String? characterPersonality,
+    int? characterNum,
     Map<String, dynamic>? onboardingScores,
     Map<String, dynamic>? solutionTypeWeights,
     List<String>? negativeTags,
@@ -96,6 +109,7 @@ class UserProfileDto {
       aiCharacter: aiCharacter,
       characterNm: characterNm,
       characterPersonality: characterPersonality,
+      characterNum: characterNum,
       onboardingScores: onboardingScores,
       solutionTypeWeights: (solutionTypeWeights ?? {})
           .map((key, value) => MapEntry(key, (value as num).toDouble())),
@@ -111,6 +125,7 @@ class UserProfileDto {
           aiCharacter: userProfile.aiCharacter,
           characterNm: userProfile.characterNm,
           characterPersonality: userProfile.characterPersonality,
+          characterNum: userProfile.characterNum,
           onboardingScores: userProfile.onboardingScores,
           solutionTypeWeights: userProfile.solutionTypeWeights,
           negativeTags: userProfile.negativeTags,

@@ -38,23 +38,25 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
 
   @override
   Widget build(BuildContext context) {
-    final _state = ref.read(userViewModelProvider);
+    final state = ref.read(userViewModelProvider);
+    final characterIndex = state.characterNum;
     return SizedBox(
-      height: 566.h,
+      height: 558.4.h,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 24.r,
+            height: 16.r,
           ),
           Container(
             width: double.infinity,
-            height: 94.h,
-            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            height: 88.h,
+            padding: EdgeInsets.symmetric(
+                horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: AppText(
-                '${_state.userProfile!.characterNm}이(가)\n뭐라고 부르면 될까요?',
+                '${state.userProfile!.characterNm}이(가)\n뭐라고 부르면 될까요?',
                 style: AppFontStyles.heading2,
               ),
             ),
@@ -99,7 +101,10 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                               .text.isEmpty
                           ? null
                           : IconButton(
-                              icon: Icon(Icons.clear),
+                              icon: Icon(
+                                Icons.clear,
+                                size: 24.r,
+                              ),
                               onPressed: () {
                                 _textEditingController.clear();
                                 setState(() {
@@ -153,10 +158,11 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
           Align(
               alignment: Alignment.bottomRight,
               child: Image.asset(
-                AppImages.cadoProfile,
+                AppImages.characterListProfile[characterIndex],
                 width: 120.w,
-                height: 180.h,
+                height: 129.h,
               )),
+          SizedBox(height: 10.4.h),
         ],
       ),
     );

@@ -104,7 +104,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
+    final selectedNotifier =
+        ref.read(selectedEmotionProvider.notifier);
 
     if (selectedNotifier.state == emotionKey) {
       selectedNotifier.state = null;
@@ -118,6 +119,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.initState();
     Future.microtask(() {
       ref.invalidate(homeDialogueProvider);
+      ref.invalidate(
+          selectedEmotionProvider); // 고라우터라 디스포즈가 안먹히는거같아서 그냥 이동할때 초기화
     });
   }
 
@@ -129,6 +132,10 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum = ref
+        .read(userViewModelProvider)
+        .userProfile!
+        .characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
     // final dialogueAsync = ref.watch(homeDialogueProvider);
 
@@ -157,21 +164,23 @@ class _HomePageState extends ConsumerState<HomePage> {
       // Body
       body: Center(
         child: Align(
-          alignment: const Alignment(0, -0.4),
+          alignment: const Alignment(0, -0.1),
           child: SizedBox(
-            height: 400.h,
+            height: 340.h,
             width: 340.w,
             child: Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
                 Image.asset(
-                  AppImages.cadoProfile, // 중앙 캐릭터 이미지
+                  // 없애기
+                  AppImages.characterListProfile[
+                      selectedCharacterNum!], // 중앙 캐릭터 이미지
                   height: 240.h,
                   width: 160.w,
                 ),
                 Positioned(
-                  top: -15,
+                  top: -50.h,
                   child: SvgPicture.asset(
                     AppIcons.bubbleUnder,
                     height: 110.h,
@@ -179,7 +188,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
                 Positioned(
-                  top: -22,
+                  top: -57.h,
                   child: SizedBox(
                     width: 150.w,
                     height: 110.h,
@@ -199,73 +208,62 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                 // 감정 이모티콘들 (Stack + Positioned)
                 Positioned(
-                    bottom: 15.h,
+                    top: 69.h,
+                    left: 55.w,
                     child: Container(
                       alignment: Alignment.center,
-                      height: 80,
-                      width: 80,
+                      height: 54.h,
+                      width: 54.w,
                       child: _Imoge(
-                          imoKey: "smile",
+                          imoKey: "angry",
                           selectedEmotion: selectedEmotion,
                           onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
-                    top: 94.h,
-                    right: 25.w,
+                    bottom: 103.h,
+                    left: 22.w,
                     child: Container(
                       alignment: Alignment.center,
-                      height: 80,
-                      width: 80,
+                      height: 54.h,
+                      width: 54.w,
                       child: _Imoge(
                           imoKey: "crying",
                           selectedEmotion: selectedEmotion,
                           onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
-                    bottom: 110.h,
-                    left: 15.w,
+                    bottom: 8.h,
+                    left: 118.w,
                     child: Container(
                       alignment: Alignment.center,
-                      height: 80,
-                      width: 80,
+                      height: 54.h,
+                      width: 54.w,
                       child: _Imoge(
                           imoKey: "shocked",
                           selectedEmotion: selectedEmotion,
                           onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
-                    bottom: 110.h,
-                    right: 15.w,
+                    bottom: 67.h,
+                    right: 40.w,
                     child: Container(
                       alignment: Alignment.center,
-                      height: 80,
-                      width: 80,
+                      height: 54.h,
+                      width: 54.w,
                       child: _Imoge(
                           imoKey: "sleeping",
                           selectedEmotion: selectedEmotion,
                           onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
-                    top: 94.h,
-                    left: 25.w,
+                    top: 87.h,
+                    right: 48.w,
                     child: Container(
                       alignment: Alignment.center,
-                      height: 80,
-                      width: 80,
+                      height: 54.h,
+                      width: 54.w,
                       child: _Imoge(
-                          imoKey: "angry",
-                          selectedEmotion: selectedEmotion,
-                          onEmojiTap: onEmojiTap),
-                    )),
-                Positioned(
-                    top: 94.h,
-                    left: 25.w,
-                    child: Container(
-                      alignment: Alignment.center,
-                      height: 80,
-                      width: 80,
-                      child: _Imoge(
-                          imoKey: "angry",
+                          imoKey: "smile",
                           selectedEmotion: selectedEmotion,
                           onEmojiTap: onEmojiTap),
                     )),
@@ -276,16 +274,21 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
 
       bottomSheet: GestureDetector(
-        onTap: () => context.go('/home/chat', extra: selectedEmotion),
+        onTap: () {
+          ref.invalidate(
+              selectedEmotionProvider); // 고라우터라 디스포즈가 안먹히는거같아서 그냥 이동할때 초기화
+          context.go('/home/chat', extra: selectedEmotion);
+        },
         child: Container(
           color: AppColors.yellow50,
           child: Container(
             height: 40.h,
             margin: EdgeInsets.all(12.r),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(
+                horizontal: 16.w, vertical: 10.h),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(color: AppColors.grey200),
             ),
             child: Row(
@@ -297,7 +300,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                         .copyWith(color: AppColors.grey600),
                   ),
                 ),
-                SvgPicture.asset(AppIcons.send),
+                selectedEmotion == null
+                    ? SvgPicture.asset(AppIcons.send)
+                    : SvgPicture.asset(AppIcons.send_orange),
               ],
             ),
           ),
@@ -327,28 +332,68 @@ class _Imoge extends StatelessWidget {
     final imagePath = EmojiAsset.fromString(imoKey).asset;
     final isSelected = selectedEmotion == imoKey;
 
+    // ✅ 각 이모지 키별로 표시할 텍스트를 매핑
+    final emotionTextMap = {
+      "angry": "불안/분노",
+      "crying": "우울/무기력",
+      "sleeping": "불규칙 수면",
+      "shocked": "집중력 저하",
+      "smile": "평온/회복",
+    };
+
+    // ✅ 현재 이모지의 텍스트 (없을 경우 빈 문자열)
+    final emotionLabel = emotionTextMap[imoKey] ?? "";
+
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        width: isSelected ? 80.r : 60.r,
-        height: isSelected ? 80.r : 60.r,
-        child: ColorFiltered(
-          colorFilter: isSelected
-              ? const ColorFilter.mode(
-                  Colors.transparent, // 원래 색 (필터 없음)
-                  BlendMode.multiply,
-                )
-              : const ColorFilter.matrix(<double>[
-                  0.2126, 0.7152, 0.0722, 0, 0, // R
-                  0.2126, 0.7152, 0.0722, 0, 0, // G
-                  0.2126, 0.7152, 0.0722, 0, 0, // B
-                  0, 0, 0, 1, 0, // A
-                ]),
-          child: Image.asset(imagePath),
-        ),
-      ),
+      child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+              width: isSelected ? 54.w : 48.w,
+              height: isSelected ? 54.h : 48.h,
+              child: ColorFiltered(
+                colorFilter: isSelected
+                    ? const ColorFilter.mode(
+                        Colors.transparent, // 원래 색 (필터 없음)
+                        BlendMode.multiply,
+                      )
+                    : const ColorFilter.matrix(<double>[
+                        0.2126, 0.7152, 0.0722, 0, 0, // R
+                        0.2126, 0.7152, 0.0722, 0, 0, // G
+                        0.2126, 0.7152, 0.0722, 0, 0, // B
+                        0, 0, 0, 1, 0, // A
+                      ]),
+                child: Image.asset(imagePath),
+              ),
+            ),
+            if (isSelected)
+              Positioned(
+                bottom: -37.h,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: AppColors.white,
+                      border: Border.all(
+                          color: AppColors.orange200,
+                          width: 2.r),
+                      borderRadius: BorderRadius.circular(20.r)),
+                  child: Center(
+                    child: Text(
+                      emotionLabel,
+                      style:
+                          AppFontStyles.bodyRegular12.copyWith(
+                        color: AppColors.grey900,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ]),
     );
   }
 }

@@ -77,17 +77,17 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
 
   @override
   Widget build(BuildContext context) {
-    // 😎 5가지 클러스터(프론트엔드 계산)와 g-score(백엔드 계산) 데이터를 각각 watch
+    // 5가지 클러스터(프론트엔드 계산)와 g-score(백엔드 계산) 데이터를 각각 watch
     final clusterState = ref.watch(clusterScoresViewModelProvider);
     final gScoreAsync = ref.watch(gScore14DayChartProvider(widget.userId));
 
-    // 😎 두 데이터 중 하나라도 로딩 중이면 로딩 인디케이터 표시
+    // 두 데이터 중 하나라도 로딩 중이면 로딩 인디케이터 표시
     if (clusterState.isLoading || gScoreAsync.isLoading) {
       return const Center(
           child:
               CircularProgressIndicator(backgroundColor: AppColors.yellow50));
     }
-    // 😎 두 데이터 중 하나라도 에러가 있으면 에러 메시지 표시
+    // 두 데이터 중 하나라도 에러가 있으면 에러 메시지 표시
     if (clusterState.error != null || gScoreAsync.hasError) {
       final error = clusterState.error ?? gScoreAsync.error.toString();
       return Center(
@@ -241,7 +241,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
               child: Column(
                 children: [
                   SizedBox(
-                    height: 200,
+                    height: 200.h,
                     child: LineChart(
                       LineChartData(
                         lineTouchData: LineTouchData(enabled: false),
@@ -252,8 +252,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                               showTitles: true,
                               interval: 2,
                               getTitlesWidget: (value, meta) {
-                                if (value.toInt() == 0)
+                                if (value.toInt() == 0) {
                                   return const SizedBox.shrink();
+                                }
                                 return AppText(
                                   value.toInt().toString(),
                                   style: AppFontStyles.bodyRegular12
@@ -275,19 +276,33 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                 if (index < 0 || index >= baseDays.length) {
                                   return const SizedBox.shrink();
                                 }
-                                final d = baseDays[index];
-                                return AppText(
-                                  "${d.month}.${d.day}",
-                                  style: AppFontStyles.bodyRegular12
-                                      .copyWith(color: AppColors.grey600),
-                                );
+                                // 마지막 인덱스(오늘 날짜)는 무조건 표시
+                                if (index == baseDays.length - 1) {
+                                  final d = baseDays[index];
+                                  return AppText(
+                                    "${d.month}.${d.day}",
+                                    style: AppFontStyles.bodyRegular12
+                                        .copyWith(color: AppColors.grey900),
+                                  );
+                                }
+                                // 나머지는 2일 간격으로만 표시
+                                if (index % 2 == 0) {
+                                  final d = baseDays[index];
+                                  return AppText(
+                                    "${d.month}.${d.day}",
+                                    style: AppFontStyles.bodyRegular12
+                                        .copyWith(color: AppColors.grey600),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
                               },
                             ),
                           ),
                         ),
                         borderData: FlBorderData(show: false),
                         minX: 0,
-                        maxX: (baseDays.length - 1).toDouble(),
+                        maxX: (baseDays.length - 0.5).toDouble(),
                         minY: 0,
                         maxY: 10,
                         lineBarsData: [
@@ -360,9 +375,27 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     .map((key) => _buildEmotionCard(key, mergedMap[key]!)),
               ],
             ),
-            SizedBox(
-              height: 40.h,
-            ),
+
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              child: GestureDetector(
+                onTap: () {
+                  //TODO : 진단페이지로 이동
+                },
+                child: Container(
+                  height: 52.h,
+                  decoration: BoxDecoration(
+                      color: AppColors.green500,
+                      borderRadius: BorderRadius.circular(12.r)),
+                  alignment: Alignment.center,
+                  child: Text(
+                    AppTextStrings.checkEmotions,
+                    style: AppFontStyles.bodyMedium16
+                        .copyWith(color: AppColors.grey50),
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),

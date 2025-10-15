@@ -19,8 +19,9 @@ class AppTextStrings {
   static const String notice = '공지사항';
   static const String termsOfService = '이용 약관';
   static const String privacyPolicy = '개인정보 처리방침';
-  static const String counselingCenter = '상담센터 연결';
+  static const String counselingCenter = '전문 상담 연결';
   static const String pageIsPreparing = '준비중';
+  static const String srj5Test = '감정 검사';
   static const String preparingTitle = '곧 만나요!';
   static const String preparingBody = '준비 중이에요';
 
@@ -102,6 +103,7 @@ class AppTextStrings {
   static const String editNickname = '닉네임 수정';
   static const String editCharacterName = '캐릭터 이름 수정';
   static const String nicknameLengthRule = ' • 2~10자만 사용 가능해요';
+  static const String myState = '나의 상태';
 
   // Onboarding
   static const String onboarding1TitleUser = '나의 닉네임 설정';
@@ -151,9 +153,16 @@ class AppTextStrings {
   static const String clusterNegHigh = '불안/분노';
   static const String clusterNegLow = '우울/무기력';
   static const String clusterSleep = '불규칙 수면';
-  static const String clusterAdhd = '집중력저하';
+  static const String clusterAdhd = '집중력 저하';
   static const String clusterPositive = '평온/회복';
   static const String clusterTotalScore = '종합 감정 점수';
+
+  // cluster name in supabase
+  static const String negLow = 'neg_low';
+  static const String negHigh = 'neg_high';
+  static const String adhd = 'adhd';
+  static const String sleep = 'sleep';
+  static const String positive = 'positive';
 
   static const String descNegHigh = '스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...';
   static const String descNegLow = '지쳤다는 신호가 보여요...';
@@ -163,12 +172,40 @@ class AppTextStrings {
 
   // weekly_report.dart 용
   static const String weeklyReportError = '에러: ';
+  static const String averageEmotionalScore = "평균 감정 점수";
+  static const String highestEmotionalScore = "최고 감정 점수";
+  static const String lowestEmotionalScore = "최저 감정 점수";
+  static const String checkEmotions = "감정 검사하기";
 
   // monthly_report.dart 용
   static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
   static const String monthlyReportLoadFailed = '로드 실패: ';
   static const String monthlyReportDateFormat = 'yyyy년 MM월';
   static const String monthlyReportDayFormat = 'M월 d일 EEEE'; // 예: 10월 7일 월요일
+
+  // select_srj5_test_page.dart 용
+  static const String negHighDescription = '최근 긴장감과 짜증, 분노 빈도를 살펴봐요';
+  static const String negLowDescription = '기분 저하와 의욕, 흥미 감소를 확인해요';
+  static const String sleepDescription = '산만함과 미루기 패턴을 점검해요';
+  static const String adhdDescription = '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
+  static const String positiveDescription = '마음의 안정감과 회복 탄력도를 확인해요';
+
+  // guide Page RichText 용
+  static const List<String> startGuideText = [
+    '하루 감정을 기록하고\n',
+    '감정 점수를 기반으로\n',
+    '캘린더의'
+  ];
+  static const List<String> middleGuideText = [
+    'AI 분석 리포트',
+    '맞춤형 솔루션',
+    '감정 히스토리'
+  ];
+  static const List<String> endGuideText = [
+    '를 받아보세요',
+    '을 추천해 드려요',
+    '를 통해\n변화를 한눈에 확인하세요'
+  ];
 }
 
 // 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가

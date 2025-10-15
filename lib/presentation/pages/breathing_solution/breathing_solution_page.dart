@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
@@ -67,7 +68,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
         "title": null,
         "text": "함께 차분해지는\n호흡 연습을 해볼까요?",
         "font": AppFontStyles.heading2,
-        "duration": 1,
+        "duration": 2,
       },
       {
         "title": "Step 1.",
@@ -101,7 +102,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     // 깜빡임 애니메이션 컨트롤러
     _blinkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
 
     _blinkAnimation = Tween<double>(
@@ -232,6 +233,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
@@ -284,7 +287,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 width: 240.w,
                 height: 360.h,
                 child: Image(
-                  image: AssetImage(AppImages.cadoProfile),
+                  image: AssetImage(
+                      AppImages.characterListProfile[selectedCharacterNum!]),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -312,6 +316,32 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 },
               ),
             ),
+
+            // '건너뛰기' 텍스트 버튼 추가
+            if (!_showFinalHint && _step > 0 && _step < _steps.length - 1)
+              Positioned(
+                top: 700.h, // 타이머보다 살짝 아래 위치
+                child: AnimatedOpacity(
+                  opacity: _opacity,
+                  duration: const Duration(milliseconds: 300),
+                  child: GestureDetector(
+                    onTap: () {
+                      // 즉시 다음 라우트로 이동
+                      context.pushReplacement(
+                        '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}',
+                      );
+                    },
+                    child: Text(
+                      "건너뛰기",
+                      style: AppFontStyles.bodyMedium16.copyWith(
+                        color: AppColors.grey400,
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppColors.grey400, // ✅ 밑줄 색을 강제로 지정
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
             // 깜빡이는 안내 문구
             if (_showFinalHint)
@@ -387,7 +417,7 @@ class TimerPainter extends CustomPainter {
       textPainter.layout();
       textPainter.paint(
         canvas,
-        center - Offset(textPainter.width / 2, textPainter.height / 2),
+        center - Offset(textPainter.width / 2, textPainter.height / 2 + 2),
       );
     }
   }
