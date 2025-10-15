@@ -83,4 +83,36 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       rethrow;
     }
   }
+
+// 피드백 결과로 가중치부여
+  @override
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/solutions/feedback');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'solution_id': solutionId,
+          'session_id': sessionId,
+          'solution_type': solutionType,
+          'feedback': feedback,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to submit feedback: ${response.body}');
+      }
+    } catch (e) {
+      print('Error submitting solution feedback: $e');
+      rethrow;
+    }
+  }
 }

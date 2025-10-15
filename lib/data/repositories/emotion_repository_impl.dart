@@ -30,4 +30,21 @@ class EmotionRepositoryImpl implements EmotionRepository {
     );
     return dto.toEntity();
   }
+
+  @override
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) {
+    return remoteDataSource.submitSolutionFeedback(
+      userId: userId,
+      solutionId: solutionId,
+      sessionId: sessionId,
+      solutionType: solutionType,
+      feedback: feedback,
+    );
+  }
 }

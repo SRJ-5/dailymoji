@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:dailymoji/domain/enums/character_personality.dart';
 import 'package:dailymoji/presentation/providers/user_providers.dart';
@@ -175,18 +176,21 @@ class UserViewModel extends Notifier<UserState> {
   }) async {
     final userId = state.userProfile?.id;
     if (userId == null) return;
+    try {
+      await ref.read(emotionRepositoryProvider).submitSolutionFeedback(
+            userId: userId,
+            solutionId: solutionId,
+            sessionId: sessionId,
+            solutionType: solutionType,
+            feedback: feedback,
+          );
 
-    // UseCase를 통해 피드백 제출 로직 실행
-    await ref.read(submitSolutionFeedbackUseCaseProvider).execute(
-          userId: userId,
-          solutionId: solutionId,
-          sessionId: sessionId,
-          solutionType: solutionType,
-          feedback: feedback,
-        );
-
-    // 피드백에 따라 변경된 사용자 프로필(가중치 등)을 다시 불러와 상태를 업데이트
-    await getUserProfile(userId);
+      // 피드백 제출 후 사용자 프로필을 다시 불러오는 로직.
+      // negative_tags가 즉시 반영되길 원한다면 유지
+      await getUserProfile(userId);
+    } catch (e) {
+      print("Error in UserViewModel while submitting feedback: $e");
+    }
   }
 
 // RIN: 수면위생 팁을 가져오는 함수

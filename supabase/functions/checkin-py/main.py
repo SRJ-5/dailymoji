@@ -912,14 +912,36 @@ async def propose_solution(payload: SolutionRequest):
         if not all_candidates:
             return {"proposal_text": "지금은 제안해드릴 특별한 활동이 없네요.", "options": []}
 
-        # 3. 거부 태그가 포함된 솔루션은 후보에서 제외
+        # # 3. 거부 태그가 포함된 솔루션은 후보에서 제외
+        # if negative_tags:
+        #     filtered_candidates = [
+        #         sol for sol in all_candidates
+        #         if not any(tag in (sol.get("tags") or []) for tag in negative_tags)
+        #     ]
+        # else:
+        #     filtered_candidates = all_candidates
+
+        # 3. 확률 기반으로 솔루션 필터링(1/3 확률로 나오도록!)
+        probabilistically_filtered_candidates = []
         if negative_tags:
-            filtered_candidates = [
-                sol for sol in all_candidates
-                if not any(tag in (sol.get("tags") or []) for tag in negative_tags)
-            ]
+            for sol in all_candidates:
+                solution_tags = set(sol.get("tags") or [])
+                # 겹치는 태그가 있는지 확인
+                if not solution_tags.isdisjoint(negative_tags):
+                    # 겹치는 태그가 있다면, 1/3 확률로만 목록에 추가
+                    if random.random() < (1/3):
+                        probabilistically_filtered_candidates.append(sol)
+                else:
+                    # 겹치는 태그가 없다면, 무조건 목록에 추가
+                    probabilistically_filtered_candidates.append(sol)
         else:
-            filtered_candidates = all_candidates
+            # negative_tags가 없으면 모든 후보를 그대로 사용
+            probabilistically_filtered_candidates = all_candidates
+        
+        # 필터링 후 후보군이 없으면 모든 후보를 다시 사용 (안전장치)
+        if not probabilistically_filtered_candidates:
+            probabilistically_filtered_candidates = all_candidates
+
 
         # 4. 각 솔루션 타입별로 대표 솔루션을 하나씩 랜덤 선택
         options = []
@@ -929,7 +951,8 @@ async def propose_solution(payload: SolutionRequest):
         first_solution_text = ""
 
         for sol_type in target_solution_types:
-            type_candidates = [s for s in filtered_candidates if s.get("solution_type") == sol_type]
+            # 필터링된 후보군('probabilistically_filtered_candidates')을 사용하도록 변경
+            type_candidates = [s for s in probabilistically_filtered_candidates if s.get("solution_type") == sol_type]
             if type_candidates:
                 chosen_solution = random.choice(type_candidates)
                 
@@ -1604,3 +1627,92 @@ async def get_action_mission(
     except Exception as e:
         print(f"❌ get_action_mission Error: {e}")
         return {"mission": "잠시 자리에서 일어나 굳은 몸을 풀어주세요."}
+
+
+
+
+# ======================================================================
+# ===     피드백 처리 엔드포인트     ===
+# ======================================================================
+
+@app.post("/solutions/feedback")
+async def handle_solution_feedback(payload: FeedbackRequest):
+    """
+    솔루션에 대한 사용자 피드백을 받아 처리하고,
+    'not_helpful'인 경우 negative_tags를 업데이트합니다.
+    """
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+
+    try:
+        # 1. 먼저 solution_feedback 테이블에 피드백 기록을 삽입합니다.
+        feedback_insert_query = supabase.table("solution_feedback").insert({
+            "user_id": payload.user_id,
+            "solution_id": payload.solution_id,
+            "session_id": payload.session_id,
+            "solution_type": payload.solution_type,
+            "feedback": payload.feedback
+        })
+        await run_in_threadpool(feedback_insert_query.execute)
+
+        # 2. 만약 피드백이 'not_helpful'이라면, 태그 업데이트 로직을 실행합니다.
+        if payload.feedback == 'not_helpful':
+            # 2-1. 싫어요 누른 솔루션의 태그를 가져옵니다.
+            solution_query = supabase.table("solutions").select("tags").eq("solution_id", payload.solution_id).single()
+            solution_res = await run_in_threadpool(solution_query.execute)
+            
+            if solution_res.data and solution_res.data.get("tags"):
+                solution_tags = solution_res.data["tags"]
+                
+                # 2-2. 사용자의 현재 negative_tags를 가져옵니다.
+                profile_query = supabase.table("user_profiles").select("negative_tags").eq("id", payload.user_id).single()
+                profile_res = await run_in_threadpool(profile_query.execute)
+                
+                current_tags = []
+                if profile_res.data and profile_res.data.get("negative_tags"):
+                    current_tags = profile_res.data["negative_tags"]
+                
+                # 2-3. 기존 태그와 새로운 태그를 합치고 중복을 제거합니다.
+                updated_tags = list(set(current_tags) | set(solution_tags))
+                
+                # 2-4. user_profiles 테이블에 업데이트된 태그 목록을 저장합니다.
+                update_query = supabase.table("user_profiles").update({"negative_tags": updated_tags}).eq("id", payload.user_id)
+                await run_in_threadpool(update_query.execute)
+                
+                print(f"✅ User {payload.user_id} negative_tags updated: {updated_tags}")
+
+        return {"message": "Feedback submitted successfully"}
+
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"🔥 EXCEPTION in /solutions/feedback: {e}\n{tb}")
+        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+    
+
+
+
+# ======================================================================
+# ===           [테스트용] 수동 리포트 생성 엔드포인트          ===
+# ======================================================================
+class ManualSummaryRequest(BaseModel):
+    user_id: str
+    date: str # "YYYY-MM-DD" 형식
+
+@app.post("/tasks/manual-summary")
+async def run_manual_summary(payload: ManualSummaryRequest):
+    """
+    특정 사용자 ID와 날짜를 지정하여 데일리/주간 요약을 수동으로 생성하는 테스트용 엔드포인트.
+    """
+    print(f"--- 🏃‍♂️ [MANUAL] Running summary job for user: {payload.user_id}, date: {payload.date} ---")
+    try:
+        # 기존 요약 생성 함수들을 그대로 호출
+        await create_and_save_summary_for_user(payload.user_id, payload.date)
+        await create_and_save_weekly_summary_for_user(payload.user_id, payload.date)
+        
+        message = f"Successfully generated summaries for user {payload.user_id} on {payload.date}"
+        print(f"--- ✅ [MANUAL] {message} ---")
+        return {"message": message}
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"🔥 [MANUAL] FAILED to generate summaries: {e}\n{tb}")
+        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
