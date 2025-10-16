@@ -49,6 +49,10 @@ class AppImages {
       'assets/images/character_cado/cado_calender.png';
   static const String cadoRecord =
       'assets/images/character_cado/cado_record.png';
+  static const String cadoLookUp =
+      'assets/images/character_cado/cado_look_up.png';
+  static const String cadoSideView =
+      'assets/images/character_cado/cado_side_view.png';
 
   // images - character_carrot
   static const String carrotChat =
@@ -59,6 +63,12 @@ class AppImages {
       'assets/images/character_carrot/carrot_profile.png';
   static const String carrotFace =
       'assets/images/character_carrot/carrot_face.png';
+  static const String carrotWalk =
+      'assets/images/character_carrot/carrot_walk.png';
+  static const String carrotFrontView =
+      'assets/images/character_carrot/carrot_front_view.png';
+  static const String carrotLookUp =
+      'assets/images/character_carrot/carrot_look_up.png';
 
   // images - characterList
   static const List<String> characterListProfile = [
@@ -75,6 +85,14 @@ class AppImages {
   ];
   static const List<String> characterListWalk = [
     AppImages.cadoWalk,
-    AppImages.cadoWalk,
+    AppImages.carrotWalk,
+  ];
+  static const List<String> characterListonBoarding12 = [
+    AppImages.cadoLookUp,
+    AppImages.carrotLookUp,
+  ];
+  static const List<String> characterListonBoarding13 = [
+    AppImages.cadoSideView,
+    AppImages.carrotFrontView,
   ];
 }
