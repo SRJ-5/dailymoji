@@ -10,7 +10,8 @@ class AppIcons {
   static const String stroke = 'assets/icons/stroke.svg';
   static const String unfoldMore = 'assets/icons/unfold_more.svg';
   static const String close = 'assets/icons/close.svg';
-  static const String send_orange = 'assets/icons/send_orange.svg';
-  static const String arrowForward =
-      'assets/icons/arrow_forward.svg';
+  static const String sendOrange = 'assets/icons/send_orange.svg';
+  static const String arrowForward = 'assets/icons/arrow_forward.svg';
+  static const String toastCheck = 'assets/icons/toast_check.svg';
+  static const String toastClose = 'assets/icons/toast_close.svg';
 }

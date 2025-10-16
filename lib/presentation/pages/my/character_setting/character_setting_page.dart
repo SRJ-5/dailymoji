@@ -3,6 +3,7 @@ import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/character_box.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
+import 'package:dailymoji/presentation/widgets/custom_toast.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -32,7 +33,14 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
   }
 
   void selectCharacter({required int selectNum, required String aiPersonality}) {
+    if (ref.watch(userViewModelProvider).characterNum == selectNum) return;
     ref.read(userViewModelProvider.notifier).setAiPersonality(selectNum: selectNum, aiPersonality: aiPersonality);
+
+    // 토스트 메시지 표시
+    ToastHelper.showToast(
+      context,
+      message: '도우미를 변경했어요',
+    );
   }
 
   final _personalitiesOnboarding = CharacterPersonality.values.map((e) => e.onboardingLabel).toList();
@@ -137,6 +145,7 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                 ),
               )
 
+              // TODO 밑에 코드는 언어 설정에서 응용해야됨
               /*
               GestureDetector(
                 onTap: () async {
