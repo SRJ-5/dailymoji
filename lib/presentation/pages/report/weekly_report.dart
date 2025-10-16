@@ -107,7 +107,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
         width: double.infinity,
         color: AppColors.yellow50,
         child: Center(
-          child: AppText('${AppTextStrings.weeklyReportError}$error'),
+          child: AppText(
+              '${AppTextStrings.weeklyReportError}${clusterState.error}'),
         ),
       );
     }
@@ -116,11 +117,25 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
     final baseDays = clusterState.days;
     final baseMap = clusterState.emotionMap;
     final gScoreData = gScoreAsync.value;
+    final weeklySummary = clusterState.weeklySummary;
+    final String? overallSummaryText = weeklySummary?.overallSummary;
 
     // 두 종류의 데이터를 하나의 맵으로 병합
     final Map<String, EmotionData> mergedMap = {
       ...baseMap,
-      if (gScoreData != null) ...{AppTextStrings.clusterTotalScore: gScoreData}
+      if (gScoreData != null) ...{
+        AppTextStrings.clusterTotalScore: EmotionData(
+          color: gScoreData.color,
+          spots: gScoreData.spots,
+          description:
+              (overallSummaryText != null && overallSummaryText.isNotEmpty)
+                  ? overallSummaryText
+                  : AppTextStrings.weeklyReportGScoreDescription,
+          avg: gScoreData.avg,
+          max: gScoreData.max,
+          min: gScoreData.min,
+        )
+      }
     };
 
     // return FutureBuilder<gs.GScoreEmotionResult>(
@@ -511,19 +526,19 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _ScoreBox(
-                      label: AppTextStrings.avgEmotionScore, // 😎 상수 사용
+                      label: AppTextStrings.avgEmotionScore,
                       value: AppTextStrings.scoreUnit
                           .replaceFirst('%s', data.avg.toStringAsFixed(1)),
                       color: AppColors.green700),
                   separator(),
                   _ScoreBox(
-                      label: AppTextStrings.maxEmotionScore, // 😎 상수 사용
+                      label: AppTextStrings.maxEmotionScore,
                       value: AppTextStrings.scoreUnit
                           .replaceFirst('%s', data.max.toStringAsFixed(1)),
                       color: AppColors.noti100),
                   separator(),
                   _ScoreBox(
-                      label: AppTextStrings.minEmotionScore, // 😎 상수 사용
+                      label: AppTextStrings.minEmotionScore,
                       value: AppTextStrings.scoreUnit
                           .replaceFirst('%s', data.min.toStringAsFixed(1)),
                       color: AppColors.noti200),
