@@ -107,7 +107,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
         width: double.infinity,
         color: AppColors.yellow50,
         child: Center(
-          child: AppText('${AppTextStrings.weeklyReportError}$error'),
+          child: AppText('${AppTextStrings.weeklyReportError}${state.error}'),
         ),
       );
     }
@@ -525,19 +525,19 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _ScoreBox(
-                      label: AppTextStrings.avgEmotionScore, // 😎 상수 사용
+                      label: AppTextStrings.avgEmotionScore,
                       value: AppTextStrings.scoreUnit
                           .replaceFirst('%s', data.avg.toStringAsFixed(1)),
                       color: AppColors.green700),
                   separator(),
                   _ScoreBox(
-                      label: AppTextStrings.maxEmotionScore, // 😎 상수 사용
+                      label: AppTextStrings.maxEmotionScore,
                       value: AppTextStrings.scoreUnit
                           .replaceFirst('%s', data.max.toStringAsFixed(1)),
                       color: AppColors.noti100),
                   separator(),
                   _ScoreBox(
-                      label: AppTextStrings.minEmotionScore, // 😎 상수 사용
+                      label: AppTextStrings.minEmotionScore,
                       value: AppTextStrings.scoreUnit
                           .replaceFirst('%s', data.min.toStringAsFixed(1)),
                       color: AppColors.noti200),
