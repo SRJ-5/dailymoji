@@ -951,7 +951,26 @@ async def propose_solution(payload: SolutionRequest):
         first_solution_text = ""
 
         for sol_type in target_solution_types:
-            # 필터링된 후보군('probabilistically_filtered_candidates')을 사용하도록 변경
+
+            # 'breathing' 타입은 DB 조회 없이 고정된 옵션을 추가합니다.
+            if sol_type == 'breathing':
+                options.append({
+                    "label": labels.get(sol_type),
+                    "action": "accept_solution",
+                    "solution_id": "breathing_default",
+                    "solution_type": "breathing"
+                })
+                continue
+
+            # 'sleep' 클러스터의 'action' 타입은 수면위생 팁으로 연결합니다.
+            elif top_cluster == 'sleep' and sol_type == 'action':
+                options.append({
+                    "label": labels.get(sol_type), "action": "accept_solution",
+                    "solution_id": "sleep_hygiene_tip_random", "solution_type": "action"
+                })
+                continue
+            
+            # 그 외 모든 경우는 DB에서 솔루션을 찾습니다.
             type_candidates = [s for s in probabilistically_filtered_candidates if s.get("solution_type") == sol_type]
             if type_candidates:
                 chosen_solution = random.choice(type_candidates)

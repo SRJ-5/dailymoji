@@ -1074,36 +1074,45 @@ class ChatViewModel extends Notifier<ChatState> {
     if (currentUserId == null) return;
 
     if (solutionType == 'action') {
-      // 1. 솔루션 데이터를 가져옵니다.
-      final solution = await ref
-          .read(solutionRepositoryProvider)
-          .fetchSolutionById(solutionId);
-      final rawMissionText = solution.text;
+      String missionText;
+      // 🥑 'sleep_hygiene_tip_random' ID를 받으면, UserViewModel을 통해 랜덤 수면 팁을 가져옵니다.
+      if (solutionId == 'sleep_hygiene_tip_random') {
+        missionText = await ref
+            .read(userViewModelProvider.notifier)
+            .fetchSleepHygieneTip();
+      } else {
+        // 🥑 그 외 일반 미션은 기존처럼 DB에서 텍스트를 가져옵니다.
+        // 1. 솔루션 데이터를 가져옵니다.
+        final solution = await ref
+            .read(solutionRepositoryProvider)
+            .fetchSolutionById(solutionId);
+        final rawMissionText = solution.text;
 
-      // 2. UserViewModel에서 현재 사용자 닉네임을 가져옵니다.
-      final userNickNm =
-          ref.read(userViewModelProvider).userProfile?.userNickNm ?? "친구";
+        // 2. UserViewModel에서 현재 사용자 닉네임을 가져옵니다.
+        final userNickNm =
+            ref.read(userViewModelProvider).userProfile?.userNickNm ?? "";
 
-      // 3. String의 replaceAll 메서드로 플레이스홀더를 실제 닉네임으로 교체합니다.
-      final formattedMissionText =
-          rawMissionText.replaceAll('{user_nick_nm}', userNickNm);
-
+        // 3. String의 replaceAll 메서드로 플레이스홀더를 실제 닉네임으로 교체합니다.
+        missionText = rawMissionText.replaceAll('{user_nick_nm}', userNickNm);
+      }
       // 4. 포맷팅이 완료된 텍스트로 메시지를 생성합니다.
       await _addMessage(Message(
-          userId: currentUserId,
-          content: formattedMissionText,
-          sender: Sender.bot));
+          userId: currentUserId, content: missionText, sender: Sender.bot));
 
       final newSet = Set<String>.from(state.completedSolutionTypes)
         ..add(solutionType);
       state = state.copyWith(completedSolutionTypes: newSet);
     } else if (solutionType == 'breathing' || solutionType == 'video') {
-      String path = (solutionType == 'breathing')
-          ? '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview'
-          : '/solution/$solutionId?sessionId=$sessionId&isReview=$isReview';
+      String path;
+      if (solutionType == 'breathing') {
+        path = '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview';
+      } else {
+        path = '/solution/$solutionId?sessionId=$sessionId&isReview=$isReview';
+      }
 
       final result = await navigatorkey.currentContext
           ?.push(path, extra: {'solution_type': solutionType});
+
       if (result is Map<String, dynamic>) {
         processSolutionResult(result);
       }
