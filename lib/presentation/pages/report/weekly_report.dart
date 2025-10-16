@@ -107,7 +107,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
         width: double.infinity,
         color: AppColors.yellow50,
         child: Center(
-          child: AppText('${AppTextStrings.weeklyReportError}${state.error}'),
+          child: AppText(
+              '${AppTextStrings.weeklyReportError}${clusterState.error}'),
         ),
       );
     }
