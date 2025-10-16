@@ -1068,6 +1068,7 @@ class ChatViewModel extends Notifier<ChatState> {
     required String solutionId,
     required String solutionType,
     String? sessionId,
+    bool isReview = false,
   }) async {
     final currentUserId = _userId;
     if (currentUserId == null) return;
@@ -1098,8 +1099,9 @@ class ChatViewModel extends Notifier<ChatState> {
       state = state.copyWith(completedSolutionTypes: newSet);
     } else if (solutionType == 'breathing' || solutionType == 'video') {
       String path = (solutionType == 'breathing')
-          ? '/breathing/default?sessionId=$sessionId'
-          : '/solution/$solutionId?sessionId=$sessionId';
+          ? '/breathing/$solutionId?sessionId=$sessionId&isReview=$isReview'
+          : '/solution/$solutionId?sessionId=$sessionId&isReview=$isReview';
+
       final result = await navigatorkey.currentContext
           ?.push(path, extra: {'solution_type': solutionType});
       if (result is Map<String, dynamic>) {

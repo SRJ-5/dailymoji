@@ -977,6 +977,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                               solutionId: solutionId,
                                               solutionType: solutionType,
                                               sessionId: sessionId,
+                                              isReview: isCompleted,
                                             );
                                       }
                                       break;
