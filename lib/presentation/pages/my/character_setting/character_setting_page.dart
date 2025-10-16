@@ -32,9 +32,12 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
     });
   }
 
-  void selectCharacter({required int selectNum, required String aiPersonality}) {
+  void selectCharacter({required int selectNum, required String aiPersonality}) async {
     if (ref.watch(userViewModelProvider).characterNum == selectNum) return;
     ref.read(userViewModelProvider.notifier).setAiPersonality(selectNum: selectNum, aiPersonality: aiPersonality);
+    await ref.read(userViewModelProvider.notifier).fetchInsertUser();
+
+    if (!mounted) return;
 
     // 토스트 메시지 표시
     ToastHelper.showToast(
