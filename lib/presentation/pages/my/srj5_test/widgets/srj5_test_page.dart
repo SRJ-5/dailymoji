@@ -51,7 +51,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
         title: stepIndex == totalSteps
             ? null
             : AppText(
-                '${clusterState.clusterNM!} 감정 검사',
+                '${clusterState.clusterNM!} 감정 체크',
                 style: AppFontStyles.bodyBold18
                     .copyWith(color: AppColors.grey900),
               ),
