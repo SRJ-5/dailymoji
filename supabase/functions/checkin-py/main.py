@@ -475,7 +475,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
                     "adhd_context": {"step": "awaiting_task_description"}
                 }
             }
-        elif "adhd_no_task" in user_response: # "adhd_no_task"
+        else: # "adhd_no_task"
          # "없어!"를 누른 경우 -> 호흡 및 집중력 훈련 솔루션 제안
             
             # 1. '집중력 훈련' 솔루션을 DB에서 찾습니다.
@@ -513,7 +513,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
             }
 
         
-    # --- 시나리오 2: 사용자가 할 일을 입력했을 때 ---
+            # --- 시나리오 2: 사용자가 할 일을 입력했을 때 ---
     elif current_step == "awaiting_task_description":
         # 사용자가 입력한 할 일 내용을 받아 처리
         user_nick_nm, _ = await get_user_info(payload.user_id)
@@ -561,7 +561,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         ]
         intervention_for_client["session_id"] = session_id
 
-        return None
+        return { "intervention": intervention_for_client }
 
 # ---------- API Endpoints (분리된 구조) ----------
 
@@ -754,14 +754,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
 
         # ADHD 컨텍스트가 존재하면, 다른 모든 분석을 건너뛰고 ADHD 답변 처리 로직으로 바로 보냅니다.
         if payload.adhd_context and "step" in payload.adhd_context:
-            adhd_result = await _handle_adhd_response(payload, debug_log)
-            # ADHD 답변 처리 함수가 정상적인 결과를 반환한 경우에만 해당 결과를 즉시 반환
-            if adhd_result is not None:
-                return adhd_result
-            # None이 반환된 경우 (맥락과 다른 답변), ADHD 컨텍스트를 비우고 아래의 일반 분석 로직으로 넘어감
-            else:
-                print("RIN: User provided an unexpected response during ADHD flow. Resetting context and performing standard analysis.")
-                payload.adhd_context = None
+            return await _handle_adhd_response(payload, debug_log)
 
 
         # --- 파이프라인 1: 🌸 CASE 2 - 이모지만 있는 경우 ---
@@ -1714,4 +1707,5 @@ async def handle_solution_feedback(payload: FeedbackRequest):
         print(f"🔥 EXCEPTION in /solutions/feedback: {e}\n{tb}")
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
     
+
 
