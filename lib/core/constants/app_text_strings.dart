@@ -149,8 +149,6 @@ class AppTextStrings {
       '이 날의 %s 감정이 %d점으로 가장 강렬했습니다.'; // %s for cluster, %d for score
   static const String checkChatHistory = '채팅 확인하기';
   static const String weeklyReportTitle = '나의 2주간 감정 상태';
-  static const String weeklyReportGScoreDescription =
-      '종합 감정 점수는 최근의 감정을 모아 보여주는 지표예요. 완벽히 좋은 점수일 필요는 없고, 그때그때의 마음을 솔직히 드러낸 기록이면 충분합니다. 수치보다 중요한 건, 당신이 꾸준히 스스로를 돌아보고 있다는 사실이에요.';
   static const String avgEmotionScore = '평균 감정 점수';
   static const String maxEmotionScore = '최고 감정 점수';
   static const String minEmotionScore = '최저 감정 점수';
@@ -176,12 +174,18 @@ class AppTextStrings {
   static const String sleep = 'sleep';
   static const String positive = 'positive';
 
+  static const String weeklyReportGScoreDescription =
+      '종합 감정 점수는 불안, 우울, 수면 등 여러 감정 상태를 종합하여 나의 전반적인 마음 컨디션을 보여주는 지표예요. 점수가 높고 낮음보다 더 중요한 것은, 꾸준한 기록을 통해 나의 감정 변화 흐름을 스스로 이해해 나가는 과정 그 자체랍니다.';
   static const String descNegHigh =
-      '스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...';
-  static const String descNegLow = '지쳤다는 신호가 보여요...';
-  static const String descPositive = '평온함을 느끼고 있다면...';
-  static const String descSleep = '잠이 오지 않거나...';
-  static const String descAdhd = '집중이 흩어지고 마음이 산만할 때가 있죠...';
+      '불안이나 스트레스 수치가 높게 나타났네요. 쉴 틈 없이 팽팽한 긴장감 속에서 마음이 많이 지쳤을 수 있어요. 나의 감정을 알아차리는 것만으로도 변화의 첫걸음이 될 수 있습니다.';
+  static const String descNegLow =
+      '마음의 에너지가 많이 소진된 모습이 보여요. 평소에 즐겁던 일도 무감각하게 느껴지고, 작은 일에도 큰 노력이 필요한 시기일 수 있습니다. 지금은 잠시 멈춰서 스스로를 돌봐달라는 신호일지도 모릅니다.';
+  static const String descPositive =
+      '안정적이고 긍정적인 감정 상태를 잘 유지하고 계시는군요. 외부의 스트레스에도 마음의 중심을 지키는 힘, 즉 회복탄력성이 건강하게 작동하고 있다는 좋은 신호입니다. 이 평온한 감각을 충분히 만끽해 보세요.';
+  static const String descSleep =
+      '수면의 질이 다소 흔들리는 모습이 보이네요. 잠드는 것이 어렵거나, 잠든 후에도 자주 깨는 날들이 있었을 수 있습니다. 좋은 잠은 감정 회복의 가장 중요한 기반이 되기에, 꾸준히 수면 패턴을 살펴보는 것이 좋습니다.';
+  static const String descAdhd =
+      '주의가 쉽게 흩어지거나 여러 생각들로 마음이 분주한 날들이 있었던 것 같아요. 해야 할 일은 많은데 어디서부터 시작해야 할지 막막하게 느껴졌을 수 있습니다. 이는 의지의 문제가 아닌, 뇌의 실행 기능이 과부하된 자연스러운 상태일 수 있어요.';
 
   // weekly_report.dart 용
   static const String weeklyReportError = '에러: ';
