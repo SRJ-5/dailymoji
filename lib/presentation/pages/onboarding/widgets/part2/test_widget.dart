@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -24,12 +25,7 @@ class TestWidget extends ConsumerStatefulWidget {
 class _TestWidgetState extends ConsumerState<TestWidget> {
   late int _selectedIndex;
 
-  final List<String> _answerList = [
-    '전혀 없었어요',
-    '가끔 있었어요',
-    '자주 있었어요',
-    '거의 매일 있었어요'
-  ];
+  final List<String> _answerList = AppTextStrings.testAnswerList;
 
   @override
   void initState() {
