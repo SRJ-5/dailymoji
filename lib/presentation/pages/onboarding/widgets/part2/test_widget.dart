@@ -117,11 +117,6 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             },
           ),
         ),
-        AppText(
-          '• 자주: 일주일 중 절반 이상은 그런 기분을 느꼈던 경우',
-          style: AppFontStyles.bodyRegular12
-              .copyWith(color: AppColors.grey700),
-        )
       ],
     );
   }
