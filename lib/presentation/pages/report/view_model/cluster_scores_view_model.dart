@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/domain/entities/weekly_summary.dart';
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/domain/enums/cluster_type.dart';
 import 'package:dailymoji/domain/enums/metric.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
@@ -262,7 +263,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     }
 
     return {
-      "불안/분노": EmotionData(
+      AppTextStrings.clusterNegHigh: EmotionData(
         color: AppColors.negHigh,
         spots: _toSpotsConnected(nhAvg), // ★ null은 건너뛰므로 선이 이어짐
         avg: _avgScaledOpt(nhAvg), // ★ null 제외하고 평균
@@ -273,7 +274,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
           s?.negHighSummary,
         ),
       ),
-      "우울/무기력": EmotionData(
+      AppTextStrings.clusterNegLow: EmotionData(
         color: AppColors.negLow,
         spots: _toSpotsConnected(nlAvg),
         avg: _avgScaledOpt(nlAvg),
@@ -284,7 +285,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
           s?.negLowSummary,
         ),
       ),
-      "평온/회복": EmotionData(
+      AppTextStrings.clusterPositive: EmotionData(
         color: AppColors.positive,
         spots: _toSpotsConnected(posAvg),
         avg: _avgScaledOpt(posAvg),
@@ -295,7 +296,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
           s?.positiveSummary,
         ),
       ),
-      "불규칙 수면": EmotionData(
+      AppTextStrings.clusterSleep: EmotionData(
         color: AppColors.sleep,
         spots: _toSpotsConnected(slAvg),
         avg: _avgScaledOpt(slAvg),
@@ -306,7 +307,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
           s?.sleepSummary,
         ),
       ),
-      "집중력 저하": EmotionData(
+      AppTextStrings.clusterAdhd: EmotionData(
         color: AppColors.adhd,
         spots: _toSpotsConnected(adAvg),
         avg: _avgScaledOpt(adAvg),

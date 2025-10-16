@@ -6,4 +6,5 @@ abstract class SolutionRemoteDataSource {
   });
 
   Future<Map<String, dynamic>> fetchSolutionById(String solutionId);
+  Future<String?> fetchSolutionTextById(String solutionId);
 }

@@ -10,6 +10,8 @@ class UserProfileDto {
   final String? characterPersonality;
   final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
+  final Map<String, dynamic>? solutionTypeWeights; //RIN: 솔루션 유형 가중치
+  final List<String>? negativeTags; // RIN: 부정적 태그
 
   UserProfileDto({
     this.id,
@@ -20,6 +22,8 @@ class UserProfileDto {
     this.characterPersonality,
     this.characterNum,
     this.onboardingScores,
+    this.solutionTypeWeights,
+    this.negativeTags,
   });
 
   UserProfileDto.fromJson(Map<String, dynamic> map)
@@ -29,30 +33,29 @@ class UserProfileDto {
           userNickNm: map["user_nick_nm"],
           aiCharacter: map["ai_character"],
           characterNm: map["character_nm"],
-          characterPersonality:
-              map["character_personality"] != null
-                  ? CharacterPersonality.values
-                      .firstWhere(
-                        (e) =>
-                            e.dbValue ==
-                            map["character_personality"],
-                        orElse: () =>
-                            CharacterPersonality.probSolver,
-                      )
-                      .myLabel
-                  : null,
+          characterPersonality: map["character_personality"] != null
+              ? CharacterPersonality.values
+                  .firstWhere(
+                    (e) => e.dbValue == map["character_personality"],
+                    orElse: () => CharacterPersonality.probSolver,
+                  )
+                  .myLabel
+              : null,
           characterNum: map["character_personality"] != null
               ? CharacterPersonality.values
                   .firstWhere(
-                    (e) =>
-                        e.dbValue ==
-                        map["character_personality"],
-                    orElse: () =>
-                        CharacterPersonality.probSolver,
+                    (e) => e.dbValue == map["character_personality"],
+                    orElse: () => CharacterPersonality.probSolver,
                   )
                   .assetLabel
               : null,
           onboardingScores: map['onboarding_scores'] ?? {},
+          solutionTypeWeights:
+              map['solution_type_weights'] as Map<String, dynamic>? ??
+                  {'breathing': 1.0, 'video': 1.0, 'action': 1.0},
+          negativeTags: map['negative_tags'] != null
+              ? List<String>.from(map['negative_tags'])
+              : [],
         );
 
   Map<String, dynamic> toJson() {
@@ -67,53 +70,64 @@ class UserProfileDto {
             orElse: () => CharacterPersonality.probSolver,
           )
           .dbValue,
-      "onboarding_scores": onboardingScores
+      "onboarding_scores": onboardingScores,
+      "solution_type_weights": solutionTypeWeights,
+      "negative_tags": negativeTags,
     };
   }
 
-  UserProfileDto copyWith(
-      {String? id,
-      DateTime? createdAt,
-      String? userNickNm,
-      String? aiCharacter,
-      String? characterNm,
-      String? characterPersonality,
-      int? characterNum,
-      Map<String, dynamic>? onboardingScores}) {
+  UserProfileDto copyWith({
+    String? id,
+    DateTime? createdAt,
+    String? userNickNm,
+    String? aiCharacter,
+    String? characterNm,
+    String? characterPersonality,
+    int? characterNum,
+    Map<String, dynamic>? onboardingScores,
+    Map<String, dynamic>? solutionTypeWeights,
+    List<String>? negativeTags,
+  }) {
     return UserProfileDto(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        userNickNm: userNickNm ?? this.userNickNm,
-        aiCharacter: aiCharacter ?? this.aiCharacter,
-        characterNm: characterNm ?? this.characterNm,
-        characterPersonality:
-            characterPersonality ?? this.characterPersonality,
-        onboardingScores:
-            onboardingScores ?? this.onboardingScores);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      userNickNm: userNickNm ?? this.userNickNm,
+      aiCharacter: aiCharacter ?? this.aiCharacter,
+      characterNm: characterNm ?? this.characterNm,
+      characterPersonality: characterPersonality ?? this.characterPersonality,
+      onboardingScores: onboardingScores ?? this.onboardingScores,
+      solutionTypeWeights: solutionTypeWeights ?? this.solutionTypeWeights,
+      negativeTags: negativeTags ?? this.negativeTags,
+    );
   }
 
   UserProfile toEntity() {
     return UserProfile(
-        id: id,
-        createdAt: createdAt ?? DateTime.now(),
-        userNickNm: userNickNm,
-        aiCharacter: aiCharacter,
-        characterNm: characterNm,
-        characterPersonality: characterPersonality,
-        characterNum: characterNum,
-        onboardingScores: onboardingScores);
+      id: id,
+      createdAt: createdAt ?? DateTime.now(),
+      userNickNm: userNickNm,
+      aiCharacter: aiCharacter,
+      characterNm: characterNm,
+      characterPersonality: characterPersonality,
+      characterNum: characterNum,
+      onboardingScores: onboardingScores,
+      solutionTypeWeights: (solutionTypeWeights ?? {})
+          .map((key, value) => MapEntry(key, (value as num).toDouble())),
+      negativeTags: negativeTags ?? [],
+    );
   }
 
-  UserProfileDto.fromEntity(UserProfile surveyResponse)
+  UserProfileDto.fromEntity(UserProfile userProfile)
       : this(
-          id: surveyResponse.id,
-          createdAt: surveyResponse.createdAt,
-          userNickNm: surveyResponse.userNickNm,
-          aiCharacter: surveyResponse.aiCharacter,
-          characterNm: surveyResponse.characterNm,
-          characterPersonality:
-              surveyResponse.characterPersonality,
-          characterNum: surveyResponse.characterNum,
-          onboardingScores: surveyResponse.onboardingScores,
+          id: userProfile.id,
+          createdAt: userProfile.createdAt,
+          userNickNm: userProfile.userNickNm,
+          aiCharacter: userProfile.aiCharacter,
+          characterNm: userProfile.characterNm,
+          characterPersonality: userProfile.characterPersonality,
+          characterNum: userProfile.characterNum,
+          onboardingScores: userProfile.onboardingScores,
+          solutionTypeWeights: userProfile.solutionTypeWeights,
+          negativeTags: userProfile.negativeTags,
         );
 }
