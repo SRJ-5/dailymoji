@@ -22,7 +22,7 @@ class AppTextStrings {
   static const String privacyPolicy = '개인정보 처리방침';
   static const String counselingCenter = '전문 상담 연결';
   static const String pageIsPreparing = '준비중';
-  static const String srj5Test = '감정 검사';
+  static const String srj5Test = '나의 감정 체크';
   static const String preparingTitle = '곧 만나요!';
   static const String preparingBody = '준비 중이에요';
 
