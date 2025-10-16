@@ -2,6 +2,7 @@ import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:dailymoji/domain/enums/character_personality.dart';
 import 'package:dailymoji/presentation/providers/user_providers.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UserState {
@@ -237,6 +238,13 @@ class UserViewModel extends Notifier<UserState> {
   Future<void> deleteAccount() async {
     final userId = state.userProfile!.id!;
     await ref.read(deletAccountUseCaseProvider).execute(userId);
+  }
+
+  Future<void> saveFcmTokenToSupabase(
+      TargetPlatform platform) async {
+    await ref
+        .read(saveFcmTokenToSupabaseUseCaseProvider)
+        .execute(platform);
   }
 }
 

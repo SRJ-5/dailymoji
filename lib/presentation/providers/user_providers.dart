@@ -12,6 +12,7 @@ import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_c
 import 'package:dailymoji/domain/use_cases/user_use_cases/google_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/insert_user_profile_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/log_out_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/save_fcm_token_to_supabase_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_name_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_personality_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_user_nickname_use_case.dart';
@@ -92,5 +93,12 @@ final fetchActionMissionUseCaseProvider = Provider(
 final deletAccountUseCaseProvider = Provider(
   (ref) {
     return DeleteAccountUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final saveFcmTokenToSupabaseUseCaseProvider = Provider(
+  (ref) {
+    return SaveFcmTokenToSupabaseUseCase(
+        ref.read(_userRepositoryProvider));
   },
 );
