@@ -9,6 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dailymoji/presentation/pages/report/widget/report_tutorial.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const _kCalendarSeenKey = 'report_tutorial_calendar_seen_v1';
+const _kChartSeenKey = 'report_tutorial_chart_seen_v1';
 
 class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
@@ -21,40 +25,74 @@ class _ReportPageState extends ConsumerState<ReportPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // 튜토리얼 제어
   bool _showTutorial = false;
   int _tutorialStep = 0; // 0: 모지달력 튜토리얼, 1: 모지차트 튜토리얼
 
-  bool _calendarTutorialShown = false;
-  bool _chartTutorialShown = false;
+  // 영구 저장된 "본 적 있음" 플래그
+  bool _calendarSeen = false;
+  bool _chartSeen = false;
+
+  // 초기 로딩 끝났는지
+  bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
-
     _tabController = TabController(length: 2, vsync: this);
 
-    // ✅ 탭 변경 리스너 (실제 탭 이동시에만 작동)
+    // 탭 변경 리스너: 차트 탭으로 이동했을 때만 체크
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) return; // 이동 중에는 무시
-      if (_tabController.index == 1 && !_chartTutorialShown) {
+      if (_tabController.indexIsChanging) return; // 스와이프 중 ignore
+      if (!mounted) return;
+      if (_tabController.index == 1 && !_chartSeen && !_showTutorial) {
+        // 차트 튜토리얼 최초 1회만 표시
         setState(() {
           _tutorialStep = 1;
           _showTutorial = true;
-          _chartTutorialShown = true;
         });
       }
     });
 
-    // ✅ 초기 진입 시 모지 달력 튜토리얼만 표시
-    Future.microtask(() {
-      if (!_calendarTutorialShown) {
-        setState(() {
-          _tutorialStep = 0;
-          _showTutorial = true;
-          _calendarTutorialShown = true;
-        });
+    _initPrefs();
+  }
+
+  Future<void> _initPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    _calendarSeen = prefs.getBool(_kCalendarSeenKey) ?? false;
+    _chartSeen = prefs.getBool(_kChartSeenKey) ?? false;
+
+    if (!mounted) return;
+    setState(() {
+      _loaded = true;
+      // 첫 진입 시: 달력 튜토리얼이 아직 안 보였으면 띄움
+      if (!_calendarSeen) {
+        _tutorialStep = 0;
+        _showTutorial = true;
       }
     });
+  }
+
+  // // 개발자용 튜토리얼 리셋 버튼 (삭제하지 말것)
+  // Future<void> resetReportTutorials() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.remove(_kCalendarSeenKey);
+  //   await prefs.remove(_kChartSeenKey);
+  // }
+
+  Future<void> _handleTutorialClose() async {
+    if (!mounted) return;
+    setState(() => _showTutorial = false);
+
+    // 누른 순간에만 '봤다' 저장
+    final prefs = await SharedPreferences.getInstance();
+    if (_tutorialStep == 0 && !_calendarSeen) {
+      _calendarSeen = true;
+      await prefs.setBool(_kCalendarSeenKey, true);
+    } else if (_tutorialStep == 1 && !_chartSeen) {
+      _chartSeen = true;
+      await prefs.setBool(_kChartSeenKey, true);
+    }
   }
 
   @override
@@ -67,6 +105,23 @@ class _ReportPageState extends ConsumerState<ReportPage>
   Widget build(BuildContext context) {
     final userProfile = ref.watch(userViewModelProvider);
 
+    if (!_loaded) {
+      return Scaffold(
+        body: Center(
+          child: Container(
+            height: double.infinity,
+            width: double.infinity,
+            color: AppColors.yellow50,
+            child: Center(
+              child: CircularProgressIndicator(
+                color: AppColors.green400,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Stack(children: [
       Scaffold(
         appBar: AppBar(
@@ -74,10 +129,22 @@ class _ReportPageState extends ConsumerState<ReportPage>
           centerTitle: true,
           title: AppText('리포트',
               style: AppFontStyles.heading3.copyWith(color: AppColors.grey900)),
+          // 개발자용 튜토리얼 리셋 버튼 (삭제하지 말것)
+          // actions: [
+          //   GestureDetector(
+          //     onTap: () {
+          //       resetReportTutorials();
+          //     },
+          //     child: Container(
+          //       color: Colors.red,
+          //       child: Text(
+          //         "튜토리얼 리셋",
+          //         style: TextStyle(color: Colors.white),
+          //       ),
+          //     ),
+          //   )
+          // ],
         ),
-
-        // ❌ 기존 DefaultTabController 제거
-        // ✅ 직접 만든 _tabController 연결
         body: Column(
           children: [
             Container(
@@ -117,13 +184,11 @@ class _ReportPageState extends ConsumerState<ReportPage>
         bottomNavigationBar: BottomBar(),
       ),
 
-      // ✅ 튜토리얼 오버레이 (화면 전체 덮음)
+      // 튜토리얼 오버레이
       if (_showTutorial)
         ReportTutorial(
           step: _tutorialStep,
-          onClose: () {
-            setState(() => _showTutorial = false);
-          },
+          onClose: _handleTutorialClose,
         ),
     ]);
   }

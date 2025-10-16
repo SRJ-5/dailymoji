@@ -17,29 +17,33 @@ class ReportTutorial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: step == 0 ? _calendarTutorial(context) : _chartTutorial(context),
-    );
+    return step == 0 ? _calendarTutorial(context) : _chartTutorial(context);
   }
 
   Widget _calendarTutorial(BuildContext context) {
-    return Stack(children: [
-      Image.asset(
-        AppImages.montlyTutorial,
-        fit: BoxFit.fill,
-      ),
-      _okButton(onPressed: onClose, page: "monthly"),
-    ]);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          AppImages.montlyTutorial,
+          fit: BoxFit.fill,
+        ),
+        _okButton(onPressed: onClose, page: "monthly"),
+      ],
+    );
   }
 
   Widget _chartTutorial(BuildContext context) {
-    return Stack(children: [
-      Image.asset(
-        AppImages.weeklyTutorial,
-        fit: BoxFit.fill,
-      ),
-      _okButton(onPressed: onClose, page: "weekly"),
-    ]);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          AppImages.weeklyTutorial,
+          fit: BoxFit.fill,
+        ),
+        _okButton(onPressed: onClose, page: "weekly"),
+      ],
+    );
   }
 }
 
