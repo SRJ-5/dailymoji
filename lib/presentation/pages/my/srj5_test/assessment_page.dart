@@ -64,9 +64,6 @@ class _AssessmentPageState
       selectedcluster = clusters[selectedClusterNum].cluster;
       selectedclusterNM = clusters[selectedClusterNum].clusterNM;
     }
-
-    // final clusterState = ref.read(assessmentViewModelProvider);
-    // selectedClusterNum = clusterState.clusterNum;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
@@ -94,8 +91,8 @@ class _AssessmentPageState
               SizedBox(height: 40.h),
               AppText(
                 stepIndex == totalSteps
-                    ? '$selectedclusterNM 감정 검사를 통해\n$userName님을 조금 더 알아볼게요'
-                    : '지금 $userName님께 필요한\n감정 검사를 선택해 볼까요?',
+                    ? '나의 $selectedclusterNM 체크를 통해\n$userName님을 조금 더 알아볼게요'
+                    : '$userName님이\n알려주고 싶은\n감정을 선택해 볼까요?',
                 textAlign: TextAlign.center,
                 style: AppFontStyles.heading2
                     .copyWith(color: AppColors.grey900),
@@ -103,8 +100,8 @@ class _AssessmentPageState
               SizedBox(height: 5.h),
               AppText(
                 stepIndex == totalSteps
-                    ? '솔직하게 답변할수록 AI 분석이 더 정교해져요 🍀'
-                    : '각 검사는 약 2분 정도 소요돼요 🌱',
+                    ? '솔직하게 답변할수록 도우미 답변이 더 정교해져요 🍀'
+                    : '도우미와 대화할 때 도움이 됩니다. 🌱',
                 textAlign: TextAlign.center,
                 style: AppFontStyles.bodyRegular14
                     .copyWith(color: AppColors.grey700),
@@ -112,51 +109,41 @@ class _AssessmentPageState
               Expanded(
                   child: stepIndex == totalSteps
                       ? StartTestWidget()
-                      : Column(
-                          children: List.generate(
-                            clusters.length,
-                            (index) {
-                              // final answer = _answerList[index];
-                              // final isSelected = _selectedIndex == index;
-                              return Column(
-                                children: [
-                                  index == 0
-                                      ? SizedBox(height: 30.h)
-                                      : SizedBox(height: 8.h),
-                                  GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          if (selectedClusterNum ==
-                                              index) {
-                                            selectedClusterNum =
-                                                -1;
-                                          } else {
-                                            selectedClusterNum =
-                                                index;
-                                          }
-                                        });
-                                      },
-                                      child: ClustersBox(
-                                          clusterIndex: index,
-                                          selectedNum:
-                                              selectedClusterNum,
-                                          cluster:
-                                              clusters[index])),
-                                ],
-                              );
-                            },
+                      : SingleChildScrollView(
+                          child: Column(
+                            children: List.generate(
+                              clusters.length,
+                              (index) {
+                                return Column(
+                                  children: [
+                                    index == 0
+                                        ? SizedBox(height: 30.h)
+                                        : SizedBox(height: 8.h),
+                                    GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            if (selectedClusterNum ==
+                                                index) {
+                                              selectedClusterNum =
+                                                  -1;
+                                            } else {
+                                              selectedClusterNum =
+                                                  index;
+                                            }
+                                          });
+                                        },
+                                        child: ClustersBox(
+                                            clusterIndex: index,
+                                            selectedNum:
+                                                selectedClusterNum,
+                                            cluster: clusters[
+                                                index])),
+                                  ],
+                                );
+                              },
+                            ),
                           ),
-                        )
-                  // child: stepIndex == totalSteps
-                  //     ? FinishWidget(
-                  //         text: '모든 준비 완료!\n함께 시작해 볼까요?',
-                  //       )
-                  //     : Srj5TestBox(
-                  //         key: ValueKey(stepIndex),
-                  //         text: personalities[stepIndex],
-                  //         questionIndex: stepIndex,
-                  //       )
-                  ),
+                        )),
             ],
           ),
         ),

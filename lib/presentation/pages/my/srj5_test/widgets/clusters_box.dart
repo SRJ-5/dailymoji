@@ -50,7 +50,7 @@ class ClustersBox extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(
-                  '${cluster.clusterNM!} 검사',
+                  '나의 ${cluster.clusterNM!} 체크',
                   style: AppFontStyles.bodyMedium16.copyWith(
                       color: selectedNum == clusterIndex
                           ? AppColors.grey50
