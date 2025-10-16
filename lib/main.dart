@@ -63,7 +63,7 @@ void main() async {
     print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
   });
 
-  // await initializeDateFormatting('ko_KR', null);
+  await initializeDateFormatting('ko_KR', null);
 
   //세로 고정
   await SystemChrome.setPreferredOrientations([

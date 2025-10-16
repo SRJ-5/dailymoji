@@ -116,11 +116,25 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
     final baseDays = clusterState.days;
     final baseMap = clusterState.emotionMap;
     final gScoreData = gScoreAsync.value;
+    final weeklySummary = clusterState.weeklySummary;
+    final String? overallSummaryText = weeklySummary?.overallSummary;
 
     // 두 종류의 데이터를 하나의 맵으로 병합
     final Map<String, EmotionData> mergedMap = {
       ...baseMap,
-      if (gScoreData != null) ...{AppTextStrings.clusterTotalScore: gScoreData}
+      if (gScoreData != null) ...{
+        AppTextStrings.clusterTotalScore: EmotionData(
+          color: gScoreData.color,
+          spots: gScoreData.spots,
+          description:
+              (overallSummaryText != null && overallSummaryText.isNotEmpty)
+                  ? overallSummaryText
+                  : AppTextStrings.weeklyReportGScoreDescription,
+          avg: gScoreData.avg,
+          max: gScoreData.max,
+          min: gScoreData.min,
+        )
+      }
     };
 
     // return FutureBuilder<gs.GScoreEmotionResult>(
