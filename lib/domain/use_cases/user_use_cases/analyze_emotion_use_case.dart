@@ -1,4 +1,3 @@
-// 감정 분석 비즈니스 로직을 담당하는 UseCase
 import 'package:dailymoji/domain/entities/emotional_record.dart';
 import 'package:dailymoji/domain/entities/message.dart';
 import 'package:dailymoji/domain/repositories/emotion_repository.dart';
@@ -15,6 +14,7 @@ class AnalyzeEmotionUseCase {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
   }) {
     return repository.analyzeEmotion(
       userId: userId,
@@ -23,6 +23,7 @@ class AnalyzeEmotionUseCase {
       onboarding: onboarding,
       characterPersonality: characterPersonality,
       history: history,
+      adhdContext: adhdContext,
     );
   }
 }

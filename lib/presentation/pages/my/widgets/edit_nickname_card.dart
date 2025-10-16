@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -35,7 +36,7 @@ class _NicknameEditCardState extends ConsumerState<NicknameEditCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppText(
-            widget.isUser ? "닉네임" : "캐릭터 이름",
+            widget.isUser ? "닉네임" : AppTextStrings.characterName,
             style: AppFontStyles.bodyBold14.copyWith(
               color: AppColors.grey900,
             ),

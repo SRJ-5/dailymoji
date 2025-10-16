@@ -25,4 +25,9 @@ class SolutionRepositoryImpl implements SolutionRepository {
     final data = await remoteDataSource.fetchSolutionById(solutionId);
     return Solution.fromJson(data);
   }
+
+  @override
+  Future<String?> fetchSolutionTextById(String solutionId) {
+    return remoteDataSource.fetchSolutionTextById(solutionId);
+  }
 }

@@ -10,26 +10,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SelectAiPersonality extends ConsumerStatefulWidget {
-  final Function(
-      {required int selectNum,
-      required String aiPersonality}) onSelect;
+  final Function({required int selectNum, required String aiPersonality}) onSelect;
   SelectAiPersonality({super.key, required this.onSelect});
 
   @override
-  ConsumerState<SelectAiPersonality> createState() =>
-      _SelectAiPersonalityState();
+  ConsumerState<SelectAiPersonality> createState() => _SelectAiPersonalityState();
 }
 
-class _SelectAiPersonalityState
-    extends ConsumerState<SelectAiPersonality> {
+class _SelectAiPersonalityState extends ConsumerState<SelectAiPersonality> {
   int _selectedIndex = 0;
 
-  PageController pageController =
-      PageController(initialPage: 0, viewportFraction: 0.75);
+  PageController pageController = PageController(initialPage: 0, viewportFraction: 0.75);
 
-  final _personalitiesOnboarding = CharacterPersonality.values
-      .map((e) => e.onboardingLabel)
-      .toList();
+  final _personalitiesOnboarding = CharacterPersonality.values.map((e) => e.onboardingLabel).toList();
 
   @override
   void initState() {
@@ -37,8 +30,7 @@ class _SelectAiPersonalityState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {}); // 첫 빌드 이후 pageController.page 값이 정확히 들어옴
     });
-    _selectedIndex =
-        ref.read(userViewModelProvider).characterNum;
+    _selectedIndex = ref.read(userViewModelProvider).characterNum;
   }
 
   @override
@@ -49,8 +41,7 @@ class _SelectAiPersonalityState
 
   @override
   Widget build(BuildContext context) {
-    final double viewportFraction =
-        pageController.viewportFraction;
+    final double viewportFraction = pageController.viewportFraction;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,14 +52,12 @@ class _SelectAiPersonalityState
         Container(
           width: double.infinity,
           height: 88.h,
-          padding: EdgeInsets.symmetric(
-              horizontal: 4.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
           child: Align(
             alignment: Alignment.centerLeft,
             child: AppText(
               '마음에 드는 도우미를\n골라볼까요?',
-              style: AppFontStyles.heading2
-                  .copyWith(color: AppColors.grey900),
+              style: AppFontStyles.heading2.copyWith(color: AppColors.grey900),
             ),
           ),
         ),
@@ -99,8 +88,7 @@ class _SelectAiPersonalityState
                       // ✨ 3. 차이에 따라 scale 값 계산 (1.0에서 0.8 사이로)
                       // 중앙(difference=0)일 때 1.0, 한 페이지 떨어졌을때(difference=1) 0.8
                       scale = 1.0 - (difference * 0.2);
-                      scale =
-                          scale.clamp(0.75, 1.0); // 최소/최대 크기 제한
+                      scale = scale.clamp(0.75, 1.0); // 최소/최대 크기 제한
                     }
 
                     // ✨ 4. Transform.scale로 크기 적용
@@ -111,11 +99,10 @@ class _SelectAiPersonalityState
                         alignment: Alignment.center,
                         child: CharacterBox(
                           viewportFraction: viewportFraction,
-                          personality:
-                              _personalitiesOnboarding[index],
-                          characterImage: AppImages
-                              .characterListProfile[index],
+                          personality: _personalitiesOnboarding[index],
+                          characterImage: AppImages.characterListProfile[index],
                           onSelect: widget.onSelect,
+                          isOnboarding: true,
                           index: index,
                         ), // 원래의 캐릭터 박스 위젯
                       ),

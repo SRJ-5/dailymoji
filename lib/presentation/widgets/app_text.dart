@@ -52,7 +52,7 @@ class AppText extends StatelessWidget {
       semanticsLabel: semanticsLabel,
       textWidthBasis: textWidthBasis,
       textHeightBehavior: textHeightBehavior,
-      textScaler: TextScaler.noScaling,
+      // textScaler: TextScaler.noScaling,
     );
   }
 }

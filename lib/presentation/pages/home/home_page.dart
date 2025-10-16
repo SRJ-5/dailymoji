@@ -291,14 +291,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                   children: [
                     Expanded(
                       child: AppText(
-                        AppTextStrings.goToChat,
+                        "무엇이든 입력하세요",
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey600),
                       ),
                     ),
                     selectedEmotion == null
                         ? SvgPicture.asset(AppIcons.send)
-                        : SvgPicture.asset(AppIcons.send_orange),
+                        : SvgPicture.asset(AppIcons.sendOrange),
                   ],
                 ),
               ),
