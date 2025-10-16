@@ -132,7 +132,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                           }
                         }
                       : null,
-                  child: AppText(isLastPage ? '완료' : '다음으로',
+                  child: AppText(isLastPage ? '완료하기' : '다음으로',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
                             ? AppColors.grey50
