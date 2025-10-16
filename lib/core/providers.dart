@@ -14,13 +14,14 @@ import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/domain/repositories/emotion_repository.dart';
 import 'package:dailymoji/domain/repositories/message_repository.dart';
 import 'package:dailymoji/domain/repositories/solution_repository.dart';
-import 'package:dailymoji/domain/use_cases/analyze_emotion_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/analyze_emotion_use_case.dart';
 import 'package:dailymoji/domain/use_cases/get_reaction_script_use_case.dart';
 import 'package:dailymoji/domain/use_cases/load_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/propose_solution_usecase.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/update_message_session_id_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/submit_solution_feedback_use_case.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -41,15 +42,18 @@ final httpClientProvider = Provider((ref) => http.Client());
 // Data Sources
 // -----------------------------------------------------------------------------
 
-final messageRemoteDataSourceProvider = Provider<MessageRemoteDataSource>((ref) {
+final messageRemoteDataSourceProvider =
+    Provider<MessageRemoteDataSource>((ref) {
   return MessageRemoteDataSourceImpl(ref.watch(supabaseClientProvider));
 });
 
-final emotionRemoteDataSourceProvider = Provider<EmotionRemoteDataSource>((ref) {
+final emotionRemoteDataSourceProvider =
+    Provider<EmotionRemoteDataSource>((ref) {
   return EmotionRemoteDataSourceImpl();
 });
 
-final solutionRemoteDataSourceProvider = Provider<SolutionRemoteDataSourceImpl>((ref) {
+final solutionRemoteDataSourceProvider =
+    Provider<SolutionRemoteDataSourceImpl>((ref) {
   final client = ref.watch(httpClientProvider);
   return SolutionRemoteDataSourceImpl(client);
 });
@@ -71,9 +75,11 @@ final solutionRepositoryProvider = Provider<SolutionRepository>((ref) {
 });
 
 // 홈 대사
-final homeDialogueRepositoryProvider = Provider<HomeDialogueRepository>((ref) => HomeDialogueRepositoryImpl());
+final homeDialogueRepositoryProvider =
+    Provider<HomeDialogueRepository>((ref) => HomeDialogueRepositoryImpl());
 // 이모지 대사
-final emojiReactionRepositoryProvider = Provider<EmojiReactionRepository>((ref) {
+final emojiReactionRepositoryProvider =
+    Provider<EmojiReactionRepository>((ref) {
   final analyze = ref.watch(analyzeEmotionUseCaseProvider);
   return EmojiReactionRepositoryImpl(analyze);
 });
@@ -90,7 +96,8 @@ final sendMessageUseCaseProvider = Provider<SendMessageUseCase>((ref) {
   return SendMessageUseCase(ref.watch(messageRepositoryProvider));
 });
 
-final subscribeMessagesUseCaseProvider = Provider<SubscribeMessagesUseCase>((ref) {
+final subscribeMessagesUseCaseProvider =
+    Provider<SubscribeMessagesUseCase>((ref) {
   return SubscribeMessagesUseCase(ref.watch(messageRepositoryProvider));
 });
 
@@ -98,7 +105,8 @@ final analyzeEmotionUseCaseProvider = Provider<AnalyzeEmotionUseCase>((ref) {
   return AnalyzeEmotionUseCase(ref.watch(emotionRepositoryProvider));
 });
 
-final updateMessageSessionIdUseCaseProvider = Provider<UpdateMessageSessionIdUseCase>((ref) {
+final updateMessageSessionIdUseCaseProvider =
+    Provider<UpdateMessageSessionIdUseCase>((ref) {
   return UpdateMessageSessionIdUseCase(ref.watch(messageRepositoryProvider));
 });
 
@@ -107,12 +115,19 @@ final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
   return ProposeSolutionUseCase(ref.watch(solutionRepositoryProvider));
 });
 
+// 솔루션 피드백 처리
+final submitSolutionFeedbackUseCaseProvider =
+    Provider<SubmitSolutionFeedbackUseCase>((ref) {
+  return SubmitSolutionFeedbackUseCase(ref.watch(emotionRepositoryProvider));
+});
+
 // -----------------------------------------------------------------------------
 // Feature-Specific Providers
 // -----------------------------------------------------------------------------
 
 // solutionId를 받아 특정 솔루션 정보 가져옴
-final solutionProvider = FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
+final solutionProvider =
+    FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
   final repository = ref.watch(solutionRepositoryProvider);
   return repository.fetchSolutionById(solutionId);
 });
@@ -140,8 +155,10 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
       : null;
 
   // RIN: 캐릭터 성향과 닉네임 함께 보내도록 수정
-  return repo.fetchHomeDialogue(selectedEmotion, personalityDbValue, userNickNm);
+  return repo.fetchHomeDialogue(
+      selectedEmotion, personalityDbValue, userNickNm);
 });
 
 // [추가됨] SolutionPage에서 ChatPage로 후속 조치 데이터를 전달하기 위한 Provider
-final solutionFollowUpProvider = StateProvider<Map<String, dynamic>?>((ref) => null);
+final solutionFollowUpProvider =
+    StateProvider<Map<String, dynamic>?>((ref) => null);

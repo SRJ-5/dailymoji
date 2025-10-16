@@ -10,5 +10,14 @@ abstract class EmotionRepository {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
+  });
+
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
   });
 }

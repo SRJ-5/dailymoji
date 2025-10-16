@@ -1,4 +1,6 @@
+import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:dailymoji/domain/enums/character_personality.dart';
 import 'package:dailymoji/presentation/providers/user_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,8 +60,8 @@ class UserViewModel extends Notifier<UserState> {
     final googleLogin = ref.read(googleLoginUseCaseProvider);
     final userId = await googleLogin.execute();
     if (userId != null) {
-      state = state.copyWith(
-          userProfile: state.userProfile?.copyWith(id: userId));
+      state =
+          state.copyWith(userProfile: state.userProfile?.copyWith(id: userId));
     }
     return userId;
   }
@@ -68,18 +70,16 @@ class UserViewModel extends Notifier<UserState> {
     final appleLogin = ref.read(appleLoginUseCaseProvider);
     final userId = await appleLogin.execute();
     if (userId != null) {
-      state = state.copyWith(
-          userProfile: state.userProfile?.copyWith(id: userId));
+      state =
+          state.copyWith(userProfile: state.userProfile?.copyWith(id: userId));
     }
     return userId;
   }
 
   Future<bool> getUserProfile(String userId) async {
-    final userProfile = await ref
-        .read(getUserProfileUseCaseProvider)
-        .execute(userId);
-    if (userProfile?.userNickNm != null &&
-        userProfile?.characterNum != null) {
+    final userProfile =
+        await ref.read(getUserProfileUseCaseProvider).execute(userId);
+    if (userProfile?.userNickNm != null && userProfile?.characterNum != null) {
       state = state.copyWith(userProfile: userProfile);
       return true;
     } else {
@@ -95,8 +95,7 @@ class UserViewModel extends Notifier<UserState> {
       return;
     }
 
-    final insertUserProfile =
-        ref.read(insertUserProfileUseCaseProvider);
+    final insertUserProfile = ref.read(insertUserProfileUseCaseProvider);
     // id가 확실히 포함된 profileToInsert를 전달
     await insertUserProfile.execute(profileToInsert);
   }
@@ -104,8 +103,7 @@ class UserViewModel extends Notifier<UserState> {
   void setAiName({required bool check, required String aiName}) {
     state = state.copyWith(
         step12: check,
-        userProfile:
-            state.userProfile?.copyWith(characterNm: aiName));
+        userProfile: state.userProfile?.copyWith(characterNm: aiName));
   }
 
   void setAiPersonality(
@@ -113,16 +111,13 @@ class UserViewModel extends Notifier<UserState> {
     state = state.copyWith(
         characterNum: selectNum,
         userProfile: state.userProfile?.copyWith(
-            characterPersonality: aiPersonality,
-            characterNum: selectNum));
+            characterPersonality: aiPersonality, characterNum: selectNum));
   }
 
-  void setUserNickName(
-      {required bool check, required String userNickName}) {
+  void setUserNickName({required bool check, required String userNickName}) {
     state = state.copyWith(
         step13: check,
-        userProfile: state.userProfile
-            ?.copyWith(userNickNm: userNickName));
+        userProfile: state.userProfile?.copyWith(userNickNm: userNickName));
   }
 
   void setAnswer({required int index, required int score}) {
@@ -130,8 +125,8 @@ class UserViewModel extends Notifier<UserState> {
     final newAnswers = List<int>.from(state.step2Answers);
     newAnswers[index] = score;
 
-    final currentScores = Map<String, dynamic>.from(
-        state.userProfile?.onboardingScores ?? {});
+    final currentScores =
+        Map<String, dynamic>.from(state.userProfile?.onboardingScores ?? {});
     currentScores['q${index + 1}'] = score;
 
     final newSurveyResponse = (state.userProfile ??
@@ -146,27 +141,20 @@ class UserViewModel extends Notifier<UserState> {
             ))
         .copyWith(onboardingScores: currentScores);
     state = state.copyWith(
-        step2Answers: newAnswers,
-        userProfile: newSurveyResponse);
+        step2Answers: newAnswers, userProfile: newSurveyResponse);
   }
 
-  Future<void> updateUserNickNM(
-      {required String newUserNickNM}) async {
+  Future<void> updateUserNickNM({required String newUserNickNM}) async {
     final updateUserProfile = await ref
         .read(updateUserNickNameUseCaseProvider)
-        .execute(
-            userNickNM: newUserNickNM,
-            uuid: state.userProfile!.id!);
+        .execute(userNickNM: newUserNickNM, uuid: state.userProfile!.id!);
     state = state.copyWith(userProfile: updateUserProfile);
   }
 
-  Future<void> updateCharacterNM(
-      {required String newCharacterNM}) async {
+  Future<void> updateCharacterNM({required String newCharacterNM}) async {
     final updateUserProfile = await ref
         .read(updateCharacterNameUseCaseProvider)
-        .execute(
-            uuid: state.userProfile!.id!,
-            characterNM: newCharacterNM);
+        .execute(uuid: state.userProfile!.id!, characterNM: newCharacterNM);
     state = state.copyWith(userProfile: updateUserProfile);
   }
 
@@ -178,6 +166,69 @@ class UserViewModel extends Notifier<UserState> {
             uuid: state.userProfile!.id!,
             characterPersonality: newCharacterPersonality);
     state = state.copyWith(userProfile: updateUserProfile);
+  }
+
+// RIN: 피드백 제출하기 위해 chat view model에서 호출할 함수
+  Future<void> submitSolutionFeedback({
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) async {
+    final userId = state.userProfile?.id;
+    if (userId == null) return;
+    try {
+      await ref.read(emotionRepositoryProvider).submitSolutionFeedback(
+            userId: userId,
+            solutionId: solutionId,
+            sessionId: sessionId,
+            solutionType: solutionType,
+            feedback: feedback,
+          );
+
+      // 피드백 제출 후 사용자 프로필을 다시 불러오는 로직.
+      // negative_tags가 즉시 반영되길 원한다면 유지
+      await getUserProfile(userId);
+    } catch (e) {
+      print("Error in UserViewModel while submitting feedback: $e");
+    }
+  }
+
+// RIN: 수면위생 팁을 가져오는 함수
+  Future<String> fetchSleepHygieneTip() async {
+    final profile = state.userProfile;
+    if (profile == null) return "규칙적인 수면 습관을 가져보세요."; // Fallback
+
+    final personalityDbValue = profile.characterPersonality != null
+        ? CharacterPersonality.values
+            .firstWhere((e) => e.myLabel == profile.characterPersonality,
+                orElse: () => CharacterPersonality.probSolver)
+            .dbValue
+        : null;
+
+    final tip = await ref.read(fetchSleepHygieneTipUseCaseProvider).execute(
+          personality: personalityDbValue,
+          userNickNm: profile.userNickNm,
+        );
+    return tip;
+  }
+
+  Future<String> fetchActionMission() async {
+    final profile = state.userProfile;
+    if (profile == null) return "잠시 자리에서 일어나 굳은 몸을 풀어보는 건 어때요?";
+
+    final personalityDbValue = profile.characterPersonality != null
+        ? CharacterPersonality.values
+            .firstWhere((e) => e.myLabel == profile.characterPersonality,
+                orElse: () => CharacterPersonality.probSolver)
+            .dbValue
+        : null;
+
+    final mission = await ref.read(fetchActionMissionUseCaseProvider).execute(
+          personality: personalityDbValue,
+          userNickNm: profile.userNickNm,
+        );
+    return mission;
   }
 
   Future<void> logOut() async {
@@ -197,7 +248,6 @@ class UserViewModel extends Notifier<UserState> {
   }
 }
 
-final userViewModelProvider =
-    NotifierProvider<UserViewModel, UserState>(() {
+final userViewModelProvider = NotifierProvider<UserViewModel, UserState>(() {
   return UserViewModel();
 });

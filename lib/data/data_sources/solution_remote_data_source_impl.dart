@@ -54,4 +54,18 @@ class SolutionRemoteDataSourceImpl implements SolutionRemoteDataSource {
           "Failed to fetch solution: ${response.statusCode} ${response.body}");
     }
   }
+
+  @override
+  Future<String?> fetchSolutionTextById(String solutionId) async {
+    // Supabase에서 직접 text를 가져오는 것이 더 효율적일 수 있으나,
+    // 일관성을 위해 기존처럼 API 서버를 통해 가져오는 방식으로 구현합니다.
+    // (만약 백엔드에 이 기능이 없다면, 백엔드에도 /solutions/{solution_id}/text 와 같은 엔드포인트 추가가 필요합니다)
+    try {
+      final data = await fetchSolutionById(solutionId); // 기존 함수 재활용
+      return data['text'] as String?;
+    } catch (e) {
+      print('Error fetching solution text by id: $e');
+      return null;
+    }
+  }
 }

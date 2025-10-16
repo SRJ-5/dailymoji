@@ -6,8 +6,8 @@ CLUSTERS = ["neg_low", "neg_high", "adhd", "sleep", "positive"]
 # ❤️ 1. 텍스트가 포함된 경우 사용할 기본 가중치
 # e.g. 최종 점수 = (텍스트 * 0.5) + (온보딩 * 0.2) + (이모지 * 0.3)
 FINAL_FUSION_WEIGHTS = {
-    "text": 0.45, # 사용자의 순간의 감정
-    "assessment": 0.40, # 사용자의 안정된 임상적 상태
+    "text": 0.60, # 사용자의 순간의 감정
+    "assessment": 0.25, # 사용자의 안정된 임상적 상태
     "icon": 0.15 # 보조적인 감정 신호
 }
 
@@ -20,17 +20,20 @@ FINAL_FUSION_WEIGHTS_NO_TEXT = {
 # 이모지는 저비용 입력이므로, 그 영향력을 0.5점으로 제한하는 EMOJI_ONLY_SCORE_CAP은 점수가 과도하게 변하는 것을 막는 매우 중요한 안전장치입니다.
 EMOJI_ONLY_SCORE_CAP = 0.5
 
+# assessment_score가 최종 점수 계산에 미치는 영향력을 제한하기 위한 상한선
+ASSESSMENT_SCORE_CAP = 0.7
+
 # 3. 텍스트는 있지만 아이콘이 없을 때를 위한 가중치 (비례 배분)
 FINAL_FUSION_WEIGHTS_NO_ICON = {
-    "text": 0.55, # text(0.45) + icon(0.15)의 일부
-    "assessment": 0.45  # assessment(0.40) + icon(0.15)의 일부
+    "text": 0.80, # text + icon
+    "assessment": 0.20  # assessment + icon
 }
 
 # --- Scoring Weights & Parameters ---
 # ❤️ Rule-based와 LLM 텍스트 분석 결과를 융합할 때의 가중치
 # 나중에 앱 운영 데이터가 쌓이고 LLM의 성능에 대한 확신이 들었을 때, 점진적으로 LLM의 비중을 50%까지 높여보는 것을 고려할 수 있습니다.
-W_RULE = 0.6 #Rule-based (60%): 명확한 키워드("너무 우울해")를 빠르고 정확하게 잡아내는 장점이 있습니다. 예측 가능성이 높아 안정적입니다.
-W_LLM = 0.4 #LLM (40%): 직접적인 단어는 없지만 미묘한 뉘앙스("요즘은 웃는 게 웃는 게 아닌 것 같아")를 파악하는 데 강점이 있습니다.
+W_RULE = 0.5 #Rule-based (60%->50%): 명확한 키워드("너무 우울해")를 빠르고 정확하게 잡아내는 장점이 있습니다. 예측 가능성이 높아 안정적입니다.
+W_LLM = 0.5 #LLM (40%->50%): 직접적인 단어는 없지만 미묘한 뉘앙스("요즘은 웃는 게 웃는 게 아닌 것 같아")를 파악하는 데 강점이 있습니다.
 
 # ❤️ 이모지-클러스터 매핑
 ICON_TO_CLUSTER = {
@@ -87,7 +90,7 @@ ONBOARDING_MAPPING = {
 DEEP_DIVE_MAX_SCORES = {
     "neg_low": 24,  # 8문항 * 3점
     "neg_high": 18, # 6문항 * 3점
-    "adhd_high": 18,# 6문항 * 3점
+    "adhd": 18,# 6문항 * 3점
     "sleep": 15,    # 5문항 * 3점
     "positive": 15  # 5문항 * 3점
 }

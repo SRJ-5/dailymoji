@@ -17,6 +17,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
   }) async {
     final dto = await remoteDataSource.analyzeEmotion(
       userId: userId,
@@ -25,7 +26,25 @@ class EmotionRepositoryImpl implements EmotionRepository {
       onboarding: onboarding ?? const {},
       characterPersonality: characterPersonality,
       history: history,
+      adhdContext: adhdContext,
     );
     return dto.toEntity();
+  }
+
+  @override
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) {
+    return remoteDataSource.submitSolutionFeedback(
+      userId: userId,
+      solutionId: solutionId,
+      sessionId: sessionId,
+      solutionType: solutionType,
+      feedback: feedback,
+    );
   }
 }

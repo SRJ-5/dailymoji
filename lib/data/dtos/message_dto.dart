@@ -12,6 +12,7 @@ class MessageDto {
   final Map<String, dynamic>? proposal;
   final String? imageAssetPath;
   final String? sessionId;
+  final String? solutionIdForFeedback;
 
   MessageDto({
     this.id,
@@ -23,6 +24,7 @@ class MessageDto {
     this.proposal,
     this.imageAssetPath,
     this.sessionId,
+    this.solutionIdForFeedback,
   });
   // DB에서 받은 JSON을 DTO 객체로 변환
   factory MessageDto.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class MessageDto {
       proposal: json['proposal'] as Map<String, dynamic>?,
       imageAssetPath: json['image_asset_path'] as String?,
       sessionId: json['session_id'] as String?,
+      solutionIdForFeedback: json['solution_id_for_feedback'] as String?,
     );
   }
 
@@ -49,7 +52,7 @@ class MessageDto {
       'proposal': proposal,
       'image_asset_path': imageAssetPath,
       'session_id': sessionId,
-      // id와 createdAt은 DB에서 자동 생성되므로 보내지 않음
+      'solution_id_for_feedback': solutionIdForFeedback,
     };
   }
 
@@ -76,7 +79,9 @@ class MessageDto {
       sender: messageSender, // 변환된 enum 사용
       type: messageType, // 변환된 enum 사용
       proposal: proposal,
-      imageAssetPath: isImageType ? EmojiAsset.fromString(imageKey).asset : null,
+      imageAssetPath:
+          isImageType ? EmojiAsset.fromString(imageKey).asset : null,
+      solutionIdForFeedback: solutionIdForFeedback,
     );
   }
 
@@ -104,6 +109,7 @@ class MessageDto {
       type: message.type.dbValue,
       proposal: message.proposal,
       imageAssetPath: message.imageAssetPath,
+      solutionIdForFeedback: message.solutionIdForFeedback,
       // sessionId는 Message Entity에 없으므로 DTO 생성 시에는 null
     );
   }
