@@ -20,14 +20,6 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
       startInclusive: startInclusive,
       endExclusive: endExclusive,
     );
-    // 테스트 후 삭제 바람
-    dtos.forEach(
-      (e) {
-        if (e.cluster == "adhd") {
-          print("${e.id}, ${e.cluster}, ${e.score}");
-        }
-      },
-    );
     return _toEntities(dtos);
   }
 

@@ -8,33 +8,85 @@ import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:dailymoji/presentation/pages/report/widget/report_tutorial.dart';
 
-// MODIFIED: 불필요한 위젯(BottomBar) 제거 및 구조 단순화. StatelessWidget -> ConsumerWidget으로 변경 가능하지만, 여기선 필요 없음.
-class ReportPage extends ConsumerWidget {
+class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final UserProfile = ref.watch(userViewModelProvider);
+  ConsumerState<ReportPage> createState() => _ReportPageState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.yellow50,
-        centerTitle: true,
-        title: AppText('리포트',
-            style: AppFontStyles.heading3
-                .copyWith(color: AppColors.grey900)),
-      ),
-      body: DefaultTabController(
-        length: 2,
-        child: Column(
+class _ReportPageState extends ConsumerState<ReportPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  bool _showTutorial = false;
+  int _tutorialStep = 0; // 0: 모지달력 튜토리얼, 1: 모지차트 튜토리얼
+
+  bool _calendarTutorialShown = false;
+  bool _chartTutorialShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _tabController = TabController(length: 2, vsync: this);
+
+    // ✅ 탭 변경 리스너 (실제 탭 이동시에만 작동)
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return; // 이동 중에는 무시
+      if (_tabController.index == 1 && !_chartTutorialShown) {
+        setState(() {
+          _tutorialStep = 1;
+          _showTutorial = true;
+          _chartTutorialShown = true;
+        });
+      }
+    });
+
+    // ✅ 초기 진입 시 모지 달력 튜토리얼만 표시
+    Future.microtask(() {
+      if (!_calendarTutorialShown) {
+        setState(() {
+          _tutorialStep = 0;
+          _showTutorial = true;
+          _calendarTutorialShown = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userProfile = ref.watch(userViewModelProvider);
+
+    return Stack(children: [
+      Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColors.yellow50,
+          centerTitle: true,
+          title: AppText('리포트',
+              style: AppFontStyles.heading3.copyWith(color: AppColors.grey900)),
+        ),
+
+        // ❌ 기존 DefaultTabController 제거
+        // ✅ 직접 만든 _tabController 연결
+        body: Column(
           children: [
             Container(
               padding: EdgeInsets.symmetric(horizontal: 28.w),
               color: AppColors.yellow50,
               child: TabBar(
+                controller: _tabController,
                 textScaler: TextScaler.noScaling,
-                tabs: [
+                tabs: const [
                   Tab(text: '모지 달력'),
                   Tab(text: '모지 차트'),
                 ],
@@ -42,30 +94,37 @@ class ReportPage extends ConsumerWidget {
                 unselectedLabelColor: AppColors.grey500,
                 indicator: UnderlineTabIndicator(
                   borderSide: BorderSide(
-                    width: 2.5, // 밑줄 두께
-                    color: AppColors.green500, // 선택된 탭 밑줄 색상
+                    width: 2.5,
+                    color: AppColors.green500,
                   ),
                 ),
-                indicatorSize:
-                    TabBarIndicatorSize.tab, // 탭 너비만큼 underline
+                indicatorSize: TabBarIndicatorSize.tab,
                 labelStyle: AppFontStyles.bodySemiBold14
                     .copyWith(color: AppColors.green500),
               ),
             ),
             Expanded(
-              child: TabBarView(children: [
-                MonthlyReport(
-                    userId: UserProfile.userProfile!.id!),
-                WeeklyReport(
-                    userId: UserProfile
-                        .userProfile!.id!), // MODIFIED: 위젯 이름 변경
-              ]),
-            )
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  MonthlyReport(userId: userProfile.userProfile!.id!),
+                  WeeklyReport(userId: userProfile.userProfile!.id!),
+                ],
+              ),
+            ),
           ],
         ),
+        bottomNavigationBar: BottomBar(),
       ),
-      bottomNavigationBar:
-          BottomBar(), // 앱 전체 네비게이션은 메인 레이아웃에서 관리하는 것이 좋음
-    );
+
+      // ✅ 튜토리얼 오버레이 (화면 전체 덮음)
+      if (_showTutorial)
+        ReportTutorial(
+          step: _tutorialStep,
+          onClose: () {
+            setState(() => _showTutorial = false);
+          },
+        ),
+    ]);
   }
 }

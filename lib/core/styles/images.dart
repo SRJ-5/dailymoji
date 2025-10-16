@@ -1,14 +1,12 @@
 class AppImages {
   // images
   static const String homeImage = 'assets/images/home_image.png';
-  static const String splashImage =
-      'assets/images/splash_image.png';
-  static const String preparingImage =
-      'assets/images/preparing_image.png';
-  static const String srj5TestStart =
-      'assets/images/srj5_test_start.png';
-  static const String srj5TestFinish =
-      'assets/images/srj5_test_finish.png';
+  static const String splashImage = 'assets/images/splash_image.png';
+  static const String preparingImage = 'assets/images/preparing_image.png';
+  static const String srj5TestStart = 'assets/images/srj5_test_start.png';
+  static const String srj5TestFinish = 'assets/images/srj5_test_finish.png';
+  static const String montlyTutorial = 'assets/images/monthly_tutorial.png';
+  static const String weeklyTutorial = 'assets/images/weekly_tutorial.png';
 
   // images - logo
   static const String dailymojiLogoBlack =
@@ -21,30 +19,20 @@ class AppImages {
       'assets/images/logo/google_login_logo.png';
 
   // images - emojis
-  static const String angryEmoji =
-      'assets/images/emojis/angry.png';
-  static const String cryingEmoji =
-      'assets/images/emojis/crying.png';
-  static const String shockedEmoji =
-      'assets/images/emojis/shocked.png';
-  static const String sleepingEmoji =
-      'assets/images/emojis/sleeping.png';
-  static const String smileEmoji =
-      'assets/images/emojis/smile.png';
-  static const String defaultEmoji =
-      'assets/images/emojis/default.png';
+  static const String angryEmoji = 'assets/images/emojis/angry.png';
+  static const String cryingEmoji = 'assets/images/emojis/crying.png';
+  static const String shockedEmoji = 'assets/images/emojis/shocked.png';
+  static const String sleepingEmoji = 'assets/images/emojis/sleeping.png';
+  static const String smileEmoji = 'assets/images/emojis/smile.png';
+  static const String defaultEmoji = 'assets/images/emojis/default.png';
 
   // images - character_cado
-  static const String cadoFace =
-      'assets/images/character_cado/cado_face.png';
-  static const String cadoLove =
-      'assets/images/character_cado/cado_love.png';
+  static const String cadoFace = 'assets/images/character_cado/cado_face.png';
+  static const String cadoLove = 'assets/images/character_cado/cado_love.png';
   static const String cadoProfile =
       'assets/images/character_cado/cado_profile.png';
-  static const String cadoWalk =
-      'assets/images/character_cado/cado_walk.png';
-  static const String cadoTest =
-      'assets/images/character_cado/cado_test.png';
+  static const String cadoWalk = 'assets/images/character_cado/cado_walk.png';
+  static const String cadoTest = 'assets/images/character_cado/cado_test.png';
   static const String cadoCalender =
       'assets/images/character_cado/cado_calender.png';
   static const String cadoRecord =
