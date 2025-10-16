@@ -56,7 +56,7 @@ class AppTextStrings {
   // My Page
   static const String myPageTitle = '마이페이지';
   static const String customSettings = '맞춤 설정';
-  static const String characterSettings = '캐릭터 설정';
+  static const String characterSettings = '도우미 설정';
   static const String information = '정보';
   static const String etc = '기타';
   static const String logout = '로그아웃';
@@ -64,16 +64,16 @@ class AppTextStrings {
   static const String confirmLogout = '로그아웃 하시겠어요?';
   static const String confirmDeleteAccount = '정말 탈퇴하시겠어요?';
   static const String nickname = '닉네임';
-  static const String characterName = '캐릭터 이름';
-  static const String characterPersonality = '캐릭터 성격';
+  static const String characterName = '도우미 이름';
+  static const String characterSelect = '도우미 선택';
   static const String editNickname = '닉네임 수정';
-  static const String editCharacterName = '캐릭터 이름 수정';
+  static const String editCharacterName = '도우미 이름 수정';
   static const String nicknameLengthRule = ' • 2~10자만 사용 가능해요';
   static const String myState = '나의 상태';
 
   // Onboarding
   static const String onboarding1TitleUser = '나의 닉네임 설정';
-  static const String onboarding1TitleAI = '캐릭터 설정';
+  static const String onboarding1TitleAI = '도우미 설정';
   static const String onboarding1Finish = '좋아요!\n이제 다음 단계로 가볼까요?';
   static const String onboarding2Title = '현재 %s의 감정 기록'; // %s for user name
   static const String onboarding2Finish = '모든 준비 완료!\n함께 시작해 볼까요?';

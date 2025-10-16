@@ -1,4 +1,7 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/icons.dart';
+import 'package:dailymoji/core/styles/images.dart';
+import 'package:dailymoji/presentation/pages/onboarding/widgets/part1/character_box.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/core/styles/colors.dart';
@@ -18,15 +21,30 @@ class CharacterSettingPage extends ConsumerStatefulWidget {
 }
 
 class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
+  PageController pageController = PageController(initialPage: 0, viewportFraction: 0.75);
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {}); // 첫 빌드 이후 pageController.page 값이 정확히 들어옴
+    });
   }
+
+  void selectCharacter({required int selectNum, required String aiPersonality}) {
+    ref.read(userViewModelProvider.notifier).setAiPersonality(selectNum: selectNum, aiPersonality: aiPersonality);
+  }
+
+  final _personalitiesOnboarding = CharacterPersonality.values.map((e) => e.onboardingLabel).toList();
 
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
     final userViewModel = ref.read(userViewModelProvider.notifier);
+
+    final double viewportFraction = pageController.viewportFraction;
+
+    int _selectedIndex = userState.characterNum;
 
     return Scaffold(
       backgroundColor: AppColors.yellow50,
@@ -34,7 +52,7 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
         backgroundColor: AppColors.yellow50,
         centerTitle: true,
         title: AppText(
-          "캐릭터 설정",
+          AppTextStrings.characterSettings,
           style: AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
         ),
       ),
@@ -42,10 +60,84 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 16.h),
               NicknameEditCard(nickname: userState.userProfile!.characterNm!, isUser: false),
               SizedBox(height: 16.h),
+              Container(
+                padding: EdgeInsets.only(top: 16.h, left: 16.w),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border(
+                    top: BorderSide(
+                      color: AppColors.grey100,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: AppText(
+                  AppTextStrings.characterSelect,
+                  style: AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
+                ),
+              ),
+              SizedBox(height: 30.h),
+              SizedBox(
+                height: 440.h,
+                // width: double.infinity,
+                child: OverflowBox(
+                  child: PageView.builder(
+                    scrollDirection: Axis.horizontal,
+                    controller: pageController,
+                    clipBehavior: Clip.none,
+                    itemCount: AppImages.characterListProfile.length,
+                    itemBuilder: (context, index) {
+                      // ✨ 1. AnimatedBuilder로 감싸기
+                      return AnimatedBuilder(
+                        animation: pageController,
+                        builder: (context, child) {
+                          double scale = 1.0;
+                          // pageController.page가 초기화되었는지 확인
+                          if (pageController.position.haveDimensions) {
+                            // ✨ 2. 현재 페이지 위치와 아이템 인덱스의 차이 계산
+                            final page = pageController.page!;
+                            final difference = (page - index).abs();
+
+                            // ✨ 3. 차이에 따라 scale 값 계산 (1.0에서 0.8 사이로)
+                            // 중앙(difference=0)일 때 1.0, 한 페이지 떨어졌을때(difference=1) 0.8
+                            scale = 1.0 - (difference * 0.2);
+                            scale = scale.clamp(0.75, 1.0); // 최소/최대 크기 제한
+                          }
+
+                          // ✨ 4. Transform.scale로 크기 적용
+                          return Transform.scale(
+                            scale: scale,
+                            child: Align(
+                              // Align은 그대로 유지하여 중앙 정렬
+                              alignment: Alignment.center,
+                              child: CharacterBox(
+                                viewportFraction: viewportFraction,
+                                personality: _personalitiesOnboarding[index],
+                                characterImage: AppImages.characterListProfile[index],
+                                onSelect: selectCharacter,
+                                isOnboarding: false,
+                                index: index,
+                              ), // 원래의 캐릭터 박스 위젯
+                            ),
+                          );
+                        },
+                      );
+
+                      // Align(
+                      //     alignment: Alignment.center,
+                      //     child: character_box());
+                    },
+                  ),
+                ),
+              )
+
+              /*
               GestureDetector(
                 onTap: () async {
                   final result = await showDialog<String>(
@@ -162,6 +254,7 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                   ),
                 ),
               ),
+            */
             ],
           ),
         ),
