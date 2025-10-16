@@ -1715,30 +1715,3 @@ async def handle_solution_feedback(payload: FeedbackRequest):
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
     
 
-
-
-# ======================================================================
-# ===           [테스트용] 수동 리포트 생성 엔드포인트          ===
-# ======================================================================
-class ManualSummaryRequest(BaseModel):
-    user_id: str
-    date: str # "YYYY-MM-DD" 형식
-
-@app.post("/tasks/manual-summary")
-async def run_manual_summary(payload: ManualSummaryRequest):
-    """
-    특정 사용자 ID와 날짜를 지정하여 데일리/주간 요약을 수동으로 생성하는 테스트용 엔드포인트.
-    """
-    print(f"--- 🏃‍♂️ [MANUAL] Running summary job for user: {payload.user_id}, date: {payload.date} ---")
-    try:
-        # 기존 요약 생성 함수들을 그대로 호출
-        await create_and_save_summary_for_user(payload.user_id, payload.date)
-        await create_and_save_weekly_summary_for_user(payload.user_id, payload.date)
-        
-        message = f"Successfully generated summaries for user {payload.user_id} on {payload.date}"
-        print(f"--- ✅ [MANUAL] {message} ---")
-        return {"message": message}
-    except Exception as e:
-        tb = traceback.format_exc()
-        print(f"🔥 [MANUAL] FAILED to generate summaries: {e}\n{tb}")
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
