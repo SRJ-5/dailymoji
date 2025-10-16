@@ -270,7 +270,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         min: _minScaledOpt(nhMin), // ★ null 제외하고 최솟값
         max: _maxScaledOpt(nhMax), // ★ null 제외하고 최댓값
         description: pick(
-          "스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...",
+          AppTextStrings.descNegHigh,
           s?.negHighSummary,
         ),
       ),
@@ -281,7 +281,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         min: _minScaledOpt(nlMin),
         max: _maxScaledOpt(nlMax),
         description: pick(
-          "지쳤다는 신호가 보여요...",
+          AppTextStrings.descNegLow,
           s?.negLowSummary,
         ),
       ),
@@ -292,7 +292,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         min: _minScaledOpt(posMin),
         max: _maxScaledOpt(posMax),
         description: pick(
-          "평온함을 느끼고 있다면...",
+          AppTextStrings.descPositive,
           s?.positiveSummary,
         ),
       ),
@@ -303,7 +303,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         min: _minScaledOpt(slMin),
         max: _maxScaledOpt(slMax),
         description: pick(
-          "잠이 오지 않거나...",
+          AppTextStrings.descSleep,
           s?.sleepSummary,
         ),
       ),
@@ -314,7 +314,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         min: _minScaledOpt(adMin),
         max: _maxScaledOpt(adMax),
         description: pick(
-          "집중이 흩어지고 마음이 산만할 때가 있죠...",
+          AppTextStrings.descAdhd,
           s?.adhdSummary,
         ),
       ),

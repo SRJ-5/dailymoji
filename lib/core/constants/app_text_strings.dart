@@ -38,15 +38,12 @@ class AppTextStrings {
   static const String breathingStep2Text = '7초간 숨을\n머금은 뒤';
   static const String breathingStep3Title = 'Step 3.';
   static const String breathingStep3Text = '8초간 천천히\n내쉬어 봐!';
-  static const String breathingFinishText =
-      '잘 했어요!\n이제 %s에 가서도\n호흡을 이어가 보세요'; // %s for context
-  static const String breathingDefaultFinishText =
-      '잘 했어요!\n이제 일상에 가서도\n호흡을 이어가 보세요';
+  static const String breathingFinishText = '잘 했어요!\n이제 %s에 가서도\n호흡을 이어가 보세요'; // %s for context
+  static const String breathingDefaultFinishText = '잘 했어요!\n이제 일상에 가서도\n호흡을 이어가 보세요';
   static const String tapToContinue = '화면을 탭해서 다음으로 넘어가세요';
 
   // Chat Page
-  static const String botIsTyping =
-      '%s이(가) 입력하고 있어요...'; // %s for character name
+  static const String botIsTyping = '%s이(가) 입력하고 있어요...'; // %s for character name
   static const String viewSolutionAgainDefault = '솔루션 다시 볼래!';
 
   // 유형별 다시보기 텍스트
@@ -88,26 +85,25 @@ class AppTextStrings {
   // My Page
   static const String myPageTitle = '마이페이지';
   static const String customSettings = '맞춤 설정';
-  static const String characterSettings = '캐릭터 설정';
+  static const String characterSettings = '도우미 설정';
   static const String information = '정보';
   static const String etc = '기타';
   static const String logout = '로그아웃';
   static const String deleteAccount = '회원 탈퇴';
   static const String confirmLogout = '로그아웃 하시겠어요?';
   static const String confirmDeleteAccount = '정말 탈퇴하시겠어요?';
-  static const String confirmDeleteAccountBody =
-      '탈퇴 시 모든 기록이 삭제되며, 복구할 수 없습니다.';
+  static const String confirmDeleteAccountBody = '탈퇴 시 모든 기록이 삭제되며, 복구할 수 없습니다.';
   static const String nickname = '닉네임';
-  static const String characterName = '캐릭터 이름';
-  static const String characterPersonality = '캐릭터 성격';
+  static const String characterName = '도우미 이름';
+  static const String characterSelect = '도우미 선택';
   static const String editNickname = '닉네임 수정';
-  static const String editCharacterName = '캐릭터 이름 수정';
+  static const String editCharacterName = '도우미 이름 수정';
   static const String nicknameLengthRule = ' • 2~10자만 사용 가능해요';
   static const String myState = '나의 상태';
 
   // Onboarding
   static const String onboarding1TitleUser = '나의 닉네임 설정';
-  static const String onboarding1TitleAI = '캐릭터 설정';
+  static const String onboarding1TitleAI = '도우미 설정';
   static const String onboarding1Finish = '좋아요!\n이제 다음 단계로 가볼까요?';
   static const String onboarding2Title = '현재 %s의 감정 기록'; // %s for user name
   static const String onboarding2Finish = '모든 준비 완료!\n함께 시작해 볼까요?';
@@ -130,23 +126,18 @@ class AppTextStrings {
   static const String monthlyReportDefaultSummary = '날짜를 선택하면 감정 요약을 볼 수 있어요.';
   static const String monthlyReportLoadingSummary = '감정 기록을 요약하고 있어요...';
   static const String monthlyReportFailedSummary = '요약을 불러오는 데 실패했어요.';
-  static const String monthlyReportErrorSummary =
-      '오류가 발생했어요: %s'; // %s for error
+  static const String monthlyReportErrorSummary = '오류가 발생했어요: %s'; // %s for error
   static const String monthlyReportNoRecord = '이 날은 기록이 없는 하루예요';
-  static const String monthlyReportDominantEmotion =
-      '이 날의 %s 감정이 %d점으로 가장 강렬했습니다.'; // %s for cluster, %d for score
+  static const String monthlyReportDominantEmotion = '이 날의 %s 감정이 %d점으로 가장 강렬했습니다.'; // %s for cluster, %d for score
   static const String checkChatHistory = '채팅 확인하기';
   static const String weeklyReportTitle = '나의 2주간 감정 상태';
-  static const String weeklyReportGScoreDescription =
-      '종합 감정 점수는 최근의 감정을 모아 보여주는 지표예요. 완벽히 좋은 점수일 필요는 없고, 그때그때의 마음을 솔직히 드러낸 기록이면 충분합니다. 수치보다 중요한 건, 당신이 꾸준히 스스로를 돌아보고 있다는 사실이에요.';
   static const String avgEmotionScore = '평균 감정 점수';
   static const String maxEmotionScore = '최고 감정 점수';
   static const String minEmotionScore = '최저 감정 점수';
   static const String scoreUnit = '%s점'; // %s for score value
 
   // Solution Page
-  static const String solutionLoadFailed =
-      '솔루션을 불러오는 데 실패했습니다: %s'; // %s for error
+  static const String solutionLoadFailed = '솔루션을 불러오는 데 실패했습니다: %s'; // %s for error
   static const String unplayableSolution = '재생할 수 없는 솔루션 유형입니다.';
 
   // Cluster Names
@@ -164,11 +155,16 @@ class AppTextStrings {
   static const String sleep = 'sleep';
   static const String positive = 'positive';
 
-  static const String descNegHigh = '스트레스가 쌓일 때는 마음이 무겁고 숨이 답답해지죠...';
-  static const String descNegLow = '지쳤다는 신호가 보여요...';
-  static const String descPositive = '평온함을 느끼고 있다면...';
-  static const String descSleep = '잠이 오지 않거나...';
-  static const String descAdhd = '집중이 흩어지고 마음이 산만할 때가 있죠...';
+  static const String weeklyReportGScoreDescription =
+      '종합 감정 점수는 불안, 우울, 수면 등 여러 감정 상태를 종합하여 나의 전반적인 마음 컨디션을 보여주는 지표예요. 점수가 높고 낮음보다 더 중요한 것은, 꾸준한 기록을 통해 나의 감정 변화 흐름을 스스로 이해해 나가는 과정 그 자체랍니다.';
+  static const String descNegHigh = '불안이나 스트레스 수치가 높게 나타났네요. 쉴 틈 없이 팽팽한 긴장감 속에서 마음이 많이 지쳤을 수 있어요. 나의 감정을 알아차리는 것만으로도 변화의 첫걸음이 될 수 있습니다.';
+  static const String descNegLow = '마음의 에너지가 많이 소진된 모습이 보여요. 평소에 즐겁던 일도 무감각하게 느껴지고, 작은 일에도 큰 노력이 필요한 시기일 수 있습니다. 지금은 잠시 멈춰서 스스로를 돌봐달라는 신호일지도 모릅니다.';
+  static const String descPositive =
+      '안정적이고 긍정적인 감정 상태를 잘 유지하고 계시는군요. 외부의 스트레스에도 마음의 중심을 지키는 힘, 즉 회복탄력성이 건강하게 작동하고 있다는 좋은 신호입니다. 이 평온한 감각을 충분히 만끽해 보세요.';
+  static const String descSleep =
+      '수면의 질이 다소 흔들리는 모습이 보이네요. 잠드는 것이 어렵거나, 잠든 후에도 자주 깨는 날들이 있었을 수 있습니다. 좋은 잠은 감정 회복의 가장 중요한 기반이 되기에, 꾸준히 수면 패턴을 살펴보는 것이 좋습니다.';
+  static const String descAdhd =
+      '주의가 쉽게 흩어지거나 여러 생각들로 마음이 분주한 날들이 있었던 것 같아요. 해야 할 일은 많은데 어디서부터 시작해야 할지 막막하게 느껴졌을 수 있습니다. 이는 의지의 문제가 아닌, 뇌의 실행 기능이 과부하된 자연스러운 상태일 수 있어요.';
 
   // weekly_report.dart 용
   static const String weeklyReportError = '에러: ';
@@ -190,22 +186,13 @@ class AppTextStrings {
   static const String adhdDescription = '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
   static const String positiveDescription = '마음의 안정감과 회복 탄력도를 확인해요';
 
+  // onboarding 및 srj5 test 응답 용
+  static const List<String> testAnswerList = ['전혀 느낀 적 없었어요', '한두 번 그런 기분이 있었어요', '일주일에 3~4일 정도 있었어요', '거의 매일 있었어요'];
+
   // guide Page RichText 용
-  static const List<String> startGuideText = [
-    '하루 감정을 기록하고\n',
-    '감정 점수를 기반으로\n',
-    '캘린더의'
-  ];
-  static const List<String> middleGuideText = [
-    'AI 분석 리포트',
-    '맞춤형 솔루션',
-    '감정 히스토리'
-  ];
-  static const List<String> endGuideText = [
-    '를 받아보세요',
-    '을 추천해 드려요',
-    '를 통해\n변화를 한눈에 확인하세요'
-  ];
+  static const List<String> startGuideText = ['하루 감정을 기록하고\n', '감정 점수를 기반으로\n', '캘린더의'];
+  static const List<String> middleGuideText = ['AI 분석 리포트', '맞춤형 솔루션', '감정 히스토리'];
+  static const List<String> endGuideText = ['를 받아보세요', '을 추천해 드려요', '를 통해\n변화를 한눈에 확인하세요'];
 }
 
 // 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가

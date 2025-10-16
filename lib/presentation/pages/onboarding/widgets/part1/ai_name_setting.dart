@@ -156,13 +156,17 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
                 .copyWith(color: AppColors.grey700),
           ),
           Spacer(),
-          Align(
-              alignment: Alignment.bottomRight,
-              child: Image.asset(
-                AppImages.characterListProfile[characterIndex],
-                width: 120.w,
-                height: 129.h,
-              )),
+          Container(
+            height: 190.h,
+            padding: EdgeInsets.only(right: 8.w),
+            child: Align(
+                alignment: Alignment.bottomRight,
+                child: Image.asset(
+                  AppImages
+                      .characterListonBoarding12[characterIndex],
+                  width: 90.w,
+                )),
+          ),
           SizedBox(height: 10.4.h),
         ],
       ),

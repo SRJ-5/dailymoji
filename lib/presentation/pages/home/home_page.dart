@@ -118,8 +118,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.initState();
     Future.microtask(() {
       ref.invalidate(homeDialogueProvider);
-      ref.invalidate(
-          selectedEmotionProvider); // 고라우터라 디스포즈가 안먹히는거같아서 그냥 이동할때 초기화
+      ref.invalidate(selectedEmotionProvider); // 고라우터라 디스포즈가 안먹히는거같아서 그냥 이동할때 초기화
     });
   }
 
@@ -131,8 +130,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedCharacterNum =
-        ref.read(userViewModelProvider).userProfile!.characterNum;
+    final selectedCharacterNum = ref.read(userViewModelProvider).userProfile!.characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
     // final dialogueAsync = ref.watch(homeDialogueProvider);
 
@@ -171,8 +169,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 Image.asset(
                   // 없애기
-                  AppImages.characterListProfile[
-                      selectedCharacterNum!], // 중앙 캐릭터 이미지
+                  AppImages.characterListProfile[selectedCharacterNum!], // 중앙 캐릭터 이미지
                   height: 240.h,
                   width: 160.w,
                 ),
@@ -192,8 +189,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Center(
                       child: AppText(
                         displayText, // 타이핑 효과 적용된 텍스트
-                        style: AppFontStyles.bodyBold16
-                            .copyWith(color: AppColors.grey900),
+                        style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
                         textAlign: TextAlign.center,
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
@@ -211,10 +207,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       alignment: Alignment.center,
                       height: 54.h,
                       width: 54.w,
-                      child: _Imoge(
-                          imoKey: "angry",
-                          selectedEmotion: selectedEmotion,
-                          onEmojiTap: onEmojiTap),
+                      child: _Imoge(imoKey: "angry", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
                     bottom: 103.h,
@@ -223,10 +216,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       alignment: Alignment.center,
                       height: 54.h,
                       width: 54.w,
-                      child: _Imoge(
-                          imoKey: "crying",
-                          selectedEmotion: selectedEmotion,
-                          onEmojiTap: onEmojiTap),
+                      child: _Imoge(imoKey: "crying", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
                     bottom: 8.h,
@@ -235,10 +225,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       alignment: Alignment.center,
                       height: 54.h,
                       width: 54.w,
-                      child: _Imoge(
-                          imoKey: "shocked",
-                          selectedEmotion: selectedEmotion,
-                          onEmojiTap: onEmojiTap),
+                      child: _Imoge(imoKey: "shocked", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
                     bottom: 67.h,
@@ -247,10 +234,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       alignment: Alignment.center,
                       height: 54.h,
                       width: 54.w,
-                      child: _Imoge(
-                          imoKey: "sleeping",
-                          selectedEmotion: selectedEmotion,
-                          onEmojiTap: onEmojiTap),
+                      child: _Imoge(imoKey: "sleeping", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap),
                     )),
                 Positioned(
                     top: 87.h,
@@ -259,10 +243,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       alignment: Alignment.center,
                       height: 54.h,
                       width: 54.w,
-                      child: _Imoge(
-                          imoKey: "smile",
-                          selectedEmotion: selectedEmotion,
-                          onEmojiTap: onEmojiTap),
+                      child: _Imoge(imoKey: "smile", selectedEmotion: selectedEmotion, onEmojiTap: onEmojiTap),
                     )),
               ],
             ),
@@ -272,8 +253,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
       bottomSheet: GestureDetector(
         onTap: () {
-          ref.invalidate(
-              selectedEmotionProvider); // 고라우터라 디스포즈가 안먹히는거같아서 그냥 이동할때 초기화
+          ref.invalidate(selectedEmotionProvider); // 고라우터라 디스포즈가 안먹히는거같아서 그냥 이동할때 초기화
           context.go('/home/chat', extra: selectedEmotion);
         },
         child: Container(
@@ -292,13 +272,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                 Expanded(
                   child: AppText(
                     "무엇이든 입력하세요",
-                    style: AppFontStyles.bodyRegular14
-                        .copyWith(color: AppColors.grey600),
+                    style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
                   ),
                 ),
-                selectedEmotion == null
-                    ? SvgPicture.asset(AppIcons.send)
-                    : SvgPicture.asset(AppIcons.send_orange),
+                selectedEmotion == null ? SvgPicture.asset(AppIcons.send) : SvgPicture.asset(AppIcons.sendOrange),
               ],
             ),
           ),
@@ -314,10 +291,7 @@ class _Imoge extends StatelessWidget {
   final String? selectedEmotion;
   final void Function(String) onEmojiTap;
 
-  const _Imoge(
-      {required this.imoKey,
-      required this.selectedEmotion,
-      required this.onEmojiTap});
+  const _Imoge({required this.imoKey, required this.selectedEmotion, required this.onEmojiTap});
 
 // 으아아아아아아아!!! 이게 문제였음 하.. 경로다른거!!
   // String get imoAssetPath => "assets/images/emoticon/emo_3d_${imoKey}_02.png";
@@ -342,51 +316,45 @@ class _Imoge extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => onEmojiTap(imoKey),
-      child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-              width: isSelected ? 54.w : 48.w,
-              height: isSelected ? 54.h : 48.h,
-              child: ColorFiltered(
-                colorFilter: isSelected
-                    ? const ColorFilter.mode(
-                        Colors.transparent, // 원래 색 (필터 없음)
-                        BlendMode.multiply,
-                      )
-                    : const ColorFilter.matrix(<double>[
-                        0.2126, 0.7152, 0.0722, 0, 0, // R
-                        0.2126, 0.7152, 0.0722, 0, 0, // G
-                        0.2126, 0.7152, 0.0722, 0, 0, // B
-                        0, 0, 0, 1, 0, // A
-                      ]),
-                child: Image.asset(imagePath),
-              ),
-            ),
-            if (isSelected)
-              Positioned(
-                bottom: -37.h,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: AppColors.white,
-                      border:
-                          Border.all(color: AppColors.orange200, width: 2.r),
-                      borderRadius: BorderRadius.circular(20.r)),
-                  child: Center(
-                    child: Text(
-                      emotionLabel,
-                      style: AppFontStyles.bodyRegular12.copyWith(
-                        color: AppColors.grey900,
-                      ),
-                    ),
+      child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          width: isSelected ? 54.w : 48.w,
+          height: isSelected ? 54.h : 48.h,
+          child: ColorFiltered(
+            colorFilter: isSelected
+                ? const ColorFilter.mode(
+                    Colors.transparent, // 원래 색 (필터 없음)
+                    BlendMode.multiply,
+                  )
+                : const ColorFilter.matrix(<double>[
+                    0.2126, 0.7152, 0.0722, 0, 0, // R
+                    0.2126, 0.7152, 0.0722, 0, 0, // G
+                    0.2126, 0.7152, 0.0722, 0, 0, // B
+                    0, 0, 0, 1, 0, // A
+                  ]),
+            child: Image.asset(imagePath),
+          ),
+        ),
+        if (isSelected)
+          Positioned(
+            bottom: -37.h,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                  color: AppColors.white, border: Border.all(color: AppColors.orange200, width: 2.r), borderRadius: BorderRadius.circular(20.r)),
+              child: Center(
+                child: Text(
+                  emotionLabel,
+                  style: AppFontStyles.bodyRegular12.copyWith(
+                    color: AppColors.grey900,
                   ),
                 ),
               ),
-          ]),
+            ),
+          ),
+      ]),
     );
   }
 }
