@@ -11,8 +11,18 @@ abstract class UserProfileRepository {
   Future<UserProfile> updateCharacterNM(
       {required String uuid, required String characterNM});
   Future<UserProfile> updateCharacterPersonality(
-      {required String uuid,
-      required String characterPersonality});
+      {required String uuid, required String characterPersonality});
+
+  Future<String> fetchSleepHygieneTip({
+    String? personality,
+    String? userNickNm,
+  });
+
+  Future<String> fetchActionMission({
+    String? personality,
+    String? userNickNm,
+  });
+
   Future<void> logOut();
   Future<void> deleteAccount(String userId);
   Future<void> saveFcmTokenToSupabase(TargetPlatform platform);

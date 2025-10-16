@@ -1,4 +1,6 @@
+import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/domain/entities/user_profile.dart';
+import 'package:dailymoji/domain/enums/character_personality.dart';
 import 'package:dailymoji/presentation/providers/user_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,6 +141,67 @@ class UserViewModel extends Notifier<UserState> {
         .read(updateCharacterPersonalityUseCaseProvider)
         .execute(uuid: state.userProfile!.id!, characterPersonality: newCharacterPersonality);
     state = state.copyWith(userProfile: updateUserProfile);
+  }
+
+// RIN: 피드백 제출하기 위해 chat view model에서 호출할 함수
+  Future<void> submitSolutionFeedback({
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) async {
+    final userId = state.userProfile?.id;
+    if (userId == null) return;
+    try {
+      await ref.read(emotionRepositoryProvider).submitSolutionFeedback(
+            userId: userId,
+            solutionId: solutionId,
+            sessionId: sessionId,
+            solutionType: solutionType,
+            feedback: feedback,
+          );
+
+      // 피드백 제출 후 사용자 프로필을 다시 불러오는 로직.
+      // negative_tags가 즉시 반영되길 원한다면 유지
+      await getUserProfile(userId);
+    } catch (e) {
+      print("Error in UserViewModel while submitting feedback: $e");
+    }
+  }
+
+// RIN: 수면위생 팁을 가져오는 함수
+  Future<String> fetchSleepHygieneTip() async {
+    final profile = state.userProfile;
+    if (profile == null) return "규칙적인 수면 습관을 가져보세요."; // Fallback
+
+    final personalityDbValue = profile.characterPersonality != null
+        ? CharacterPersonality.values
+            .firstWhere((e) => e.myLabel == profile.characterPersonality, orElse: () => CharacterPersonality.probSolver)
+            .dbValue
+        : null;
+
+    final tip = await ref.read(fetchSleepHygieneTipUseCaseProvider).execute(
+          personality: personalityDbValue,
+          userNickNm: profile.userNickNm,
+        );
+    return tip;
+  }
+
+  Future<String> fetchActionMission() async {
+    final profile = state.userProfile;
+    if (profile == null) return "잠시 자리에서 일어나 굳은 몸을 풀어보는 건 어때요?";
+
+    final personalityDbValue = profile.characterPersonality != null
+        ? CharacterPersonality.values
+            .firstWhere((e) => e.myLabel == profile.characterPersonality, orElse: () => CharacterPersonality.probSolver)
+            .dbValue
+        : null;
+
+    final mission = await ref.read(fetchActionMissionUseCaseProvider).execute(
+          personality: personalityDbValue,
+          userNickNm: profile.userNickNm,
+        );
+    return mission;
   }
 
   Future<void> logOut() async {

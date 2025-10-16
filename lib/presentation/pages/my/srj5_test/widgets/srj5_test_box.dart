@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/my/srj5_test/assessment_view_model.dart';
@@ -23,12 +24,7 @@ class Srj5TestBox extends ConsumerStatefulWidget {
 class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
   late int _selectedIndex = -1;
 
-  final List<String> _answerList = [
-    '전혀없음',
-    '며칠',
-    '절반 이상',
-    '거의 매일'
-  ];
+  final List<String> _answerList = AppTextStrings.testAnswerList;
 
   @override
   void initState() {
@@ -89,11 +85,6 @@ class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
             },
           ),
         ),
-        AppText(
-          '• 지난2주동안, 아래의 경험을 얼마나 자주 느끼셨나요?',
-          style: AppFontStyles.bodyRegular12
-              .copyWith(color: AppColors.grey700),
-        )
       ],
     );
   }

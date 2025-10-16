@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -42,12 +44,23 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
   late AnimationController _timerController;
   Timer? _secondTimer; // 1초마다 숫자를 업데이트할 Timer 변수 추가
 
+  // 영상 솔루션 페이지와 동일한 로직을 위한 변수 추가
+  bool _isNavigating = false;
+  String? _exitReason;
+
   // RIN: 마지막 멘트 컨텍스트 추가
   List<Map<String, dynamic>> _steps = [];
 
   @override
   void initState() {
     super.initState();
+
+    // 세로 고정 UI 적용
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     // 1. 기본값으로 즉시 초기화 (late error 방지)
     _steps = [
@@ -182,10 +195,39 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     }
   }
 
+  // 영상 솔루션 페이지와 동일한 종료 및 네비게이션 로직 함수 추가
+  void _startExitSequence() {
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    if (!widget.isReview) {
+      final reason = _exitReason ?? 'breathing_ended';
+      debugPrint("RIN: Setting result and navigating with reason: $reason");
+
+      ref.read(solutionResultProvider.notifier).state = {
+        'reason': reason,
+        'solutionId': widget.solutionId,
+        'sessionId': widget.sessionId,
+        'solution_type': 'breathing', // 솔루션 타입을 명확히 전달
+      };
+    } else {
+      debugPrint("RIN: This is a review. Skipping follow-up message.");
+    }
+    context.go('/home/chat');
+  }
+
   @override
   void dispose() {
+    // 페이지 나갈 때 화면 UI 원상복구
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     _blinkController.dispose();
-    _timerController.dispose(); // RIN: 타이머 추가
+    _timerController.dispose();
+    _secondTimer?.cancel();
     super.dispose();
   }
 
@@ -196,9 +238,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
+        // 호흡이 끝나고 힌트가 보일 때 탭하면 채팅방으로 돌아가도록 수정
         if (_showFinalHint) {
-          context.pushReplacement(
-              '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}');
+          _startExitSequence();
         }
       },
       child: Scaffold(
@@ -252,7 +294,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               ),
             ),
 
-            //RIN: 타이머 (Step 1~3 동안만 표시)
+            // RIN: 타이머 (Step 1~3 동안만 표시)
             Positioned(
               top: 625.h,
               child: AnimatedBuilder(
@@ -308,6 +350,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 child: FadeTransition(
                   opacity: _blinkAnimation,
                   child: AppText(
+                    // TODO: "채팅방으로 넘어가세요"??
                     "화면을 탭해서 다음으로 넘어가세요",
                     style: AppFontStyles.bodyMedium18
                         .copyWith(color: AppColors.grey400),

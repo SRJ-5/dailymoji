@@ -22,6 +22,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   // .env 불러오기
   await dotenv.load(fileName: ".env");
 
@@ -58,7 +63,7 @@ void main() async {
     print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
   });
 
-  await initializeDateFormatting('ko_KR', null);
+  // await initializeDateFormatting('ko_KR', null);
 
   //세로 고정
   await SystemChrome.setPreferredOrientations([
