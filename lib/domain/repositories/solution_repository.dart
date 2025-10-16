@@ -8,4 +8,6 @@ abstract class SolutionRepository {
   });
 
   Future<Solution> fetchSolutionById(String solutionId);
+
+  Future<String?> fetchSolutionTextById(String solutionId);
 }

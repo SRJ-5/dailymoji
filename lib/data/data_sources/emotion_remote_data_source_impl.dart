@@ -17,6 +17,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
     List<Message>? history,
+    Map<String, dynamic>? adhdContext,
   }) async {
     try {
       // 1. .env 파일에 설정한 FastAPI 서버 URL로 /analyze 엔드포인트 호출
@@ -52,7 +53,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
           'timestamp': DateTime.now().toIso8601String(),
           'onboarding': onboarding,
           'character_personality': personalityDbValue,
-          'history': historyPayload, // 1. history 페이로드 추가
+          'history': historyPayload,
+          'adhd_context': adhdContext,
         }),
       );
 
@@ -67,15 +69,49 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         final jsonResult = jsonDecode(responseBody);
 
         if (jsonResult == null || jsonResult is! Map<String, dynamic>) {
-          throw Exception('Received null or invalid JSON from API. Response Body: $responseBody');
+          throw Exception(
+              'Received null or invalid JSON from API. Response Body: $responseBody');
         }
 
         return EmotionalRecordDto.fromJson(jsonResult);
       } else {
-        throw Exception('Failed to analyze emotion: ${response.statusCode} ${response.body}');
+        throw Exception(
+            'Failed to analyze emotion: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       print("Emotion analysis http error: $e");
+      rethrow;
+    }
+  }
+
+// 피드백 결과로 가중치부여
+  @override
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/solutions/feedback');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'solution_id': solutionId,
+          'session_id': sessionId,
+          'solution_type': solutionType,
+          'feedback': feedback,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to submit feedback: ${response.body}');
+      }
+    } catch (e) {
+      print('Error submitting solution feedback: $e');
       rethrow;
     }
   }

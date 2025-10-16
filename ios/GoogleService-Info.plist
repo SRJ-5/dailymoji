@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Firebase 설정 -->
+	<key>API_KEY</key>
+	<string>AIzaSyCkpjqT2-S3WKDk6dF8B94uLEp4h7LlSxE</string>
+	<key>GCM_SENDER_ID</key>
+	<string>86959046633</string>	
+	<key>PROJECT_ID</key>
+	<string>dailymoji-push</string>
+	<key>STORAGE_BUCKET</key>
+	<string>dailymoji-push.firebasestorage.app</string>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:86959046633:ios:8df68d61d6e497aef79578</string>
+	
+	<!-- Google Sign-In 설정 -->
+	<key>CLIENT_ID</key>
+	<string>18885609599-34jdl4ccqmre9pqqe4quglnd5lu89vck.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.18885609599-34jdl4ccqmre9pqqe4quglnd5lu89vck</string>
+	
+	<!-- 공통 설정 -->
+	<key>BUNDLE_ID</key>
+	<string>com.srj5.dailymoji</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	
+	<!-- Firebase 기능 설정 -->
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+</dict>
+</plist>
+
+
+
+
+
+

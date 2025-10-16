@@ -4,8 +4,7 @@ import 'package:dailymoji/domain/entities/user_profile.dart';
 import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
 import 'package:flutter/src/foundation/platform.dart';
 
-class UserProfileRepositoryImpl
-    implements UserProfileRepository {
+class UserProfileRepositoryImpl implements UserProfileRepository {
   UserProfileRepositoryImpl(this._userDataSource);
   final UserProfileDataSource _userDataSource;
 
@@ -31,8 +30,7 @@ class UserProfileRepositoryImpl
 
   @override
   Future<void> insertUserProfile(UserProfile userProfile) async {
-    final userProfileDto =
-        UserProfileDto.fromEntity(userProfile);
+    final userProfileDto = UserProfileDto.fromEntity(userProfile);
     await _userDataSource.insertUserProfile(userProfileDto);
   }
 
@@ -46,8 +44,7 @@ class UserProfileRepositoryImpl
 
   @override
   Future<UserProfile> updateCharacterNM(
-      {required String uuid,
-      required String characterNM}) async {
+      {required String uuid, required String characterNM}) async {
     final result = await _userDataSource.updateCharacterNM(
         uuid: uuid, characterNM: characterNM);
     return result.toEntity();
@@ -55,13 +52,27 @@ class UserProfileRepositoryImpl
 
   @override
   Future<UserProfile> updateCharacterPersonality(
-      {required String uuid,
-      required String characterPersonality}) async {
-    final result =
-        await _userDataSource.updateCharacterPersonality(
-            uuid: uuid,
-            characterPersonality: characterPersonality);
+      {required String uuid, required String characterPersonality}) async {
+    final result = await _userDataSource.updateCharacterPersonality(
+        uuid: uuid, characterPersonality: characterPersonality);
     return result.toEntity();
+  }
+
+  @override
+  Future<String> fetchSleepHygieneTip(
+      {String? personality, String? userNickNm}) {
+    return _userDataSource.fetchSleepHygieneTip(
+      personality: personality,
+      userNickNm: userNickNm,
+    );
+  }
+
+  @override
+  Future<String> fetchActionMission({String? personality, String? userNickNm}) {
+    return _userDataSource.fetchActionMission(
+      personality: personality,
+      userNickNm: userNickNm,
+    );
   }
 
   @override

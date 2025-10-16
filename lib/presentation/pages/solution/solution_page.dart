@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -19,12 +20,15 @@ class SolutionPage extends ConsumerWidget {
   final String solutionId;
   final String? sessionId;
   final bool isReview;
+  final String solutionType;
 
-  const SolutionPage(
-      {super.key,
-      required this.solutionId,
-      this.sessionId,
-      this.isReview = false});
+  const SolutionPage({
+    super.key,
+    required this.solutionId,
+    this.sessionId,
+    this.isReview = false,
+    this.solutionType = 'video',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,17 +44,28 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: AppText("솔루션을 불러오는 데 실패했습니다: $err",
+          child: AppText(
+              '${AppTextStrings.solutionLoadFailed.split('%s')[0]}$err',
               style: const TextStyle(color: AppColors.white)),
         ),
       ),
       data: (solution) {
         // 데이터 로딩 성공 시, 비디오 플레이어 UI를 렌더링
+        if (solution.videoId == null) {
+          return const Scaffold(
+            backgroundColor: AppColors.black,
+            body: Center(
+              child: AppText("재생할 수 없는 솔루션 유형입니다.",
+                  style: TextStyle(color: AppColors.white)),
+            ),
+          );
+        }
         return _PlayerView(
           solutionId: solutionId,
           sessionId: sessionId,
           solution: solution,
           isReview: isReview,
+          solutionType: solutionType,
         );
       },
     );
@@ -63,12 +78,14 @@ class _PlayerView extends ConsumerStatefulWidget {
   final String? sessionId;
   final Solution solution;
   final bool isReview;
+  final String solutionType;
 
   const _PlayerView({
     required this.solutionId,
     this.sessionId,
     required this.solution,
     required this.isReview,
+    required this.solutionType,
   });
 
   @override
@@ -97,14 +114,14 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
     // Provider로부터 받은 solution 데이터로 컨트롤러 초기화
     _controller = YoutubePlayerController(
-      initialVideoId: widget.solution.videoId,
+      initialVideoId: widget.solution.videoId!,
       flags: YoutubePlayerFlags(
         autoPlay: true, // 페이지 진입 시 자동 재생
         hideControls: true, // 기본 컨트롤 숨김
         disableDragSeek: true, // 드래그 시킹 비활성화(원하면 false)
         enableCaption: false,
         mute: true, // 자동재생 정책 회피하려면 true로 시작 후 첫 탭에서 unMute()
-        startAt: widget.solution.startAt,
+        startAt: widget.solution.startAt ?? 0,
         endAt: widget.solution.endAt,
       ),
     );
@@ -177,6 +194,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
         'reason': reason,
         'solutionId': widget.solutionId,
         'sessionId': widget.sessionId,
+        'solution_type': widget.solutionType,
       };
     } else {
       debugPrint("RIN: This is a review. Skipping follow-up message.");
