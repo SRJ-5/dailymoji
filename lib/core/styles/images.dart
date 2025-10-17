@@ -26,6 +26,12 @@ class AppImages {
   static const String smileEmoji = 'assets/images/emojis/smile.png';
   static const String defaultEmoji = 'assets/images/emojis/default.png';
 
+  // images - back_ground
+  static const String bgHouse = 'assets/images/back_ground/bg_house.png';
+  static const String bgRain = 'assets/images/back_ground/bg_rain.png';
+  static const String bgSnow = 'assets/images/back_ground/bg_snow.png';
+  static const String bgForest = 'assets/images/back_ground/bg_forest.png';
+
   // images - character_cado
   static const String cadoFace = 'assets/images/character_cado/cado_face.png';
   static const String cadoLove = 'assets/images/character_cado/cado_love.png';

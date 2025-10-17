@@ -85,6 +85,7 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/images/emojis/
+    - assets/images/back_ground/
     - assets/images/app_icon/
     - assets/images/character_cado/
     - assets/images/character_carrot/
