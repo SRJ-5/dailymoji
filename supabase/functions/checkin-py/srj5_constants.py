@@ -100,8 +100,8 @@ DEEP_DIVE_MAX_SCORES = {
 CLUSTER_TO_DISPLAY_NAME = {
     "neg_high": "불안/분노",
     "neg_low": "우울/무기력",
-    "adhd": "집중력 저하/산만",
-    "sleep": "불규칙한 수면 패턴",
+    "adhd": "집중력 저하",
+    "sleep": "불규칙한 수면",
     "positive": "평온/회복"
 }
 
