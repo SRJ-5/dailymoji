@@ -47,7 +47,7 @@ class AppTextStrings {
   // Chat Page
   static const String botIsTyping =
       '%s이(가) 입력하고 있어요...'; // %s for character name
-  static const String viewSolutionAgainDefault = '솔루션 다시 볼래!';
+  static const String viewSolutionAgainDefault = '마음 관리 팁 다시 볼래!';
 
   // 유형별 다시보기 텍스트
   static const String viewBreathingAgain = '다시 호흡하러 가기';
@@ -62,12 +62,12 @@ class AppTextStrings {
 
   static const String currentMyEmotion = '현재 나의 감정';
   static const String chatDateFormat = 'yyyy년 MM월 dd일';
-  static const String feedbackThanks = '피드백을 주셔서 고마워요! 다음 솔루션에 꼭 참고할게요. 😊';
+  static const String feedbackThanks = '피드백을 주셔서 고마워요! 다음 마음 관리 팁에 꼭 참고할게요. 😊';
 
   // Chat ViewModel Fallbacks & Messages
   static const String fallbackEmojiQuestion = '어떤 일 때문에 그렇게 느끼셨나요?';
   static const String fallbackAnalysisError = '죄송해요, 응답을 이해할 수 없었어요.';
-  static const String fallbackSolutionError = '솔루션을 제안하는 중에 문제가 발생했어요.';
+  static const String fallbackSolutionError = '마음 관리 팁을 제안하는 중에 문제가 발생했어요.';
   static const String askVideoFeedback = '이번 영상은 어떠셨나요?';
   static const String loginRequiredError = '로그인 정보가 없습니다.';
   static const String loadMoreFailedError = '추가 메시지를 불러오는데 실패했어요.';
@@ -149,8 +149,8 @@ class AppTextStrings {
 
   // Solution Page
   static const String solutionLoadFailed =
-      '솔루션을 불러오는 데 실패했습니다: %s'; // %s for error
-  static const String unplayableSolution = '재생할 수 없는 솔루션 유형입니다.';
+      '마음 관리 팁을 불러오는 데 실패했습니다: %s'; // %s for error
+  static const String unplayableSolution = '재생할 수 없는 마음 관리 팁 유형입니다.';
 
   // Cluster Names
   static const String clusterNegHigh = '불안/분노';

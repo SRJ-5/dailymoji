@@ -55,7 +55,7 @@ class SolutionPage extends ConsumerWidget {
           return const Scaffold(
             backgroundColor: AppColors.black,
             body: Center(
-              child: AppText("재생할 수 없는 솔루션 유형입니다.",
+              child: AppText("재생할 수 없는 마음 관리 팁 유형입니다.",
                   style: TextStyle(color: AppColors.white)),
             ),
           );

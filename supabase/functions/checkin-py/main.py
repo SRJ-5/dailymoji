@@ -482,14 +482,14 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
                 }
             }
         else: # "adhd_no_task"
-         # "없어!"를 누른 경우 -> 호흡 및 집중력 훈련 솔루션 제안
+         # "없어!"를 누른 경우 -> 호흡 및 집중력 훈련 마음 관리 팁 제안
             
-            # 1. '집중력 훈련' 솔루션을 DB에서 찾습니다.
+            # 1. '집중력 훈련' 마음 관리 팁을 DB에서 찾습니다.
             focus_solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "focus_training").limit(1)
             focus_solution_res = await run_in_threadpool(focus_solution_query.execute)
             focus_solution_data = focus_solution_res.data[0] if focus_solution_res.data else {}
 
-            # 2. '호흡' 솔루션 - 프론트엔드 라우팅을 위해서!
+            # 2. '호흡' 마음 관리 팁 - 프론트엔드 라우팅을 위해서!
             breathing_solution_data = {
             "solution_id": "breathing_default", 
             "solution_type": "breathing"
@@ -503,7 +503,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
                 personality=payload.character_personality
             )     
 
-            # 솔루션 제안 시점에 session 생성
+            # 마음 관리 팁 제안 시점에 session 생성
             intervention_for_db = { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text}
             session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
         
@@ -540,7 +540,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         coaching_text = breakdown_result.get("coaching_text", "좋아요, 함께 시작해봐요!")
         mission_text = breakdown_result.get("mission_text", "가장 작은 일부터 시작해보세요.")
         
-         # 뽀모도로 솔루션 정보 조회
+         # 뽀모도로 마음 관리 팁 정보 조회
         solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1)
         solution_res = await run_in_threadpool(solution_query.execute)
         solution_data = solution_res.data[0] if solution_res.data else {}
@@ -773,7 +773,12 @@ async def analyze_emotion(payload: AnalyzeRequest):
         if is_crisis:
             print(f"🚨 1st Safety Check Triggered: '{text}'")
             g, profile, top_cluster = g_score(crisis_scores), 1, "neg_low"
-            intervention = {"preset_id": PresetIds.SAFETY_CRISIS_MODAL, "analysis_text": "많이 힘드시군요. 지금 도움이 필요할 수 있어요.", "cluster": top_cluster,"solution_id": f"{top_cluster}_crisis_01"}
+            intervention = {
+                    "preset_id": PresetIds.SAFETY_CRISIS_MODAL,
+                    "analysis_text": """정말 많이 힘드셨던 것 같아요.\n지금은 혼자 버티기보다 전문가와 이야기하는 것이 가장 안전하고 도움이 될 수 있습니다.\n\n저는 전문적인 위기 개입을 직접 제공하지 않지만, 바로 도움을 받을 수 있는 곳으로 안내해드릴 수 있어요.\n\n연결해드릴까요?""",
+                    "cluster": top_cluster,
+                    "solution_id": f"{top_cluster}_crisis_01"
+            }
             session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores)
             return {"session_id": session_id, "intervention": intervention}
 
@@ -800,7 +805,7 @@ async def analyze_emotion(payload: AnalyzeRequest):
             user_nick_nm, _ = await get_user_info(payload.user_id)
             
             
-            # 만약 분석 결과 top_cluster가 ADHD라면, 솔루션을 바로 제안하지 않고 질문을 던짐
+            # 만약 분석 결과 top_cluster가 ADHD라면, 마음 관리 팁을 바로 제안하지 않고 질문을 던짐
             if top_cluster == "adhd":
                 print("🧠 ADHD cluster detected. Switching to pre-solution question flow.")
                 
@@ -864,14 +869,14 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
 
 
 # ======================================================================
-# ===          솔루션 제안 및 상세 정보 엔드포인트         ===
+# ===          마음 관리 팁 제안 및 상세 정보 엔드포인트         ===
 # ======================================================================
    
 
 @app.post("/solutions/propose")
 async def propose_solution(payload: SolutionRequest): 
     """
-    분석 결과(top_cluster)에 맞는 클러스터별로 제안할 솔루션 타입 목록을 명확히 정의하고, 해당 타입의 솔루션만 찾아 
+    분석 결과(top_cluster)에 맞는 클러스터별로 제안할 마음 관리 팁 타입 목록을 명확히 정의하고, 해당 타입의 마음 관리 팁만 찾아 
     사용자가 선택할 수 있는 옵션 목록과, 대표 제안 텍스트를 함께 반환합니다.
     neg_low, sleep: 호흡, 영상, 행동미션
     neg_high, positive: 호흡, 영상만
@@ -883,7 +888,7 @@ async def propose_solution(payload: SolutionRequest):
         user_nick_nm, _ = await get_user_info(payload.user_id)
         top_cluster = payload.top_cluster
 
-         # 0. 클러스터별로 제안할 솔루션 타입 목록을 정의해야함
+         # 0. 클러스터별로 제안할 마음 관리 팁 타입 목록을 정의해야함
         solution_types_by_cluster = {
             "neg_low": ["breathing", "video", "action"],
             "sleep": ["breathing", "video", "action"],
@@ -893,7 +898,7 @@ async def propose_solution(payload: SolutionRequest):
             "adhd": ["breathing", "video"] 
         }
         
-        # 현재 top_cluster에 해당하는 솔루션 타입 목록 가져오기
+        # 현재 top_cluster에 해당하는 마음 관리 팁 타입 목록 가져오기
         target_solution_types = solution_types_by_cluster.get(top_cluster, ["video"])
 
 
@@ -906,7 +911,7 @@ async def propose_solution(payload: SolutionRequest):
         )
         negative_tags = (profile_res.data or {}).get("negative_tags", [])
 
-        # 2. 제안할 후보 솔루션 전체를 DB에서 가져오기
+        # 2. 제안할 후보 마음 관리 팁 전체를 DB에서 가져오기
         all_candidates_res = await run_in_threadpool(
             supabase.table("solutions")
             .select("*")
@@ -918,7 +923,7 @@ async def propose_solution(payload: SolutionRequest):
         if not all_candidates:
             return {"proposal_text": "지금은 제안해드릴 특별한 활동이 없네요.", "options": []}
 
-        # # 3. 거부 태그가 포함된 솔루션은 후보에서 제외
+        # # 3. 거부 태그가 포함된 마음 관리 팁은 후보에서 제외
         # if negative_tags:
         #     filtered_candidates = [
         #         sol for sol in all_candidates
@@ -927,7 +932,7 @@ async def propose_solution(payload: SolutionRequest):
         # else:
         #     filtered_candidates = all_candidates
 
-        # 3. 확률 기반으로 솔루션 필터링(1/3 확률로 나오도록!)
+        # 3. 확률 기반으로 마음 관리 팁 필터링(1/3 확률로 나오도록!)
         probabilistically_filtered_candidates = []
         if negative_tags:
             for sol in all_candidates:
@@ -949,11 +954,11 @@ async def propose_solution(payload: SolutionRequest):
             probabilistically_filtered_candidates = all_candidates
 
 
-        # 4. 각 솔루션 타입별로 대표 솔루션을 하나씩 랜덤 선택
+        # 4. 각 마음 관리 팁 타입별로 대표 마음 관리 팁을 하나씩 랜덤 선택
         options = []
         labels = {"breathing": "호흡하러 가기", "video": "영상 보러가기", "action": "미션 하러가기"}
         
-        # 텍스트 조합을 위해 첫 번째 솔루션의 설명을 저장할 변수
+        # 텍스트 조합을 위해 첫 번째 마음 관리 팁의 설명을 저장할 변수
         first_solution_text = ""
 
         for sol_type in target_solution_types:
@@ -976,27 +981,27 @@ async def propose_solution(payload: SolutionRequest):
                 })
                 continue
             
-            # 그 외 모든 경우는 DB에서 솔루션을 찾습니다.
+            # 그 외 모든 경우는 DB에서 마음 관리 팁을 찾습니다.
             type_candidates = [s for s in probabilistically_filtered_candidates if s.get("solution_type") == sol_type]
             if type_candidates:
                 chosen_solution = random.choice(type_candidates)
                 
                 # 4-1. 프론트엔드에 전달할 버튼 옵션 목록
                 options.append({
-                    "label": labels.get(sol_type, "솔루션 보기"),
+                    "label": labels.get(sol_type, "마음 관리 팁 보기"),
                     "action": "accept_solution",
                     "solution_id": chosen_solution["solution_id"],
                     "solution_type": chosen_solution["solution_type"]
                 })
 
-                # 4-2. 첫 번째로 선택된 솔루션의 설명 텍스트 저장 
+                # 4-2. 첫 번째로 선택된 마음 관리 팁의 설명 텍스트 저장 
                 if not first_solution_text:
                     first_solution_text = chosen_solution.get("text", "")
 
         if not options:
             return {"proposal_text": "지금 제안해드릴 만한 맞춤 활동이 없네요. 대화를 더 나눠볼까요?", "options": []}
 
-        # 5. 제안 멘트와 대표 솔루션 설명을 조합하여 최종 제안 텍스트 생성
+        # 5. 제안 멘트와 대표 마음 관리 팁 설명을 조합하여 최종 제안 텍스트 생성
         proposal_script = await get_mention_from_db(
             mention_type="propose",
             language_code=payload.language_code,
@@ -1020,14 +1025,14 @@ async def propose_solution(payload: SolutionRequest):
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
 
 # ======================================================================
-# ===          솔루션 영상 엔드포인트         ===
+# ===          마음 관리 팁 영상 엔드포인트         ===
 # ======================================================================
 
     # SolutionPage에서 영상 로드
     # 하드코딩된 SOLUTION_DETAILS_LIBRARY를 DB 조회로 대체했음!!
 @app.get("/solutions/{solution_id}")
 async def get_solution_details(solution_id: str):
-    print(f"RIN: ✅ 솔루션 상세 정보 요청 받음: {solution_id}")
+    print(f"RIN: ✅ 마음 관리 팁 상세 정보 요청 받음: {solution_id}")
     
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase client not initialized")
@@ -1056,7 +1061,7 @@ async def get_solution_details(solution_id: str):
             }
         
     except Exception as e:
-        print(f"RIN: ❌ 해당 솔루션을 찾을 수 없음: {solution_id}, 에러: {e}")
+        print(f"RIN: ❌ 해당 마음 관리 팁을 찾을 수 없음: {solution_id}, 에러: {e}")
         raise HTTPException(status_code=404, detail="Solution not found")
     
 
@@ -1091,7 +1096,7 @@ async def get_home_dialogue(
     
     return {"dialogue": dialogue_text}
     
-#  솔루션 완료 후 후속 질문을 위한 엔드포인트  
+#  마음 관리 팁 완료 후 후속 질문을 위한 엔드포인트  
 @app.get("/dialogue/solution-followup")
 async def get_solution_followup_dialogue(
     reason: str, # 'user_closed' 또는 'video_ended'
@@ -1099,7 +1104,7 @@ async def get_solution_followup_dialogue(
     user_nick_nm: Optional[str] = "친구",
     language_code: Optional[str] = 'ko'
 ):
-    """솔루션이 끝난 후의 상황(reason)과 캐릭터 성향에 맞는 후속 질문을 반환합니다."""
+    """마음 관리 팁이 끝난 후의 상황(reason)과 캐릭터 성향에 맞는 후속 질문을 반환합니다."""
     
     # 이유(reason)에 따라 DB에서 조회할 mention_type을 결정합니다.
     if reason == 'user_closed':
@@ -1120,14 +1125,14 @@ async def get_solution_followup_dialogue(
     return {"dialogue": dialogue_text}
 
 
-# 솔루션 제안을 거절했을 때의 멘트를 성향별로 주기 
+# 마음 관리 팁 제안을 거절했을 때의 멘트를 성향별로 주기 
 @app.get("/dialogue/decline-solution")
 async def get_decline_solution_dialogue(
     personality: Optional[str] = None, 
     user_nick_nm: Optional[str] = "친구",
     language_code: Optional[str] = 'ko'
 ):
-    """솔루션 제안을 거절하고 대화를 이어가고 싶어할 때의 반응 멘트를 반환합니다."""
+    """마음 관리 팁 제안을 거절하고 대화를 이어가고 싶어할 때의 반응 멘트를 반환합니다."""
     
     dialogue_text = await get_mention_from_db(
         mention_type="decline_solution",
@@ -1694,7 +1699,7 @@ async def get_action_mission(
 @app.post("/solutions/feedback")
 async def handle_solution_feedback(payload: FeedbackRequest):
     """
-    솔루션에 대한 사용자 피드백을 받아 처리하고,
+    마음 관리 팁에 대한 사용자 피드백을 받아 처리하고,
     'not_helpful'인 경우 negative_tags를 업데이트합니다.
     """
     if not supabase:
@@ -1713,7 +1718,7 @@ async def handle_solution_feedback(payload: FeedbackRequest):
 
         # 2. 만약 피드백이 'not_helpful'이라면, 태그 업데이트 로직을 실행합니다.
         if payload.feedback == 'not_helpful':
-            # 2-1. 싫어요 누른 솔루션의 태그를 가져옵니다.
+            # 2-1. 싫어요 누른 마음 관리 팁의 태그를 가져옵니다.
             solution_query = supabase.table("solutions").select("tags").eq("solution_id", payload.solution_id).single()
             solution_res = await run_in_threadpool(solution_query.execute)
             
