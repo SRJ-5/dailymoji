@@ -21,10 +21,10 @@ class FinishWidget extends ConsumerWidget {
       height: 566.h,
       child: Column(
         children: [
-          SizedBox(height: 120.r),
+          SizedBox(height: srj5 == null ? 120.r : 84.r),
           SizedBox(
             width: double.infinity,
-            height: 72.h,
+            height: srj5 == null ? 72.h : 108.r,
             child: Center(
                 child: AppText(
               textAlign: TextAlign.center,

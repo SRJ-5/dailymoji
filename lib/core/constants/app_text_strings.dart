@@ -21,7 +21,7 @@ class AppTextStrings {
   static const String privacyPolicy = '개인정보 처리방침';
   static const String counselingCenter = '전문 상담 연결';
   static const String pageIsPreparing = '준비중';
-  static const String srj5Test = '감정 검사';
+  static const String srj5Test = '나의 감정 알기';
   static const String preparingTitle = '곧 만나요!';
   static const String preparingBody = '준비 중이에요';
 
@@ -223,18 +223,18 @@ class AppTextStrings {
 
   // guide Page RichText 용
   static const List<String> startGuideText = [
-    '하루 감정을 기록하고\n',
-    '감정 점수를 기반으로\n',
-    '캘린더의'
+    '하루 감정을 기록하면\n',
+    '기록한 감정을 기반으로\n',
+    '캘린더의 '
   ];
   static const List<String> middleGuideText = [
-    'AI 분석 리포트',
-    '맞춤형 솔루션',
+    '나를 이해하는 리포트',
+    '나만의 마음 관리법',
     '감정 히스토리'
   ];
   static const List<String> endGuideText = [
-    '를 받아보세요',
-    '을 추천해 드려요',
+    '가 쌓여요',
+    '을 찾아보세요',
     '를 통해\n변화를 한눈에 확인하세요'
   ];
 }

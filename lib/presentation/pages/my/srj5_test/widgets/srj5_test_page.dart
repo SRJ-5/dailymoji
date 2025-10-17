@@ -51,7 +51,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
         title: stepIndex == totalSteps
             ? null
             : AppText(
-                '${clusterState.clusterNM!} 감정 체크',
+                '${clusterState.clusterNM!} 감정 알기',
                 style: AppFontStyles.bodyBold18
                     .copyWith(color: AppColors.grey900),
               ),
@@ -83,7 +83,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                 child: isLastPage
                     ? FinishWidget(
                         text:
-                            '좋아요!\n${user.userNickNm}님을 좀 더 이해하게 됐어요',
+                            '나의 감정을 알아봤어요!\n도우미가 당신에게\n딱 맞는 대화를 준비 중이에요',
                         srj5: true,
                       )
                     : Srj5TestBox(
@@ -132,7 +132,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                           }
                         }
                       : null,
-                  child: AppText(isLastPage ? '완료' : '다음으로',
+                  child: AppText(isLastPage ? '완료하기' : '다음으로',
                       style: AppFontStyles.bodyMedium16.copyWith(
                         color: isNextEnabled
                             ? AppColors.grey50
