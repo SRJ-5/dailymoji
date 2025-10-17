@@ -325,12 +325,6 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       return (t != null && t.isNotEmpty) ? t : fallback;
     }
 
-    print("어머니 날보고있다면 정답을알려줘${s?.overallSummary}");
-    print("어머니 날보고있다면 정답을알려줘${s?.negHighSummary}");
-    print("어머니 날보고있다면 정답을알려줘${s?.negLowSummary}");
-    print("어머니 날보고있다면 정답을알려줘${s?.adhdSummary}");
-    print("어머니 날보고있다면 정답을알려줘${s?.sleepSummary}");
-    print("어머니 날보고있다면 정답을알려줘${s?.positiveSummary}");
     return {
       AppTextStrings.clusterNegHigh: EmotionData(
         color: AppColors.negHigh,

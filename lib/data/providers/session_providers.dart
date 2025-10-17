@@ -29,12 +29,7 @@ final gScore14DayChartProvider =
   } catch (_) {
     weeklySummary = null; // 주석: 실패해도 차트는 그리도록
   }
-  print("아버지 날보고있다면 정답을알려줘${weeklySummary?.overallSummary}");
-  print("아버지 날보고있다면 정답을알려줘${weeklySummary?.negHighSummary}");
-  print("아버지 날보고있다면 정답을알려줘${weeklySummary?.negLowSummary}");
-  print("아버지 날보고있다면 정답을알려줘${weeklySummary?.adhdSummary}");
-  print("아버지 날보고있다면 정답을알려줘${weeklySummary?.sleepSummary}");
-  print("아버지 날보고있다면 정답을알려줘${weeklySummary?.positiveSummary}");
+
   // 이 함수가 백엔드 RPC('get_daily_gscore_stats')를 호출합니다.
   final dailyStats = await repo.fetchDailyStatsLast14Days(userId: userId);
 

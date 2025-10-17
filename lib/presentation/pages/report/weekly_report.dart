@@ -528,19 +528,19 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                   _ScoreBox(
                       label: AppTextStrings.avgEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.avg.toStringAsFixed(1)),
+                          .replaceFirst('%s', data.avg.toStringAsFixed(0)),
                       color: AppColors.green700),
                   separator(),
                   _ScoreBox(
                       label: AppTextStrings.maxEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.max.toStringAsFixed(1)),
+                          .replaceFirst('%s', data.max.toStringAsFixed(0)),
                       color: AppColors.noti100),
                   separator(),
                   _ScoreBox(
                       label: AppTextStrings.minEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.min.toStringAsFixed(1)),
+                          .replaceFirst('%s', data.min.toStringAsFixed(0)),
                       color: AppColors.noti200),
                 ],
               ),
