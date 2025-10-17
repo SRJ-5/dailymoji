@@ -75,7 +75,7 @@ class AppImages {
   ];
   static const List<String> characterListWalk = [
     AppImages.cadoWalk,
-    AppImages.carrotLeftWalk,
+    AppImages.carrotWalk,
   ];
   static const List<String> characterListonBoarding12 = [
     AppImages.cadoLookUp,
