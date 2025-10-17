@@ -823,11 +823,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
   //   );
   // }
 
-  // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
+  // 새로운 마음 관리 팁 제안 카드 UI (세로 버튼 레이아웃)
   Widget _solutionProposalCardMessage(Message message,
       {required Key key, required bool isLastMessage}) {
     // String msg =
-    //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
+    //   "[2분 마음 관리 팁 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
     final proposal = message.proposal;
     final chatState = ref.watch(chatViewModelProvider);
 
@@ -1026,7 +1026,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //           SizedBox(height: 4.h),
           //           GestureDetector(
           //             onTap: () {
-          //               // TODO 영상 솔루션 진행
+          //               // TODO 영상 마음 관리 팁 진행
           //             },
           //             child: Container(
           //               height: 40.h,
@@ -1047,7 +1047,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //           SizedBox(height: 4.h),
           //           GestureDetector(
           //             onTap: () {
-          //               // TODO 미션 솔루션 진행
+          //               // TODO 미션 마음 관리 팁 진행
           //             },
           //             child: Container(
           //               height: 40.h,

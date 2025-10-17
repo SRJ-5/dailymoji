@@ -9,7 +9,7 @@ class SolutionContextViewModel extends Notifier<SolutionContext> {
   }
 
   Future<String> getSolutionContext(String solutionId) async {
-    print('솔루션 : $solutionId');
+    print('마음 관리 팁 : $solutionId');
     final result =
         await ref.read(getSolutionContextUseCaseProvider).execute(solutionId);
     state = state.copyWith(context: result!.context);
