@@ -72,35 +72,94 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
 
   /// 주간 요약을 받아오는 private 메서드 추가
   Future<WeeklySummary?> _fetchWeeklySummary(String userId) async {
+    final functionName = '_fetchWeeklySummary'; // 로그용 함수 이름
+    print('[$functionName] Fetching weekly summary for userId: $userId');
+
     // ignore: avoid_print
     print('[weekly-summary] start userId=$userId');
 
     final uri = Uri.parse('${ApiConfig.baseUrl}/report/weekly-summary');
+    http.Response? resp;
+
     try {
-      final resp = await http
+      resp = await http
           .post(
             uri,
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'user_id': userId}),
           )
-          .timeout(const Duration(milliseconds: 5000));
+          .timeout(const Duration(milliseconds: 7000));
       // ignore: avoid_print
-      print('[weekly-summary] status=${resp.statusCode}');
+      print('[$functionName] API Response Status Code: ${resp.statusCode}');
 
-      if (resp.statusCode != 200) {
+// ⭐ [수정] Status Code가 200일 때와 아닐 때의 로직을 명확히 분리
+      if (resp.statusCode == 200) {
+        String decodedBody;
+        try {
+          decodedBody = utf8.decode(resp.bodyBytes);
+          print('[$functionName] API Response Body (Decoded): $decodedBody');
+        } catch (e) {
+          print('[$functionName] Error decoding response body: $e');
+          return null;
+        }
+
+        try {
+          final data = jsonDecode(decodedBody) as Map<String, dynamic>;
+          print('[$functionName] JSON Decoding Successful.');
+
+          // ⭐ [추가] 백엔드가 "데이터 없음" 응답을 보냈는지 확인
+          if (data.containsKey('overall_summary') &&
+              data.keys.length == 1 &&
+              data['overall_summary'] ==
+                  "아직 2주 리포트가 생성되지 않았어요. 꾸준히 기록을 남겨주세요!") {
+            print(
+                '[$functionName] Received placeholder summary, indicating no data yet. Returning null.');
+            return null; // 데이터가 없는 경우 null 반환 (기본 설명 사용됨)
+          }
+
+          try {
+            final summary = WeeklySummary.fromJson(data);
+            print(
+                '[$functionName] WeeklySummary Parsing Successful. Returning summary.');
+            return summary;
+          } catch (e) {
+            print(
+                '[$functionName] Error parsing JSON into WeeklySummary object: $e');
+            print('[$functionName] Parsed JSON data was: $data');
+            return null;
+          }
+        } catch (e) {
+          print('[$functionName] Error decoding JSON: $e');
+          print('[$functionName] Raw decoded body was: $decodedBody');
+          return null;
+        }
+      } else {
+        // ⭐ Status Code가 200이 아닐 때만 이 블록 실행
+        print(
+            '[$functionName] API returned non-200 status code: ${resp.statusCode}. Returning null.');
         return null;
       }
-      final decoded = utf8.decode(resp.bodyBytes);
-      // ignore: avoid_print
-      print('[weekly-summary] body=$decoded');
-      final data = jsonDecode(decoded) as Map<String, dynamic>;
-      return WeeklySummary.fromJson(data);
     } catch (e) {
-      // 네트워크/타임아웃/JSON 에러 시 조용히 null 반환 -> 기본 문구로 대체
-      // ignore: avoid_print
-      print('[weekly-summary] error=$e');
+      // 타임아웃 또는 네트워크 오류 등 http 호출 자체의 예외 처리
+      print('[$functionName] HTTP request failed: $e');
+      if (resp != null) {
+        print(
+            '[$functionName] Failed request details - Status: ${resp.statusCode}, Body: ${resp.body}');
+      }
       return null;
     }
+
+    //   final decoded = utf8.decode(resp.bodyBytes);
+    //   // ignore: avoid_print
+    //   print('[weekly-summary] body=$decoded');
+    //   final data = jsonDecode(decoded) as Map<String, dynamic>;
+    //   return WeeklySummary.fromJson(data);
+    // } catch (e) {
+    //   // 네트워크/타임아웃/JSON 에러 시 조용히 null 반환 -> 기본 문구로 대체
+    //   // ignore: avoid_print
+    //   print('[weekly-summary] error=$e');
+    //   return null;
+    // }
   }
 
   /// 14일 집계 로드 → EmotionData로 변환(차트/카드 용도)

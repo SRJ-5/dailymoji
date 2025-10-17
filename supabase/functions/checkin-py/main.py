@@ -1287,8 +1287,29 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         # 14일간의 세션 및 클러스터 점수 데이터 한 번에 가져오기
         sessions_res = supabase.table("sessions").select("id, created_at, g_score").eq("user_id", user_id).gte("created_at", start_date.isoformat()).lt("created_at", end_date.isoformat()).execute()
         if not sessions_res.data:
-            print(f"Info: No data for weekly summary for user {user_id}. Skipping.")
+            print(f"Info: No session data found for weekly summary for user {user_id}. Skipping.")
+            return # 데이터 없으면 바로 종료
+        
+        # 기록이 있는 날짜 수 계산
+        recorded_days = set()
+        for session in sessions_res.data:
+            try:
+                # 타임존 정보 제거하고 날짜만 추출
+                day_str = dt.datetime.fromisoformat(session['created_at'].split('+')[0]).strftime('%Y-%m-%d')
+                recorded_days.add(day_str)
+            except Exception as e:
+                print(f"Warning: Could not parse date {session['created_at']} for user {user_id}. Error: {e}")
+                continue # 날짜 파싱 실패 시 해당 세션 건너뛰기
+
+        MIN_DAYS_REQUIRED = 3 # 최소 필요 일수
+        if len(recorded_days) < MIN_DAYS_REQUIRED:
+            print(f"Info: Insufficient data ({len(recorded_days)} days found, requires {MIN_DAYS_REQUIRED}) for weekly summary for user {user_id}. Skipping.")
+            # 데이터 부족 시, DB에 placeholder 저장하지 않고 그냥 종료
             return
+        # [수정 끝] 데이터가 충분할 때만 아래 로직 실행
+
+
+
         
         session_ids = [s['id'] for s in sessions_res.data]
         scores_res = supabase.table("cluster_scores").select("session_id, created_at, cluster, score").in_("session_id", session_ids).execute()
@@ -1441,28 +1462,52 @@ class WeeklyReportRequest(BaseModel):
 @app.post("/report/weekly-summary")
 async def get_weekly_report_summary(request: WeeklyReportRequest):
     if not supabase: raise HTTPException(500, "Supabase client not initialized")
+    
+    # 기본 플레이스홀더 메시지 정의
+    placeholder_no_data = "아직 2주 리포트를 만들기에 기록이 조금 부족해요. 3일 이상 꾸준히 기록해주시면 더 자세한 리포트를 받아보실 수 있어요!"
+    placeholder_error = "리포트를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+
     try:
-        # 가장 최신 요약본을 가져옴
-        response = await run_in_threadpool(
+        # Supabase 쿼리 객체 생성
+        query = (
             supabase.table("weekly_summaries")
             .select("*")
             .eq("user_id", request.user_id)
             .order("summary_date", desc=True)
             .limit(1)
-            .single() # single()을 사용하여 하나의 결과만 기대
-            .execute()
+            .maybe_single()
         )
-        if response.data:
-            return response.data
-        else:
-            return {"overall_summary": "아직 2주 리포트가 생성되지 않았어요. 꾸준히 기록을 남겨주세요!"}
-    except Exception as e:
-        # single()은 데이터가 없을 때 에러를 발생시킬 수 있으므로 예외처리
-        if "JSON object requested, but multiple rows returned" in str(e):
-             # 데이터가 여러개인 경우에 대한 예외 처리 (실제로는 일어나기 어려움)
-            return {"overall_summary": "리포트를 불러오는 중 오류가 발생했습니다."}
-        return {"overall_summary": "아직 2주 리포트가 생성되지 않았어요. 꾸준히 기록을 남겨주세요!"}
 
+        # ⭐ [수정] query 객체의 execute 메서드 자체를 전달 (괄호 없음!)
+        response = await run_in_threadpool(query.execute)
+
+        # ⭐ response.data가 None이 아니고, 내용이 실제로 있는지 확인
+        if response and response.data and response.data.get("overall_summary"):
+            print(f"✅ Found weekly summary for user {request.user_id}")
+            return response.data # 정상 데이터 반환
+        else:
+            print(f"⚠️ No weekly summary data found for user {request.user_id}. Returning placeholder.")
+            return {
+                "overall_summary": placeholder_no_data,
+                "neg_low_summary": placeholder_no_data,
+                "neg_high_summary": placeholder_no_data,
+                "adhd_summary": placeholder_no_data,
+                "sleep_summary": placeholder_no_data,
+                "positive_summary": placeholder_no_data
+            }
+
+    except Exception as e:
+        print(f"🔥 EXCEPTION in /report/weekly-summary: {e}")
+        traceback.print_exc()
+        return {
+            "overall_summary": placeholder_error,
+            "neg_low_summary": placeholder_error,
+            "neg_high_summary": placeholder_error,
+            "adhd_summary": placeholder_error,
+            "sleep_summary": placeholder_error,
+            "positive_summary": placeholder_error
+        }
+    
 # ======================================================================
 # ===     백그라운드 스케줄링 작업용 엔드포인트     ===
 # ======================================================================
