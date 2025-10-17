@@ -656,6 +656,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Widget _botMessage(Message message, {required Key key}) {
+    final userNickNm =
+        ref.read(userViewModelProvider).userProfile?.userNickNm ?? "";
+    final formattedMessage =
+        message.content.replaceAll('{user_nick_nm}', userNickNm);
+
     return Padding(
       key: key,
       padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -675,7 +680,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               ),
             ),
             child: AppText(
-              message.content.replaceAll(r'\n', '\n'),
+              formattedMessage.replaceAll(r'\n', '\n'),
               style: AppFontStyles.bodyRegular14
                   .copyWith(color: AppColors.grey900),
             ),
@@ -848,6 +853,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
       }
     }
 
+    final userNickNm =
+        ref.read(userViewModelProvider).userProfile?.userNickNm ?? "";
+    final formattedMessage =
+        message.content.replaceAll('{user_nick_nm}', userNickNm);
+
     return Padding(
       key: key,
       padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -875,7 +885,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     builder: (context) {
                       // 1. 전체 메시지를 줄바꿈 기준으로 나눕니다.
                       final lines =
-                          message.content.replaceAll(r'\n', '\n').split('\n');
+                          formattedMessage.replaceAll(r'\n', '\n').split('\n');
 
                       // 2. 첫 번째 줄을 제목으로 사용합니다.
                       final title = lines.first;
@@ -904,7 +914,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       );
                     },
                   ),
-                  if (message.content.isNotEmpty) SizedBox(height: 16.h),
+                  if (formattedMessage.isNotEmpty) SizedBox(height: 16.h),
                   // 버튼들 (세로로 쌓기)
                   Column(
                     children: options.map((option) {
@@ -1070,8 +1080,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //     ],
           //   ),
           // ),
-          if (message.content.isNotEmpty) SizedBox(width: 4.w),
-          if (message.content.isNotEmpty)
+          if (formattedMessage.isNotEmpty) SizedBox(width: 4.w),
+          if (formattedMessage.isNotEmpty)
             AppText(
               _formattedNow(message.createdAt),
               style: AppFontStyles.bodyRegular14
