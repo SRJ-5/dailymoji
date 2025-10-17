@@ -114,8 +114,12 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       final agg = await fAgg;
 
       final emap = _buildEmotionMap(agg, summary); // ← 시그니처 변경
-      state =
-          state.copyWith(isLoading: false, days: agg.days, emotionMap: emap);
+      state = state.copyWith(
+          isLoading: false,
+          days: agg.days,
+          emotionMap: emap,
+          // RIN: 상태 업뎃할때 이것도 저장해야할거같은디?
+          weeklySummary: summary);
     } catch (e, st) {
       // ignore: avoid_print
       print('[load14DayChart] error=$e\n$st');
