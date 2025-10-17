@@ -162,22 +162,22 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
   }
 
   // ---------- 변환 유틸 ----------
-  // 0~1 → 0~10 (소수 1자리 반올림, 0~10 클램프)
-  double scaleToTen(num v) {
-    final scaled = v * 10;
-    final one = (scaled * 10).round() / 10.0; // 소수1자리
-    return one.clamp(0.0, 10.0);
+// 0~1 → 0~100 (소수 1자리 반올림, 0~100 클램프)
+  double scaleToHundred(num v) {
+    final scaled = v * 100;
+    final one = (scaled * 10).round() / 10.0; // 소수 1자리 반올림
+    return one.clamp(0.0, 100.0);
   }
 
-  List<double> scaleList(Iterable<num> values) =>
-      values.map(scaleToTen).toList();
+  List<double> scaleListToHundred(Iterable<num> values) =>
+      values.map(scaleToHundred).toList();
 
   List<FlSpot> _toSpotsConnected(List<double?> ys) {
     final spots = <FlSpot>[];
     for (var i = 0; i < ys.length; i++) {
       final v = ys[i];
-      if (v == null) continue; // ★ 포인트 자체를 만들지 않음 → 앞뒤가 연결됨
-      spots.add(FlSpot(i.toDouble(), scaleToTen(v)));
+      if (v == null) continue; // null은 건너뜀 → 끊김 없이 연결
+      spots.add(FlSpot(i.toDouble(), scaleToHundred(v)));
     }
     return spots;
   }
@@ -190,7 +190,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
     ];
     if (vals.isEmpty) return 0.0;
     final avg = vals.reduce((a, b) => a + b) / vals.length;
-    return scaleToTen(avg);
+    return scaleToHundred(avg);
   }
 
   double _minScaledOpt(List<double?> v) {
@@ -199,7 +199,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         if (e != null) e
     ];
     if (vals.isEmpty) return 0.0;
-    return scaleToTen(vals.reduce((a, b) => a < b ? a : b));
+    return scaleToHundred(vals.reduce((a, b) => a < b ? a : b));
   }
 
   double _maxScaledOpt(List<double?> v) {
@@ -208,7 +208,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
         if (e != null) e
     ];
     if (vals.isEmpty) return 0.0;
-    return scaleToTen(vals.reduce((a, b) => a > b ? a : b));
+    return scaleToHundred(vals.reduce((a, b) => a > b ? a : b));
   }
 
   Map<String, EmotionData> _buildEmotionMap(FourteenDayAgg agg,
@@ -262,6 +262,12 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
       return (t != null && t.isNotEmpty) ? t : fallback;
     }
 
+    print("어머니 날보고있다면 정답을알려줘${s?.overallSummary}");
+    print("어머니 날보고있다면 정답을알려줘${s?.negHighSummary}");
+    print("어머니 날보고있다면 정답을알려줘${s?.negLowSummary}");
+    print("어머니 날보고있다면 정답을알려줘${s?.adhdSummary}");
+    print("어머니 날보고있다면 정답을알려줘${s?.sleepSummary}");
+    print("어머니 날보고있다면 정답을알려줘${s?.positiveSummary}");
     return {
       AppTextStrings.clusterNegHigh: EmotionData(
         color: AppColors.negHigh,

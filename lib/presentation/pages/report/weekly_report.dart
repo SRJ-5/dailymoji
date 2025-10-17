@@ -283,7 +283,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 2,
+                              interval: 20,
                               getTitlesWidget: (value, meta) {
                                 if (value.toInt() == 0) {
                                   return const SizedBox.shrink();
@@ -337,7 +337,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                         minX: 0,
                         maxX: (baseDays.length - 0.5).toDouble(),
                         minY: 0,
-                        maxY: 10,
+                        maxY: 100,
                         lineBarsData: [
                           // ★ 항상 그릴 “종합 감정 점수” 라인 (있을 때)
                           if (mergedMap[AppTextStrings.clusterTotalScore] !=

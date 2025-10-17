@@ -42,7 +42,7 @@ class AppTextStrings {
       '잘 했어요!\n이제 %s에 가서도\n호흡을 이어가 보세요'; // %s for context
   static const String breathingDefaultFinishText =
       '잘 했어요!\n이제 일상에 가서도\n호흡을 이어가 보세요';
-  static const String tapToContinue = '화면을 탭해서 다음으로 넘어가세요';
+  static const String tapToContinue = '화면을 탭해서 종료하세요';
 
   // Chat Page
   static const String botIsTyping =
