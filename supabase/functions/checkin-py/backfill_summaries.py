@@ -9,6 +9,7 @@ from supabase import create_client, Client
 import json
 import httpx
 import numpy as np
+import argparse
 
 try:
     from llm_prompts import REPORT_SUMMARY_PROMPT, WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD, WEEKLY_REPORT_SUMMARY_PROMPT_NEURO
@@ -151,8 +152,8 @@ async def create_weekly_summary(supabase: Client, openai_key: str, user_id: str,
     except Exception as e:
         print(f"    ERROR weekly summary: {e}")
 
-# --- 백필 실행 함수 (날짜 매개변수 받는 버전) ---
-async def run_backfill(start_date: str, end_date: str):
+# --- 백필 실행 함수 (날짜와 유저 매개변수 받는 버전) ---
+async def run_backfill(start_date: str, end_date: str, user_id: str = None):
     dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
     load_dotenv(dotenv_path=dotenv_path)
     
@@ -177,12 +178,22 @@ async def run_backfill(start_date: str, end_date: str):
 
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
     
-    response = supabase.table('user_profiles').select('id', count='exact').execute()
-    if not response.data:
-        print("사용자가 없습니다.")
-        return {"error": "사용자가 없습니다."}
-        
-    user_ids = [user['id'] for user in response.data]
+    # user_id가 제공된 경우 해당 유저만 처리, 그렇지 않으면 모든 유저 처리
+    if user_id:
+        # 특정 유저가 존재하는지 확인
+        response = supabase.table('user_profiles').select('id').eq('id', user_id).execute()
+        if not response.data:
+            print(f"오류: 사용자 ID '{user_id}'를 찾을 수 없습니다.")
+            return {"error": f"사용자 ID '{user_id}'를 찾을 수 없습니다."}
+        user_ids = [user_id]
+        print(f"특정 사용자 {user_id[:8]}...에 대한 요약을 생성합니다.")
+    else:
+        response = supabase.table('user_profiles').select('id', count='exact').execute()
+        if not response.data:
+            print("사용자가 없습니다.")
+            return {"error": "사용자가 없습니다."}
+        user_ids = [user['id'] for user in response.data]
+        print(f"모든 사용자({len(user_ids)}명)에 대한 요약을 생성합니다.")
     
     # 날짜 범위 계산
     current_date = start_dt
@@ -205,9 +216,19 @@ async def run_backfill(start_date: str, end_date: str):
     print("\n모든 과거 데이터 요약 생성이 완료되었습니다.")
     return {"success": True, "message": f"{start_date}부터 {end_date}까지의 요약 생성이 완료되었습니다.", "total_users": len(user_ids), "total_days": total_days}
 
-# --- 기존 main 함수 (독립 실행용) ---
+# --- main 함수 (명령행 인자 지원) ---
 async def main():
-    return await run_backfill(START_DATE, END_DATE)
+    parser = argparse.ArgumentParser(description='백필 서머리 생성 스크립트')
+    parser.add_argument('--start-date', type=str, default=START_DATE, 
+                       help='시작 날짜 (YYYY-MM-DD 형식, 기본값: 2024-01-01)')
+    parser.add_argument('--end-date', type=str, default=END_DATE,
+                       help='끝 날짜 (YYYY-MM-DD 형식, 기본값: 2024-12-31)')
+    parser.add_argument('--user-id', type=str, default=None,
+                       help='특정 사용자 ID (지정하지 않으면 모든 사용자 처리)')
+    
+    args = parser.parse_args()
+    
+    return await run_backfill(args.start_date, args.end_date, args.user_id)
 
 if __name__ == "__main__":
     asyncio.run(main())
