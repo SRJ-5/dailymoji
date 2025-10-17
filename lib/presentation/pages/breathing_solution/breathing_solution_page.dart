@@ -72,25 +72,25 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       },
       {
         "title": "Step 1.",
-        "text": "코로 4초동안\n숨을 들이마시고",
+        "text": "코로 4초동안\n천천히 숨을 들이마셔요",
         "font": AppFontStyles.heading3,
         "duration": 4,
       },
       {
         "title": "Step 2.",
-        "text": "7초간 숨을\n머금은 뒤",
+        "text": "7초 동안 살짝 멈추고\n몸의 긴장을 느껴봐요",
         "font": AppFontStyles.heading3,
         "duration": 7,
       },
       {
         "title": "Step 3.",
-        "text": "8초간 천천히\n내쉬어 봐!",
+        "text": "코로 4초 동안\n부드럽게 내쉬어주세요",
         "font": AppFontStyles.heading3,
         "duration": 8,
       },
       {
         "title": null,
-        "text": "잘 했어요!\n이제 일상에 가서도\n호흡을 이어가 보세요",
+        "text": "잘 했어요!\n안정되셨다면 마무리할게요",
         "font": AppFontStyles.heading2,
         "duration": 2,
       },
@@ -282,14 +282,13 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 
             // 캐릭터
             Positioned(
-              top: 245.h,
+              top: 265.h,
               child: SizedBox(
                 width: 240.w,
                 height: 360.h,
                 child: Image(
                   image: AssetImage(
                       AppImages.characterListProfile[selectedCharacterNum!]),
-                  fit: BoxFit.cover,
                 ),
               ),
             ),
@@ -317,31 +316,31 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               ),
             ),
 
-            // '건너뛰기' 텍스트 버튼 추가
-            if (!_showFinalHint && _step > 0 && _step < _steps.length - 1)
-              Positioned(
-                top: 700.h, // 타이머보다 살짝 아래 위치
-                child: AnimatedOpacity(
-                  opacity: _opacity,
-                  duration: const Duration(milliseconds: 300),
-                  child: GestureDetector(
-                    onTap: () {
-                      // 즉시 다음 라우트로 이동
-                      context.pushReplacement(
-                        '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}',
-                      );
-                    },
-                    child: Text(
-                      "건너뛰기",
-                      style: AppFontStyles.bodyMedium16.copyWith(
-                        color: AppColors.grey400,
-                        decoration: TextDecoration.underline,
-                        decorationColor: AppColors.grey400, // ✅ 밑줄 색을 강제로 지정
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // // '건너뛰기' 텍스트 버튼 추가
+            // if (!_showFinalHint && _step > 0 && _step < _steps.length - 1)
+            //   Positioned(
+            //     top: 700.h, // 타이머보다 살짝 아래 위치
+            //     child: AnimatedOpacity(
+            //       opacity: _opacity,
+            //       duration: const Duration(milliseconds: 300),
+            //       child: GestureDetector(
+            //         onTap: () {
+            //           // 즉시 다음 라우트로 이동
+            //           context.pushReplacement(
+            //             '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}',
+            //           );
+            //         },
+            //         child: Text(
+            //           "건너뛰기",
+            //           style: AppFontStyles.bodyMedium16.copyWith(
+            //             color: AppColors.grey400,
+            //             decoration: TextDecoration.underline,
+            //             decorationColor: AppColors.grey400, // ✅ 밑줄 색을 강제로 지정
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
 
             // 깜빡이는 안내 문구
             if (_showFinalHint)
@@ -350,8 +349,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 child: FadeTransition(
                   opacity: _blinkAnimation,
                   child: AppText(
-                    // TODO: "채팅방으로 넘어가세요"??
-                    "화면을 탭해서 다음으로 넘어가세요",
+                    "화면을 탭해서 종료해주세요",
                     style: AppFontStyles.bodyMedium18
                         .copyWith(color: AppColors.grey400),
                     textAlign: TextAlign.center,
