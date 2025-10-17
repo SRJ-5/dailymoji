@@ -91,8 +91,8 @@ class _AssessmentPageState
               SizedBox(height: 40.h),
               AppText(
                 stepIndex == totalSteps
-                    ? '$selectedclusterNM 체크를 통해\n나를 조금 더 알아볼게요'
-                    : '지금 어떤 감정 상태인지\n체크해 볼까요?',
+                    ? '$selectedclusterNM 감정을 살펴보고\n나를 조금 더 알아볼게요'
+                    : '지금 어떤 감정 상태인지\n간단히 살펴볼까요?',
                 textAlign: TextAlign.center,
                 style: AppFontStyles.heading2
                     .copyWith(color: AppColors.grey900),

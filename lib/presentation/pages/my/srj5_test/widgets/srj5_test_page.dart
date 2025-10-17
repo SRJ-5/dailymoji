@@ -51,7 +51,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
         title: stepIndex == totalSteps
             ? null
             : AppText(
-                '${clusterState.clusterNM!} 체크',
+                '${clusterState.clusterNM!} 감정 알기',
                 style: AppFontStyles.bodyBold18
                     .copyWith(color: AppColors.grey900),
               ),
@@ -83,7 +83,7 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                 child: isLastPage
                     ? FinishWidget(
                         text:
-                            '감정 체크가 완료됐어요!\n도우미가 당신에게\n딱 맞는 대화를 준비 중이에요',
+                            '나의 감정을 알아봤어요!\n도우미가 당신에게\n딱 맞는 대화를 준비 중이에요',
                         srj5: true,
                       )
                     : Srj5TestBox(
