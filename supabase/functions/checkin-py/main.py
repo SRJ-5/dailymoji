@@ -1,6 +1,7 @@
 # main.py
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import json
 import os
@@ -104,6 +105,11 @@ class FeedbackRequest(BaseModel):
     session_id: Optional[str] = None
     solution_type: str
     feedback: str
+
+
+class BackfillRequest(BaseModel):
+    start_date: str  # "YYYY-MM-DD" 형식
+    end_date: str    # "YYYY-MM-DD" 형식
 
 
 # /assessment/submit 엔드포인트의 입력 모델
@@ -1691,6 +1697,28 @@ async def handle_solution_feedback(payload: FeedbackRequest):
     except Exception as e:
         tb = traceback.format_exc()
         print(f"🔥 EXCEPTION in /solutions/feedback: {e}\n{tb}")
+        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+    
+@app.post("/jobs/backfill")
+async def run_backfill(payload: BackfillRequest):
+    """
+    지정된 날짜 범위에 대해 모든 사용자의 일일/주간 요약을 생성합니다.
+    
+    Args:
+        payload: BackfillRequest
+            - start_date: 시작 날짜 (YYYY-MM-DD 형식)
+            - end_date: 끝 날짜 (YYYY-MM-DD 형식)
+    
+    Returns:
+        dict: 백필 작업 결과
+    """
+    try:
+        from backfill_summaries import run_backfill as backfill_function
+        result = await backfill_function(payload.start_date, payload.end_date)
+        return result
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"🔥 EXCEPTION in /jobs/backfill: {e}\n{tb}")
         raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
     
 
