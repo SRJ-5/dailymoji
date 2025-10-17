@@ -1349,17 +1349,17 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         
         # [긍정적 상관관계: A가 높을 때 B도 높음]
         if cluster_stats['sleep']['avg'] > 40 and cluster_stats['neg_low']['avg'] > 40:
-            correlations.append("수면의 질 저하와 우울/무기력감이 함께 높게 나타나는 경향이 있습니다. 이는 심리적 에너지를 고갈시킬 수 있어 마음을 잘 돌아보시기 바랍니다.")
+            correlations.append("수면의 질 저하와 우울/무기력감이 함께 높게 나타나는 경향이 있습니다. 이는 심리적 에너지를 소모시키는 요인이 될 수 있어, 두 감정의 관계를 함께 살펴보는 것이 도움이 될 수 있습니다.")
         if cluster_stats['neg_high']['avg'] > 40 and cluster_stats['sleep']['avg'] > 40:
-            correlations.append("불안/긴장감이 높은 날, 수면 문제도 함께 증가하는 패턴이 보입니다. 과도한 각성 상태가 편안한 휴식을 방해하고 있는 것은 아닌지 걱정됩니다.")
+            correlations.append("불안/긴장감이 높은 날, 수면 문제도 함께 증가하는 패턴이 보입니다. 과도한 각성 상태가 편안한 휴식에 영향을 미칠 수 있으니, 불안/긴장과 수면의 연관성을 돌아보는 것이 도움이 될 수 있습니다.")
         if cluster_stats['adhd']['avg'] > 50 and cluster_stats['neg_high']['avg'] > 50:
-            correlations.append("집중력 저하 문제와 불안감이 모두 높은 수준으로 나타났습니다. 주의를 통제하려는 노력이 과도한 정신적 긴장으로 이어지고 있을 수 있어 걱정됩니다.")
+            correlations.append("집중력 저하 문제와 불안감이 모두 높은 수준으로 나타났습니다. 주의를 통제하려는 노력이 과도한 정신적 긴장으로 이어질 수 있는 패턴이 관찰됩니다. 집중력과 불안감 사이의 관계를 살펴보는 것이 도움이 될 수 있습니다.")
 
         # [부정적/반비례 상관관계: A가 높을 때 B는 낮음]
         if cluster_stats['neg_low']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
             correlations.append("우울/무기력감이 높은 시기에는 긍정적 감정을 느끼는 정도가 현저히 낮아지는 패턴이 뚜렷합니다. 이는 감정 회복을 위한 인지적 자원이 부족하다는 신호일 수 있습니다.")
         if cluster_stats['neg_high']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
-            correlations.append("불안/분노 감정이 높아질 때, 평온/회복 점수는 반대로 낮아지는 경향을 보입니다. 정서적 안정성을 유지하기 위해 노력하셔도 좋겠습니다.")
+            correlations.append("불안/분노 감정이 높아질 때, 평온/회복 점수는 반대로 낮아지는 경향이 관찰됩니다. 이 두 감정 사이의 관계를 살펴보며 정서적 안정성을 위한 자신만의 방법을 찾아보는 것도 좋겠습니다.")
 
         # [추세 기반 반비례 상관관계: A가 개선될 때 B도 개선됨]
         if cluster_stats['sleep']['trend'] == 'decreasing' and cluster_stats['neg_low']['trend'] == 'decreasing':
