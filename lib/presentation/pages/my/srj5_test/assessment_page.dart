@@ -91,8 +91,8 @@ class _AssessmentPageState
               SizedBox(height: 40.h),
               AppText(
                 stepIndex == totalSteps
-                    ? '나의 $selectedclusterNM 체크를 통해\n$userName님을 조금 더 알아볼게요'
-                    : '$userName님이\n알려주고 싶은\n감정을 선택해 볼까요?',
+                    ? '$selectedclusterNM 감정을 살펴보고\n나를 조금 더 알아볼게요'
+                    : '지금 어떤 감정 상태인지\n간단히 살펴볼까요?',
                 textAlign: TextAlign.center,
                 style: AppFontStyles.heading2
                     .copyWith(color: AppColors.grey900),
@@ -100,8 +100,8 @@ class _AssessmentPageState
               SizedBox(height: 5.h),
               AppText(
                 stepIndex == totalSteps
-                    ? '솔직하게 답변할수록 도우미 답변이 더 정교해져요 🍀'
-                    : '도우미와 대화할 때 도움이 됩니다. 🌱',
+                    ? '솔직하게 답변할수록 도우미가 당신을 더 잘 이해해요 🍀'
+                    : '도우미와의 대화를 더 자연스럽게 만들어줘요 🌱',
                 textAlign: TextAlign.center,
                 style: AppFontStyles.bodyRegular14
                     .copyWith(color: AppColors.grey700),

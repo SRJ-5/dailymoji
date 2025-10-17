@@ -21,7 +21,7 @@ class AppTextStrings {
   static const String privacyPolicy = '개인정보 처리방침';
   static const String counselingCenter = '전문 상담 연결';
   static const String pageIsPreparing = '준비중';
-  static const String srj5Test = '감정 검사';
+  static const String srj5Test = '나의 감정 알기';
   static const String preparingTitle = '곧 만나요!';
   static const String preparingBody = '준비 중이에요';
 
@@ -133,14 +133,19 @@ class AppTextStrings {
   static const String monthlyReportErrorSummary =
       '오류가 발생했어요: %s'; // %s for error
   static const String monthlyReportNoRecord = '이 날은 기록이 없는 하루예요';
-  static const String monthlyReportDominantEmotion =
-      '이 날의 %s 감정이 %d점으로 가장 강렬했습니다.'; // %s for cluster, %d for score
   static const String checkChatHistory = '채팅 확인하기';
   static const String weeklyReportTitle = '나의 2주간 감정 상태';
   static const String avgEmotionScore = '평균 감정 점수';
   static const String maxEmotionScore = '최고 감정 점수';
   static const String minEmotionScore = '최저 감정 점수';
   static const String scoreUnit = '%s점'; // %s for score value
+
+  // 의료 가이드라인-> RIN: 클러스터 유형에 따라 동적 제목을 생성하는 static 메서드 추가
+  static String getMonthlyReportSummaryTitle({
+    required String clusterName,
+  }) {
+    return "이 날의 가장 높은 감정은 '$clusterName'";
+  }
 
   // Solution Page
   static const String solutionLoadFailed =
@@ -205,18 +210,18 @@ class AppTextStrings {
 
   // guide Page RichText 용
   static const List<String> startGuideText = [
-    '하루 감정을 기록하고\n',
-    '감정 점수를 기반으로\n',
-    '캘린더의'
+    '하루 감정을 기록하면\n',
+    '기록한 감정을 기반으로\n',
+    '캘린더의 '
   ];
   static const List<String> middleGuideText = [
-    'AI 분석 리포트',
-    '맞춤형 솔루션',
+    '나를 이해하는 리포트',
+    '나만의 마음 관리법',
     '감정 히스토리'
   ];
   static const List<String> endGuideText = [
-    '를 받아보세요',
-    '을 추천해 드려요',
+    '가 쌓여요',
+    '을 찾아보세요',
     '를 통해\n변화를 한눈에 확인하세요'
   ];
 }
