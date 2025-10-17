@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/domain/entities/daily_summary.dart';
 import 'package:dailymoji/domain/enums/cluster_type.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/daily_summary_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -146,6 +148,18 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = ref.read(dailySummaryViewModelProvider.notifier);
+    print("fffffffffffffffffffffffffffff");
+    final data = vm.getMonthDatas(
+        "92aa4016-5ac7-4024-b575-d0baa82a7e3a", DateTime.now());
+
+    data.then(
+      (value) {
+        print(value.length);
+      },
+    );
+    print("fffffffffffffffffffffffffffff");
+
     // final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     // ── 여기서 key 만들고
     final key = (widget.userId, _focusedDay.year, _focusedDay.month);
@@ -202,7 +216,11 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
                 // 페이지(월) 넘길 때 포커스 변경 → Provider family 키가 바뀌며 자동 리로드
                 onPageChanged: (focused) {
-                  setState(() => _focusedDay = focused); // → key가 바뀌며 재요청
+                  setState(() {
+                    ////////////////////////////
+                    print(focused);
+                    _focusedDay = focused;
+                  }); // → key가 바뀌며 재요청
                 },
 
                 onDaySelected: (selected, focused) {

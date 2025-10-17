@@ -265,13 +265,13 @@ class _EmojiItem extends StatelessWidget {
         children: [
           // 아이콘 타일
           Container(
-            width: 64.w,
-            height: 64.w,
+            width: 100.w,
+            height: 118.h,
             decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.9),
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: isSelected ? AppColors.orange200 : AppColors.grey200,
+                color: isSelected ? AppColors.orange300 : AppColors.grey200,
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: [
@@ -283,9 +283,9 @@ class _EmojiItem extends StatelessWidget {
               ],
             ),
             alignment: Alignment.center,
-            child: Image.asset(imagePath, width: 40.w, height: 40.w),
+            child: Image.asset(imagePath, width: 60.w, height: 60.h),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 8.h),
           // 라벨
           SizedBox(
             width: 72.w,
