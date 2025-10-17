@@ -180,10 +180,9 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
     final summaryTitle = (selectedRow == null)
         ? AppTextStrings.monthlyReportNoRecord
         : AppTextStrings.getMonthlyReportSummaryTitle(
-            cluster: selectedRow.cluster,
             clusterName: ClusterUtil.getDisplayName(selectedRow.cluster),
-            score: displayScore100(selectedRow.score).toString(),
           );
+
     return Scaffold(
       backgroundColor: AppColors.yellow50,
       body: Padding(

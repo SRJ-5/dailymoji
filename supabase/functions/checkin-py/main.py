@@ -721,7 +721,7 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
         personality=payload.character_personality, 
         cluster=top_cluster, 
         level=level, 
-        format_kwargs={"emotion": CLUSTER_TO_DISPLAY_NAME.get(top_cluster)}
+        format_kwargs={"emotion": CLUSTER_TO_DISPLAY_NAME.get(top_cluster),"user_nick_nm": user_nick_nm}
     )
     
     # intervention 객체 생성 및 DB 저장
@@ -1146,7 +1146,7 @@ class DailyReportRequest(BaseModel):
 
 async def create_and_save_summary_for_user(user_id: str, date_str: str):
     """
-    g_score가 가장 높았던 세션을 기준으로 일일 요약을 생성하고 DB에 저장합니다.
+    그날의 '최고점 감정'과 '가장 힘들었던 순간의 감정'을 모두 찾아 LLM에 전달하여 요약을 생성합니다.
     이 함수는 스케줄링된 작업(/tasks/generate-summaries)에 의해 호출됩니다.
     """
     print(f"----- [Daily Summary Job Start] User: {user_id}, Date: {date_str} -----")
@@ -1160,60 +1160,66 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         start_of_day = f"{date_str}T00:00:00+00:00"
         end_of_day = f"{date_str}T23:59:59+00:00"
 
-        # --- 그날의 모든 세션과 점수 기록을 가져옴
-        session_query = supabase.table("sessions").select("id, summary, g_score, created_at") \
+        # --- 1. '그날 가장 높았던 단일 감정' 찾기 (기준점 1) ---
+        top_score_query = supabase.table("cluster_scores") \
+            .select("cluster, score, sessions(summary)") \
             .eq("user_id", user_id) \
             .gte("created_at", start_of_day) \
-            .lte("created_at", end_of_day)
-        session_res = await run_in_threadpool(session_query.execute)
+            .lte("created_at", end_of_day) \
+            .order("score", desc=True) \
+            .limit(1)
+        top_score_res = await run_in_threadpool(top_score_query.execute)
 
-        if not session_res.data:
-            print(f"Info: No session data for user {user_id} on {date_str}. Skipping.")
-            return
-        
-        # g_score가 가장 높았던 세션을 찾음
-        top_session = max(session_res.data, key=lambda x: x.get('g_score', 0.0))
-        top_session_id = top_session['id']
-        top_session_summary = top_session.get('summary', "특별한 대화는 없었어요.")
-
-        # 해당 세션의 클러스터 점수 중 가장 높은 것을 찾음
-        score_query = supabase.table("cluster_scores").select("cluster, score") \
-            .eq("session_id", top_session_id)
-        score_res = await run_in_threadpool(score_query.execute)
-
-        if not score_res.data:
-            # 세션은 있지만 스코어가 없는 경우(친구모드 등)는 요약을 생성하지 않음
-            print(f"Info: No cluster scores for top session {top_session_id}. Skipping.")
+        if not top_score_res.data:
+            print(f"Info: No cluster scores for user {user_id} on {date_str}. Skipping.")
             return
 
-        
-        # 가장 높은 점수를 가진 기록(entry)을 찾아 그날 최고 점수를 기록한 세션의 점수 계산
-        top_score_entry = max(score_res.data, key=lambda x: x['score'])
-        top_cluster_name = top_score_entry['cluster']
-        top_score_for_llm = int(top_score_entry['score'] * 100)
-        
-        user_nick_nm, _ = await get_user_info(user_id)
-        advice_text = await get_mention_from_db("analysis", "ko", cluster=top_cluster_name, level="high")
+        top_score_entry = top_score_res.data[0]
+        headline_cluster = top_score_entry['cluster']
+        headline_score = int(top_score_entry['score'] * 100)
+        headline_summary = (top_score_entry.get('sessions') or {}).get('summary', "특별한 대화는 없었어요.")
 
-        # --- LLM의 답변 반복을 막기 위해 최근 5개의 요약 기록을 가져옴
-        recent_summaries_query = supabase.table("daily_summaries") \
-            .select("summary_text") \
+        # --- 2. '가장 힘들었던 순간(g_score 최고점)의 감정' 찾기 (기준점 2) ---
+        top_g_score_session_query = supabase.table("sessions") \
+            .select("id, summary, g_score, cluster_scores(cluster, score)") \
             .eq("user_id", user_id) \
-            .order("date", desc=True) \
-            .limit(5)
-        recent_summaries_res = await run_in_threadpool(recent_summaries_query.execute)
-        previous_summaries = [s['summary_text'] for s in recent_summaries_res.data]
+            .gte("created_at", start_of_day) \
+            .lte("created_at", end_of_day) \
+            .order("g_score", desc=True) \
+            .limit(1)
+        top_g_score_res = await run_in_threadpool(top_g_score_session_query.execute)
+        
+        difficult_moment_context = None
+        if top_g_score_res.data:
+            top_g_score_session = top_g_score_res.data[0]
+            if top_g_score_session.get('cluster_scores'):
+                # 해당 세션 내에서 가장 높았던 클러스터 찾기
+                top_cluster_in_g_session = max(top_g_score_session['cluster_scores'], key=lambda x: x['score'])
+                
+                # '최고점 감정'과 '가장 힘들었던 순간의 감정'이 다를 경우에만 추가 정보 구성
+                if top_cluster_in_g_session['cluster'] != headline_cluster:
+                    difficult_moment_context = {
+                        "cluster_name": CLUSTER_TO_DISPLAY_NAME.get(top_cluster_in_g_session['cluster']),
+                        "score": int(top_cluster_in_g_session['score'] * 100),
+                        "reason": "이 감정은 하루 중 가장 힘들었던(종합 점수가 높았던) 순간의 주요 감정입니다."
+                    }
 
-        # --- LLM에 전달할 컨텍스트 조합 ---
+        # --- 3. LLM에 전달할 정보 구성 ---
+        user_nick_nm, _ = await get_user_info(user_id)
         llm_context = {
             "user_nick_nm": user_nick_nm,
-            "top_cluster_display_name": CLUSTER_TO_DISPLAY_NAME.get(top_cluster_name, "주요 감정"),
-            "top_score_today": top_score_for_llm,
-            "user_dialogue_summary": top_session_summary,
-            "cluster_advice": advice_text,
-            "previous_summaries": previous_summaries 
+            "headline_emotion": {
+                "cluster_name": CLUSTER_TO_DISPLAY_NAME.get(headline_cluster),
+                "score": headline_score,
+                "dialogue_summary": headline_summary
+            },
+            "difficult_moment": difficult_moment_context # None일 수도 있음
         }
         
+        recent_summaries_query = supabase.table("daily_summaries").select("summary_text").eq("user_id", user_id).order("date", desc=True).limit(5)
+        recent_summaries_res = await run_in_threadpool(recent_summaries_query.execute)
+        llm_context["previous_summaries"] = [s['summary_text'] for s in recent_summaries_res.data]
+
         # --- LLM 호출하여 요약문 생성 ---
         summary_json = await call_llm(
             system_prompt=REPORT_SUMMARY_PROMPT,
@@ -1232,9 +1238,10 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
             "user_id": user_id,
             "date": date_str,
             "summary_text": daily_summary_text,
-            "top_cluster": top_cluster_name,
-            "top_score": top_score_for_llm 
+            "top_cluster": headline_cluster,
+            "top_score": headline_score 
         }
+        await run_in_threadpool(supabase.table("daily_summaries").upsert(summary_data, on_conflict="user_id,date").execute)
 
         # upsert: user_id와 date가 동일한 데이터가 있으면 업데이트, 없으면 삽입
         upsert_query = supabase.table("daily_summaries").upsert(summary_data, on_conflict="user_id,date")
@@ -1342,17 +1349,17 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         
         # [긍정적 상관관계: A가 높을 때 B도 높음]
         if cluster_stats['sleep']['avg'] > 40 and cluster_stats['neg_low']['avg'] > 40:
-            correlations.append("수면의 질 저하와 우울/무기력감이 함께 높게 나타나는 경향이 있습니다. 이는 심리적 에너지를 고갈시키는 주요 원인일 수 있습니다.")
+            correlations.append("수면의 질 저하와 우울/무기력감이 함께 높게 나타나는 경향이 있습니다. 이는 심리적 에너지를 고갈시킬 수 있어 마음을 잘 돌아보시기 바랍니다.")
         if cluster_stats['neg_high']['avg'] > 40 and cluster_stats['sleep']['avg'] > 40:
-            correlations.append("불안/긴장감이 높은 날, 수면 문제도 함께 증가하는 패턴이 보입니다. 과도한 각성 상태가 편안한 휴식을 방해하고 있을 수 있습니다.")
+            correlations.append("불안/긴장감이 높은 날, 수면 문제도 함께 증가하는 패턴이 보입니다. 과도한 각성 상태가 편안한 휴식을 방해하고 있는 것은 아닌지 걱정됩니다.")
         if cluster_stats['adhd']['avg'] > 50 and cluster_stats['neg_high']['avg'] > 50:
-            correlations.append("집중력 저하 문제와 불안감이 모두 높은 수준으로 나타났습니다. 주의를 통제하려는 노력이 과도한 정신적 긴장으로 이어지고 있을 가능성이 있습니다.")
+            correlations.append("집중력 저하 문제와 불안감이 모두 높은 수준으로 나타났습니다. 주의를 통제하려는 노력이 과도한 정신적 긴장으로 이어지고 있을 수 있어 걱정됩니다.")
 
         # [부정적/반비례 상관관계: A가 높을 때 B는 낮음]
         if cluster_stats['neg_low']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
             correlations.append("우울/무기력감이 높은 시기에는 긍정적 감정을 느끼는 정도가 현저히 낮아지는 패턴이 뚜렷합니다. 이는 감정 회복을 위한 인지적 자원이 부족하다는 신호일 수 있습니다.")
         if cluster_stats['neg_high']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
-            correlations.append("불안/분노 감정이 높아질 때, 평온/회복 점수는 반대로 낮아지는 경향을 보입니다. 정서적 안정성을 유지하기 위한 노력이 필요해 보입니다.")
+            correlations.append("불안/분노 감정이 높아질 때, 평온/회복 점수는 반대로 낮아지는 경향을 보입니다. 정서적 안정성을 유지하기 위해 노력하셔도 좋겠습니다.")
 
         # [추세 기반 반비례 상관관계: A가 개선될 때 B도 개선됨]
         if cluster_stats['sleep']['trend'] == 'decreasing' and cluster_stats['neg_low']['trend'] == 'decreasing':
@@ -1390,30 +1397,6 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         print(f"Success: Saved weekly summary for user {user_id} on {date_str}.")
     except Exception as e:
         print(f"Error in create_and_save_weekly_summary_for_user: {e}"); traceback.print_exc()
-
-
-#  ------- 스케줄링 엔드포인트: 두 가지 요약 함수를 모두 호출 ---------
-
-@app.post("/tasks/generate-summaries")
-async def handle_generate_summaries_task():
-    yesterday = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
-    yesterday_str = yesterday.strftime('%Y-%m-%d')
-    start_of_yesterday = f"{yesterday_str}T00:00:00+00:00"
-    end_of_yesterday = f"{yesterday_str}T23:59:59+00:00"
-    print(f"Starting daily & weekly summary generation task for date: {yesterday_str}")
-
-    active_users_res = await run_in_threadpool(supabase.table("sessions").select("user_id").gte("created_at", start_of_yesterday).lte("created_at", end_of_yesterday).execute)
-    if not active_users_res.data:
-        return {"message": "No active users yesterday."}
-    
-    user_ids = list(set([item['user_id'] for item in active_users_res.data]))
-    print(f"Found {len(user_ids)} active users. Generating summaries...")
-    
-    for user_id in user_ids:
-        await create_and_save_summary_for_user(user_id, yesterday_str)
-        await create_and_save_weekly_summary_for_user(user_id, yesterday_str)
-
-    return {"message": f"Summary generation task complete for {len(user_ids)} users."}
 
 
 
@@ -1514,6 +1497,7 @@ async def handle_generate_summaries_task():
     # 각 유저에 대해 순차적으로 요약 생성 함수 호출
     for user_id in user_ids:
         await create_and_save_summary_for_user(user_id, yesterday_str)
+        await create_and_save_weekly_summary_for_user(user_id, yesterday_str)
 
     message = f"Summary generation task complete for {len(user_ids)} users."
     print(message)
