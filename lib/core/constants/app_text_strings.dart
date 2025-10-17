@@ -142,22 +142,9 @@ class AppTextStrings {
 
   // 의료 가이드라인-> RIN: 클러스터 유형에 따라 동적 제목을 생성하는 static 메서드 추가
   static String getMonthlyReportSummaryTitle({
-    required String cluster,
     required String clusterName,
-    required String score, // 타입은 String으로 유지
   }) {
-    switch (cluster) {
-      case negLow:
-      case negHigh:
-      case positive:
-        return "이 날은 '$clusterName' 감정이 ${score}점으로 가장 두드러졌습니다.";
-      case adhd:
-        return "이 날은 '$clusterName' 상태가 ${score}점으로 나타났습니다.";
-      case sleep:
-        return "이 날은 '$clusterName' 정도가 ${score}점으로 측정되었습니다.";
-      default:
-        return "이 날의 '$clusterName' 지표는 ${score}점으로 기록되었습니다.";
-    }
+    return "이 날의 가장 높은 감정은 '$clusterName'";
   }
 
   // Solution Page
