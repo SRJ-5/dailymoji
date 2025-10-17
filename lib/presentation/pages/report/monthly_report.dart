@@ -179,7 +179,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
     // 요약 카드 제목 문구
     final summaryTitle = (selectedRow == null)
         ? AppTextStrings.monthlyReportNoRecord
-        : "이 날의 ${ClusterUtil.getDisplayName(selectedRow.cluster)} 감정이 ${displayScore100(selectedRow.score)}점으로 가장 강렬했습니다.";
+        : "이 날의 ${ClusterUtil.getDisplayName(selectedRow.cluster)} 이 ${displayScore100(selectedRow.score)}점으로 가장 강렬했습니다.";
 
     return Scaffold(
       backgroundColor: AppColors.yellow50,

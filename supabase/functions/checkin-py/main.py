@@ -1362,14 +1362,16 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
 
         # 4. 주요 클러스터 식별
         # 지난 2주간 발생한 모든 감정 기록 중에서, 점수가 가장 높았던 순간 Top 2를 찾아내라
-        dominant_clusters = list(set([item[0] for item in sorted(all_scores, key=lambda item: item[1], reverse=True)[:2]]))
-        
+        dominant_clusters_keys = list(set([item[0] for item in sorted(all_scores, key=lambda item: item[1], reverse=True)[:2]]))        
+        # 클러스터 이름 변환
+        dominant_clusters_display = [CLUSTER_TO_DISPLAY_NAME.get(c, c) for c in dominant_clusters_keys]
+
         # 최종 LLM 전달 데이터 구조
         trend_data = {
             "g_score_stats": {"avg": int(np.mean(g_scores)*100) if g_scores else 0, 
                               "std": int(np.std(g_scores)*100) if g_scores else 0}, 
             "cluster_stats": cluster_stats, 
-            "dominant_clusters": dominant_clusters, 
+            "dominant_clusters": dominant_clusters_display, 
             "correlations": correlations
             }
 
