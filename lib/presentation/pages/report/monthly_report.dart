@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dailymoji/core/config/api_config.dart';
 import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/domain/enums/cluster_type.dart';
+import 'package:dailymoji/presentation/pages/report/view_model/daily_summary_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -146,6 +147,9 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
 
   @override
   Widget build(BuildContext context) {
+    final monthState = ref.watch(dailySummaryViewModelProvider);
+    final monthVm = ref.read(dailySummaryViewModelProvider.notifier);
+
     // final weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     // ── 여기서 key 만들고
     final key = (widget.userId, _focusedDay.year, _focusedDay.month);
@@ -203,6 +207,7 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                 // 페이지(월) 넘길 때 포커스 변경 → Provider family 키가 바뀌며 자동 리로드
                 onPageChanged: (focused) {
                   setState(() => _focusedDay = focused); // → key가 바뀌며 재요청
+                  monthVm.fetchMonthData(widget.userId, focused);
                 },
 
                 onDaySelected: (selected, focused) {
@@ -250,24 +255,25 @@ class _MonthlyReportState extends ConsumerState<MonthlyReport> {
                       ),
                     );
                   },
-
+/////////수정해야하함ㅁㅁㅁㅁㅁㅁㅁ
                   // 일반 날짜 셀
                   defaultBuilder: (context, day, focusedDay) {
-                    final path = emojiByDay[day.day]; // ← 뷰모델의 이모지 맵 사용!
-                    if (path != null) {
+                    for (var i in monthState.dailySummaries) {
+                      if (i.date.day == day.day) {
+                        return SizedBox(
+                          width: 40.w,
+                          height: 40.h,
+                          child: Center(
+                              child: Image.asset(i.topCluster,
+                                  width: 36.w, height: 36.h)),
+                        );
+                      }
                       return SizedBox(
                         width: 40.w,
                         height: 40.h,
-                        child: Center(
-                            child:
-                                Image.asset(path, width: 36.w, height: 36.h)),
+                        child: Center(child: AppText('${day.day}')),
                       );
                     }
-                    return SizedBox(
-                      width: 40.w,
-                      height: 40.h,
-                      child: Center(child: AppText('${day.day}')),
-                    );
                   },
 
                   // 오늘 날짜 셀
