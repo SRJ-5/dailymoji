@@ -53,6 +53,8 @@ class AppImages {
       'assets/images/character_carrot/carrot_face.png';
   static const String carrotWalk =
       'assets/images/character_carrot/carrot_walk.png';
+  static const String carrotLeftWalk =
+      'assets/images/character_carrot/carrot_left_walk.png';
   static const String carrotFrontView =
       'assets/images/character_carrot/carrot_front_view.png';
   static const String carrotLookUp =
@@ -73,7 +75,7 @@ class AppImages {
   ];
   static const List<String> characterListWalk = [
     AppImages.cadoWalk,
-    AppImages.carrotWalk,
+    AppImages.carrotLeftWalk,
   ];
   static const List<String> characterListonBoarding12 = [
     AppImages.cadoLookUp,

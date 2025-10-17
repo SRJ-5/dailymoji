@@ -3,6 +3,7 @@ import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/data/repositories/session_repository.dart';
 import 'package:dailymoji/presentation/pages/report/weekly_report.dart';
+import 'package:dailymoji/presentation/providers/report_providers.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,6 +17,10 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
 final gScore14DayChartProvider =
     FutureProvider.family<EmotionData?, String>((ref, userId) async {
   final repo = ref.watch(sessionRepositoryProvider);
+
+  // 백엔드에서 요약 받아오는 provider (지금 중복 사용 중 나중에 깔끔하게 수정 필요)
+  final weeklySummary = ref.watch(weeklySummaryProvider(userId));
+
   // 이 함수가 백엔드 RPC('get_daily_gscore_stats')를 호출합니다.
   final dailyStats = await repo.fetchDailyStatsLast14Days(userId: userId);
 
@@ -63,12 +68,18 @@ final gScore14DayChartProvider =
   final double maxAvg = validAvgs.reduce((a, b) => a > b ? a : b);
   final double minAvg = validAvgs.reduce((a, b) => a < b ? a : b);
 
+  //요약이 없으면 기본 문구
+  String pick(String fallback, String? fromApi) {
+    final t = fromApi?.trim();
+    return (t != null && t.isNotEmpty) ? t : fallback;
+  }
+
   return EmotionData(
     color: AppColors.totalScore,
     spots: spots,
-    description: AppTextStrings.weeklyReportGScoreDescription,
     avg: double.parse(overallAvg.toStringAsFixed(1)),
     max: double.parse(maxAvg.toStringAsFixed(1)),
     min: double.parse(minAvg.toStringAsFixed(1)),
+    description: AppTextStrings.weeklyReportGScoreDescription,
   );
 });

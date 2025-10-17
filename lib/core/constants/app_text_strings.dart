@@ -163,11 +163,11 @@ class AppTextStrings {
   static const String positive = 'positive';
 
   static const String weeklyReportGScoreDescription =
-      '종합 감정 점수는 불안, 우울, 수면 등 여러 감정 상태를 종합하여 나의 전반적인 마음 컨디션을 보여주는 지표예요. 점수가 높고 낮음보다 더 중요한 것은, 꾸준한 기록을 통해 나의 감정 변화 흐름을 스스로 이해해 나가는 과정 그 자체랍니다.';
+      '종합 감정 점수는 불안, 우울, 수면 등 여러 마음 상태를 종합하여 나의 전반적인 마음 컨디션을 보여주는 지표예요. 점수가 높고 낮음보다 더 중요한 것은, 꾸준한 기록을 통해 나의 감정 변화 흐름을 스스로 이해해 나가는 과정 그 자체랍니다.';
   static const String descNegHigh =
-      '불안이나 스트레스 수치가 높게 나타났네요. 쉴 틈 없이 팽팽한 긴장감 속에서 마음이 많이 지쳤을 수 있어요. 나의 감정을 알아차리는 것만으로도 변화의 첫걸음이 될 수 있습니다.';
+      '불안이나 스트레스 높아 보여요. 쉴 틈 없이 팽팽한 긴장감 속에서 마음이 많이 지쳤을 수 있어요. 나의 감정을 알아차리는 것만으로도 변화의 첫걸음이 될 수 있습니다.';
   static const String descNegLow =
-      '마음의 에너지가 많이 소진된 모습이 보여요. 평소에 즐겁던 일도 무감각하게 느껴지고, 작은 일에도 큰 노력이 필요한 시기일 수 있습니다. 지금은 잠시 멈춰서 스스로를 돌봐달라는 신호일지도 모릅니다.';
+      '마음의 에너지가 많이 소진된 모습이 보여요. 평소에 즐겁던 일도 무감각하게 느껴지고, 작은 일에도 큰 노력이 필요한 시기일 수 있습니다. 지금은 잠시 멈춰서 스스로를 돌봐달라는 뜻일지도 모릅니다.';
   static const String descPositive =
       '안정적이고 긍정적인 감정 상태를 잘 유지하고 계시는군요. 외부의 스트레스에도 마음의 중심을 지키는 힘, 즉 회복탄력성이 건강하게 작동하고 있다는 좋은 신호입니다. 이 평온한 감각을 충분히 만끽해 보세요.';
   static const String descSleep =
@@ -180,7 +180,7 @@ class AppTextStrings {
   static const String averageEmotionalScore = "평균 감정 점수";
   static const String highestEmotionalScore = "최고 감정 점수";
   static const String lowestEmotionalScore = "최저 감정 점수";
-  static const String checkEmotions = "감정 검사하기";
+  static const String checkEmotions = "나의 감정 알기";
 
   // monthly_report.dart 용
   static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
