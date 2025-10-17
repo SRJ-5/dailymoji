@@ -18,24 +18,45 @@ class CharacterSettingPage extends ConsumerStatefulWidget {
   const CharacterSettingPage({super.key});
 
   @override
-  ConsumerState<CharacterSettingPage> createState() => _CharacterSettingPageState();
+  ConsumerState<CharacterSettingPage> createState() =>
+      _CharacterSettingPageState();
 }
 
-class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
-  PageController pageController = PageController(initialPage: 0, viewportFraction: 0.75);
+class _CharacterSettingPageState
+    extends ConsumerState<CharacterSettingPage> {
+  late PageController pageController;
 
   @override
   void initState() {
     super.initState();
+    final userState = ref.read(userViewModelProvider);
+    pageController = PageController(
+        initialPage: userState.userProfile!.characterNum!,
+        viewportFraction: 0.75);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {}); // 첫 빌드 이후 pageController.page 값이 정확히 들어옴
     });
   }
 
-  void selectCharacter({required int selectNum, required String aiPersonality}) async {
-    if (ref.watch(userViewModelProvider).characterNum == selectNum) return;
-    ref.read(userViewModelProvider.notifier).setAiPersonality(selectNum: selectNum, aiPersonality: aiPersonality);
-    await ref.read(userViewModelProvider.notifier).fetchInsertUser();
+  @override
+  void dispose() {
+    super.dispose();
+    pageController.dispose();
+  }
+
+  void selectCharacter(
+      {required int selectNum,
+      required String aiPersonality}) async {
+    if (ref
+            .watch(userViewModelProvider)
+            .userProfile!
+            .characterNum ==
+        selectNum) return;
+    ref.read(userViewModelProvider.notifier).setAiPersonality(
+        selectNum: selectNum, aiPersonality: aiPersonality);
+    await ref
+        .read(userViewModelProvider.notifier)
+        .fetchInsertUser();
 
     if (!mounted) return;
 
@@ -46,16 +67,18 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
     );
   }
 
-  final _personalitiesOnboarding = CharacterPersonality.values.map((e) => e.onboardingLabel).toList();
+  final _personalitiesOnboarding = CharacterPersonality.values
+      .map((e) => e.onboardingLabel)
+      .toList();
 
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
-    final userViewModel = ref.read(userViewModelProvider.notifier);
+    final userViewModel =
+        ref.read(userViewModelProvider.notifier);
 
-    final double viewportFraction = pageController.viewportFraction;
-
-    int _selectedIndex = userState.characterNum;
+    final double viewportFraction =
+        pageController.viewportFraction;
 
     return Scaffold(
       backgroundColor: AppColors.yellow50,
@@ -64,7 +87,8 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
         centerTitle: true,
         title: AppText(
           AppTextStrings.characterSettings,
-          style: AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
+          style: AppFontStyles.bodyBold18
+              .copyWith(color: AppColors.grey900),
         ),
       ),
       body: Padding(
@@ -74,7 +98,9 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 16.h),
-              NicknameEditCard(nickname: userState.userProfile!.characterNm!, isUser: false),
+              NicknameEditCard(
+                  nickname: userState.userProfile!.characterNm!,
+                  isUser: false),
               SizedBox(height: 16.h),
               Container(
                 padding: EdgeInsets.only(top: 16.h, left: 16.w),
@@ -90,7 +116,8 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                 ),
                 child: AppText(
                   AppTextStrings.characterSelect,
-                  style: AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
+                  style: AppFontStyles.bodyBold14
+                      .copyWith(color: AppColors.grey900),
                 ),
               ),
               SizedBox(height: 30.h),
@@ -102,7 +129,8 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                     scrollDirection: Axis.horizontal,
                     controller: pageController,
                     clipBehavior: Clip.none,
-                    itemCount: AppImages.characterListProfile.length,
+                    itemCount:
+                        AppImages.characterListProfile.length,
                     itemBuilder: (context, index) {
                       // ✨ 1. AnimatedBuilder로 감싸기
                       return AnimatedBuilder(
@@ -110,15 +138,18 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                         builder: (context, child) {
                           double scale = 1.0;
                           // pageController.page가 초기화되었는지 확인
-                          if (pageController.position.haveDimensions) {
+                          if (pageController
+                              .position.haveDimensions) {
                             // ✨ 2. 현재 페이지 위치와 아이템 인덱스의 차이 계산
                             final page = pageController.page!;
-                            final difference = (page - index).abs();
+                            final difference =
+                                (page - index).abs();
 
                             // ✨ 3. 차이에 따라 scale 값 계산 (1.0에서 0.8 사이로)
                             // 중앙(difference=0)일 때 1.0, 한 페이지 떨어졌을때(difference=1) 0.8
                             scale = 1.0 - (difference * 0.2);
-                            scale = scale.clamp(0.75, 1.0); // 최소/최대 크기 제한
+                            scale = scale.clamp(
+                                0.75, 1.0); // 최소/최대 크기 제한
                           }
 
                           // ✨ 4. Transform.scale로 크기 적용
@@ -128,9 +159,13 @@ class _CharacterSettingPageState extends ConsumerState<CharacterSettingPage> {
                               // Align은 그대로 유지하여 중앙 정렬
                               alignment: Alignment.center,
                               child: CharacterBox(
-                                viewportFraction: viewportFraction,
-                                personality: _personalitiesOnboarding[index],
-                                characterImage: AppImages.characterListProfile[index],
+                                viewportFraction:
+                                    viewportFraction,
+                                personality:
+                                    _personalitiesOnboarding[
+                                        index],
+                                characterImage: AppImages
+                                    .characterListProfile[index],
                                 onSelect: selectCharacter,
                                 isOnboarding: false,
                                 index: index,
