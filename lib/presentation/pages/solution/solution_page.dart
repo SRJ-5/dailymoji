@@ -283,13 +283,9 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // 캐릭터 이미지
-                  Transform(
-                    alignment: Alignment.center, // 중심축 기준으로 반전
-                    transform: Matrix4.rotationY(math.pi), // 좌우 반전
-                    child: Image.asset(
-                      AppImages.characterListWalk[selectedCharacterNum!],
-                      height: 180.h,
-                    ),
+                  Image.asset(
+                    AppImages.characterListWalk[selectedCharacterNum!],
+                    height: 180.h,
                   ),
                   // 말풍선
                   const SolutionBubble(
