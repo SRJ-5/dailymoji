@@ -283,7 +283,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 2,
+                              interval: 20,
                               getTitlesWidget: (value, meta) {
                                 if (value.toInt() == 0) {
                                   return const SizedBox.shrink();
@@ -337,7 +337,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                         minX: 0,
                         maxX: (baseDays.length - 0.5).toDouble(),
                         minY: 0,
-                        maxY: 10,
+                        maxY: 100,
                         lineBarsData: [
                           // ★ 항상 그릴 “종합 감정 점수” 라인 (있을 때)
                           if (mergedMap[AppTextStrings.clusterTotalScore] !=
@@ -528,19 +528,19 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                   _ScoreBox(
                       label: AppTextStrings.avgEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.avg.toStringAsFixed(1)),
+                          .replaceFirst('%s', data.avg.toStringAsFixed(0)),
                       color: AppColors.green700),
                   separator(),
                   _ScoreBox(
                       label: AppTextStrings.maxEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.max.toStringAsFixed(1)),
+                          .replaceFirst('%s', data.max.toStringAsFixed(0)),
                       color: AppColors.noti100),
                   separator(),
                   _ScoreBox(
                       label: AppTextStrings.minEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.min.toStringAsFixed(1)),
+                          .replaceFirst('%s', data.min.toStringAsFixed(0)),
                       color: AppColors.noti200),
                 ],
               ),

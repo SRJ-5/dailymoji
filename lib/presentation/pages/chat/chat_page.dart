@@ -20,7 +20,9 @@ import 'package:intl/intl.dart';
 
 //(구분선추가) 날짜 비교를 위한 Helper 함수
 bool isSameDay(DateTime date1, DateTime date2) {
-  return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
+  return date1.year == date2.year &&
+      date1.month == date2.month &&
+      date1.day == date2.day;
 }
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -28,13 +30,15 @@ class ChatPage extends ConsumerStatefulWidget {
   final Map<String, dynamic>? navigationData;
   final DateTime? targetDate;
 
-  const ChatPage({super.key, this.emotionFromHome, this.navigationData, this.targetDate});
+  const ChatPage(
+      {super.key, this.emotionFromHome, this.navigationData, this.targetDate});
 
   @override
   ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTickerProviderStateMixin {
+class _ChatPageState extends ConsumerState<ChatPage>
+    with RouteAware, SingleTickerProviderStateMixin {
   bool showEmojiBar = false;
   late String currentSelectedEmojiKey;
   final _messageInputController = TextEditingController();
@@ -65,7 +69,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
   // 입력 필드의 높이를 측정하여 이모지바 위치 업데이트
   void _updateInputFieldHeight() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox = _inputFieldKey.currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? renderBox =
+          _inputFieldKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox != null) {
         final newHeight = renderBox.size.height;
         if (_inputFieldHeight != newHeight) {
@@ -84,7 +89,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
 
       // 맨 위로 스크롤했을 때 (minScrollExtent에 가까워졌을 때)
       // 그리고 현재 로딩 중이 아니고, 더 불러올 메시지가 있을 때만 실행
-      if (_scrollController.position.pixels <= _scrollController.position.minScrollExtent + 200 &&
+      if (_scrollController.position.pixels <=
+              _scrollController.position.minScrollExtent + 200 &&
           !chatState.isLoadingMore &&
           chatState.hasMore &&
           !chatState.isLoading) {
@@ -179,7 +185,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
       final maxExtent = _scrollController.position.maxScrollExtent;
 
       // 이전과 같은 위치면 더 이상 렌더링되지 않는 것이므로 중단
-      if (previousMaxExtent != null && (maxExtent - previousMaxExtent).abs() < 1.0) {
+      if (previousMaxExtent != null &&
+          (maxExtent - previousMaxExtent).abs() < 1.0) {
         return;
       }
 
@@ -218,19 +225,24 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final seletedCharacterNum = ref.read(userViewModelProvider).userProfile!.characterNum;
+    final seletedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     // RIN ♥ : 홈에서 온 이모지 처리가 끝나면 디폴트 이미지로 돌려놓기
-    ref.listen(chatViewModelProvider.select((value) => value.clearPendingEmoji), (previous, next) {
+    ref.listen(chatViewModelProvider.select((value) => value.clearPendingEmoji),
+        (previous, next) {
       if (next == true) {
         setState(() {
           currentSelectedEmojiKey = 'default';
         });
-        ref.read(chatViewModelProvider.notifier).consumeClearPendingEmojiSignal();
+        ref
+            .read(chatViewModelProvider.notifier)
+            .consumeClearPendingEmojiSignal();
       }
     });
 
     // 초기 로딩 완료 시 스크롤을 맨 아래로 이동
-    ref.listen(chatViewModelProvider.select((value) => value.isLoading), (previous, next) {
+    ref.listen(chatViewModelProvider.select((value) => value.isLoading),
+        (previous, next) {
       if (previous == true && next == false && _isInitialLoad) {
         _isInitialLoad = false;
         // 여러 프레임에 걸쳐 여러 번 시도하여 확실하게 스크롤
@@ -254,8 +266,11 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
     final veryLastMessageId = messages.isNotEmpty ? messages.last.id : null;
 
     //  메시지 리스트가 변경될 때마다 스크롤을 맨 아래로 이동 (무한 스크롤 로딩 중이 아닐 때만)
-    ref.listen(chatViewModelProvider.select((state) => state.messages.length), (previous, next) {
-      if (next > (previous ?? 0) && !chatState.isLoading && !chatState.isLoadingMore) {
+    ref.listen(chatViewModelProvider.select((state) => state.messages.length),
+        (previous, next) {
+      if (next > (previous ?? 0) &&
+          !chatState.isLoading &&
+          !chatState.isLoadingMore) {
         _scrollToBottom();
       }
     });
@@ -282,14 +297,18 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
             children: [
               CircleAvatar(
                 radius: 16.r,
-                backgroundImage: (characterImageUrl != null && characterImageUrl.isNotEmpty)
+                backgroundImage: (characterImageUrl != null &&
+                        characterImageUrl.isNotEmpty)
                     ? NetworkImage(characterImageUrl)
-                    : AssetImage(AppImages.characterListFace[seletedCharacterNum!]) as ImageProvider,
+                    : AssetImage(
+                            AppImages.characterListFace[seletedCharacterNum!])
+                        as ImageProvider,
               ),
               SizedBox(width: 12.r),
               AppText(
                 characterName,
-                style: AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
+                style:
+                    AppFontStyles.bodyBold14.copyWith(color: AppColors.grey900),
               ),
             ],
           ),
@@ -307,7 +326,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                         ? const Center(child: CircularProgressIndicator())
                         : ListView.builder(
                             controller: _scrollController,
-                            itemCount: messages.length + (chatState.isLoadingMore ? 1 : 0),
+                            itemCount: messages.length +
+                                (chatState.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               // 로딩 인디케이터 표시 (맨 위에 표시됨)
                               if (chatState.isLoadingMore && index == 0) {
@@ -317,16 +337,19 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
                                     ),
                                   ),
                                 );
                               }
 
                               // 로딩 인디케이터가 있을 때는 인덱스를 1 감소
-                              final messageIndex = chatState.isLoadingMore ? index - 1 : index;
+                              final messageIndex =
+                                  chatState.isLoadingMore ? index - 1 : index;
                               if (messageIndex < 0) {
-                                return const SizedBox.shrink(); // 로딩 인디케이터만 있을 경우 방지
+                                return const SizedBox
+                                    .shrink(); // 로딩 인디케이터만 있을 경우 방지
                               }
 
                               final message = messages[messageIndex];
@@ -340,17 +363,21 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                               } else {
                                 // 현재 메시지와 바로 이전 메시지의 날짜를 비교
                                 final prevMessage = messages[messageIndex - 1];
-                                if (!isSameDay(prevMessage.createdAt, message.createdAt)) {
+                                if (!isSameDay(
+                                    prevMessage.createdAt, message.createdAt)) {
                                   showDateSeparator = true;
                                 }
                               }
 
-                              final bool isLastProposal = !chatState.isArchivedView && (message.id == veryLastMessageId);
+                              final bool isLastProposal =
+                                  !chatState.isArchivedView &&
+                                      (message.id == veryLastMessageId);
 
                               final messageWidget = _buildMessageWidget(
                                 message,
                                 key: ValueKey(message.tempId),
-                                isLastMessage: !chatState.isArchivedView && (message.id == veryLastMessageId),
+                                isLastMessage: !chatState.isArchivedView &&
+                                    (message.id == veryLastMessageId),
                               );
 
                               // 날짜 구분선이 메시지 위에 표시됨
@@ -366,7 +393,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                             },
                           ),
                   ),
-                  if (widget.targetDate == null) _buildInputField(isBotTyping: isBotTyping),
+                  if (widget.targetDate == null)
+                    _buildInputField(isBotTyping: isBotTyping),
                 ],
               ),
             ),
@@ -391,7 +419,10 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                 return Positioned(
                   left: 0,
                   right: 0,
-                  bottom: (isKeyboardVisible ? MediaQuery.of(context).viewInsets.bottom : 34.h) + _inputFieldHeight,
+                  bottom: (isKeyboardVisible
+                          ? MediaQuery.of(context).viewInsets.bottom
+                          : 34.h) +
+                      _inputFieldHeight,
                   child: _buildEmojiSelector(),
                 );
               }),
@@ -402,7 +433,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
   }
 
   //  --- 메시지 종류에 따라 위젯을 분기하는 Helper 함수 ---
-  Widget _buildMessageWidget(Message message, {required Key key, required bool isLastMessage}) {
+  Widget _buildMessageWidget(Message message,
+      {required Key key, required bool isLastMessage}) {
     if (message.sender == Sender.user) {
       return _userMessage(message, key: key);
     } else {
@@ -410,7 +442,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         case MessageType.analysis:
           return _analysisMessage(message, key: key);
         case MessageType.solutionProposal:
-          return _solutionProposalCardMessage(message, key: key, isLastMessage: isLastMessage);
+          return _solutionProposalCardMessage(message,
+              key: key, isLastMessage: isLastMessage);
         case MessageType.solutionFeedback:
           return _solutionFeedbackMessage(message, key: key);
         case MessageType.system:
@@ -595,15 +628,20 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         children: [
           AppText(
             _formattedNow(message.createdAt),
-            style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+            style:
+                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
           ),
           SizedBox(width: 4.w),
           Container(
-            padding: message.type == MessageType.image ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: message.type == MessageType.image
+                ? EdgeInsets.zero
+                : EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
 
             constraints: BoxConstraints(maxWidth: 292.w), // 말풍선 가로 길이 최대
             decoration: BoxDecoration(
-              color: message.type == MessageType.image ? Colors.transparent : AppColors.green200,
+              color: message.type == MessageType.image
+                  ? Colors.transparent
+                  : AppColors.green200,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 bottomRight: Radius.circular(12.r),
@@ -638,13 +676,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
             ),
             child: AppText(
               message.content.replaceAll(r'\n', '\n'),
-              style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.bodyRegular14
+                  .copyWith(color: AppColors.grey900),
             ),
           ),
           SizedBox(width: 4.w),
           AppText(
             _formattedNow(message.createdAt),
-            style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+            style:
+                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
           ),
         ],
       ),
@@ -784,7 +824,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
   // }
 
   // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
-  Widget _solutionProposalCardMessage(Message message, {required Key key, required bool isLastMessage}) {
+  Widget _solutionProposalCardMessage(Message message,
+      {required Key key, required bool isLastMessage}) {
     // String msg =
     //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
     final proposal = message.proposal;
@@ -833,13 +874,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                   Builder(
                     builder: (context) {
                       // 1. 전체 메시지를 줄바꿈 기준으로 나눕니다.
-                      final lines = message.content.replaceAll(r'\n', '\n').split('\n');
+                      final lines =
+                          message.content.replaceAll(r'\n', '\n').split('\n');
 
                       // 2. 첫 번째 줄을 제목으로 사용합니다.
                       final title = lines.first;
 
                       // 3. 나머지 줄들을 다시 하나의 문자열로 합쳐 본문을 만듭니다.
-                      final body = lines.length > 1 ? lines.sublist(1).join('\n') : '';
+                      final body =
+                          lines.length > 1 ? lines.sublist(1).join('\n') : '';
 
                       // 4. 제목과 본문을 각각 AppText 위젯으로 표시합니다.
                       return Column(
@@ -847,13 +890,15 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                         children: [
                           AppText(
                             title,
-                            style: AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900),
+                            style: AppFontStyles.bodyMedium14
+                                .copyWith(color: AppColors.grey900),
                           ),
                           if (body.isNotEmpty)
                             // 본문
                             AppText(
                               body,
-                              style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+                              style: AppFontStyles.bodyRegular14
+                                  .copyWith(color: AppColors.grey900),
                             ),
                         ],
                       );
@@ -865,26 +910,33 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                     children: options.map((option) {
                       final String label = option['label'] as String;
                       final String action = option['action'] as String;
-                      final String? solutionType = option['solution_type'] as String?;
+                      final String? solutionType =
+                          option['solution_type'] as String?;
 
                       // isCompleted 값에 따라 버튼의 텍스트와 스타일을 동적으로 결정
-                      final bool isCompleted = solutionType != null && chatState.completedSolutionTypes.contains(solutionType);
+                      final bool isCompleted = solutionType != null &&
+                          chatState.completedSolutionTypes
+                              .contains(solutionType);
 
-                      final bool isEnabled = isLastMessage || !isAdhdChoiceMessage;
+                      final bool isEnabled =
+                          isLastMessage || !isAdhdChoiceMessage;
 
-                      final String buttonLabel = isCompleted ? "다시 " + label : label;
+                      final String buttonLabel =
+                          isCompleted ? "다시 " + label : label;
 
                       final BoxDecoration decoration = isEnabled
                           ? (isCompleted
                               ? BoxDecoration(
                                   color: AppColors.white,
                                   borderRadius: BorderRadius.circular(10.r),
-                                  border: Border.all(color: AppColors.grey200, width: 1),
+                                  border: Border.all(
+                                      color: AppColors.grey200, width: 1),
                                 )
                               : BoxDecoration(
                                   color: AppColors.green50,
                                   borderRadius: BorderRadius.circular(10.r),
-                                  border: Border.all(color: AppColors.grey200, width: 1),
+                                  border: Border.all(
+                                      color: AppColors.grey200, width: 1),
                                 ))
                           : BoxDecoration(
                               // 비활성화 스타일
@@ -894,9 +946,12 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
 
                       final TextStyle textStyle = isEnabled
                           ? (isCompleted
-                              ? AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900)
-                              : AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey900))
-                          : AppFontStyles.bodyMedium14.copyWith(color: AppColors.grey600);
+                              ? AppFontStyles.bodyMedium14
+                                  .copyWith(color: AppColors.grey900)
+                              : AppFontStyles.bodyMedium14
+                                  .copyWith(color: AppColors.grey900))
+                          : AppFontStyles.bodyMedium14
+                              .copyWith(color: AppColors.grey600);
 
                       // 2-3. 버튼 위젯 렌더링
                       return Padding(
@@ -907,11 +962,18 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                                   // isEnabled일 때만 onTap 활성화
                                   switch (action) {
                                     case 'accept_solution':
-                                      final solutionId = option['solution_id'] as String?;
-                                      final solutionType = option['solution_type'] as String?;
-                                      final sessionId = proposal['session_id'] as String?;
-                                      if (solutionId != null && solutionType != null) {
-                                        ref.read(chatViewModelProvider.notifier).respondToSolution(
+                                      final solutionId =
+                                          option['solution_id'] as String?;
+                                      final solutionType =
+                                          option['solution_type'] as String?;
+                                      final sessionId =
+                                          proposal['session_id'] as String?;
+                                      if (solutionId != null &&
+                                          solutionType != null) {
+                                        ref
+                                            .read(
+                                                chatViewModelProvider.notifier)
+                                            .respondToSolution(
                                               solutionId: solutionId,
                                               solutionType: solutionType,
                                               sessionId: sessionId,
@@ -922,17 +984,23 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
 
                                     case 'adhd_has_task':
                                     case 'adhd_no_task':
-                                      final String label = option['label'] as String;
-                                      ref.read(chatViewModelProvider.notifier).respondToAdhdChoice(action, label);
+                                      final String label =
+                                          option['label'] as String;
+                                      ref
+                                          .read(chatViewModelProvider.notifier)
+                                          .respondToAdhdChoice(action, label);
                                       break;
 
                                     case 'decline_solution_and_talk':
                                     case 'safety_crisis':
-                                      ref.read(chatViewModelProvider.notifier).handleProposalAction(action);
+                                      ref
+                                          .read(chatViewModelProvider.notifier)
+                                          .handleProposalAction(action);
                                       break;
 
                                     default:
-                                      print("Error: Tapped unknown action in UI: $action");
+                                      print(
+                                          "Error: Tapped unknown action in UI: $action");
                                   }
                                 }
                               : null,
@@ -1006,7 +1074,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
           if (message.content.isNotEmpty)
             AppText(
               _formattedNow(message.createdAt),
-              style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.bodyRegular14
+                  .copyWith(color: AppColors.grey900),
             ),
         ],
       ),
@@ -1054,7 +1123,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                   child: Center(
                     child: AppText(
                       '현재 나의 감정',
-                      style: AppFontStyles.bodySemiBold16.copyWith(color: AppColors.grey900),
+                      style: AppFontStyles.bodySemiBold16
+                          .copyWith(color: AppColors.grey900),
                     ),
                   ),
                 ),
@@ -1122,7 +1192,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                           width: 62.2.w,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10.r),
-                            color: currentSelectedEmojiKey == emoji.label ? AppColors.grey100 : Colors.transparent,
+                            color: currentSelectedEmojiKey == emoji.label
+                                ? AppColors.grey100
+                                : Colors.transparent,
                           ),
                           child: Column(
                             children: [
@@ -1157,7 +1229,9 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
 
 // 봇 입력중일 때 사용자 입력 불가 설정
   Widget _buildInputField({required bool isBotTyping}) {
-    final bool isSendButtonEnabled = !isBotTyping && (_messageInputController.text.trim().isNotEmpty || currentSelectedEmojiKey != 'default');
+    final bool isSendButtonEnabled = !isBotTyping &&
+        (_messageInputController.text.trim().isNotEmpty ||
+            currentSelectedEmojiKey != 'default');
 
     return KeyboardVisibilityBuilder(
       builder: (context, isKeyboardVisible) {
@@ -1191,8 +1265,11 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                       minLines: 1,
                       decoration: InputDecoration(
                         counterText: "", // 글자 수 카운터 숨기기
-                        hintText: isBotTyping ? "" : "무엇이든 입력하세요", // TODO: 입력 못하게 멘트를 넣어야하나..?
-                        hintStyle: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
+                        hintText: isBotTyping
+                            ? ""
+                            : "무엇이든 입력하세요", // TODO: 입력 못하게 멘트를 넣어야하나..?
+                        hintStyle: AppFontStyles.bodyRegular14
+                            .copyWith(color: AppColors.grey600),
                         fillColor: Colors.transparent, // 컨테이너 색상을 따르도록 투명화
                         filled: true,
                         contentPadding: EdgeInsets.zero,
@@ -1205,7 +1282,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                 ),
                 // 봇 입력 중에는 이모지 선택 비활성화
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.h).copyWith(right: 12),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 8.h).copyWith(right: 12),
                   child: Row(
                     children: [
                       AbsorbPointer(
@@ -1227,24 +1305,31 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                         // 봇 입력 중이거나 텍스트가 비어있으면 onTap을 null로 처리하여 비활성화
                         onTap: isSendButtonEnabled
                             ? () {
-                                final chatVm = ref.read(chatViewModelProvider.notifier);
-                                final text = _messageInputController.text.trim();
+                                final chatVm =
+                                    ref.read(chatViewModelProvider.notifier);
+                                final text =
+                                    _messageInputController.text.trim();
                                 // RIN ♥ 텍스트만, 이모지만, 텍스트+이모지 케이스 분리
-                                if (text.isNotEmpty && currentSelectedEmojiKey != 'default') {
+                                if (text.isNotEmpty &&
+                                    currentSelectedEmojiKey != 'default') {
                                   // 케이스 3: 텍스트 + 이모지 같이 입력
-                                  chatVm.sendTextAndEmojiAsMessages(text, currentSelectedEmojiKey);
+                                  chatVm.sendTextAndEmojiAsMessages(
+                                      text, currentSelectedEmojiKey);
                                 } else if (text.isNotEmpty) {
                                   // 케이스 1: 텍스트만 입력
                                   chatVm.sendMessage(text, null);
-                                } else if (currentSelectedEmojiKey != 'default') {
+                                } else if (currentSelectedEmojiKey !=
+                                    'default') {
                                   // 케이스 2: 이모지만 입력
                                   // 디폴트 이미지면 아예 안보내지게!!
-                                  chatVm.sendEmojiAsMessage(currentSelectedEmojiKey);
+                                  chatVm.sendEmojiAsMessage(
+                                      currentSelectedEmojiKey);
                                 }
 
                                 _messageInputController.clear();
                                 setState(() {
-                                  currentSelectedEmojiKey = 'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
+                                  currentSelectedEmojiKey =
+                                      'default'; // 이모지 전송 후 디폴트로 다시 돌아오기
                                   showEmojiBar = false;
                                 });
                               }
@@ -1254,11 +1339,17 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                           width: 24.w,
                           height: 24.h,
                           child: SvgPicture.asset(
-                            currentSelectedEmojiKey != "default" || _messageInputController.text.isNotEmpty ? AppIcons.sendOrange : AppIcons.send,
-                            colorFilter: currentSelectedEmojiKey != "default" || _messageInputController.text.isNotEmpty
+                            currentSelectedEmojiKey != "default" ||
+                                    _messageInputController.text.isNotEmpty
+                                ? AppIcons.sendOrange
+                                : AppIcons.send,
+                            colorFilter: currentSelectedEmojiKey != "default" ||
+                                    _messageInputController.text.isNotEmpty
                                 ? null
                                 : ColorFilter.mode(
-                                    isBotTyping ? AppColors.grey200 : AppColors.grey400,
+                                    isBotTyping
+                                        ? AppColors.grey200
+                                        : AppColors.grey400,
                                     BlendMode.srcIn,
                                   ),
                           ),
@@ -1299,7 +1390,9 @@ class _DateSeparator extends StatelessWidget {
               )
             ],
           ),
-          child: AppText(DateFormat('yyyy년 MM월 dd일').format(date), style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey900)),
+          child: AppText(DateFormat('yyyy년 MM월 dd일').format(date),
+              style: AppFontStyles.bodyRegular12
+                  .copyWith(color: AppColors.grey900)),
         ),
       ),
     );
@@ -1323,7 +1416,8 @@ class _FeedbackButtons extends ConsumerWidget {
     final String? _selectedFeedback = message.feedbackState;
 
     // 피드백 버튼을 만드는 Helper 함수
-    Widget buildFeedbackButton(String feedbackType, String iconPath, String filledIconPath) {
+    Widget buildFeedbackButton(
+        String feedbackType, String iconPath, String filledIconPath) {
       bool isSelected = _selectedFeedback == feedbackType;
       bool isUnselected = _selectedFeedback != null && !isSelected;
 
@@ -1356,7 +1450,9 @@ class _FeedbackButtons extends ConsumerWidget {
           child: Center(
             child: Padding(
               padding: EdgeInsets.all(
-                isSelected && filledIconPath == AppIcons.thumbsUpFilled ? 6.w : (iconPath == AppIcons.thumbsUp ? 10.w : 8.w),
+                isSelected && filledIconPath == AppIcons.thumbsUpFilled
+                    ? 6.w
+                    : (iconPath == AppIcons.thumbsUp ? 10.w : 8.w),
               ),
               child: SvgPicture.asset(
                 isSelected ? filledIconPath : iconPath,
@@ -1375,9 +1471,11 @@ class _FeedbackButtons extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          buildFeedbackButton('helpful', AppIcons.thumbsUp, AppIcons.thumbsUpFilled),
+          buildFeedbackButton(
+              'helpful', AppIcons.thumbsUp, AppIcons.thumbsUpFilled),
           SizedBox(width: 8.w),
-          buildFeedbackButton('not_helpful', AppIcons.thumbsDown, AppIcons.thumbsDownFilled),
+          buildFeedbackButton(
+              'not_helpful', AppIcons.thumbsDown, AppIcons.thumbsDownFilled),
         ],
       ),
     );
