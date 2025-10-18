@@ -20,6 +20,8 @@ class DailySummaryDataSourceImpl implements DailySummaryDataSource {
         .lt('created_at', endExclusive.toIso8601String())
         .order('created_at', ascending: true);
     final test = (res as List).map((e) => DailySummaryDto.fromJson(e)).toList();
+    print("asdasdasdasdasdasdsadad${test.first.id}");
+    print("asdasdasdasdasdasdsadad");
     return test;
   }
 }

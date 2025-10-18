@@ -54,6 +54,8 @@ class DailySummaryViewModel extends Notifier<DailySummaryState> {
   Future<void> fetchMonthData(String userId, DateTime focusedDate) async {
     state = state.copyWith(isLoading: true, error: null);
 
+    print("fetchMonthData실행됨!");
+
     try {
       final results = await ref.read(dailySummaryUsecaseProvider).execute(
             userId: userId,
