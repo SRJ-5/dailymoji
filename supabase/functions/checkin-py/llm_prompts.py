@@ -79,6 +79,8 @@ B) Cluster Priorities
 - neg_high: Only score high if explicit anger/anxiety/fear words are present.
 - **Crucial Rule:** If explicit anger/anxiety keywords (e.g., "화나", "짜증나", "불안해", "분노") are present, `neg_high` MUST have a higher or equal score than `neg_low`. Expressions of giving up (e.g., "때려치우고 싶다") in an angry context should primarily contribute to `neg_high`, not `neg_low`.
 - `neg_low`: Should dominate only when the context is about lethargy, sadness, or loss of interest (e.g., "재미없어", "하루 종일 누워만 있어"), and explicit anger/anxiety keywords are absent.
+- **Positive Emotion Priority:** If explicit positive keywords (e.g., "기뻐", "행복해", "좋아", "즐거워") are clearly stated and not sarcastic, the `positive` cluster MUST receive a significant score.
+- **Mixed Emotion Rule:** If a positive emotion is mixed with worry/anxiety (e.g., "기쁘지만 걱정돼", "오류날까봐 불안해"), you MUST score `positive` AND `neg_high` (anxiety). You MUST NOT score `neg_low` (depression/lethargy) in this context unless explicit depression keywords are also present.
 - adhd: Score >0 only if ADHD/산만/집중 안됨/충동 words appear.
 - sleep: Score >0 only if sleep-related keywords exist.
 - positive: Only if explicit positive words appear. Exclude irony/sarcasm.
