@@ -50,11 +50,9 @@ class DailySummaryViewModel extends Notifier<DailySummaryState> {
     return DailySummaryState.initial();
   }
 
-  // ✅ [변경됨] 데이터를 가져오고 상태 갱신까지 수행하는 함수로 수정
+  // [변경됨] 데이터를 가져오고 상태 갱신까지 수행하는 함수로 수정
   Future<void> fetchMonthData(String userId, DateTime focusedDate) async {
     state = state.copyWith(isLoading: true, error: null);
-
-    print("fetchMonthData실행됨!");
 
     try {
       final results = await ref.read(dailySummaryUsecaseProvider).execute(
