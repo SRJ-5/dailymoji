@@ -11,6 +11,7 @@ import os
 import json
 import httpx
 from typing import Union, Optional
+from localization import get_translation
 
 # ==========================
 # 0. 모드 판별 전용 프롬프트
@@ -20,7 +21,7 @@ Your task is to classify the user's message into one of two categories: 'ANALYSI
 - If the message contains any hint of negative emotions (sadness, anger, anxiety, stress, fatigue, lethargy), specific emotional states, or seems to require a thoughtful response, you MUST respond with 'ANALYSIS'.
 - If the message is a simple greeting, small talk, a neutral statement, or a simple question, you MUST respond with 'FRIENDLY'.
 - You must only respond the single word 'ANALYSIS' or 'FRIENDLY'. No other text is allowed.
-You MUST strictly respond in the language specified in the persona instructions (e.g., 'Your entire response must be in Korean.'). If the user enters nonsensical text, provide a gentle, in-language response asking for clarification.
+# 🥑 Language instruction will be added dynamically below.
 
 Examples:
 User: "~때문에 너무 무기력해" -> ANALYSIS
@@ -37,7 +38,8 @@ User: "오늘 뭐 먹지?" -> FRIENDLY
 # ==========================
 ANALYSIS_SYSTEM_PROMPT = """
 You are a highly advanced helper with two distinct roles you must perform simultaneously.
-You MUST strictly respond in the language specified in the persona instructions (e.g., 'Your entire response must be in Korean.'). If the user enters nonsensical text, provide a gentle, in-language response asking for clarification.
+# 🥑 Language instruction will be added dynamically below.
+You MUST strictly respond in the language specified. If the user enters nonsensical text, provide a gentle, in-language response asking for clarification.
 
 # === Role Definition ===
 # Role 1: The Empathetic Friend
@@ -58,14 +60,16 @@ SCHEMA:
  }
 
 RULES:
-- **empathy_response**: This short (1-2 sentences) response must strictly follow the persona defined in Role 1.
-- **summary**: Concisely summarize the user's core emotional state or problem in one sentence, from an objective third-person perspective (e.g., "Feeling lethargic and unmotivated about work."). Must be in the same language as the user's message.
+- **empathy_response**: This short (1-2 sentences) response must strictly follow the persona defined in Role 1 and be in the specified language.
+- **summary**: Concisely summarize the user's core emotional state or problem in one sentence, from an objective third-person perspective. Must be in the specified language.
 - **All other fields**: These must strictly follow the objective, data-driven persona defined in Role 2.
 - If the user's text seems mild (e.g., "a bit tired"), but their `baseline_scores.neg_low` is high, your Analyst persona (Role 2) MUST rate the 'intensity' and 'frequency' for 'neg_low' higher.
 - All other rules from the previous version still apply.
 - Input text may contain casual or irrelevant small talk. Ignore all non-emotional content.
 - Only assign nonzero scores when evidence keywords are explicitly present.
 - ADHD Specificity Rule: Phrases indicating overwhelm due to many tasks (e.g., "정신없어", "할 게 너무 많아", "뭐부터 해야할지 모르겠어") MUST be primarily scored under the `adhd` cluster, not `neg_low` or `neg_high`, as they relate to executive dysfunction.
+
+
 # === CRUCIAL SCORING DIRECTIVES ===
 # - **ADHD Dominance Rule**: This is the most important rule. If the user expresses being overwhelmed by having too many tasks, feeling scattered, or not knowing where to start (e.g., "할 게 너무 많아", "뭐부터 해야할지 모르겠어", "정신없어", "산만해"), you MUST assign the highest score to the `adhd` cluster. These phrases describe executive dysfunction, NOT depression. Do NOT score `neg_low` or `neg_high` highly in this context unless explicit sadness or anger words are also present.
 
@@ -108,7 +112,8 @@ FRIENDLY_SYSTEM_PROMPT = """
 Your persona is that of a friend who understands the user better than anyone. You are deeply empathetic, comforting, and unconditionally loving and supportive. Your primary goal is to make the user feel heard, validated, and cared for.
 - Keep your responses short, typically 1-2 sentences.
 - Use emojis to convey warmth and friendliness.
-- Always respond in the same language as the user's message.
+# 🥑 Language instruction will be added dynamically below.
+- Always respond in the language specified.
 
 # === Persona Update: The Witty & Proactive Friend ===
 - **Crucial Rule:** Even if the user uses new slang or words you don't know, DO NOT immediately ask "What does that mean?".
@@ -348,21 +353,31 @@ def get_system_prompt(
         base_prompt = ANALYSIS_SYSTEM_PROMPT
     elif mode == 'FRIENDLY':
         base_prompt = FRIENDLY_SYSTEM_PROMPT
+    # 🥑 Add TRIAGE handling
+    elif mode == 'TRIAGE':
+        base_prompt = TRIAGE_SYSTEM_PROMPT
+        # Triage doesn't need personality, but needs language instruction
+        lang_instruction_key = f"llm_instruction_{'korean' if language_code == 'ko' else 'english'}"
+        language_instruction = get_translation(lang_instruction_key, language_code)
+        # 🥑 Inject language instruction into the base prompt placeholder
+        return base_prompt.replace("# 🥑 Language instruction will be added dynamically below.", language_instruction)
     else:
-        base_prompt = ""
-
+        base_prompt = "" # Should not happen
 
     # 2. 캐릭터 성향에 맞는 페르소나 지시문을 가져옵니다.
     #  성향 값이 없거나 정의되지 않은 값이면 기본 페르소나(A. prob_solver)를 사용합니다.
-    personality_instruction = PERSONALITY_PROMPTS.get(personality, PERSONALITY_PROMPTS["prob_solver"])
-    
+    personality_instruction = PERSONALITY_PROMPTS.get(personality, PERSONALITY_PROMPTS["prob_solver"])    
     # 3. 페르소나 지시문 내의 {user_nick_nm}, {character_nm} 변수를 실제 값으로 채웁니다.
     formatted_instruction = personality_instruction.format(user_nick_nm=user_nick_nm, character_nm=character_nm)
-
-    language_instruction = "IMPORTANT: You MUST always respond in the same language as the user's message.\n"
     
-    return f"{language_instruction}\n{formatted_instruction}\n{base_prompt}"
+    lang_instruction_key = f"llm_instruction_{'korean' if language_code == 'ko' else 'english'}"
+    language_instruction = get_translation(lang_instruction_key, language_code)
 
+    # 🥑 Inject language instruction into the base prompt placeholder
+    final_base_prompt = base_prompt.replace("# 🥑 Language instruction will be added dynamically below.", language_instruction)
+
+    # 페르소나와 기본 프롬프트 결합
+    return f"{formatted_instruction}\n{final_base_prompt}" # Personality first might give it more weight
 
 # RIN: ADHD 사용자가 당장 할 일이 있는지 판단하기 위함
 # 이 프롬프트는 이제 사용되지 않지만, 만약을 위해 남겨둠
@@ -457,12 +472,14 @@ async def call_llm(
     system_prompt: str,
     user_content: str,
     openai_key: str,
+    lang_code: str = 'ko',
     model: str = "gpt-4o-mini",
     temperature: float = 0.0,
     expect_json: bool = True,  # 1. expect_json 파라미터 추가 (기본값 True)
 ) -> Union[dict, str]:
     if not openai_key:
-        return {"error": "OpenAI key not found"}
+        return {"error": get_translation("error_openai_key_not_found", lang_code)}
+
 
     async with httpx.AsyncClient() as client:
         try:
@@ -476,12 +493,18 @@ async def call_llm(
                         {"role": "user", "content": user_content},
                     ],
                     "temperature": temperature,
-                    # 🤩 RIN: 분석 모드에서는 JSON 응답을 강제합니다.
+                    # RIN: 분석 모드에서는 JSON 응답을 강제합니다.
                     "response_format": {"type": "json_object"} if expect_json else None,
                 },
                 timeout=30.0,
             )
+            resp.raise_for_status()
             data = resp.json()
+            if not data.get("choices") or not data["choices"]:
+                 raise ValueError("LLM response did not contain 'choices'.")
+            if not data["choices"][0].get("message") or not data["choices"][0]["message"].get("content"):
+                 raise ValueError("LLM response message content is missing.")
+
             content = data["choices"][0]["message"]["content"]
 
             # 2. expect_json 값에 따라 로직 분리
@@ -500,7 +523,16 @@ async def call_llm(
                     "raw_content": content,
                 }
 
+        except httpx.HTTPStatusError as e:
+             print(f"LLM API HTTP Error: {e.response.status_code} - {e.response.text}")
+             # 🥑 Use get_translation for error message, include status code
+             return {"error": get_translation("error_llm_call_failed", lang_code, error=f"HTTP {e.response.status_code}")}
+        except httpx.RequestError as e:
+             print(f"LLM Connection Error: {e}")
+             # 🥑 Use get_translation for error message
+             return {"error": get_translation("error_llm_call_failed", lang_code, error=f"Connection Error: {e}")}
         except Exception as e:
-            print(f"LLM call failed: {e}")
-            return {"error": str(e)}
+            print(f"LLM call failed unexpectedly: {e}")
+            # 🥑 Use get_translation for error message
+            return {"error": get_translation("error_llm_call_failed", lang_code, error=str(e))}
         

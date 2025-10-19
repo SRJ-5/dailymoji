@@ -1,0 +1,6 @@
+# l10n.yaml
+arb-dir: lib/l10n # .arb 파일들이 위치할 디렉토리
+template-arb-file: app_ko.arb # 기본 언어 파일 (여기서는 한국어)
+output-localization-file: app_localizations.dart # 생성될 Dart 파일 이름
+
+

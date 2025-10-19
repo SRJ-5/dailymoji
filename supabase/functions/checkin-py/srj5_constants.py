@@ -96,12 +96,12 @@ DEEP_DIVE_MAX_SCORES = {
 }
 
 
-# 사용자에게 보여줄 이름
-CLUSTER_TO_DISPLAY_NAME = {
-    "neg_high": "불안/분노",
-    "neg_low": "우울/무기력",
-    "adhd": "집중력 저하",
-    "sleep": "불규칙한 수면",
-    "positive": "평온/회복"
-}
+# # 사용자에게 보여줄 이름
+# CLUSTER_TO_DISPLAY_NAME = {
+#     "neg_high": "불안/분노",
+#     "neg_low": "우울/무기력",
+#     "adhd": "집중력 저하",
+#     "sleep": "불규칙한 수면",
+#     "positive": "평온/회복"
+# }
 

@@ -10,6 +10,7 @@ import traceback
 import random
 from typing import Optional, List, Dict, Any, Tuple
 import uuid
+from localization import DEFAULT_LANG, get_translation, translations
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -39,7 +40,7 @@ try:
     _kiwi = Kiwi()
 except ImportError:
     _kiwi = None
-    print("⚠️ kiwipiepy is not installed. Some safety features will be disabled.")
+    print(get_translation("log_error_kiwi_not_installed", DEFAULT_LANG))
 
 
 # --- 환경설정 ---
@@ -62,7 +63,7 @@ def startup_event():
     global supabase
     if SUPABASE_URL and SUPABASE_KEY:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    print("✅ FastAPI server started and Supabase client initialized.")
+    print(get_translation("log_startup_success", DEFAULT_LANG))
 
 app.add_middleware(
     CORSMiddleware,
@@ -105,12 +106,14 @@ class FeedbackRequest(BaseModel):
     session_id: Optional[str] = None
     solution_type: str
     feedback: str
+    language_code: Optional[str] = 'ko'
 
 
 class BackfillRequest(BaseModel):
     start_date: str  # "YYYY-MM-DD" 형식
     end_date: str    # "YYYY-MM-DD" 형식
     user_id: Optional[str] = None  # 특정 사용자 ID (선택사항)
+    language_code: Optional[str] = 'ko'
 
 
 # /assessment/submit 엔드포인트의 입력 모델
@@ -118,7 +121,15 @@ class AssessmentSubmitRequest(BaseModel):
     user_id: str
     cluster: str  # "neg_low", "neg_high" 등 평가한 클러스터
     responses: Dict[str, int] # {"NGL_01": 3, "NGL_02": 2, ...} 형태의 답변
+    language_code: Optional[str] = 'ko'
+class DailyReportRequest(BaseModel):
+    user_id: str
+    date: str
+    language_code: str = 'ko'
 
+class WeeklyReportRequest(BaseModel):
+    user_id: str
+    language_code: Optional[str] = 'ko'
 
 # Flutter의 PresetIds와 동일한 구조
 class PresetIds:
@@ -171,7 +182,7 @@ def is_safety_text(text: str, llm_json:  Optional[dict], debug_log: dict) -> Tup
     if figurative_matches:
         debug_log["safety"] = {
             "triggered": False,
-            "reason": "Figurative speech detected",
+            "reason": get_translation("log_safety_figurative", DEFAULT_LANG),
             "matches": figurative_matches
         }
         return False, {}
@@ -297,10 +308,14 @@ def calculate_baseline_scores(onboarding_scores: Optional[Dict[str, int]]) -> Di
 # ======================================================================
 # === DB 관련 헬퍼 함수 ===
 # ======================================================================
-
-async def get_user_info(user_id: str) -> Tuple[str, str]:
+async def get_user_info(user_id: str, lang_code: str = 'ko') -> Tuple[str, str]:
     """사용자 닉네임과 캐릭터 이름을 DB에서 조회합니다."""
-    if not supabase: return "사용자", "모지"
+    default_user = get_translation("default_user_name", lang_code) # localization.py에 추가 필요
+    default_char = get_translation("default_char_name", lang_code) # localization.py에 추가 필요
+
+    if not supabase:
+        return default_user, default_char
+    
     try:
         res = await run_in_threadpool(
             supabase.table("user_profiles")
@@ -308,42 +323,55 @@ async def get_user_info(user_id: str) -> Tuple[str, str]:
             .eq("id", user_id).single().execute
         )
         if res.data:
-            return res.data.get("user_nick_nm", "사용자"), res.data.get("character_nm", "모지")
-    except Exception:
-        pass
-    return "사용자", "모지"
+            user_nick = res.data.get("user_nick_nm") or default_user
+            char_name = res.data.get("character_nm") or default_char
+            return user_nick, char_name
+        else:
+             # 사용자가 DB에 있지만 이름이 없는 경우 (거의 없음)
+             return default_user, default_char
+    except Exception as e: 
+        print(get_translation("log_error_fetch_user_info", DEFAULT_LANG, user_id=user_id, error=str(e)))
+        return default_user, default_char
 
 
 # 모든 멘트 조회를 통합 관리하는 함수
 async def get_mention_from_db(mention_type: str, language_code: str, **kwargs) -> str:
     """DB에서 지정된 타입과 조건에 맞는 캐릭터 멘트를 랜덤으로 가져옵니다."""
-    print(f"--- ✅ get_mention_from_db 호출됨 (mention_type: {mention_type}) ✅ ---")
+    print(f"--- ✅ get_mention_from_db (type: {mention_type}, lang: {language_code}) ✅ ---")
 
-    default_messages = {
-        "analysis": "오늘 당신의 마음은 특별한 색을 띠고 있네요.",
-        "reaction": "어떤 일 때문에 그렇게 느끼셨나요?",
-        "propose": "이런 활동은 어떠세요?",
-        "home": "안녕, {user_nick_nm}! 오늘 기분은 어때?",
-        "followup_user_closed": "괜찮아요. 대화를 이어나갈까요?",
-        "followup_video_ended": "어때요? 좀 좋아진 것 같아요?😊",
-        "decline_solution": "알겠습니다. 편안하게 털어놓으세요."
+    default_keys = {
+        "analysis": "default_analysis_message",
+        "reaction": "default_reaction_message",
+        "propose": "default_propose_message",
+        "home": "default_home_message",
+        "followup_user_closed": "default_followup_user_closed",
+        "followup_video_ended": "default_followup_video_ended",
+        "decline_solution": "default_decline_solution",
+        "adhd_question": "adhd_ask_task"
     }
-    default_message = default_messages.get(mention_type, "...")
+    default_key = default_keys.get(mention_type, "...")
 
     # .format()에 사용될 인자들을 미리 준비합니다.
     format_args = kwargs.get("format_kwargs", kwargs)
+
+    default_message = get_translation(default_key, language_code, **(format_args or {}))
 
     def _safe_format(text: str) -> str:
         """KeyError 없이 안전하게 문자열을 포맷팅하는 내부 함수"""
         try:
             # format_args가 None일 경우를 대비해 빈 dict으로 처리
             return text.format(**(format_args or {}))
-        except KeyError:
-            # 포맷팅에 실패하면 플레이스홀더를 기본값으로 대체
-            return text.replace("{user_nick_nm}", "친구")
+        except KeyError as e:
+            print(get_translation("log_warn_missing_format_key", DEFAULT_LANG, key=str(e), lang=language_code, text=text))
+            try:
+                placeholders = re.findall(r'\{([^}]+)\}', text)
+                safe_kwargs = {**{p: f"{{{p}}}" for p in placeholders}, **(format_args or {})}
+                return text.format(**safe_kwargs)
+            except:
+                return text # Final fallback
 
     if not supabase:
-        return _safe_format(default_message)
+        return default_message
 
 
     # if not supabase: return default_message.format(**kwargs) if kwargs else default_message
@@ -359,15 +387,16 @@ async def get_mention_from_db(mention_type: str, language_code: str, **kwargs) -
         scripts = [row['text'] for row in response.data]
         
         if not scripts:
-            return _safe_format(default_message)
+            print(get_translation("log_warn_no_mention_found", DEFAULT_LANG, mention_type=mention_type, lang=language_code, filters=kwargs))
+            return default_message # Return already formatted default
         
         selected_script = random.choice(scripts)
         # DB에서 가져온 멘트도 안전하게 포맷팅
         return _safe_format(selected_script)
 
     except Exception as e:
-        print(f"❌ get_mention_from_db Error: {e}")
-        return _safe_format(default_message)
+        print(get_translation("log_error_get_mention", DEFAULT_LANG, error=str(e)))
+        return default_message
 
 
 # # 수치를 주기보다는, 심각도 3단계에 따라 메시지 해석해주는게 달라짐(수치형x, 대화형o)
@@ -398,7 +427,8 @@ async def get_mention_from_db(mention_type: str, language_code: str, **kwargs) -
 
 async def save_analysis_to_supabase(
     payload: AnalyzeRequest, profile: int, g: float,
-    intervention: dict, debug_log: dict, final_scores: dict
+    intervention: dict, debug_log: dict, final_scores: dict,
+    lang_code: str = 'ko'
 ) -> Optional[str]:
     """분석 결과를 Supabase에 저장합니다."""
     if not supabase: return None
@@ -410,10 +440,10 @@ async def save_analysis_to_supabase(
         profile_response = await run_in_threadpool(profile_query.execute)
         
         if not profile_response.data:
-            print(f"⚠️ User profile for {user_id} not found. Creating a new one.")
+            print(get_translation("error_user_profile_not_found_creating", lang_code, user_id=user_id))            
             insert_query = supabase.table("user_profiles").insert({
                 "id": user_id, 
-                "user_nick_nm": "사용자" 
+                "user_nick_nm": get_translation("default_user_name", lang_code)
             })
             await run_in_threadpool(insert_query.execute)
 
@@ -433,10 +463,10 @@ async def save_analysis_to_supabase(
         new_session_id = session_data.get('id')
 
         if not new_session_id:
-            print("🚨 ERROR: Failed to save session, no ID returned.")
+            print(get_translation("error_failed_to_save_session", lang_code))
             return None
         
-        print(f"✅ Session saved successfully. session_id: {new_session_id}")
+        print(get_translation("log_session_saved", lang_code, session_id=new_session_id))
 
         if final_scores:
             score_rows = [
@@ -453,16 +483,17 @@ async def save_analysis_to_supabase(
         
         return new_session_id
     except Exception as e:
-        print(f"🚨 Supabase save failed: {e}")
+        print(get_translation("error_supabase_save_failed", lang_code, error=str(e)))
         traceback.print_exc()
         return None
 
 
 # RIN: ADHD 질문에 대한 사용자 답변을 처리하는 함수
-async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
+async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict, lang_code: str = 'ko'):
     user_response = payload.text
     adhd_context = payload.adhd_context or {}
     current_step = adhd_context.get("step")
+    user_nick_nm, _ = await get_user_info(payload.user_id, lang_code) 
 
     # --- 시나리오 1: "있어!" / "없어!" 버튼을 눌렀을 때 ---
     if current_step == "awaiting_choice":
@@ -471,9 +502,9 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
             # 다음 단계: 할 일이 무엇인지 물어보기
             question_text = await get_mention_from_db(
                 mention_type="adhd_ask_task",
-                language_code=payload.language_code,
+                language_code=lang_code,
                 personality=payload.character_personality,
-                format_kwargs={"user_nick_nm": (await get_user_info(payload.user_id))[0]}
+                format_kwargs={"user_nick_nm": user_nick_nm}
             )
             return {
                 "intervention": {
@@ -499,23 +530,28 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
               # 3. 제안 멘트를 가져옵니다.
             proposal_text = await get_mention_from_db(
                 "propose", 
-                payload.language_code, 
+                lang_code,
                 cluster="adhd", 
-                personality=payload.character_personality
+                personality=payload.character_personality,
+                format_kwargs={"user_nick_nm": user_nick_nm}
             )     
 
             # 마음 관리 팁 제안 시점에 session 생성
             intervention_for_db = { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text}
-            session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
+            session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {}, lang_code)
         
 
             return {
-                "intervention": { "preset_id": PresetIds.SOLUTION_PROPOSAL, "proposal_text": proposal_text,
-                "options": [
-                    { "label": "호흡하러 가기", "action": "accept_solution", "solution_id": breathing_solution_data.get("solution_id"), "solution_type": "breathing" },
-                    { "label": "집중력 훈련하기", "action": "accept_solution", "solution_id": focus_solution_data.get("solution_id"), "solution_type": focus_solution_data.get("solution_type") },
-                ],
-                "session_id": session_id 
+                "intervention": {
+                    "preset_id": PresetIds.SOLUTION_PROPOSAL,
+                    "proposal_text": proposal_text,
+                    "options": [
+                         { "label": get_translation("label_breathing", lang_code), # 🥑 Use get_translation
+                           "action": "accept_solution", "solution_id": breathing_solution_data.get("solution_id"), "solution_type": "breathing" },
+                         { "label": get_translation("label_focus_training", lang_code), # 🥑 Needs key "label_focus_training"
+                           "action": "accept_solution", "solution_id": focus_solution_data.get("solution_id"), "solution_type": focus_solution_data.get("solution_type") },
+                    ],
+                    "session_id": session_id
                 }
             }
 
@@ -523,7 +559,7 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
             # --- 시나리오 2: 사용자가 할 일을 입력했을 때 ---
     elif current_step == "awaiting_task_description":
         # 사용자가 입력한 할 일 내용을 받아 처리
-        user_nick_nm, _ = await get_user_info(payload.user_id)
+        user_nick_nm, _ = await get_user_info(payload.user_id, lang_code)
         
         # 성격에 맞는 프롬프트 템플릿을 가져옵니다.
         prompt_template = get_adhd_breakdown_prompt(payload.character_personality)
@@ -535,12 +571,13 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
             system_prompt=final_prompt, # 완성된 프롬프트를 system_prompt로 사용
             user_content="", # user_content는 비워두기
             openai_key=OPENAI_KEY, 
+            lang_code=lang_code,
             expect_json=True
         )
         
-        coaching_text = breakdown_result.get("coaching_text", "좋아요, 함께 시작해봐요!")
-        mission_text = breakdown_result.get("mission_text", "가장 작은 일부터 시작해보세요.")
-        
+        coaching_text = breakdown_result.get("coaching_text", get_translation("adhd_fallback_coaching", lang_code))
+        mission_text = breakdown_result.get("mission_text", get_translation("adhd_fallback_mission", lang_code))
+
          # 뽀모도로 마음 관리 팁 정보 조회
         solution_query = supabase.table("solutions").select("solution_id, solution_type").eq("cluster", "adhd").eq("solution_variant", "pomodoro").limit(1)
         solution_res = await run_in_threadpool(solution_query.execute)
@@ -554,16 +591,16 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
         }
 
         # 뽀모도로 제안 시점에 session 생성
-        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {})
+        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention_for_db, debug_log, {}, lang_code)
 
         # intervention 객체 안에 options와 session_id를 포함시켜 한번에 반환합니다.
         intervention_for_client = intervention_for_db.copy()
         intervention_for_client["options"] = [
-            { 
-                "label": "뽀모도로와 함께 미션하러 가기", 
-                "action": "accept_solution", 
-                "solution_id": solution_data.get("solution_id"), 
-                "solution_type": solution_data.get("solution_type") 
+            {
+                "label": get_translation("label_pomodoro_mission", lang_code),
+                "action": "accept_solution",
+                "solution_id": solution_data.get("solution_id"),
+                "solution_type": solution_data.get("solution_type")
             }
         ]
         intervention_for_client["session_id"] = session_id
@@ -577,9 +614,9 @@ async def _handle_adhd_response(payload: AnalyzeRequest, debug_log: dict):
 # === /analyze 엔드포인트 처리 로직 (분리된 함수들) ===
 # ======================================================================
 
-async def _handle_moderation(text: str) -> bool:
+async def _handle_moderation(text: str, lang_code: str = 'ko') -> bool:
     """OpenAI Moderation API를 호출하여 유해 콘텐츠를 확인하고 차단 여부를 반환합니다."""
-    is_flagged, categories = await moderate_text(text, OPENAI_KEY)
+    is_flagged, categories = await moderate_text(text, OPENAI_KEY, lang_code)
     if not is_flagged:
         return False
 
@@ -587,22 +624,23 @@ async def _handle_moderation(text: str) -> bool:
     should_block = any(cat not in allowed_categories and triggered for cat, triggered in categories.items())
     
     if should_block:
-        print(f"🚨 [BLOCKED] Inappropriate content: '{text}', Categories: {categories}")
+        print(get_translation("log_moderation_blocked", DEFAULT_LANG, text=text, categories=categories))
     else:
-        print(f"⚠️ [PASSED] Delegating to internal safety check: '{text}', Categories: {categories}")
+        print(get_translation("log_moderation_passed", DEFAULT_LANG, text=text, categories=categories))
     
     return should_block
 
-async def _handle_emoji_only_case(payload: AnalyzeRequest, debug_log: dict) -> dict:
+async def _handle_emoji_only_case(payload: AnalyzeRequest, debug_log: dict, lang_code: str = 'ko'):
     """아이콘만 입력된 경우를 처리합니다."""
     debug_log["mode"] = "EMOJI_REACTION"
-    print("\n--- 🧐 EMOJI-ONLY ANALYSIS ---")
+    print(f"\n--- 🧐 EMOJI-ONLY ANALYSIS (Lang: {lang_code}) ---")
 
     selected_cluster = ICON_TO_CLUSTER.get(payload.icon.lower(), "neg_low")
     
     if selected_cluster == "neutral":
-        intervention = {"preset_id": PresetIds.EMOJI_REACTION, "text": "오늘은 기분이 어떠신가요?", "top_cluster": "neutral"}
-        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
+        intervention = {"preset_id": PresetIds.EMOJI_REACTION, "text": get_translation("neutral_emoji_response", lang_code), "top_cluster": "neutral"}        
+        session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {}, lang_code)
+
         return {"session_id": session_id, "intervention": intervention}
     
     assessment_scores = calculate_baseline_scores(payload.onboarding) # 이모지만 있을 땐 온보딩 점수 사용
@@ -618,46 +656,46 @@ async def _handle_emoji_only_case(payload: AnalyzeRequest, debug_log: dict) -> d
    
     g, profile = g_score(final_scores), pick_profile(final_scores, None)
     
-    user_nick_nm, _ = await get_user_info(payload.user_id)
-    reaction_text = await get_mention_from_db("reaction", payload.language_code, personality=payload.character_personality, cluster=selected_cluster, user_nick_nm=user_nick_nm)
+    user_nick_nm, _ = await get_user_info(payload.user_id, lang_code)
+    reaction_text = await get_mention_from_db("reaction", lang_code, personality=payload.character_personality, cluster=selected_cluster, user_nick_nm=user_nick_nm)
     intervention = {"preset_id": PresetIds.EMOJI_REACTION, "top_cluster": selected_cluster, "empathy_text": reaction_text}
-    session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, final_scores)
+    session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, final_scores, lang_code)
     return {"session_id": session_id, "final_scores": final_scores, "g_score": g, "profile": profile, "intervention": intervention}
 
 
-async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict) -> dict:
+async def _handle_friendly_mode(payload: AnalyzeRequest, debug_log: dict, lang_code: str = 'ko') -> dict:
     """Triage 결과가 '친구 모드'일 경우를 처리합니다."""
     debug_log["mode"] = "FRIENDLY"
-    print(f"\n--- 👋 FRIENDLY MODE: '{payload.text}' ---")
+    print(f"\n--- 👋 FRIENDLY MODE (Lang: {lang_code}): '{payload.text}' ---")
 
-    user_nick_nm, character_nm = await get_user_info(payload.user_id)
+    user_nick_nm, character_nm = await get_user_info(payload.user_id, lang_code)
     system_prompt = get_system_prompt(
-        mode='FRIENDLY', personality=payload.character_personality, language_code=payload.language_code,
+        mode='FRIENDLY', personality=payload.character_personality, language_code=lang_code,
         user_nick_nm=user_nick_nm, character_nm=character_nm
     )
     # 이전 대화 기억: 친구 모드에서도 대화 기록을 user_content에 포함
     history_str = "\n".join([f"{h.sender}: {h.content}" for h in payload.history]) if payload.history else ""
     user_content = f"Previous conversation:\n{history_str}\n\nCurrent message: {payload.text}"
 
-    llm_response = await call_llm(system_prompt, user_content, OPENAI_KEY, expect_json=False)
+    llm_response = await call_llm(system_prompt, user_content, OPENAI_KEY, lang_code=lang_code, expect_json=False)
 
     # LLM 호출 결과를 바로 사용하지 않고, 에러인지 먼저 확인합니다.
-    final_text = llm_response if not (isinstance(llm_response, dict) and 'error' in llm_response) else "음... 지금은 잠시 생각할 시간이 필요해요!🥹"
+    final_text = llm_response if not (isinstance(llm_response, dict) and 'error' in llm_response) else get_translation("default_llm_friendly_fallback", lang_code)
     intervention = {"preset_id": PresetIds.FRIENDLY_REPLY, "text": final_text}
     
-    session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {})
+    session_id = await save_analysis_to_supabase(payload, 0, 0.5, intervention, debug_log, {}, lang_code)    
     return {"session_id": session_id, "intervention": intervention}
 
 
-async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> dict:
+async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict, lang_code: str = 'ko') -> dict: 
     """Triage 결과가 '분석 모드'일 경우의 전체 파이프라인을 실행합니다."""
     debug_log["mode"] = "ANALYSIS"
-    print(f"\n--- 🧐 ANALYSIS MODE: '{payload.text}' ---")
+    print(f"\n--- 🧐 ANALYSIS MODE (Lang: {lang_code}): '{payload.text}' ---")
 
      # 1. 사용자의 최신 평가 점수(assessment_scores)를 DB에서 가져옵니다.
     #    이 점수는 온보딩으로 시작해서, 심층 분석을 할 때마다 업데이트됩니다.
-    user_nick_nm, character_nm = await get_user_info(payload.user_id)
-    
+    user_nick_nm, character_nm = await get_user_info(payload.user_id, lang_code)    
+   
     profile_res = await run_in_threadpool(
         supabase.table("user_profiles")
         .select("latest_assessment_scores")
@@ -667,7 +705,7 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
     assessment_scores = (profile_res.data or {}).get("latest_assessment_scores", {})
     if not assessment_scores or not isinstance(assessment_scores, dict):
         # 최신 평가 점수가 없으면(예: 첫 사용자), 온보딩 점수를 대신 사용합니다.
-        print("⚠️ Latest assessment scores not found, using onboarding scores as baseline.")
+        print(get_translation("log_warn_no_assessment_scores", DEFAULT_LANG))
         assessment_scores = calculate_baseline_scores(payload.onboarding)
     # assessment_scores에 상한선(Cap)을 적용
     for cluster in assessment_scores:
@@ -676,7 +714,7 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
     # --------------------------------------------------------------------------
     # 2. 시스템 프롬프트 준비 
     system_prompt = get_system_prompt(
-        mode='ANALYSIS', personality=payload.character_personality, language_code=payload.language_code,
+        mode='ANALYSIS', personality=payload.character_personality, language_code=lang_code,
         user_nick_nm=user_nick_nm, character_nm=character_nm
     )
 
@@ -685,15 +723,20 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
     llm_payload = {"user_message": payload.text, "baseline_scores": assessment_scores, "history": history_for_llm}
    
     # 2. LLM 호출 및 2차 안전 장치
-    llm_json = await call_llm(system_prompt, json.dumps(llm_payload, ensure_ascii=False), OPENAI_KEY)
+    llm_json = await call_llm(system_prompt, json.dumps(llm_payload, ensure_ascii=False), OPENAI_KEY, lang_code=lang_code)
     debug_log["llm"] = llm_json
 
     is_crisis, crisis_scores = is_safety_text(payload.text, llm_json, debug_log)
     if is_crisis:
-        print(f"🚨 2nd Safety Check Triggered: '{payload.text}'")
+        print(get_translation("log_safety_triggered_2nd", DEFAULT_LANG, text=payload.text))
         g, profile, top_cluster = g_score(crisis_scores), 1, "neg_low"
-        intervention = {"preset_id": PresetIds.SAFETY_CRISIS_MODAL, "analysis_text": "많이 힘드시군요. 지금 도움이 필요할 수 있어요.", "cluster": top_cluster,"solution_id": f"{top_cluster}_crisis_01"}
-        session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores)
+        intervention = {
+            "preset_id": PresetIds.SAFETY_CRISIS_MODAL,
+            "analysis_text": get_translation("safety_crisis_text", lang_code), # 🥑 Use translation
+            "cluster": top_cluster,
+            "solution_id": f"{top_cluster}_crisis_01"
+        }        
+        session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores, lang_code)
         return {"session_id": session_id, "final_scores": crisis_scores, "g_score": g, "profile": profile, "intervention": intervention}
 
 
@@ -717,18 +760,20 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
     top_cluster = max(final_scores, key=final_scores.get, default="neg_low")
     print(f"G-Score: {g:.2f}, Profile: {profile}")
     
-    empathy_text = (llm_json or {}).get("empathy_response", "마음을 살피는 중이에요...")
+    empathy_text = (llm_json or {}).get("empathy_response", get_translation("default_empathy_fallback", lang_code))
     score_val = final_scores[top_cluster]
     level = "high" if score_val > 0.7 else "mid" if score_val > 0.4 else "low"
-    
+ 
+    cluster_display_name = get_translation(f"cluster_{top_cluster}", lang_code)
+
     # 'analysis' 타입의 멘트를 DB에서 가져옴
     analysis_text = await get_mention_from_db(
         "analysis", 
-        payload.language_code, 
+        lang_code,
         personality=payload.character_personality, 
         cluster=top_cluster, 
         level=level, 
-        format_kwargs={"emotion": CLUSTER_TO_DISPLAY_NAME.get(top_cluster),"user_nick_nm": user_nick_nm}
+        format_kwargs={"emotion": cluster_display_name, "user_nick_nm": user_nick_nm}
     )
     
     # intervention 객체 생성 및 DB 저장
@@ -739,9 +784,49 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
         "analysis_text": analysis_text
     }
 
-    session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, final_scores)
-    return {"session_id": session_id, "final_scores": final_scores, "g_score": g, "profile": profile, "intervention": intervention}
+    session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, final_scores, lang_code)
+    
+    # --- 저장 후 최종 반환 객체 구성 ---
+    analysis_result = {
+        "session_id": session_id,
+        "final_scores": final_scores,
+        "g_score": g,
+        "profile": profile,
+        "intervention": intervention # 일단 기본 intervention 할당
+    }
+    # intervention 객체에 session_id 추가 (ADHD 분기에서도 사용 가능하도록)
+    analysis_result["intervention"]["session_id"] = session_id
 
+
+    # --- 🥑 ADHD 분기 로직 (세션 저장 *후*, 최종 반환 *전*) ---
+    if top_cluster == "adhd":
+        print(get_translation("log_adhd_detected", lang_code)) # 로그 번역 사용
+
+        question_text_template = await get_mention_from_db(
+            mention_type="adhd_question",
+            language_code=lang_code,
+            personality=payload.character_personality,
+            format_kwargs={"user_nick_nm": user_nick_nm}
+        )
+
+        # 공감 멘트가 있으면 질문 앞에 붙여줌
+        final_question_text = f"{empathy_text} {question_text_template}".strip()
+
+        # analysis_result의 intervention 내용을 ADHD 질문 형태로 *덮어쓰기*
+        analysis_result["intervention"] = {
+            "preset_id": PresetIds.ADHD_PRE_SOLUTION_QUESTION,
+            "text": final_question_text,
+            "options": [
+                {"label": get_translation("label_adhd_has_task", lang_code), "action": "adhd_has_task"},
+                {"label": get_translation("label_adhd_no_task", lang_code), "action": "adhd_no_task"}
+            ],
+            "adhd_context": { "step": "awaiting_choice" },
+            "session_id": session_id # session_id는 유지
+        }
+        # top_cluster, empathy_text, analysis_text는 ADHD 질문 시나리오에서는 제거
+
+    # --- 최종 결과 반환 ---
+    return analysis_result
 
 
 # ======================================================================
@@ -752,37 +837,40 @@ async def _run_analysis_pipeline(payload: AnalyzeRequest, debug_log: dict) -> di
 async def analyze_emotion(payload: AnalyzeRequest):
     """사용자의 텍스트와 아이콘을 받아 감정을 분석하고 스코어링 결과를 반환합니다."""
     text = (payload.text or "").strip()
+    lang_code = payload.language_code if payload.language_code in translations else DEFAULT_LANG
     debug_log: Dict[str, Any] = {"input": payload.dict()}
 
     try:
         # --- 파이프라인 0: 유해 콘텐츠 검열 ---
-        if await _handle_moderation(text):
-            return JSONResponse(status_code=400, content={"error": "Inappropriate content detected."})
-
+        if await _handle_moderation(text, lang_code): 
+            return JSONResponse(status_code=400, content={"error": get_translation("error_inappropriate_content", lang_code)})
+       
+        # --- ADHD Context Handling ---
         # ADHD 컨텍스트가 존재하면, 다른 모든 분석을 건너뛰고 ADHD 답변 처리 로직으로 바로 보냅니다.
         if payload.adhd_context and "step" in payload.adhd_context:
-            return await _handle_adhd_response(payload, debug_log)
+            return await _handle_adhd_response(payload, debug_log, lang_code)
 
 
         # --- 파이프라인 1: 🌸 CASE 2 - 이모지만 있는 경우 ---
         if payload.icon and not text:
             debug_log["mode"] = "EMOJI_REACTION"
-            return await _handle_emoji_only_case(payload, debug_log)
+            return await _handle_emoji_only_case(payload, debug_log, lang_code)
 
         # --- 파이프라인 2: 1차 안전 장치 (LLM 호출 전) ---
         is_crisis, crisis_scores = is_safety_text(text, None, debug_log)
         if is_crisis:
-            print(f"🚨 1st Safety Check Triggered: '{text}'")
+            print(get_translation("log_safety_triggered_1st", DEFAULT_LANG, text=text))
             g, profile, top_cluster = g_score(crisis_scores), 1, "neg_low"
             intervention = {
-                    "preset_id": PresetIds.SAFETY_CRISIS_MODAL,
-                    "analysis_text": """정말 많이 힘드셨던 것 같아요.\n지금은 혼자 버티기보다 전문가와 이야기하는 것이 가장 안전하고 도움이 될 수 있습니다.\n\n저는 전문적인 위기 개입을 직접 제공하지 않지만, 바로 도움을 받을 수 있는 곳으로 안내해드릴 수 있어요.\n\n연결해드릴까요?""",
-                    "cluster": top_cluster,
-                    "solution_id": f"{top_cluster}_crisis_01"
+                "preset_id": PresetIds.SAFETY_CRISIS_MODAL,
+                "analysis_text": get_translation("safety_crisis_text", lang_code), # 🥑 번역 사용
+                "cluster": top_cluster,
+                "solution_id": f"{top_cluster}_crisis_01"
             }
-            session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores)
-            return {"session_id": session_id, "intervention": intervention}
-
+            session_id = await save_analysis_to_supabase(payload, profile, g, intervention, debug_log, crisis_scores, lang_code)
+            intervention["session_id"] = session_id
+            return {"session_id": session_id, "final_scores": crisis_scores, "g_score": g, "profile": profile, "intervention": intervention}
+       
         # --- 파이프라인 3: Triage (친구 모드 / 분석 모드 분기) ---
         rule_scores, _, _ = rule_scoring(text)
         is_simple_text = len(text) < 10 and max(rule_scores.values() or [0.0]) < 0.1
@@ -791,64 +879,81 @@ async def analyze_emotion(payload: AnalyzeRequest):
             triage_mode = 'FRIENDLY'
             debug_log["triage_decision"] = "Rule-based: Simple text"
         else:
-            triage_mode = await call_llm(TRIAGE_SYSTEM_PROMPT, text, OPENAI_KEY, expect_json=False)
+            triage_system_prompt = get_system_prompt(mode='TRIAGE', personality=None, language_code=lang_code)
+            triage_mode = await call_llm(triage_system_prompt, text, OPENAI_KEY, lang_code=lang_code, expect_json=False)
             debug_log["triage_decision"] = f"LLM Triage: {triage_mode}"
 
         # --- 파이프라인 4: Triage 결과에 따른 분기 처리 ---
         if triage_mode == 'FRIENDLY':
-            return await _handle_friendly_mode(payload, debug_log)
-        else: # ANALYSIS
-            analysis_result = await _run_analysis_pipeline(payload, debug_log)
+            return await _handle_friendly_mode(payload, debug_log, lang_code)
+        elif triage_mode == 'ANALYSIS':
+            analysis_result = await _run_analysis_pipeline(payload, debug_log, lang_code)
             
-            intervention = analysis_result.get("intervention", {})
-            top_cluster = intervention.get("top_cluster")
-            empathy_text = intervention.get("empathy_text", "")
-            user_nick_nm, _ = await get_user_info(payload.user_id)
-            
-            
-            # 만약 분석 결과 top_cluster가 ADHD라면, 마음 관리 팁을 바로 제안하지 않고 질문을 던짐
-            if top_cluster == "adhd":
-                print("🧠 ADHD cluster detected. Switching to pre-solution question flow.")
-                
-                question_text_template = await get_mention_from_db(
-                    mention_type="adhd_question",
-                    language_code=payload.language_code,
-                    personality=payload.character_personality,
-                    format_kwargs={"user_nick_nm": user_nick_nm}
-                )
+            if not analysis_result or "error" in analysis_result:
+                 # 에러 상황 처리 또는 기본 응답 반환 (예: 친구 모드 응답)
+                 print(f"⚠️ Analysis pipeline failed or returned error. Result: {analysis_result}")
+                 # 필요 시 에러 응답을 클라이언트에 전달하거나 기본 응답 반환
+                 return await _handle_friendly_mode(payload, debug_log, lang_code) # 예시: 친구 모드로 대체
 
-                final_question_text = f"{empathy_text} {question_text_template}"
+            # # --- ADHD 분기 로직 (이제 analysis_result 안에서 처리됨) ---
+            # # _run_analysis_pipeline 함수 내부에서 ADHD 분기 처리가 완료되었으므로,
+            # # 여기서는 analysis_result를 그대로 반환하면 됩니다.
+            # intervention = analysis_result.get("intervention", {})
+            # top_cluster = intervention.get("top_cluster")
+            # empathy_text = intervention.get("empathy_text", "")
+            # user_nick_nm, _ = await get_user_info(payload.user_id)
+            
+            
+            # # 만약 분석 결과 top_cluster가 ADHD라면, 마음 관리 팁을 바로 제안하지 않고 질문을 던짐
+            # if top_cluster == "adhd":
+            #     print("🧠 ADHD cluster detected. Switching to pre-solution question flow.")
+                
+            #     question_text_template = await get_mention_from_db(
+            #         mention_type="adhd_question", # Assuming key exists
+            #         language_code=lang_code, # 🥑 Pass lang_code
+            #         personality=payload.character_personality,
+            #         format_kwargs={"user_nick_nm": user_nick_nm}
+            #     )
+
+            #     final_question_text = f"{empathy_text} {question_text_template}"
 
                 
-                # 프론트엔드로 질문과 다음 요청에 필요한 컨텍스트를 전달
-                analysis_result["intervention"] = {
-                    "preset_id": PresetIds.ADHD_PRE_SOLUTION_QUESTION,
-                    "text": final_question_text.strip(), # 최종 조합된 텍스트
-                    "options": [
-                        {"label": "있어! 뭐부터 하면 좋을까?", "action": "adhd_has_task"},
-                        {"label": "없어! 집중력 훈련 할래", "action": "adhd_no_task"}
-                    ],
-                    "adhd_context": { "step": "awaiting_choice" }
-                }
+            #     # 프론트엔드로 질문과 다음 요청에 필요한 컨텍스트를 전달
+            #     analysis_result["intervention"] = {
+            #         "preset_id": PresetIds.ADHD_PRE_SOLUTION_QUESTION,
+            #         "text": final_question_text.strip(), # 최종 조합된 텍스트
+            #         "options": [
+            #             {"label": "있어! 뭐부터 하면 좋을까?", "action": "adhd_has_task"},
+            #             {"label": "없어! 집중력 훈련 할래", "action": "adhd_no_task"}
+            #         ],
+            #         "adhd_context": { "step": "awaiting_choice" }
+            #     }
 
             return analysis_result
+        
+        else: # Handle unexpected triage result
+            print(get_translation("log_warn_unexpected_triage", DEFAULT_LANG, mode=triage_mode))
+            return await _handle_friendly_mode(payload, debug_log, lang_code)
 
     except Exception as e:
         tb = traceback.format_exc()
-        print(f"🔥 UNHANDLED EXCEPTION in /analyze: {e}\n{tb}")
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
-
+        job_name = "/analyze"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=tb))
+        error_msg = get_translation("error_occurred", lang_code, error=str(e))
+        raise HTTPException(status_code=500, detail={"error": error_msg, "trace": tb if os.getenv("DEBUG") else None})
+    
 # ======================================================================
 # ===     심층 분석 (마음 점검) 결과 제출 엔드포인트     ===
 # ======================================================================
 @app.post("/assessment/submit")
 async def submit_assessment(payload: AssessmentSubmitRequest):
-    if not supabase: raise HTTPException(status_code=500, detail="Supabase client not initialized")
+    lang_code = payload.language_code if payload.language_code in translations else DEFAULT_LANG
+    if not supabase: raise HTTPException(status_code=500, detail=get_translation("error_supabase_init", lang_code))
     try:
         total_score = sum(payload.responses.values())
         max_score = DEEP_DIVE_MAX_SCORES.get(payload.cluster)
-        if not max_score: raise HTTPException(status_code=400, detail=f"Invalid cluster: {payload.cluster}")
-        
+        if not max_score: raise HTTPException(status_code=400, detail=get_translation("error_invalid_cluster", lang_code, cluster=payload.cluster))
+
         normalized_score = clip01(total_score / max_score)
         
         profile_res = await run_in_threadpool(supabase.table("user_profiles").select("latest_assessment_scores").eq("id", payload.user_id).single().execute)
@@ -862,11 +967,13 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
         history_row = {"user_id": payload.user_id, "assessment_type": f"deep_dive_{payload.cluster}", "scores": {payload.cluster: normalized_score}, "raw_responses": payload.responses}
         await run_in_threadpool(supabase.table("assessment_history").insert(history_row).execute)
         
-        return {"message": "Assessment submitted successfully", "updated_scores": latest_scores}
+        return {"message": get_translation("assessment_success", lang_code), "updated_scores": latest_scores}
+    
     except Exception as e:
         tb = traceback.format_exc()
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
-
+        job_name = "/assessment/submit"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=tb))
+        raise HTTPException(status_code=500, detail={"error": get_translation("error_occurred", lang_code, error=str(e)), "trace": tb if os.getenv("DEBUG") else None})
 
 
 # ======================================================================
@@ -883,10 +990,12 @@ async def propose_solution(payload: SolutionRequest):
     neg_high, positive: 호흡, 영상만
     adhd는 할거 있냐없냐 물어보고 있으면 뽀모도로, 없으면 호흡, 영상
     """    
-    if not supabase: raise HTTPException(status_code=500, detail="Supabase client not initialized")
-        
+    lang_code = payload.language_code if payload.language_code in translations else DEFAULT_LANG
+
+    if not supabase: raise HTTPException(status_code=500, detail=get_translation("error_supabase_init", lang_code))
+
     try:
-        user_nick_nm, _ = await get_user_info(payload.user_id)
+        user_nick_nm, _ = await get_user_info(payload.user_id, lang_code)
         top_cluster = payload.top_cluster
 
          # 0. 클러스터별로 제안할 마음 관리 팁 타입 목록을 정의해야함
@@ -922,7 +1031,7 @@ async def propose_solution(payload: SolutionRequest):
         all_candidates = all_candidates_res.data
         
         if not all_candidates:
-            return {"proposal_text": "지금은 제안해드릴 특별한 활동이 없네요.", "options": []}
+            return {"proposal_text": get_translation("no_solution_proposal", lang_code), "options": []}
 
         # # 3. 거부 태그가 포함된 마음 관리 팁은 후보에서 제외
         # if negative_tags:
@@ -957,8 +1066,13 @@ async def propose_solution(payload: SolutionRequest):
 
         # 4. 각 마음 관리 팁 타입별로 대표 마음 관리 팁을 하나씩 랜덤 선택
         options = []
-        labels = {"breathing": "호흡하러 가기", "video": "영상 보러가기", "action": "미션 하러가기"}
-        
+        labels = {
+            "breathing": get_translation("label_breathing", lang_code),
+            "video": get_translation("label_video", lang_code),
+            "action": get_translation("label_mission", lang_code)
+        }
+        default_label = get_translation("label_tip", lang_code)
+
         # 텍스트 조합을 위해 첫 번째 마음 관리 팁의 설명을 저장할 변수
         first_solution_text = ""
 
@@ -977,8 +1091,10 @@ async def propose_solution(payload: SolutionRequest):
             # 'sleep' 클러스터의 'action' 타입은 수면위생 팁으로 연결합니다.
             elif top_cluster == 'sleep' and sol_type == 'action':
                 options.append({
-                    "label": labels.get(sol_type), "action": "accept_solution",
-                    "solution_id": "sleep_hygiene_tip_random", "solution_type": "action"
+                    "label": labels.get(sol_type), 
+                    "action": "accept_solution",
+                    "solution_id": "sleep_hygiene_tip_random",
+                    "solution_type": "action"
                 })
                 continue
             
@@ -989,7 +1105,7 @@ async def propose_solution(payload: SolutionRequest):
                 
                 # 4-1. 프론트엔드에 전달할 버튼 옵션 목록
                 options.append({
-                    "label": labels.get(sol_type, "마음 관리 팁 보기"),
+                    "label": labels.get(sol_type, default_label),
                     "action": "accept_solution",
                     "solution_id": chosen_solution["solution_id"],
                     "solution_type": chosen_solution["solution_type"]
@@ -1000,14 +1116,14 @@ async def propose_solution(payload: SolutionRequest):
                     first_solution_text = chosen_solution.get("text", "")
 
         if not options:
-            return {"proposal_text": "지금 제안해드릴 만한 맞춤 활동이 없네요. 대화를 더 나눠볼까요?", "options": []}
-
+            return {"proposal_text": get_translation("no_solution_proposal_talk", lang_code), "options": []}
+        
         # 5. 제안 멘트와 대표 마음 관리 팁 설명을 조합하여 최종 제안 텍스트 생성
         proposal_script = await get_mention_from_db(
             mention_type="propose",
-            language_code=payload.language_code,
+            language_code=lang_code,
             cluster=top_cluster,
-            user_nick_nm=user_nick_nm
+            format_kwargs={"user_nick_nm": user_nick_nm}
         )
         final_text = f"{proposal_script} {first_solution_text}".strip()
       
@@ -1023,8 +1139,10 @@ async def propose_solution(payload: SolutionRequest):
 
     except Exception as e:
         tb = traceback.format_exc()
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
-
+        job_name = "/solutions/propose"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=tb))
+        raise HTTPException(status_code=500, detail={"error": get_translation("error_occurred", lang_code, error=str(e)), "trace": tb if os.getenv("DEBUG") else None})
+    
 # ======================================================================
 # ===          마음 관리 팁 영상 엔드포인트         ===
 # ======================================================================
@@ -1032,12 +1150,12 @@ async def propose_solution(payload: SolutionRequest):
     # SolutionPage에서 영상 로드
     # 하드코딩된 SOLUTION_DETAILS_LIBRARY를 DB 조회로 대체했음!!
 @app.get("/solutions/{solution_id}")
-async def get_solution_details(solution_id: str):
+async def get_solution_details(solution_id: str, language_code: Optional[str] = 'ko'): 
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
     print(f"RIN: ✅ 마음 관리 팁 상세 정보 요청 받음: {solution_id}")
     
     if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase client not initialized")
-    
+        raise HTTPException(status_code=500, detail=get_translation("error_supabase_init", lang_code))    
     try:
         # solutions 테이블에서 필요한 데이터를 조회
         response = await run_in_threadpool(
@@ -1050,7 +1168,7 @@ async def get_solution_details(solution_id: str):
         
         
         if not response.data:
-            raise HTTPException(status_code=404, detail="Solution not found")
+            raise HTTPException(status_code=404, detail=get_translation("error_solution_not_found", lang_code))
 
         # 유튜브 불러올때 startAt, endAt (camelCase)를 기대하므로 키를 변환해줌
         # supabase는 snake_case로 저장해야 한다고 함.
@@ -1062,8 +1180,8 @@ async def get_solution_details(solution_id: str):
             }
         
     except Exception as e:
-        print(f"RIN: ❌ 해당 마음 관리 팁을 찾을 수 없음: {solution_id}, 에러: {e}")
-        raise HTTPException(status_code=404, detail="Solution not found")
+        print(get_translation("log_error_solution_not_found", DEFAULT_LANG, solution_id=solution_id, error=str(e)))
+        raise HTTPException(status_code=404, detail=get_translation("error_solution_not_found", lang_code))
     
 
 # ======================================================================
@@ -1072,11 +1190,14 @@ async def get_solution_details(solution_id: str):
 @app.get("/dialogue/home")
 async def get_home_dialogue(
     personality: Optional[str] = None, 
-    user_nick_nm: Optional[str] = "친구",
+    user_nick_nm: Optional[str] = None,
     language_code: Optional[str] = 'ko',
     emotion: Optional[str] = None 
 ):
     """홈 화면에 표시할 대사를 반환합니다."""
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
+    user_name_to_use = user_nick_nm or get_translation("default_user_name", lang_code)
+
     if emotion:
         # 이모지가 선택된 경우: 'reaction' 멘트를 가져옵니다.
         mention_type = "reaction"
@@ -1088,11 +1209,10 @@ async def get_home_dialogue(
 
     dialogue_text = await get_mention_from_db(
         mention_type=mention_type,
-        language_code=language_code,
+        language_code=lang_code,
         personality=personality,
         cluster=cluster,
-        default_message=f"안녕, {user_nick_nm}! 오늘 기분은 어때?",
-        format_kwargs={"user_nick_nm": user_nick_nm}
+        format_kwargs={"user_nick_nm": user_name_to_use}
     )
     
     return {"dialogue": dialogue_text}
@@ -1102,11 +1222,14 @@ async def get_home_dialogue(
 async def get_solution_followup_dialogue(
     reason: str, # 'user_closed' 또는 'video_ended'
     personality: Optional[str] = None, 
-    user_nick_nm: Optional[str] = "친구",
+    user_nick_nm: Optional[str] = None,
     language_code: Optional[str] = 'ko'
 ):
     """마음 관리 팁이 끝난 후의 상황(reason)과 캐릭터 성향에 맞는 후속 질문을 반환합니다."""
     
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
+    user_name_to_use = user_nick_nm or get_translation("default_user_name", lang_code)
+
     # 이유(reason)에 따라 DB에서 조회할 mention_type을 결정합니다.
     if reason == 'user_closed':
         mention_type = "followup_user_closed"
@@ -1117,10 +1240,9 @@ async def get_solution_followup_dialogue(
     dialogue_text = await get_mention_from_db(
         mention_type=mention_type,
         personality=personality,
-        language_code=language_code,
+        language_code=lang_code,
         cluster="common", 
-        default_message="어때요? 좀 좋아진 것 같아요?😊",
-        format_kwargs={"user_nick_nm": user_nick_nm}
+        format_kwargs={"user_nick_nm": user_name_to_use}
     )
     
     return {"dialogue": dialogue_text}
@@ -1130,42 +1252,40 @@ async def get_solution_followup_dialogue(
 @app.get("/dialogue/decline-solution")
 async def get_decline_solution_dialogue(
     personality: Optional[str] = None, 
-    user_nick_nm: Optional[str] = "친구",
+    user_nick_nm: Optional[str] = None,
     language_code: Optional[str] = 'ko'
 ):
     """마음 관리 팁 제안을 거절하고 대화를 이어가고 싶어할 때의 반응 멘트를 반환합니다."""
     
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
+    user_name_to_use = user_nick_nm or get_translation("default_user_name", lang_code)
+    
     dialogue_text = await get_mention_from_db(
         mention_type="decline_solution",
         personality=personality,
-        language_code=language_code,
+        language_code=lang_code,
         cluster="common",
-        default_message="알겠습니다. 그럼요. 저에게 편안하게 털어놓으세요. 귀 기울여 듣고 있을게요.",
-        format_kwargs={"user_nick_nm": user_nick_nm}
+        format_kwargs={"user_nick_nm": user_name_to_use}
     )
     
     return {"dialogue": dialogue_text}
 
-
 # ======================================================================
 # ===     리포트 요약 엔드포인트     ===
 # ======================================================================
-class DailyReportRequest(BaseModel):
-    user_id: str
-    date: str # "YYYY-MM-DD" 형식
-    language_code: str = 'ko'
 
 
-async def create_and_save_summary_for_user(user_id: str, date_str: str):
+
+async def create_and_save_summary_for_user(user_id: str, date_str: str, lang_code: str = 'ko'): 
     """
     그날의 '최고점 감정'과 '가장 힘들었던 순간의 감정'을 모두 찾아 LLM에 전달하여 요약을 생성합니다.
     이 함수는 스케줄링된 작업(/tasks/generate-summaries)에 의해 호출됩니다.
     """
-    print(f"----- [Daily Summary Job Start] User: {user_id}, Date: {date_str} -----")
+    print(get_translation("log_daily_summary_start", DEFAULT_LANG, user_id=user_id, date_str=date_str))
     
     # Supabase 또는 OpenAI 키가 설정되지 않은 경우 작업을 건너뜁니다.
     if not supabase or not OPENAI_KEY:
-        print("Error: Supabase or OpenAI key not set.")
+        print(get_translation("log_error_keys_not_set", DEFAULT_LANG))
         return
 
     try:
@@ -1183,13 +1303,13 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         top_score_res = await run_in_threadpool(top_score_query.execute)
 
         if not top_score_res.data:
-            print(f"Info: No cluster scores for user {user_id} on {date_str}. Skipping.")
+            print(get_translation("log_daily_summary_no_scores", DEFAULT_LANG, user_id=user_id, date_str=date_str))
             return
 
         top_score_entry = top_score_res.data[0]
         headline_cluster = top_score_entry['cluster']
         headline_score = int(top_score_entry['score'] * 100)
-        headline_summary = (top_score_entry.get('sessions') or {}).get('summary', "특별한 대화는 없었어요.")
+        headline_summary = (top_score_entry.get('sessions') or {}).get('summary', get_translation("placeholder_no_dialogue", lang_code)) 
 
         # --- 2. '가장 힘들었던 순간(g_score 최고점)의 감정' 찾기 (기준점 2) ---
         top_g_score_session_query = supabase.table("sessions") \
@@ -1210,22 +1330,23 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
                 
                 # '최고점 감정'과 '가장 힘들었던 순간의 감정'이 다를 경우에만 추가 정보 구성
                 if top_cluster_in_g_session['cluster'] != headline_cluster:
+                    cluster_name_display = get_translation(f"cluster_{top_cluster_in_g_session['cluster']}", lang_code)
                     difficult_moment_context = {
-                        "cluster_name": CLUSTER_TO_DISPLAY_NAME.get(top_cluster_in_g_session['cluster']),
-                        "score": int(top_cluster_in_g_session['score'] * 100),
-                        "reason": "이 감정은 하루 중 가장 힘들었던(종합 점수가 높았던) 순간의 주요 감정입니다."
+                    "cluster_name": cluster_name_display,
+                    "score": int(top_cluster_in_g_session['score'] * 100),
+                    "reason": get_translation("reason_difficult_moment", lang_code)
                     }
 
         # --- 3. LLM에 전달할 정보 구성 ---
-        user_nick_nm, _ = await get_user_info(user_id)
+        user_nick_nm, _ = await get_user_info(user_id, lang_code)
         llm_context = {
             "user_nick_nm": user_nick_nm,
             "headline_emotion": {
-                "cluster_name": CLUSTER_TO_DISPLAY_NAME.get(headline_cluster),
+                "cluster_name": get_translation(f"cluster_{headline_cluster}", lang_code),
                 "score": headline_score,
                 "dialogue_summary": headline_summary
             },
-            "difficult_moment": difficult_moment_context # None일 수도 있음
+            "difficult_moment": difficult_moment_context
         }
         
         recent_summaries_query = supabase.table("daily_summaries").select("summary_text").eq("user_id", user_id).order("date", desc=True).limit(5)
@@ -1236,12 +1357,13 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         summary_json = await call_llm(
             system_prompt=REPORT_SUMMARY_PROMPT,
             user_content=json.dumps(llm_context, ensure_ascii=False),
-            openai_key=OPENAI_KEY
+            openai_key=OPENAI_KEY,
+            lang_code=lang_code
         )
         
         daily_summary_text = summary_json.get("daily_summary")
         if not daily_summary_text:
-            print(f"Warning: LLM failed to generate summary for user {user_id} on {date_str}.")
+            print(get_translation("log_daily_summary_llm_fail", DEFAULT_LANG, user_id=user_id, date_str=date_str))
             return
 
 
@@ -1255,23 +1377,23 @@ async def create_and_save_summary_for_user(user_id: str, date_str: str):
         }
         await run_in_threadpool(supabase.table("daily_summaries").upsert(summary_data, on_conflict="user_id,date").execute)
 
-        # upsert: user_id와 date가 동일한 데이터가 있으면 업데이트, 없으면 삽입
-        upsert_query = supabase.table("daily_summaries").upsert(summary_data, on_conflict="user_id,date")
-        await run_in_threadpool(upsert_query.execute)
-        
-        print(f"Success: Saved daily summary for user {user_id} on {date_str}.")
+        print(get_translation("log_daily_summary_success", DEFAULT_LANG, user_id=user_id, date_str=date_str))
+    
 
     except Exception as e:
-                print(f"Error in create_and_save_summary_for_user: {e}"); traceback.print_exc()
+        job_name = "create_and_save_summary_for_user"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=traceback.format_exc()))
     finally:
-        print(f"----- [Job End] User: {user_id}, Date: {date_str} -----")
+        print(get_translation("log_daily_summary_end", DEFAULT_LANG, user_id=user_id, date_str=date_str))
 
 
 # 2주 차트 요약 생성 함수
-async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
-    print(f"----- [Weekly Summary Job Start] User: {user_id}, Date: {date_str} -----")
-    if not supabase or not OPENAI_KEY: return
-
+async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str, lang_code: str = 'ko'):
+    print(get_translation("log_weekly_summary_start", DEFAULT_LANG, user_id=user_id, date_str=date_str))
+    if not supabase or not OPENAI_KEY:
+        print(get_translation("log_error_keys_not_set", DEFAULT_LANG))
+        return
+    
     try:
         # 오늘 날짜를 datetime 객체로 변환하여 요일 확인
         today_dt = dt.datetime.strptime(date_str, '%Y-%m-%d')
@@ -1281,10 +1403,10 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         # 요일에 따라 다른 프롬프트 선택
         if is_sunday:
             system_prompt = WEEKLY_REPORT_SUMMARY_PROMPT_NEURO
-            print(f"    Info: 일요일이므로 '뇌과학 리포트'를 생성합니다.")
+            print(get_translation("log_weekly_summary_sunday", DEFAULT_LANG))
         else:
             system_prompt = WEEKLY_REPORT_SUMMARY_PROMPT_STANDARD
-            print(f"    Info: 일반 2주 리포트를 생성합니다.")
+            print(get_translation("log_weekly_summary_standard", DEFAULT_LANG))
             
         today = dt.datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=dt.timezone.utc)
         start_date = today - dt.timedelta(days=13)
@@ -1293,7 +1415,7 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         # 14일간의 세션 및 클러스터 점수 데이터 한 번에 가져오기
         sessions_res = supabase.table("sessions").select("id, created_at, g_score").eq("user_id", user_id).gte("created_at", start_date.isoformat()).lt("created_at", end_date.isoformat()).execute()
         if not sessions_res.data:
-            print(f"Info: No session data found for weekly summary for user {user_id}. Skipping.")
+            print(get_translation("log_weekly_summary_no_session", DEFAULT_LANG, user_id=user_id))
             return # 데이터 없으면 바로 종료
         
         # 기록이 있는 날짜 수 계산
@@ -1304,12 +1426,12 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
                 day_str = dt.datetime.fromisoformat(session['created_at'].split('+')[0]).strftime('%Y-%m-%d')
                 recorded_days.add(day_str)
             except Exception as e:
-                print(f"Warning: Could not parse date {session['created_at']} for user {user_id}. Error: {e}")
+                print(get_translation("log_weekly_summary_parse_error", DEFAULT_LANG, user_id=user_id, date_str=session['created_at'], error=str(e)))
                 continue # 날짜 파싱 실패 시 해당 세션 건너뛰기
 
         MIN_DAYS_REQUIRED = 3 # 최소 필요 일수
         if len(recorded_days) < MIN_DAYS_REQUIRED:
-            print(f"Info: Insufficient data ({len(recorded_days)} days found, requires {MIN_DAYS_REQUIRED}) for weekly summary for user {user_id}. Skipping.")
+            print(get_translation("log_weekly_summary_insufficient_data", DEFAULT_LANG, days_found=len(recorded_days), days_required=MIN_DAYS_REQUIRED, user_id=user_id))
             # 데이터 부족 시, DB에 placeholder 저장하지 않고 그냥 종료
             return
         # [수정 끝] 데이터가 충분할 때만 아래 로직 실행
@@ -1329,8 +1451,8 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
             session['cluster_scores'] = scores_by_session_id.get(session['id'], [])
             sessions_with_scores.append(session)
 
-        if not session:
-            print(f"Info: No data for weekly summary for user {user_id}. Skipping.")
+        if not sessions_with_scores:
+            print(get_translation("log_weekly_summary_no_session", DEFAULT_LANG, user_id=user_id))
             return
 
 
@@ -1382,55 +1504,54 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
         
         # [긍정적 상관관계: A가 높을 때 B도 높음]
         if cluster_stats['sleep']['avg'] > 40 and cluster_stats['neg_low']['avg'] > 40:
-            correlations.append("수면의 질 저하와 우울/무기력감이 함께 높게 나타나는 경향이 있습니다. 이는 심리적 에너지를 소모시키는 요인이 될 수 있어, 두 감정의 관계를 함께 살펴보는 것이 도움이 될 수 있습니다.")
+            correlations.append(get_translation("corr_sleep_neglow", lang_code))
         if cluster_stats['neg_high']['avg'] > 40 and cluster_stats['sleep']['avg'] > 40:
-            correlations.append("불안/긴장감이 높은 날, 수면 문제도 함께 증가하는 패턴이 보입니다. 과도한 각성 상태가 편안한 휴식에 영향을 미칠 수 있으니, 불안/긴장과 수면의 연관성을 돌아보는 것이 도움이 될 수 있습니다.")
+            correlations.append(get_translation("corr_neghigh_sleep", lang_code))
         if cluster_stats['adhd']['avg'] > 50 and cluster_stats['neg_high']['avg'] > 50:
-            correlations.append("집중력 저하 문제와 불안감이 모두 높은 수준으로 나타났습니다. 주의를 통제하려는 노력이 과도한 정신적 긴장으로 이어질 수 있는 패턴이 관찰됩니다. 집중력과 불안감 사이의 관계를 살펴보는 것이 도움이 될 수 있습니다.")
+            correlations.append(get_translation("corr_adhd_neghigh", lang_code))
 
         # [부정적/반비례 상관관계: A가 높을 때 B는 낮음]
         if cluster_stats['neg_low']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
-            correlations.append("우울/무기력감이 높은 시기에는 긍정적 감정을 느끼는 정도가 현저히 낮아지는 패턴이 뚜렷합니다. 이는 감정 회복을 위한 인지적 자원이 부족하다는 신호일 수 있습니다.")
+            correlations.append(get_translation("corr_neglow_positive", lang_code))
         if cluster_stats['neg_high']['avg'] > 50 and cluster_stats['positive']['avg'] < 30:
-            correlations.append("불안/분노 감정이 높아질 때, 평온/회복 점수는 반대로 낮아지는 경향이 관찰됩니다. 이 두 감정 사이의 관계를 살펴보며 정서적 안정성을 위한 자신만의 방법을 찾아보는 것도 좋겠습니다.")
+            correlations.append(get_translation("corr_neghigh_positive", lang_code))
 
         # [추세 기반 반비례 상관관계: A가 개선될 때 B도 개선됨]
         if cluster_stats['sleep']['trend'] == 'decreasing' and cluster_stats['neg_low']['trend'] == 'decreasing':
-            correlations.append("매우 긍정적인 신호입니다! 최근 2주간 수면의 질이 개선되면서, 우울/무기력감 또한 함께 감소하는 선순환이 만들어지고 있습니다.")
+            correlations.append(get_translation("corr_trend_sleep_neglow", lang_code))
         if cluster_stats['neg_low']['trend'] == 'decreasing' and cluster_stats['positive']['trend'] == 'increasing':
-            correlations.append("회복탄력성이 강화되고 있습니다. 우울감이 점차 줄어들면서 그 자리를 긍정적이고 평온한 감정이 채워나가고 있는 모습이 인상적입니다.")
+            correlations.append(get_translation("corr_trend_neglow_positive", lang_code))
 
         # 4. 주요 클러스터 식별
         # 지난 2주간 발생한 모든 감정 기록 중에서, 점수가 가장 높았던 순간 Top 2를 찾아내라
         dominant_clusters_keys = list(set([item[0] for item in sorted(all_scores, key=lambda item: item[1], reverse=True)[:2]]))        
         # 클러스터 이름 변환
-        dominant_clusters_display = [CLUSTER_TO_DISPLAY_NAME.get(c, c) for c in dominant_clusters_keys]
-
+        dominant_clusters_display = [get_translation(f"cluster_{c}", lang_code) for c in dominant_clusters_keys]
         # 최종 LLM 전달 데이터 구조
         trend_data = {
             "g_score_stats": {"avg": int(np.mean(g_scores)*100) if g_scores else 0, 
                               "std": int(np.std(g_scores)*100) if g_scores else 0}, 
             "cluster_stats": cluster_stats, 
-            "dominant_clusters": dominant_clusters_display, 
+            "dominant_clusters": dominant_clusters_display,
             "correlations": correlations
             }
 
         # 5. LLM 호출 및 결과 저장
         # 분석한 트렌드 llm에 넣기
-        user_nick_nm, _ = await get_user_info(user_id)
+        user_nick_nm, _ = await get_user_info(user_id, lang_code)
         llm_context = { "user_nick_nm": user_nick_nm, "trend_data": trend_data }
-        summary_json = await call_llm(system_prompt, json.dumps(llm_context, ensure_ascii=False), OPENAI_KEY)
+        summary_json = await call_llm(system_prompt, json.dumps(llm_context, ensure_ascii=False), OPENAI_KEY, lang_code=lang_code)
 
         if not summary_json or "error" in summary_json:
-            print(f"Warning: LLM failed to generate weekly summary for user {user_id}.")
+            print(get_translation("log_weekly_summary_llm_fail", DEFAULT_LANG, user_id=user_id))
             return
             
         summary_data = { "user_id": user_id, "summary_date": date_str, **summary_json }
         await run_in_threadpool(supabase.table("weekly_summaries").upsert(summary_data, on_conflict="user_id,summary_date").execute)
-        print(f"Success: Saved weekly summary for user {user_id} on {date_str}.")
+        print(get_translation("log_weekly_summary_success", DEFAULT_LANG, user_id=user_id, date_str=date_str))
     except Exception as e:
-        print(f"Error in create_and_save_weekly_summary_for_user: {e}"); traceback.print_exc()
-
+        job_name = "create_and_save_weekly_summary_for_user"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=traceback.format_exc()))
 
 
 
@@ -1439,39 +1560,39 @@ async def create_and_save_weekly_summary_for_user(user_id: str, date_str: str):
 @app.post("/report/summary")
 async def get_daily_report_summary(request: DailyReportRequest):
     """미리 생성된 일일 요약문을 DB에서 조회합니다."""
+    lang_code = request.language_code if request.language_code in translations else DEFAULT_LANG
+
     if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+        raise HTTPException(status_code=500, detail=get_translation("error_supabase_init", lang_code))
 
     try:
-        query = supabase.table("daily_summaries").select("summary_text") \
-            .eq("user_id", request.user_id) \
-            .eq("date", request.date) \
-            .limit(1)
-            
+        query = supabase.table("daily_summaries").select("summary_text").eq("user_id", request.user_id).eq("date", request.date).limit(1)
         response = await run_in_threadpool(query.execute)
 
         if response.data:
-            summary = response.data[0].get("summary_text", "요약을 찾을 수 없습니다.")
+            summary = response.data[0].get("summary_text", get_translation("summary_not_found", lang_code))
             return {"summary": summary}
         else:
-            return {"summary": "해당 날짜의 요약 기록이 아직 생성되지 않았어요."}
+            return {"summary": get_translation("placeholder_summary_no_data", lang_code)}
 
     except Exception as e:
-        print(f"🔥 EXCEPTION in /report/summary (read): {e}")
-        raise HTTPException(status_code=500, detail="요약을 불러오는 중 오류가 발생했습니다.")
+        job_name = "/report/summary"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=traceback.format_exc()))
+        raise HTTPException(status_code=500, detail=get_translation("error_loading_summary", lang_code))
     
+
 # --- 2주 차트 요약문을 프론트엔드에 제공하는 API 엔드포인트 ---
 # 모지 차트 페이지에 들어갔을 때, '2주 분석 리포트' 전체(종합, 클러스터별)를 가져오는 역할
-class WeeklyReportRequest(BaseModel):
-    user_id: str
+
 
 @app.post("/report/weekly-summary")
 async def get_weekly_report_summary(request: WeeklyReportRequest):
-    if not supabase: raise HTTPException(500, "Supabase client not initialized")
-    
+    lang_code = request.language_code if request.language_code in translations else DEFAULT_LANG
+    if not supabase: raise HTTPException(500, get_translation("error_supabase_init", lang_code))
+
     # 기본 플레이스홀더 메시지 정의
-    placeholder_no_data = "아직 2주 리포트를 만들기에 기록이 조금 부족해요. 3일 이상 꾸준히 기록해주시면 더 자세한 리포트를 받아보실 수 있어요!"
-    placeholder_error = "리포트를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+    placeholder_no_data = get_translation("placeholder_weekly_summary_no_data", lang_code)
+    placeholder_error = get_translation("placeholder_weekly_summary_error", lang_code)
 
     try:
         # Supabase 쿼리 객체 생성
@@ -1484,13 +1605,13 @@ async def get_weekly_report_summary(request: WeeklyReportRequest):
             .maybe_single()
         )
 
-        # ⭐ [수정] query 객체의 execute 메서드 자체를 전달 (괄호 없음!)
+        # query 객체의 execute 메서드 자체를 전달 (괄호 없음!)
         response = await run_in_threadpool(query.execute)
 
-        # ⭐ response.data가 None이 아니고, 내용이 실제로 있는지 확인
+        # response.data가 None이 아니고, 내용이 실제로 있는지 확인
         if response and response.data and response.data.get("overall_summary"):
             print(f"✅ Found weekly summary for user {request.user_id}")
-            return response.data # 정상 데이터 반환
+            return response.data
         else:
             print(f"⚠️ No weekly summary data found for user {request.user_id}. Returning placeholder.")
             return {
@@ -1501,10 +1622,9 @@ async def get_weekly_report_summary(request: WeeklyReportRequest):
                 "sleep_summary": placeholder_no_data,
                 "positive_summary": placeholder_no_data
             }
-
     except Exception as e:
-        print(f"🔥 EXCEPTION in /report/weekly-summary: {e}")
-        traceback.print_exc()
+        job_name = "/report/weekly-summary"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=traceback.format_exc()))
         return {
             "overall_summary": placeholder_error,
             "neg_low_summary": placeholder_error,
@@ -1519,11 +1639,12 @@ async def get_weekly_report_summary(request: WeeklyReportRequest):
 # ======================================================================
 
 @app.post("/tasks/generate-summaries")
-async def handle_generate_summaries_task():
+async def handle_generate_summaries_task(language_code: Optional[str] = 'ko'): 
     """
     Supabase Cron Job에 의해 호출될 엔드포인트.
     어제 활동한 모든 사용자의 일일 요약을 생성합니다.
     """
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
     
     # 어제 날짜 계산 (UTC 기준)
     yesterday = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
@@ -1532,7 +1653,7 @@ async def handle_generate_summaries_task():
     start_of_yesterday = f"{yesterday_str}T00:00:00+00:00"
     end_of_yesterday = f"{yesterday_str}T23:59:59+00:00"
 
-    print(f"Starting daily summary generation task for date: {yesterday_str}")
+    print(get_translation("log_task_start", DEFAULT_LANG, job_name="Daily/Weekly Summaries", date_str=yesterday_str))
 
     # 어제 활동한 유저 ID 목록 가져오기 (중복 제거)
     active_users_query = supabase.table("sessions").select("user_id", count='exact') \
@@ -1542,21 +1663,25 @@ async def handle_generate_summaries_task():
     active_users_res = await run_in_threadpool(active_users_query.execute)
     # 어제 앱을 사용한 유저가 단 한 명도 없다면, 즉시 "어제 활동한 유저 없음" 메시지를 출력하고 작업을 종료
     if not active_users_res.data:
-        message = "No active users yesterday. Task finished."
+        message = get_translation("log_task_no_active_users", DEFAULT_LANG)
         print(message)
         return {"message": message}
 
     # 활동 유저가 있을 때만 아래 로직 실행
     user_ids = list(set([item['user_id'] for item in active_users_res.data]))
     
-    print(f"Found {len(user_ids)} active users. Starting summary generation for each user...")
+    print(get_translation("log_task_found_users", DEFAULT_LANG, user_count=len(user_ids)))
 
     # 각 유저에 대해 순차적으로 요약 생성 함수 호출
-    for user_id in user_ids:
-        await create_and_save_summary_for_user(user_id, yesterday_str)
-        await create_and_save_weekly_summary_for_user(user_id, yesterday_str)
+    profiles_res = await run_in_threadpool(supabase.table("user_profiles").select("id, language_code").in_("id", user_ids).execute)
+    user_lang_map = {p['id']: p.get('language_code', DEFAULT_LANG) for p in profiles_res.data}
 
-    message = f"Summary generation task complete for {len(user_ids)} users."
+    for user_id in user_ids:
+        user_lang = user_lang_map.get(user_id, DEFAULT_LANG) # 🥑 해당 유저의 언어 설정 사용
+        await create_and_save_summary_for_user(user_id, yesterday_str, user_lang)
+        await create_and_save_weekly_summary_for_user(user_id, yesterday_str, user_lang)
+
+    message = get_translation("log_task_complete", DEFAULT_LANG, user_count=len(user_ids))
     print(message)
     return {"message": message}
 
@@ -1568,15 +1693,17 @@ async def handle_generate_summaries_task():
 @app.post("/assessment/submit")
 async def submit_assessment(payload: AssessmentSubmitRequest):
     """주기적 심층 분석 결과를 받아 DB에 저장하고, 사용자의 최신 상태를 업데이트합니다."""
+    lang_code = payload.language_code if payload.language_code in translations else DEFAULT_LANG
+
     if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+        raise HTTPException(status_code=500, detail=get_translation("error_supabase_init", lang_code))
 
     try:
         # 1. 제출된 답변으로 점수 계산 및 정규화
         total_score = sum(payload.responses.values())
         max_score = DEEP_DIVE_MAX_SCORES.get(payload.cluster)
         if not max_score:
-            raise HTTPException(status_code=400, detail=f"Invalid cluster: {payload.cluster}")
+            raise HTTPException(status_code=400, detail=get_translation("error_invalid_cluster", lang_code, cluster=payload.cluster))
         
         normalized_score = clip01(total_score / max_score)
 
@@ -1610,12 +1737,13 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
         }
         await run_in_threadpool(supabase.table("assessment_history").insert(history_row).execute)
 
-        return {"message": "Assessment submitted successfully", "updated_scores": latest_scores}
+        return {"message": get_translation("assessment_success", lang_code), "updated_scores": latest_scores}
 
     except Exception as e:
         tb = traceback.format_exc()
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
-    
+        job_name = "/assessment/submit"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=tb))
+        raise HTTPException(status_code=500, detail={"error": get_translation("error_occurred", lang_code, error=str(e)), "trace": tb if os.getenv("DEBUG") else None})    
 
 
 # ======================================================================
@@ -1625,15 +1753,19 @@ async def submit_assessment(payload: AssessmentSubmitRequest):
 @app.get("/dialogue/sleep-tip")
 async def get_sleep_tip(
     personality: Optional[str] = None,
-    user_nick_nm: Optional[str] = "친구",
+    user_nick_nm: Optional[str] = None,
     language_code: Optional[str] = 'ko'
 ):
-    """캐릭터 성향에 맞는 수면위생 팁을 랜덤으로 하나 반환합니다."""
     # get_mention_from_db 대신 직접 쿼리 (별도 테이블이므로)
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
+    user_name_to_use = user_nick_nm or get_translation("default_user_name", lang_code)
+    default_tip = get_translation("default_sleep_tip", lang_code)
+
+    """캐릭터 성향에 맞는 수면위생 팁을 랜덤으로 하나 반환합니다."""
     if not supabase:
-        return {"tip": "규칙적인 수면 습관을 가져보세요."}
+        return {"tip": default_tip}
     try:
-        query = supabase.table("sleep_hygiene_tips").select("text").eq("language_code", language_code)
+        query = supabase.table("sleep_hygiene_tips").select("text").eq("language_code", lang_code)
         if personality:
             query = query.eq("personality", personality)
         
@@ -1643,18 +1775,19 @@ async def get_sleep_tip(
         
         if not tips:
             # 해당 성격의 팁이 없으면 기본 팁 반환
-            fallback_res = await run_in_threadpool(supabase.table("sleep_hygiene_tips").select("text").eq("personality", "prob_solver").execute)
+            fallback_res = await run_in_threadpool(supabase.table("sleep_hygiene_tips").select("text").eq("language_code", lang_code).eq("personality", "prob_solver").execute)
             tips = [row['text'] for row in fallback_res.data]
 
-        selected_tip = random.choice(tips) if tips else "수면 위생법을 참고해보세요."
-        
-        # user_nick_nm 플레이스홀더를 실제 값으로 채워서 반환
-        return {"tip": selected_tip.format(user_nick_nm=user_nick_nm)}
+        selected_tip = random.choice(tips) if tips else default_tip
 
+        try:
+            return {"tip": selected_tip.format(user_nick_nm=user_name_to_use)}
+        except KeyError:
+            return {"tip": selected_tip.replace("{user_nick_nm}", user_name_to_use)}
+        
     except Exception as e:
-        print(f"❌ get_sleep_tip Error: {e}")
-        return {"tip": "수면 위생법을 참고해보세요."}
-    
+        print(get_translation("log_error_get_sleep_tip", DEFAULT_LANG, error=str(e)))
+        return {"tip": default_tip}
 
 
 # ======================================================================
@@ -1664,14 +1797,19 @@ async def get_sleep_tip(
 @app.get("/dialogue/action-mission")
 async def get_action_mission(
     personality: Optional[str] = None,
-    user_nick_nm: Optional[str] = "친구",
+    user_nick_nm: Optional[str] = None,
     language_code: Optional[str] = 'ko'
 ):
     """우울(neg_low) 클러스터를 위한 행동 미션을 랜덤으로 하나 반환합니다."""
+
+    lang_code = language_code if language_code in translations else DEFAULT_LANG
+    user_name_to_use = user_nick_nm or get_translation("default_user_name", lang_code)
+    default_mission = get_translation("default_action_mission", lang_code)
+
     if not supabase:
-        return {"mission": "창문을 열고 1분간 바깥 공기를 쐬어보는 건 어떨까요?"}
+        return {"mission": default_mission}
     try:
-        query = supabase.table("action_solutions").select("text").eq("language_code", language_code)
+        query = supabase.table("action_solutions").select("text").eq("language_code", lang_code)
         if personality:
             query = query.eq("personality", personality)
         
@@ -1679,18 +1817,19 @@ async def get_action_mission(
         missions = [row['text'] for row in response.data]
         
         if not missions:
-            fallback_res = await run_in_threadpool(supabase.table("action_solutions").select("text").eq("personality", "prob_solver").execute)
+            fallback_res = await run_in_threadpool(supabase.table("action_solutions").select("text").eq("language_code", lang_code).eq("personality", "prob_solver").execute)
             missions = [row['text'] for row in fallback_res.data]
 
-        selected_mission = random.choice(missions) if missions else "잠시 자리에서 일어나 굳은 몸을 풀어주세요."
+        selected_mission = random.choice(missions) if missions else default_mission
         
-        return {"mission": selected_mission.format(user_nick_nm=user_nick_nm)}
+        try:
+            return {"mission": selected_mission.format(user_nick_nm=user_name_to_use)}
+        except KeyError:
+            return {"mission": selected_mission.replace("{user_nick_nm}", user_name_to_use)}
 
     except Exception as e:
-        print(f"❌ get_action_mission Error: {e}")
-        return {"mission": "잠시 자리에서 일어나 굳은 몸을 풀어주세요."}
-
-
+        print(get_translation("log_error_get_action_mission", DEFAULT_LANG, error=str(e)))
+        return {"mission": default_mission}
 
 
 # ======================================================================
@@ -1703,8 +1842,9 @@ async def handle_solution_feedback(payload: FeedbackRequest):
     마음 관리 팁에 대한 사용자 피드백을 받아 처리하고,
     'not_helpful'인 경우 negative_tags를 업데이트합니다.
     """
+    lang_code = payload.language_code if payload.language_code in translations else DEFAULT_LANG
     if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase client not initialized")
+        raise HTTPException(status_code=500, detail=get_translation("error_supabase_init", lang_code))
 
     try:
         # 1. 먼저 solution_feedback 테이블에 피드백 기록을 삽입합니다.
@@ -1725,7 +1865,7 @@ async def handle_solution_feedback(payload: FeedbackRequest):
             
             if solution_res.data and solution_res.data.get("tags"):
                 solution_tags = solution_res.data["tags"]
-                
+
                 # 2-2. 사용자의 현재 negative_tags를 가져옵니다.
                 profile_query = supabase.table("user_profiles").select("negative_tags").eq("id", payload.user_id).single()
                 profile_res = await run_in_threadpool(profile_query.execute)
@@ -1733,7 +1873,7 @@ async def handle_solution_feedback(payload: FeedbackRequest):
                 current_tags = []
                 if profile_res.data and profile_res.data.get("negative_tags"):
                     current_tags = profile_res.data["negative_tags"]
-                
+
                 # 2-3. 기존 태그와 새로운 태그를 합치고 중복을 제거합니다.
                 updated_tags = list(set(current_tags) | set(solution_tags))
                 
@@ -1741,17 +1881,23 @@ async def handle_solution_feedback(payload: FeedbackRequest):
                 update_query = supabase.table("user_profiles").update({"negative_tags": updated_tags}).eq("id", payload.user_id)
                 await run_in_threadpool(update_query.execute)
                 
-                print(f"✅ User {payload.user_id} negative_tags updated: {updated_tags}")
+                print(get_translation("log_negative_tags_updated", DEFAULT_LANG, user_id=payload.user_id, tags=updated_tags))
 
-        return {"message": "Feedback submitted successfully"}
+        return {"message": get_translation("feedback_success", lang_code)}
 
     except Exception as e:
         tb = traceback.format_exc()
-        print(f"🔥 EXCEPTION in /solutions/feedback: {e}\n{tb}")
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+        job_name = "/solutions/feedback"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=tb))
+        raise HTTPException(status_code=500, detail={"error": get_translation("error_occurred", lang_code, error=str(e)), "trace": tb if os.getenv("DEBUG") else None})
     
+
+# ======================================================================
+# === 백필 수동 실행 ===
+# ======================================================================
 @app.post("/jobs/backfill")
 async def run_backfill(payload: BackfillRequest):
+    lang_code = payload.language_code if payload.language_code in translations else DEFAULT_LANG
     """
     지정된 날짜 범위에 대해 모든 사용자 또는 특정 사용자의 일일/주간 요약을 생성합니다.
     
@@ -1766,12 +1912,22 @@ async def run_backfill(payload: BackfillRequest):
     """
     try:
         from backfill_summaries import run_backfill as backfill_function
-        result = await backfill_function(payload.start_date, payload.end_date, payload.user_id)
+        print(get_translation("log_backfill_request", lang_code, endpoint="/jobs/backfill"))
+        print(get_translation("log_backfill_range", lang_code, start_date=payload.start_date, end_date=payload.end_date))
+        print(get_translation("log_backfill_check_logs", lang_code, main_py="main.py"))
+        print(get_translation("log_backfill_wait", lang_code))
+        
+        # 백필 함수에도 lang_code 전달 (만약 지원한다면)
+        result = await backfill_function(payload.start_date, payload.end_date, payload.user_id, lang_code)
+        
+        print(get_translation("backfill_complete", lang_code))
         return result
+    except ImportError:
+        raise HTTPException(status_code=404, detail="Backfill script not found.")
     except Exception as e:
         tb = traceback.format_exc()
-        print(f"🔥 EXCEPTION in /jobs/backfill: {e}\n{tb}")
-        raise HTTPException(status_code=500, detail={"error": str(e), "trace": tb})
+        job_name = "/jobs/backfill"
+        print(get_translation("log_error_unhandled_exception", DEFAULT_LANG, job_name=job_name, error=str(e), trace=tb))
+        raise HTTPException(status_code=500, detail={"error": get_translation("error_occurred", lang_code, error=str(e)), "trace": tb if os.getenv("DEBUG") else None})
     
-
 
