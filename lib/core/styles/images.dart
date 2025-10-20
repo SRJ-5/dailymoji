@@ -15,6 +15,10 @@ class AppImages {
       'assets/images/weekly_tutorial.png';
 
   // images - logo
+  // static const String dailymojiLogoBlack =
+  //     'assets/images/logo/dailymoji_logo_black.png';
+  // static const String dailymojiLogoColor =
+  //     'assets/images/logo/dailymoji_logo_color.png';
   static const String appleLoginLogo =
       'assets/images/logo/apple_login_logo.png';
   static const String googleLoginLogo =
