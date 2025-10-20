@@ -1,6 +1,6 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/presentation/pages/home/widget/emoji_video.dart';
 import 'package:dailymoji/presentation/pages/home/widget/home_tutorial.dart';
-import 'package:dailymoji/presentation/pages/my/character_setting/background_setting_page.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/domain/enums/emoji_asset.dart';
 import 'package:dailymoji/core/providers.dart';
@@ -99,9 +99,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       });
     });
 
-    // 변경: 상단 여백(노치/StatusBar 높이)만큼 패딩 계산
-    final topInset = MediaQuery.of(context).viewPadding.top;
-
     if (!_loaded) {
       return Scaffold(
         body: Center(
@@ -124,22 +121,20 @@ class _HomePageState extends ConsumerState<HomePage> {
           extendBodyBehindAppBar: true,
           backgroundColor: Colors.transparent,
           // 변경: 투명 AppBar + 좌측 로고(디자인 1번처럼)
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(kToolbarHeight),
-            child: Container(
-              padding: EdgeInsets.only(top: topInset), // 노치만 피해서 배치
-              color: Colors.transparent,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 16.w, top: 8.h),
-                  child: Image.asset(
-                    AppImages.dailymojiLogoBlack,
-                    height: 30,
-                  ),
-                ),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            titleSpacing: 16.w,
+            title: Image.asset(AppImages.dailymojiLogoBlack, height: 30),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  context.go("/home/background_setting");
+                },
+                icon: SvgPicture.asset(AppIcons.setting, width: 22, height: 22),
               ),
-            ),
+              SizedBox(width: 12.w),
+            ],
           ),
 
           // ✅ 변경: 배경 이미지를 화면 가득(상단 SafeArea 없이)
@@ -151,9 +146,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                   fit: BoxFit.cover,
                 ),
               ),
-
-              // 콘텐츠
-              // SizedBox(height: topInset + kToolbarHeight + 8.h),
 
               // 중앙 캐릭터 + 말풍선
               Positioned(
@@ -181,7 +173,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                               child: AppText(
                                 displayText.isNotEmpty
                                     ? displayText
-                                    : '안녕하세요!\n오늘 기분은 어떠신가요?',
+                                    : AppTextStrings.defaultGreeting,
                                 style: AppFontStyles.bodyBold16
                                     .copyWith(color: AppColors.grey900),
                                 textAlign: TextAlign.center,
@@ -210,7 +202,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 left: 0,
                 right: 0,
                 child: SizedBox(
-                  height: 118.h,
+                  height: 122.h,
                   child: ListView.separated(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     scrollDirection: Axis.horizontal,
@@ -277,32 +269,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
               ),
-              Positioned(
-                top: 100.h,
-                right: 20.w,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BackgroundSettingPage(),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      "배경선택",
-                      style: TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
           bottomNavigationBar: BottomBar(),
@@ -331,7 +297,8 @@ class _EmojiItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imagePath = EmojiAsset.fromString(emoKey).asset;
+    // final imagePath = EmojiAsset.fromString(emoKey).asset;
+    final videoPath = EmojiAsset.fromString(emoKey).video;
 
     const emotionTextMap = {
       AppTextStrings.negHigh: AppTextStrings.clusterNegHigh,
@@ -350,18 +317,18 @@ class _EmojiItem extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             width: 100.w,
-            height: 118.h,
+            height: 122.h,
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
                 color: isSelected ? AppColors.orange300 : AppColors.grey200,
-                width: isSelected ? 2 : 1,
+                width: isSelected ? 2.r : 1.r,
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.04),
-                  blurRadius: 6,
+                  blurRadius: 6.r,
                   offset: const Offset(0, 2),
                 ),
               ],
@@ -369,7 +336,8 @@ class _EmojiItem extends StatelessWidget {
             alignment: Alignment.center,
             child: Column(
               children: [
-                Image.asset(imagePath, width: 60.w, height: 60.h),
+                LoopVideo(assetPath: videoPath, width: 60.w, height: 60.h),
+                SizedBox(height: 8.h),
                 // 라벨
                 SizedBox(
                   width: 72.w,

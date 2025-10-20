@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dailymoji/presentation/providers/background_provider.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 /// 배경 선택 페이지
 class BackgroundSettingPage extends ConsumerStatefulWidget {
@@ -91,7 +92,7 @@ class _BackgroundSelectPageState extends ConsumerState<BackgroundSettingPage> {
               onTap: () async {
                 final selectedPath = backgrounds[_currentIndex];
                 await bgNotifier.setBackground(selectedPath);
-                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) context.pop();
               },
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),

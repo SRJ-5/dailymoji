@@ -23,20 +23,6 @@ class _MyPageState extends ConsumerState<MyPage> {
     // 상태 초기화 시 userNickNm이 널이 되어서 화면이 깨지는 현상 때문에 ''를 넣음
     final String userNickname = userState.userProfile?.userNickNm ?? '';
 
-    // _buildSection(
-    //   title: AppTextStrings.customSettings,
-    //   items: [AppTextStrings.characterSettings],
-    //   onTapList: [() => context.push('/characterSetting')],
-    // ),
-
-    //MIN : 맞춤 설정에 배경화면 변경 추가를 위해 맵 생성
-    final Map<String, VoidCallback> customSettings = {
-      AppTextStrings.characterSettings: () =>
-          context.push('/info/${AppTextStrings.characterSettings}'),
-      AppTextStrings.backgroundSettings: () =>
-          context.push('/info/${AppTextStrings.backgroundSettings}'),
-    };
-
 // onTap 동작을 위한 라우팅 맵 정의
     final Map<String, VoidCallback> infoTapActions = {
       AppTextStrings.notice: () =>
@@ -104,8 +90,8 @@ class _MyPageState extends ConsumerState<MyPage> {
               SizedBox(height: 16.h),
               _buildSection(
                 title: AppTextStrings.customSettings,
-                items: customSettings.keys.toList(),
-                onTapList: customSettings.values.toList(),
+                items: [AppTextStrings.characterSettings],
+                onTapList: [() => context.push('/characterSetting')],
               ),
               SizedBox(height: 16.h),
               _buildSection(

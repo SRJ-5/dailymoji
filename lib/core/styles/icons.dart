@@ -18,4 +18,5 @@ class AppIcons {
   static const String sendOrange = 'assets/icons/send_orange.svg';
   static const String toastCheck = 'assets/icons/toast_check.svg';
   static const String toastClose = 'assets/icons/toast_close.svg';
+  static const String setting = 'assets/icons/setting.svg';
 }

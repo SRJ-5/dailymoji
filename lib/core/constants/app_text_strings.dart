@@ -79,6 +79,9 @@ class AppTextStrings {
   static const String solutionNotHelpful = '도움 안됨';
   static const String solutionBlock = '이런 종류 그만 보기';
 
+  // Home Page
+  static const String defaultGreeting = '안녕하세요!\n오늘 기분은 어떠신가요?';
+
   // Login Page
   static const String loginFailed = '로그인에 실패했습니다. 다시 시도해주세요.';
   static const String loginTermsPrefix = '가입 시 ';
