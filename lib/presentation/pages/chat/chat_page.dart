@@ -1169,16 +1169,17 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         return Container(
           key: _inputFieldKey,
           margin: EdgeInsets.only(bottom: isKeyboardVisible ? 0 : 34.h),
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          constraints: BoxConstraints(
+            minHeight: 40.h,
+            maxHeight: 166.h,
+          ),
           child: Container(
             decoration: BoxDecoration(
               // color: isBotTyping ? AppColors.grey100 : Colors.white,
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(color: AppColors.grey200),
-            ),
-            constraints: BoxConstraints(
-              minHeight: 40.h,
-              maxHeight: 142.h,
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -1199,7 +1200,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                         hintStyle: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
                         fillColor: Colors.transparent, // 컨테이너 색상을 따르도록 투명화
                         filled: true,
-                        contentPadding: EdgeInsets.zero,
+                        contentPadding: EdgeInsets.symmetric(vertical: 8.h),
                         border: InputBorder.none,
                         // 비활성화 상태일 때 밑줄 제거
                         disabledBorder: InputBorder.none,
