@@ -31,23 +31,23 @@ class ClusterScoresRepositoryImpl implements ClusterScoresRepository {
     return _toEntities(dtos);
   }
 
-// RIN: 복잡했던 _pickDailyMax 함수가 제거되고, RPC를 호출하는 데이터 소스 함수를 직접 사용합니다.
-  // 이제 Repository는 데이터를 변환하는 역할에만 집중합니다.
-  @override
-  Future<List<ClusterScore>> fetchByUserAndMonth({
-    required String userId,
-    required int year,
-    required int month,
-  }) async {
-    final dtos = await dataSource.fetchDailyMaxByUserAndMonth(
-      userId: userId,
-      year: year,
-      month: month,
-    );
+  // // RIN: 복잡했던 _pickDailyMax 함수가 제거되고, RPC를 호출하는 데이터 소스 함수를 직접 사용합니다.
+  // // 이제 Repository는 데이터를 변환하는 역할에만 집중합니다.
+  // @override
+  // Future<List<ClusterScore>> fetchByUserAndMonth({
+  //   required String userId,
+  //   required int year,
+  //   required int month,
+  // }) async {
+  //   final dtos = await dataSource.fetchDailyMaxByUserAndMonth(
+  //     userId: userId,
+  //     year: year,
+  //     month: month,
+  //   );
 
-    // 서버에서 이미 계산된 데이터를 엔티티로 변환하기만 하면 됩니다~!
-    return _toEntities(dtos);
-  }
+  //   // 서버에서 이미 계산된 데이터를 엔티티로 변환하기만 하면 됩니다~!
+  //   return _toEntities(dtos);
+  // }
 
   // DTO → 슬림 Entity 매핑
   List<ClusterScore> _toEntities(List<ClusterScoreDto> dtos) {
