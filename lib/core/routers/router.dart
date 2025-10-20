@@ -1,6 +1,6 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/presentation/pages/counseling/counseling_page.dart';
-import 'package:dailymoji/presentation/pages/my/character_setting/background_setting_page.dart';
+import 'package:dailymoji/presentation/pages/home/widget/background_setting_page.dart';
 import 'package:dailymoji/presentation/pages/my/character_setting/character_setting_page.dart';
 import 'package:dailymoji/presentation/pages/chat/chat_page.dart';
 import 'package:dailymoji/presentation/pages/home/home_page.dart';

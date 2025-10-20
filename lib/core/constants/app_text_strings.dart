@@ -82,6 +82,12 @@ class AppTextStrings {
   // Home Page
   static const String defaultGreeting = '안녕하세요!\n오늘 기분은 어떠신가요?';
 
+  // Background Setting Page
+  static const String backgroundSelect = '선택하기';
+  static const String backgroundSelected = '선택됨';
+  static const String backgroundSetting = '배경 설정';
+  static const String backgroundDone = '배경을 변경했어요';
+
   // Login Page
   static const String loginFailed = '로그인에 실패했습니다. 다시 시도해주세요.';
   static const String loginTermsPrefix = '가입 시 ';

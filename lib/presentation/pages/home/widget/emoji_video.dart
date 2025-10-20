@@ -22,21 +22,44 @@ class LoopVideo extends StatefulWidget {
 
 class _LoopVideoState extends State<LoopVideo>
     with AutomaticKeepAliveClientMixin {
-  late final VideoPlayerController _controller;
+  late VideoPlayerController _controller;
   bool _initialized = false;
   bool _visible = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(widget.assetPath)
+    _initController();
+  }
+
+  // ✅ 컨트롤러 생성 로직 분리 (재생성/업데이트 시 재사용)
+  Future<void> _initController() async {
+    _controller = VideoPlayerController.asset(
+      widget.assetPath,
+      // ✅ 여러 플레이어가 동시에 재생되도록 오디오 포커스 공유
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    )
       ..setLooping(true)
-      ..setVolume(0.0)
-      ..initialize().then((_) {
-        if (!mounted) return;
-        setState(() => _initialized = true);
-        if (_visible) _controller.play();
-      });
+      ..setVolume(0.0); // ✅ 항상 무음
+
+    await _controller.initialize();
+    if (!mounted) return;
+    setState(() => _initialized = true);
+
+    // 화면에 보였던 상태라면 초기화 직후 재생
+    if (_visible) _controller.play();
+  }
+
+  // ✅ assetPath가 변경되면 컨트롤러를 재생성
+  @override
+  void didUpdateWidget(covariant LoopVideo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.assetPath != widget.assetPath) {
+      _initialized = false;
+      // 기존 컨트롤러 정리 후 새로 초기화
+      _controller.dispose();
+      _initController();
+    }
   }
 
   @override
@@ -52,15 +75,15 @@ class _LoopVideoState extends State<LoopVideo>
   Widget build(BuildContext context) {
     super.build(context);
     return VisibilityDetector(
-      key: Key(widget.assetPath),
+      key: Key('video-${widget.assetPath}'),
       onVisibilityChanged: (info) {
-        final nowVisible = info.visibleFraction > 0.3;
+        final nowVisible = info.visibleFraction > 0.2; // ✅ 보이면 재생, 안 보이면 일시정지
+        _visible = nowVisible;
         if (_initialized) {
           nowVisible ? _controller.play() : _controller.pause();
         }
-        _visible = nowVisible;
       },
-      child: _initialized
+      child: _initialized && _controller.value.isInitialized
           ? SizedBox(
               width: widget.width,
               height: widget.height,

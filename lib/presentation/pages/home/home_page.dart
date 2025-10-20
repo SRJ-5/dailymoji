@@ -131,7 +131,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 onPressed: () {
                   context.go("/home/background_setting");
                 },
-                icon: SvgPicture.asset(AppIcons.setting, width: 22, height: 22),
+                icon: SvgPicture.asset(AppIcons.setting,
+                    width: 19.w, height: 19.h),
               ),
               SizedBox(width: 12.w),
             ],
@@ -209,11 +210,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     itemBuilder: (_, idx) {
                       // 원하는 노출 순서 정의
                       const keys = [
-                        AppTextStrings.negHigh,
-                        AppTextStrings.negLow,
-                        AppTextStrings.adhd,
-                        AppTextStrings.sleep,
-                        AppTextStrings.positive,
+                        "angry",
+                        "crying",
+                        "shocked",
+                        "sleeping",
+                        "smile",
                       ];
                       final key = keys[idx % keys.length];
                       return _EmojiItem(
@@ -297,15 +298,26 @@ class _EmojiItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final imagePath = EmojiAsset.fromString(emoKey).asset;
-    final videoPath = EmojiAsset.fromString(emoKey).video;
+    // 하... 드디어 문제 해결..
+    // 백엔드와 프론트까지에서 클러스터에 대한 전반적인 용어정리가 안됨
+    // 백엔드에선  "angry", "crying", "sleeping", "shocked", "smile"데이터를 원하고
+    // 프론트랑 프로바이더, 에셋경로, 기타 전반적인 곳은 'neg_high', 'neg_low', 'sleep', 'adhd', 'positive'를 원함
+    const emotionClusterMap = {
+      "angry": AppTextStrings.negHigh,
+      "crying": AppTextStrings.negLow,
+      "sleeping": AppTextStrings.sleep,
+      "shocked": AppTextStrings.adhd,
+      "smile": AppTextStrings.positive,
+    };
+
+    final videoPath = EmojiAsset.fromString(emotionClusterMap[emoKey]!).video;
 
     const emotionTextMap = {
-      AppTextStrings.negHigh: AppTextStrings.clusterNegHigh,
-      AppTextStrings.negLow: AppTextStrings.clusterNegLow,
-      AppTextStrings.sleep: AppTextStrings.clusterSleep,
-      AppTextStrings.adhd: AppTextStrings.clusterAdhd,
-      AppTextStrings.positive: AppTextStrings.clusterPositive,
+      "angry": AppTextStrings.clusterNegHigh,
+      "crying": AppTextStrings.clusterNegLow,
+      "sleeping": AppTextStrings.clusterSleep,
+      "shocked": AppTextStrings.clusterAdhd,
+      "smile": AppTextStrings.clusterPositive,
     };
     final label = emotionTextMap[emoKey] ?? "";
 
@@ -465,7 +477,7 @@ class _EmojiItem extends StatelessWidget {
 
 //   void onEmojiTap(String emotionKey) {
 //     final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
-
+//     print(selectedNotifier.state);
 //     if (selectedNotifier.state == emotionKey) {
 //       selectedNotifier.state = null;
 //     } else {
