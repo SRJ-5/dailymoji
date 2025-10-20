@@ -9,13 +9,13 @@ import 'package:http/http.dart' as http;
 abstract class HomeDialogueRepository {
   Future<String> fetchHomeDialogue(
       String? emotion, String? personality, String? userNickNm);
-  // 솔루션 후속 멘트를 가져오는 함수
+  // 마음 관리 팁 후속 멘트를 가져오는 함수
   Future<String> fetchFollowUpDialogue({
     required String reason,
     required String? personality,
     required String? userNickNm,
   });
-  // 솔루션 거절 멘트를 가져오는 함수
+  // 마음 관리 팁 거절 멘트를 가져오는 함수
   Future<String> fetchDeclineSolutionDialogue({
     required String? personality,
     required String? userNickNm,
@@ -46,7 +46,7 @@ class HomeDialogueRepositoryImpl implements HomeDialogueRepository {
     return "안녕! 오늘 기분은 어때?"; // fallback
   }
 
-// 솔루션 마친 후 멘트
+// 마음 관리 팁 마친 후 멘트
   @override
   Future<String> fetchFollowUpDialogue({
     required String reason,

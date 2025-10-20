@@ -7,9 +7,9 @@ class UserProfile {
   final String? characterPersonality;
   final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
-  // RIN: 솔루션 유형별 가중치. Map<유형, 가중치> 형태.
+  // RIN: 마음 관리 팁 유형별 가중치. Map<유형, 가중치> 형태.
   final Map<String, double>? solutionTypeWeights;
-  // RIN: 사용자가 원하지 않는 솔루션 태그 목록.
+  // RIN: 사용자가 원하지 않는 마음 관리 팁 태그 목록.
   final List<String>? negativeTags;
 
   UserProfile({

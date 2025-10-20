@@ -6,7 +6,7 @@ enum MessageType {
   solution("solution"),
   analysis("analysis"),
   solutionProposal("solution_proposal"),
-  solutionFeedback("solution_feedback"), //RIN: 솔루션 피드백 요청 타입
+  solutionFeedback("solution_feedback"), //RIN: 마음 관리 팁 피드백 요청 타입
   image("image"),
   system("system");
 
