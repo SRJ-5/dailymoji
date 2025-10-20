@@ -141,84 +141,81 @@ class _BackgroundSelectPageState extends ConsumerState<BackgroundSettingPage> {
             alignment: Alignment.bottomCenter,
             child: SafeArea(
               minimum: EdgeInsets.only(bottom: 20.h),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 인디케이터 (1번 시안 스타일: 작은 점 4개)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        backgrounds.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: EdgeInsets.symmetric(horizontal: 4.w),
-                          width: 8.w,
-                          height: 8.h,
-                          decoration: BoxDecoration(
-                            color: _currentIndex == index
-                                ? AppColors.grey900 // 활성 점
-                                : AppColors.grey100, // 비활성 점
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 인디케이터 (1번 시안 스타일: 작은 점 4개)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      backgrounds.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: EdgeInsets.symmetric(horizontal: 4.w),
+                        width: 8.w,
+                        height: 8.h,
+                        decoration: BoxDecoration(
+                          color: _currentIndex == index
+                              ? AppColors.grey900 // 활성 점
+                              : AppColors.grey100, // 비활성 점
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.h),
+                  ),
+                  SizedBox(height: 16.h),
 
-                    // 선택이 됐을 때 : 안됐을 때
-                    bgState != backgrounds[_currentIndex]
-                        ? Container(
-                            width: double.infinity,
-                            height: 48.h,
-                            margin: EdgeInsets.symmetric(horizontal: 12.w)
-                                .copyWith(bottom: 52.h),
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                final selectedPath = backgrounds[_currentIndex];
-                                // 토스트 메시지 표시
-                                ToastHelper.showToast(
-                                  context,
-                                  message: AppTextStrings.backgroundDone,
-                                );
-                                await bgNotifier.setBackground(selectedPath);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.green500,
-                                disabledBackgroundColor: AppColors.green200,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                elevation: 0,
+                  // 선택이 됐을 때 : 안됐을 때
+                  bgState != backgrounds[_currentIndex]
+                      ? Container(
+                          width: double.infinity,
+                          height: 48.h,
+                          margin: EdgeInsets.symmetric(horizontal: 12.w)
+                              .copyWith(bottom: 52.h),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final selectedPath = backgrounds[_currentIndex];
+                              // 토스트 메시지 표시
+                              ToastHelper.showToast(
+                                context,
+                                message: AppTextStrings.backgroundDone,
+                              );
+                              await bgNotifier.setBackground(selectedPath);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.green500,
+                              disabledBackgroundColor: AppColors.green200,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
                               ),
-                              child: Text(
-                                AppTextStrings.backgroundSelect,
-                                style: AppFontStyles.bodyMedium16
-                                    .copyWith(color: AppColors.grey50),
-                              ),
-                            ),
-                          )
-                        : Container(
-                            alignment: Alignment.center,
-                            width: double.infinity,
-                            height: 48.h,
-                            margin: EdgeInsets.symmetric(horizontal: 12.w)
-                                .copyWith(bottom: 52.h),
-                            decoration: BoxDecoration(
-                              color: AppColors.green700,
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(
-                                  color: AppColors.green200, width: 2.r),
+                              elevation: 0,
                             ),
                             child: Text(
-                              AppTextStrings.backgroundSelected,
+                              AppTextStrings.backgroundSelect,
                               style: AppFontStyles.bodyMedium16
                                   .copyWith(color: AppColors.grey50),
                             ),
                           ),
-                  ],
-                ),
+                        )
+                      : Container(
+                          alignment: Alignment.center,
+                          width: double.infinity,
+                          height: 48.h,
+                          margin: EdgeInsets.symmetric(horizontal: 12.w)
+                              .copyWith(bottom: 52.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.green700,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                                color: AppColors.green200, width: 2.r),
+                          ),
+                          child: Text(
+                            AppTextStrings.backgroundSelected,
+                            style: AppFontStyles.bodyMedium16
+                                .copyWith(color: AppColors.grey50),
+                          ),
+                        ),
+                ],
               ),
             ),
           ),
