@@ -1034,7 +1034,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
     return FadeTransition(
       opacity: bgOpacity,
       child: Container(
-        padding: EdgeInsets.all(12.r),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 10.w),
         margin: EdgeInsets.symmetric(horizontal: 12.w),
         decoration: BoxDecoration(
           color: AppColors.white,
