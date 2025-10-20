@@ -84,7 +84,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       },
       {
         "title": "Step 3.",
-        "text": "코로 4초 동안\n부드럽게 내쉬어주세요",
+        "text": "코로 8초 동안\n부드럽게 내쉬어주세요",
         "font": AppFontStyles.heading3,
         "duration": 8,
       },

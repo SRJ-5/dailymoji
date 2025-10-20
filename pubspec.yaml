@@ -90,6 +90,7 @@ flutter:
     - assets/images/character_cado/
     - assets/images/character_carrot/
     - assets/images/logo/
+    - assets/images/tutorial/
     - .env
   
     

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/presentation/pages/my/character_setting/background_setting_page.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/domain/enums/emoji_asset.dart';
 import 'package:dailymoji/core/providers.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:dailymoji/presentation/providers/background_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -53,6 +55,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         ref.read(userViewModelProvider).userProfile!.characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
 
+    // Provider에서 현재 배경 경로 가져오기
+    final backgroundPath = ref.watch(backgroundImageProvider);
+
     // 말풍선 텍스트 변경 리스너
     ref.listen(homeDialogueProvider, (_, next) {
       next.whenData((dialogue) {
@@ -62,15 +67,14 @@ class _HomePageState extends ConsumerState<HomePage> {
       });
     });
 
-    // ✅ 변경: 상단 여백(노치/StatusBar 높이)만큼 패딩 계산
+    // 변경: 상단 여백(노치/StatusBar 높이)만큼 패딩 계산
     final topInset = MediaQuery.of(context).viewPadding.top;
 
     return Scaffold(
-      // ✅ 변경: 바디를 AppBar 뒤로 연장 → 배경이 StatusBar까지 꽉 차게
+      // 변경: 바디를 AppBar 뒤로 연장 → 배경이 StatusBar까지 꽉 차게
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent,
-
-      // ✅ 변경: 투명 AppBar + 좌측 로고(디자인 1번처럼)
+      // 변경: 투명 AppBar + 좌측 로고(디자인 1번처럼)
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: Container(
@@ -94,147 +98,170 @@ class _HomePageState extends ConsumerState<HomePage> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              // TODO: 프로젝트의 홈 배경 에셋으로 바꿔주세요.
-              // ex) AppImages.homeBackground
-              AppImages.bgHouse, // 임시 키. 실제 키로 교체 필요
+              backgroundPath,
               fit: BoxFit.cover,
             ),
           ),
 
           // 콘텐츠
-          Column(
-            children: [
-              SizedBox(height: topInset + kToolbarHeight + 8.h),
+          // SizedBox(height: topInset + kToolbarHeight + 8.h),
 
-              // 중앙 캐릭터 + 말풍선
-              Expanded(
-                child: Center(
-                  child: SizedBox(
-                    width: 340.w,
-                    height: 360.h,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
-                      children: [
-                        // 캐릭터
-                        Image.asset(
-                          AppImages.characterListProfile[selectedCharacterNum!],
-                          height: 240.h,
-                          width: 160.w,
-                        ),
-
-                        // 말풍선(캐릭터 위)
-                        Positioned(
-                          top: -58.h,
-                          child: SvgPicture.asset(
-                            AppIcons.bubbleUnder,
-                            height: 110.h,
-                            width: 200.w,
-                          ),
-                        ),
-                        Positioned(
-                          top: -65.h,
-                          child: SizedBox(
-                            width: 160.w,
-                            height: 110.h,
-                            child: Center(
-                              child: AppText(
-                                displayText,
-                                style: AppFontStyles.bodyBold16
-                                    .copyWith(color: AppColors.grey900),
-                                textAlign: TextAlign.center,
-                                maxLines: 4,
-                                overflow: TextOverflow.ellipsis,
-                                softWrap: true,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // ✅ 변경: 가로 스크롤 이모지 리스트(확대/컬러 필터 제거)
-              SizedBox(
-                height: 110.h,
-                child: ListView.separated(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (_, idx) {
-                    // 원하는 노출 순서 정의
-                    const keys = [
-                      "angry",
-                      "crying",
-                      "shocked",
-                      "sleeping",
-                      "smile"
-                    ];
-                    final key = keys[idx % keys.length];
-                    return _EmojiItem(
-                      emoKey: key,
-                      isSelected: selectedEmotion == key,
-                      onTap: () => onEmojiTap(key),
-                    );
-                  },
-                  separatorBuilder: (_, __) => SizedBox(width: 12.w),
-                  itemCount: 5,
-                ),
-              ),
-
-              SizedBox(height: 84.h), // bottomSheet 공간 확보
-            ],
-          ),
-        ],
-      ),
-
-      // 하단 입력 바(기존 유지)
-      bottomSheet: GestureDetector(
-        onTap: () {
-          ref.invalidate(selectedEmotionProvider);
-          context.go('/home/chat', extra: selectedEmotion);
-        },
-        child: Container(
-          color: Colors.transparent,
-          child: Container(
-            height: 40.h,
-            margin: EdgeInsets.all(12.r),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.grey200),
-            ),
-            child: Row(
+          // 중앙 캐릭터 + 말풍선
+          Positioned(
+            top: 144.h,
+            left: 0,
+            right: 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: AppText(
-                    "무엇이든 입력하세요",
-                    style: AppFontStyles.bodyRegular14
-                        .copyWith(color: AppColors.grey600),
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    SvgPicture.asset(
+                      AppIcons.bubbleUnder,
+                      height: 110.h,
+                      width: 200.w,
+                    ),
+                    Transform.translate(
+                      offset: Offset(0, -7.h),
+                      child: SizedBox(
+                        width: 160.w,
+                        height: 110.h,
+                        child: Center(
+                          child: AppText(
+                            displayText.isNotEmpty
+                                ? displayText
+                                : '안녕하세요!\n오늘 기분은 어떠신가요?',
+                            style: AppFontStyles.bodyBold16
+                                .copyWith(color: AppColors.grey900),
+                            textAlign: TextAlign.center,
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                selectedEmotion == null
-                    ? SvgPicture.asset(AppIcons.send)
-                    : SvgPicture.asset(AppIcons.sendOrange),
+                SizedBox(height: 30.h),
+                Image.asset(
+                  AppImages.characterListProfile[selectedCharacterNum!],
+                  height: 168.h,
+                  width: 168.w,
+                ),
               ],
             ),
           ),
-        ),
-      ),
 
+          // ✅ 변경: 가로 스크롤 이모지 리스트(확대/컬러 필터 제거)
+          Positioned(
+            bottom: 98.h,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              height: 118.h,
+              child: ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (_, idx) {
+                  // 원하는 노출 순서 정의
+                  const keys = [
+                    AppTextStrings.negHigh,
+                    AppTextStrings.negLow,
+                    AppTextStrings.adhd,
+                    AppTextStrings.sleep,
+                    AppTextStrings.positive,
+                  ];
+                  final key = keys[idx % keys.length];
+                  return _EmojiItem(
+                    emoKey: key,
+                    isSelected: selectedEmotion == key,
+                    onTap: () => onEmojiTap(key),
+                  );
+                },
+                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                itemCount: 5,
+              ),
+            ),
+          ),
+
+          // SizedBox(height: 84.h),
+          // 하단 입력 바(기존 유지)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 12.h,
+            child: GestureDetector(
+              onTap: () {
+                final emotion = selectedEmotion; // 백업
+                context.go('/home/chat', extra: emotion);
+                ref.invalidate(selectedEmotionProvider);
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                child: Container(
+                  height: 40.h,
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.grey200),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: AppText(
+                          "무엇이든 입력하세요",
+                          style: AppFontStyles.bodyRegular14
+                              .copyWith(color: AppColors.grey600),
+                        ),
+                      ),
+                      selectedEmotion == null
+                          ? SvgPicture.asset(AppIcons.send)
+                          : SvgPicture.asset(AppIcons.sendOrange),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 100.h,
+            right: 20.w,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BackgroundSettingPage(),
+                  ),
+                );
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "배경선택",
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomBar(),
     );
   }
 }
 
-/// ─────────────────────────────────────────────────────────────
-/// 이모지 아이템(가로 스크롤용)
-/// ✅ 변경사항 요약
-///  - 확대/축소, 흑백/컬러 전환 제거
-///  - 라벨은 항상 노출, 선택 시 테두리/배경만 살짝 강조(가볍게)
-/// ─────────────────────────────────────────────────────────────
+//이모지 요소
 class _EmojiItem extends StatelessWidget {
   final String emoKey;
   final bool isSelected;
@@ -251,11 +278,11 @@ class _EmojiItem extends StatelessWidget {
     final imagePath = EmojiAsset.fromString(emoKey).asset;
 
     const emotionTextMap = {
-      "angry": "불안/분노",
-      "crying": "우울/무기력",
-      "sleeping": "불규칙 수면",
-      "shocked": "집중력 저하",
-      "smile": "평온/회복",
+      AppTextStrings.negHigh: AppTextStrings.clusterNegHigh,
+      AppTextStrings.negLow: AppTextStrings.clusterNegLow,
+      AppTextStrings.sleep: AppTextStrings.clusterSleep,
+      AppTextStrings.adhd: AppTextStrings.clusterAdhd,
+      AppTextStrings.positive: AppTextStrings.clusterPositive,
     };
     final label = emotionTextMap[emoKey] ?? "";
 
@@ -265,6 +292,7 @@ class _EmojiItem extends StatelessWidget {
         children: [
           // 아이콘 타일
           Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             width: 100.w,
             height: 118.h,
             decoration: BoxDecoration(
@@ -283,20 +311,23 @@ class _EmojiItem extends StatelessWidget {
               ],
             ),
             alignment: Alignment.center,
-            child: Image.asset(imagePath, width: 60.w, height: 60.h),
-          ),
-          SizedBox(height: 8.h),
-          // 라벨
-          SizedBox(
-            width: 72.w,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppFontStyles.bodyRegular12.copyWith(
-                color: AppColors.grey900,
-              ),
+            child: Column(
+              children: [
+                Image.asset(imagePath, width: 60.w, height: 60.h),
+                // 라벨
+                SizedBox(
+                  width: 72.w,
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFontStyles.bodyRegular12.copyWith(
+                      color: AppColors.grey900,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
