@@ -537,7 +537,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
     );
   }
 
-// 분석 중 메시지를 표시하기 위한 위젯
+// 분석 중 메시지를 표시하기 위한 위젯("~가 입력하고 있어요...")
   Widget _analysisMessage(Message message, {required Key key}) {
     return Padding(
       key: key,
@@ -600,7 +600,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
           SizedBox(width: 4.w),
           Container(
             padding: message.type == MessageType.image ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-
             constraints: BoxConstraints(maxWidth: 292.w), // 말풍선 가로 길이 최대
             decoration: BoxDecoration(
               color: message.type == MessageType.image ? Colors.transparent : AppColors.green200,
@@ -820,7 +819,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(
+          Flexible(
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               constraints: BoxConstraints(maxWidth: 292.w),
