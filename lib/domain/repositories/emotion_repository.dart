@@ -1,5 +1,6 @@
 // 감정 분석 Repository 인터페이스
 import 'package:dailymoji/domain/entities/emotional_record.dart';
+import 'package:dailymoji/domain/entities/message.dart';
 
 abstract class EmotionRepository {
   Future<EmotionalRecord> analyzeEmotion({
@@ -8,5 +9,15 @@ abstract class EmotionRepository {
     String? emotion,
     Map<String, dynamic>? onboarding,
     String? characterPersonality,
+    List<Message>? history,
+    Map<String, dynamic>? adhdContext,
+  });
+
+  Future<void> submitSolutionFeedback({
+    required String userId,
+    required String solutionId,
+    String? sessionId,
+    required String solutionType,
+    required String feedback,
   });
 }

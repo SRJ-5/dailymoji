@@ -14,13 +14,14 @@ import 'package:dailymoji/domain/enums/enum_data.dart';
 import 'package:dailymoji/domain/repositories/emotion_repository.dart';
 import 'package:dailymoji/domain/repositories/message_repository.dart';
 import 'package:dailymoji/domain/repositories/solution_repository.dart';
-import 'package:dailymoji/domain/use_cases/analyze_emotion_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/analyze_emotion_use_case.dart';
 import 'package:dailymoji/domain/use_cases/get_reaction_script_use_case.dart';
 import 'package:dailymoji/domain/use_cases/load_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/propose_solution_usecase.dart';
 import 'package:dailymoji/domain/use_cases/send_message_use_case.dart';
 import 'package:dailymoji/domain/use_cases/subscribe_messages_use_case.dart';
 import 'package:dailymoji/domain/use_cases/update_message_session_id_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/submit_solution_feedback_use_case.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -109,16 +110,22 @@ final updateMessageSessionIdUseCaseProvider =
   return UpdateMessageSessionIdUseCase(ref.watch(messageRepositoryProvider));
 });
 
-// 솔루션 제안
+// 마음 관리 팁 제안
 final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
   return ProposeSolutionUseCase(ref.watch(solutionRepositoryProvider));
+});
+
+// 마음 관리 팁 피드백 처리
+final submitSolutionFeedbackUseCaseProvider =
+    Provider<SubmitSolutionFeedbackUseCase>((ref) {
+  return SubmitSolutionFeedbackUseCase(ref.watch(emotionRepositoryProvider));
 });
 
 // -----------------------------------------------------------------------------
 // Feature-Specific Providers
 // -----------------------------------------------------------------------------
 
-// solutionId를 받아 특정 솔루션 정보 가져옴
+// solutionId를 받아 특정 마음 관리 팁 정보 가져옴
 final solutionProvider =
     FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
   final repository = ref.watch(solutionRepositoryProvider);
@@ -141,7 +148,7 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
   final personalityDbValue = personalityLabel != null
       ? CharacterPersonality.values
           .firstWhere(
-            (e) => e.label == personalityLabel,
+            (e) => e.myLabel == personalityLabel,
             orElse: () => CharacterPersonality.warmHeart, // 기본값
           )
           .dbValue
@@ -151,3 +158,7 @@ final homeDialogueProvider = FutureProvider<String>((ref) async {
   return repo.fetchHomeDialogue(
       selectedEmotion, personalityDbValue, userNickNm);
 });
+
+// [추가됨] SolutionPage에서 ChatPage로 후속 조치 데이터를 전달하기 위한 Provider
+final solutionFollowUpProvider =
+    StateProvider<Map<String, dynamic>?>((ref) => null);

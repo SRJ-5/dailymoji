@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -52,7 +53,7 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: Text(widget.title),
+        title: AppText(widget.title),
         backgroundColor: AppColors.white,
         centerTitle: true,
         leading: IconButton(

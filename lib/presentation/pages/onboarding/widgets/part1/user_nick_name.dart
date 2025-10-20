@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -37,23 +38,25 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
 
   @override
   Widget build(BuildContext context) {
-    final _state = ref.read(userViewModelProvider);
+    final state = ref.read(userViewModelProvider);
+    final characterIndex = state.characterNum;
     return SizedBox(
-      height: 566.h,
+      height: 558.4.h,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 24.r,
+            height: 16.r,
           ),
           Container(
             width: double.infinity,
-            height: 94.h,
-            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            height: 88.h,
+            padding: EdgeInsets.symmetric(
+                horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                '${_state.userProfile!.characterNm}이(가)\n뭐라고 부르면 될까요?',
+              child: AppText(
+                '${state.userProfile!.characterNm}이(가)\n뭐라고 부르면 될까요?',
                 style: AppFontStyles.heading2,
               ),
             ),
@@ -98,7 +101,10 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                               .text.isEmpty
                           ? null
                           : IconButton(
-                              icon: Icon(Icons.clear),
+                              icon: Icon(
+                                Icons.clear,
+                                size: 24.r,
+                              ),
                               onPressed: () {
                                 _textEditingController.clear();
                                 setState(() {
@@ -138,24 +144,29 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
               ),
             ),
           ),
-          Text('• 2~10자만 사용 가능해요',
+          AppText('• 2~10자만 사용 가능해요',
               style: AppFontStyles.bodyRegular12.copyWith(
                   color: _isNameCheck
                       ? AppColors.grey700
                       : AppColors.noti900)),
-          Text(
+          AppText(
             '• 나중에 언제든지 변경할 수 있어요',
             style: AppFontStyles.bodyRegular12
                 .copyWith(color: AppColors.grey700),
           ),
           Spacer(),
-          Align(
-              alignment: Alignment.bottomRight,
-              child: Image.asset(
-                AppImages.cadoProfile,
-                width: 120.w,
-                height: 180.h,
-              )),
+          Container(
+            height: 190.h,
+            padding: EdgeInsets.only(right: 8.w),
+            child: Align(
+                alignment: Alignment.bottomRight,
+                child: Image.asset(
+                  AppImages
+                      .characterListonBoarding13[characterIndex],
+                  width: 90.w,
+                )),
+          ),
+          SizedBox(height: 10.4.h),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
   int _selectedNum = -1;
+  bool _deleteCheck = false;
 
   final reasons = [
     '더 이상 앱을 사용하지 않아요',
@@ -30,10 +32,12 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       if (_selectedNum == 3) {
         // 직접 입력이면 TextField 포커스
         FocusScope.of(context).requestFocus(_focusNode);
+        _deleteCheck = false;
       } else {
         // 다른 항목이면 입력 초기화 & 포커스 해제
         _textEditingController.clear();
         _focusNode.unfocus();
+        _deleteCheck = true;
       }
     });
   }
@@ -53,7 +57,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         appBar: AppBar(
           scrolledUnderElevation: 0,
           backgroundColor: AppColors.yellow50,
-          title: Text(
+          title: AppText(
             '회원 탈퇴',
             style: AppFontStyles.bodyBold18
                 .copyWith(color: AppColors.grey900),
@@ -73,25 +77,25 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                       SizedBox(
                         height: 16.h,
                       ),
-                      Text(
+                      AppText(
                         '떠나신다니 아쉬워요 🥲',
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
                       ),
                       SizedBox(height: 12.h),
-                      Text(
+                      AppText(
                         '저희 서비스가 아직 부족했나 봐요. 만족을 드리지 못해 죄송합니다. 더 좋은 경험을 드릴 수 있도록 노력하겠습니다.',
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey900),
                       ),
                       SizedBox(height: 16.h),
-                      Text(
+                      AppText(
                         '탈퇴 전, 꼭 확인해 주세요',
                         style: AppFontStyles.bodyBold16.copyWith(
                             color: AppColors.orange700),
                       ),
                       SizedBox(height: 12.h),
-                      Text(
+                      AppText(
                         ' ∙ 지금까지 저장된 대화 내역과 데이터는 모두 삭제돼요.\n ∙ 다시 가입하셔도 예전 기록은 복구되지 않아요.\n ∙ 회원 탈퇴 후 3개월간 재가입이 불가능해요.',
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey900),
@@ -113,7 +117,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 16.h),
-                      Text(
+                      AppText(
                         '무엇이 불편하셨나요?',
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
@@ -150,49 +154,68 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                             style: AppFontStyles.bodyRegular16
                                 .copyWith(
                                     color: AppColors.grey900),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value.isEmpty) {
+                                  _deleteCheck = false;
+                                } else {
+                                  _deleteCheck = true;
+                                }
+                              });
+                            },
                             decoration: InputDecoration(
-                                hintText: '의견을 적어주세요',
-                                hintStyle: AppFontStyles.bodyRegular16
-                                    .copyWith(
-                                        color:
-                                            AppColors.grey400),
-                                suffixIcon: _textEditingController
-                                        .text.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        onPressed: () {
-                                          _textEditingController
-                                              .clear();
-                                        },
-                                        icon: Icon(Icons.clear)),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 12.h),
-                                filled: true,
-                                fillColor: AppColors.green50,
-                                border: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color:
-                                            AppColors.grey200),
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                            12.r)),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color:
-                                            AppColors.green500),
-                                    borderRadius:
-                                        BorderRadius.circular(12.r)),
-                                enabledBorder: OutlineInputBorder(
+                              hintText: '의견을 적어주세요',
+                              hintStyle: AppFontStyles
+                                  .bodyRegular16
+                                  .copyWith(
+                                      color: AppColors.grey400),
+                              suffixIcon: _textEditingController
+                                      .text.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _deleteCheck = false;
+                                        });
+                                        _textEditingController
+                                            .clear();
+                                      },
+                                      icon: Icon(Icons.clear)),
+                              contentPadding:
+                                  EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 12.h),
+                              filled: true,
+                              fillColor: AppColors.green50,
+                              border: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       width: 1,
                                       color: AppColors.grey200),
                                   borderRadius:
                                       BorderRadius.circular(
-                                          12.r),
-                                )),
+                                          12.r)),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      width: 1,
+                                      color: AppColors.green500),
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                          12.r)),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1,
+                                    color: AppColors.grey200),
+                                borderRadius:
+                                    BorderRadius.circular(12.r),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1,
+                                    color: AppColors.grey200),
+                                borderRadius:
+                                    BorderRadius.circular(12.r),
+                              ),
+                            ),
                           )),
                       SizedBox(height: 4.h)
                     ],
@@ -202,46 +225,45 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             ),
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: 8.h,
-              left: 12.w,
-              right: 12.w,
-              bottom: MediaQuery.of(context).viewInsets.bottom >
-                      0
-                  ? MediaQuery.of(context).viewInsets.bottom +
-                      10.h
-                  : 32.h,
+        bottomNavigationBar: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            top: 8.h,
+            left: 12.w,
+            right: 12.w,
+            bottom: MediaQuery.of(context).viewInsets.bottom >
+                    56.h
+                ? MediaQuery.of(context).viewInsets.bottom + 10.h
+                : 56.h,
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(double.infinity, 52.h),
+              backgroundColor: _deleteCheck
+                  ? AppColors.green500
+                  : AppColors.grey200,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
             ),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 52.h),
-                backgroundColor: _selectedNum == -1
-                    ? AppColors.grey200
-                    : AppColors.green500,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              onPressed: _selectedNum == -1
-                  ? null
-                  : () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return ConfirmDialog(
-                              isDeleteAccount: true);
-                        },
-                      );
-                    },
-              child: Text(
-                '탈퇴하기',
-                style: AppFontStyles.bodyMedium16.copyWith(
-                    color: _selectedNum == -1
-                        ? AppColors.grey500
-                        : AppColors.grey50),
-              ),
+            onPressed: _deleteCheck
+                ? () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return ConfirmDialog(
+                            isDeleteAccount: true);
+                      },
+                    );
+                  }
+                : null,
+            child: AppText(
+              '탈퇴하기',
+              style: AppFontStyles.bodyMedium16.copyWith(
+                  color: _deleteCheck
+                      ? AppColors.grey50
+                      : AppColors.grey500),
             ),
           ),
         ),
@@ -285,7 +307,7 @@ class ReasonBox extends StatelessWidget {
                     )
                   : SizedBox.shrink()),
           SizedBox(width: 8.w),
-          Text(
+          AppText(
             text,
             style: isSelected
                 ? AppFontStyles.bodySemiBold14

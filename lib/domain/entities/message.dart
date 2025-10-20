@@ -8,11 +8,14 @@ class Message {
   final Sender sender;
   final MessageType type;
   final DateTime createdAt; // 슈퍼베이스에서 자동 생성 - nullable 제거
-  final Map<String, dynamic>? proposal; // 솔루션 제안(버튼 등) 정보를 담을 필드
+  final Map<String, dynamic>? proposal; // 마음 관리 팁 제안(버튼 등) 정보를 담을 필드
 
   final String? imageAssetPath; //채팅으로 보낼 이모지 이미지
 
   final String tempId; // 로컬 - DB 연동을 위해 로컬에 일단 uuid 부여
+
+  final String? feedbackState; // "helpful" 또는 "not_helpful"
+  final String? solutionIdForFeedback;
 
   Message({
     this.id,
@@ -24,6 +27,8 @@ class Message {
     DateTime? createdAt,
     this.imageAssetPath,
     String? tempId,
+    this.feedbackState,
+    this.solutionIdForFeedback,
   })  : createdAt = createdAt ?? DateTime.now(),
         tempId = tempId ?? const Uuid().v4();
 
@@ -39,6 +44,8 @@ class Message {
     Map<String, dynamic>? proposal,
     String? imageAssetPath,
     String? tempId,
+    String? feedbackState,
+    String? solutionIdForFeedback,
   }) {
     return Message(
       id: id ?? this.id,
@@ -50,6 +57,9 @@ class Message {
       proposal: proposal ?? this.proposal,
       imageAssetPath: imageAssetPath ?? this.imageAssetPath,
       tempId: tempId ?? this.tempId,
+      feedbackState: feedbackState ?? this.feedbackState,
+      solutionIdForFeedback:
+          solutionIdForFeedback ?? this.solutionIdForFeedback, // ⭐️ 로직 추가
     );
   }
 

@@ -2,7 +2,7 @@
 // 채팅 이모지 전용! /analyze(text="")로 세션 생성 + 대사 수신
 
 import 'package:dailymoji/domain/entities/emotional_record.dart';
-import 'package:dailymoji/domain/use_cases/analyze_emotion_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/analyze_emotion_use_case.dart';
 
 abstract class EmojiReactionRepository {
   Future<EmotionalRecord> getReactionWithSession({

@@ -4,7 +4,7 @@
 # # 2. Checkin 모델에서 contexts 제거.
 # # 3. 홈에서 선택한 이모지를 처리하는 로직 추가.
 # # 4. 수치 점수를 사용자 친화적 문구로 변환하는 기능 추가.
-# # 5. 솔루션 제안 시, 제안 멘트와 솔루션 상세 정보를 함께 반환하도록 수정.
+# # 5. 마음 관리 팁 제안 시, 제안 멘트와 마음 관리 팁 상세 정보를 함께 반환하도록 수정.
 # # 6. Supabase 저장 로직 강화 (리포트를 위한 cluster_scores 저장).
 
 # from __future__ import annotations
@@ -211,7 +211,7 @@
 # async def get_solution_proposal(top_cluster: str) -> Dict[str, Any]:
 #     # 1. 멘트 라이브러리에서 랜덤으로 멘트 하나 선택
 #     proposal_script = random.choice(SOLUTION_PROPOSAL_SCRIPTS.get(top_cluster, [""]))
-#     # 2. 솔루션 ID 라이브러리에서 랜덤으로 ID 하나 선택
+#     # 2. 마음 관리 팁 ID 라이브러리에서 랜덤으로 ID 하나 선택
 #     solution_id = random.choice(SOLUTION_ID_LIBRARY.get(top_cluster, [None]))
     
 #     if not solution_id:
@@ -258,7 +258,7 @@
 #     text = (payload.text or "").strip()
 #     debug_log: Dict[str, Any] = {"input": payload.dict()}
 #     try:
-#         # --- 파이프라인 0: 사전 처리 (솔루션 수락 등) ---
+#         # --- 파이프라인 0: 사전 처리 (마음 관리 팁 수락 등) ---
 #         if payload.action and payload.action.get("type") == "accept_solution":
 #             return {"intervention": {"preset_id": "SOLUTION_PROVIDED", "solution_id": payload.action.get("solution_id")}}
 

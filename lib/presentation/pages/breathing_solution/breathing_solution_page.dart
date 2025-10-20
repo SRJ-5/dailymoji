@@ -1,18 +1,28 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/pages/chat/chat_view_model.dart';
+import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/breathing_solution/solution_context_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String solutionId;
+  final String? sessionId;
+  final bool isReview;
 
-  const BreathingSolutionPage({super.key, required this.solutionId});
+  const BreathingSolutionPage(
+      {super.key,
+      required this.solutionId,
+      this.sessionId,
+      this.isReview = false});
 
   @override
   ConsumerState<BreathingSolutionPage> createState() =>
@@ -20,9 +30,7 @@ class BreathingSolutionPage extends ConsumerStatefulWidget {
 }
 
 class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
-// RIN: 수정된 부분: SingleTickerProviderStateMixin -> TickerProviderStateMixin 애니메이션 여러개 허용
-    with
-        TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
   int _timerSeconds = 0;
@@ -36,6 +44,10 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
   late AnimationController _timerController;
   Timer? _secondTimer; // 1초마다 숫자를 업데이트할 Timer 변수 추가
 
+  // 영상 마음 관리 팁 페이지와 동일한 로직을 위한 변수 추가
+  bool _isNavigating = false;
+  String? _exitReason;
+
   // RIN: 마지막 멘트 컨텍스트 추가
   List<Map<String, dynamic>> _steps = [];
 
@@ -43,35 +55,42 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
   void initState() {
     super.initState();
 
+    // 세로 고정 UI 적용
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
     // 1. 기본값으로 즉시 초기화 (late error 방지)
     _steps = [
       {
         "title": null,
         "text": "함께 차분해지는\n호흡 연습을 해볼까요?",
         "font": AppFontStyles.heading2,
-        "duration": 1,
+        "duration": 2,
       },
       {
         "title": "Step 1.",
-        "text": "코로 4초동안\n숨을 들이마시고",
+        "text": "코로 4초동안\n천천히 숨을 들이마셔요",
         "font": AppFontStyles.heading3,
         "duration": 4,
       },
       {
         "title": "Step 2.",
-        "text": "7초간 숨을\n머금은 뒤",
+        "text": "7초 동안 살짝 멈추고\n몸의 긴장을 느껴봐요",
         "font": AppFontStyles.heading3,
         "duration": 7,
       },
       {
         "title": "Step 3.",
-        "text": "8초간 천천히\n내쉬어 봐!",
+        "text": "코로 4초 동안\n부드럽게 내쉬어주세요",
         "font": AppFontStyles.heading3,
         "duration": 8,
       },
       {
         "title": null,
-        "text": "잘 했어요!\n이제 일상에 가서도\n호흡을 이어가 보세요",
+        "text": "잘 했어요!\n안정되셨다면 마무리할게요",
         "font": AppFontStyles.heading2,
         "duration": 2,
       },
@@ -83,7 +102,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     // 깜빡임 애니메이션 컨트롤러
     _blinkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true); // 반복 (opacity 1 → 0 → 1)
 
     _blinkAnimation = Tween<double>(
@@ -114,7 +133,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     _startSequence();
   }
 
-  // 솔루션 컨텍스트를 비동기로 가져와서 _steps를 업데이트
+  // 마음 관리 팁 컨텍스트를 비동기로 가져와서 _steps를 업데이트
   Future<void> _loadSolutionContext() async {
     try {
       final solutionContext = await ref
@@ -176,20 +195,52 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     }
   }
 
+  // 영상 마음 관리 팁 페이지와 동일한 종료 및 네비게이션 로직 함수 추가
+  void _startExitSequence() {
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    if (!widget.isReview) {
+      final reason = _exitReason ?? 'breathing_ended';
+      debugPrint("RIN: Setting result and navigating with reason: $reason");
+
+      ref.read(solutionResultProvider.notifier).state = {
+        'reason': reason,
+        'solutionId': widget.solutionId,
+        'sessionId': widget.sessionId,
+        'solution_type': 'breathing', // 마음 관리 팁 타입을 명확히 전달
+      };
+    } else {
+      debugPrint("RIN: This is a review. Skipping follow-up message.");
+    }
+    context.go('/home/chat');
+  }
+
   @override
   void dispose() {
+    // 페이지 나갈 때 화면 UI 원상복구
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     _blinkController.dispose();
-    _timerController.dispose(); // RIN: 타이머 추가
+    _timerController.dispose();
+    _secondTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
+        // 호흡이 끝나고 힌트가 보일 때 탭하면 채팅방으로 돌아가도록 수정
         if (_showFinalHint) {
-          context.pushReplacement('/solution/${widget.solutionId}');
+          _startExitSequence();
         }
       },
       child: Scaffold(
@@ -211,13 +262,13 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                   child: Column(
                     children: [
                       if (_steps[_step]["title"] != null)
-                        Text(
+                        AppText(
                           _steps[_step]["title"],
                           style: AppFontStyles.heading2
                               .copyWith(color: AppColors.grey100),
                           textAlign: TextAlign.center,
                         ),
-                      Text(
+                      AppText(
                         _steps[_step]["text"],
                         style: (_steps[_step]["font"] as TextStyle)
                             .copyWith(color: AppColors.grey100),
@@ -231,18 +282,18 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 
             // 캐릭터
             Positioned(
-              top: 245.h,
+              top: 265.h,
               child: SizedBox(
                 width: 240.w,
                 height: 360.h,
                 child: Image(
-                  image: AssetImage(AppImages.cadoProfile),
-                  fit: BoxFit.cover,
+                  image: AssetImage(
+                      AppImages.characterListProfile[selectedCharacterNum!]),
                 ),
               ),
             ),
 
-//RIN: 타이머 (Step 1~3 동안만 표시)
+            // RIN: 타이머 (Step 1~3 동안만 표시)
             Positioned(
               top: 625.h,
               child: AnimatedBuilder(
@@ -265,14 +316,40 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               ),
             ),
 
+            // // '건너뛰기' 텍스트 버튼 추가
+            // if (!_showFinalHint && _step > 0 && _step < _steps.length - 1)
+            //   Positioned(
+            //     top: 700.h, // 타이머보다 살짝 아래 위치
+            //     child: AnimatedOpacity(
+            //       opacity: _opacity,
+            //       duration: const Duration(milliseconds: 300),
+            //       child: GestureDetector(
+            //         onTap: () {
+            //           // 즉시 다음 라우트로 이동
+            //           context.pushReplacement(
+            //             '/solution/${widget.solutionId}?sessionId=${widget.sessionId}&isReview=${widget.isReview}',
+            //           );
+            //         },
+            //         child: Text(
+            //           "건너뛰기",
+            //           style: AppFontStyles.bodyMedium16.copyWith(
+            //             color: AppColors.grey400,
+            //             decoration: TextDecoration.underline,
+            //             decorationColor: AppColors.grey400, // ✅ 밑줄 색을 강제로 지정
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+
             // 깜빡이는 안내 문구
             if (_showFinalHint)
               Positioned(
                 top: 625.h,
                 child: FadeTransition(
                   opacity: _blinkAnimation,
-                  child: Text(
-                    "화면을 탭해서 다음으로 넘어가세요",
+                  child: AppText(
+                    "화면을 탭해서 종료해주세요",
                     style: AppFontStyles.bodyMedium18
                         .copyWith(color: AppColors.grey400),
                     textAlign: TextAlign.center,
@@ -338,7 +415,7 @@ class TimerPainter extends CustomPainter {
       textPainter.layout();
       textPainter.paint(
         canvas,
-        center - Offset(textPainter.width / 2, textPainter.height / 2),
+        center - Offset(textPainter.width / 2, textPainter.height / 2 + 2),
       );
     }
   }

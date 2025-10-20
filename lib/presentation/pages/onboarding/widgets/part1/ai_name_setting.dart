@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -39,23 +40,25 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
 
   @override
   Widget build(BuildContext context) {
+    final characterIndex =
+        ref.read(userViewModelProvider).characterNum;
     return SizedBox(
-      height: 566.h,
+      height: 558.4.h,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 24.r,
+            height: 16.h,
           ),
           Container(
             width: double.infinity,
-            height: 94.h,
+            height: 88.h,
             padding: EdgeInsets.symmetric(
                 horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                '캐릭터에게\n멋진 이름을 지어주세요',
+              child: AppText(
+                '도우미에게\n멋진 이름을 지어주세요',
                 style: AppFontStyles.heading2,
               ),
             ),
@@ -142,24 +145,29 @@ class _AiNameSettingState extends ConsumerState<AiNameSetting> {
               ),
             ),
           ),
-          Text('• 2~10자만 사용 가능해요',
+          AppText('• 2~10자만 사용 가능해요',
               style: AppFontStyles.bodyRegular12.copyWith(
                   color: _isNameCheck
                       ? AppColors.grey700
                       : AppColors.noti900)),
-          Text(
+          AppText(
             '• 나중에 언제든지 변경할 수 있어요',
             style: AppFontStyles.bodyRegular12
                 .copyWith(color: AppColors.grey700),
           ),
           Spacer(),
-          Align(
-              alignment: Alignment.bottomRight,
-              child: Image.asset(
-                AppImages.cadoProfile,
-                width: 120.w,
-                height: 180.h,
-              )),
+          Container(
+            height: 190.h,
+            padding: EdgeInsets.only(right: 8.w),
+            child: Align(
+                alignment: Alignment.bottomRight,
+                child: Image.asset(
+                  AppImages
+                      .characterListonBoarding12[characterIndex],
+                  width: 90.w,
+                )),
+          ),
+          SizedBox(height: 10.4.h),
         ],
       ),
     );

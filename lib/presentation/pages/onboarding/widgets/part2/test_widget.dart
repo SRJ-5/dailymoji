@@ -1,4 +1,6 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
+import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
@@ -23,12 +25,7 @@ class TestWidget extends ConsumerStatefulWidget {
 class _TestWidgetState extends ConsumerState<TestWidget> {
   late int _selectedIndex;
 
-  final List<String> _answerList = [
-    '전혀 없었어요',
-    '가끔 있었어요',
-    '자주 있었어요',
-    '거의 매일 있었어요'
-  ];
+  final List<String> _answerList = AppTextStrings.testAnswerList;
 
   @override
   void initState() {
@@ -40,19 +37,23 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final characterIndex =
+        ref.read(userViewModelProvider).characterNum;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(height: 30.h),
         Container(
           width: double.infinity,
-          height: 180.h,
+          height: 129.h,
           child: Row(
             children: [
               SizedBox(width: 2.w),
               Image.asset(
-                AppImages.cadoProfile,
+                AppImages.characterListProfile[characterIndex],
                 width: 120.w,
-                height: 180.h,
+                height: 129.h,
               ),
               Container(
                 width: 206.17.w,
@@ -70,7 +71,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                             horizontal: 16.w, vertical: 10.h),
                         child: Align(
                             alignment: Alignment.centerLeft,
-                            child: Text(
+                            child: AppText(
                               widget.text,
                               style: AppFontStyles.bodyBold16
                                   .copyWith(
@@ -84,7 +85,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             ],
           ),
         ),
-        SizedBox(height: 24.h),
+        SizedBox(height: 56.h),
         Column(
           children: List.generate(
             _answerList.length,
@@ -116,11 +117,6 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
             },
           ),
         ),
-        Text(
-          '• 자주: 일주일 중 절반 이상은 그런 기분을 느꼈던 경우',
-          style: AppFontStyles.bodyRegular12
-              .copyWith(color: AppColors.grey700),
-        )
       ],
     );
   }

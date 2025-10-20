@@ -1,13 +1,18 @@
+import 'package:dailymoji/core/providers.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source.dart';
 import 'package:dailymoji/data/data_sources/user_profile_data_source_impl.dart';
 import 'package:dailymoji/data/repositories/user_profile_repository_impl.dart';
 import 'package:dailymoji/domain/repositories/user_profile_repository.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/fetch_action_mission_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/fetch_sleep_hygiene_tip_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/submit_solution_feedback_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/apple_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/delete_account_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/get_user_profile_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/google_login_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/insert_user_profile_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/log_out_use_case.dart';
+import 'package:dailymoji/domain/use_cases/user_use_cases/save_fcm_token_to_supabase_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_name_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_character_personality_use_case.dart';
 import 'package:dailymoji/domain/use_cases/user_use_cases/update_user_nickname_use_case.dart';
@@ -21,8 +26,7 @@ final _userDataSourceProvider = Provider<UserProfileDataSource>(
 
 final _userRepositoryProvider = Provider<UserProfileRepository>(
   (ref) {
-    return UserProfileRepositoryImpl(
-        ref.read(_userDataSourceProvider));
+    return UserProfileRepositoryImpl(ref.read(_userDataSourceProvider));
   },
 );
 
@@ -40,36 +44,31 @@ final appleLoginUseCaseProvider = Provider(
 
 final insertUserProfileUseCaseProvider = Provider(
   (ref) {
-    return InsertUserProfileUseCase(
-        ref.read(_userRepositoryProvider));
+    return InsertUserProfileUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final getUserProfileUseCaseProvider = Provider(
   (ref) {
-    return GetUserProfileUseCase(
-        ref.read(_userRepositoryProvider));
+    return GetUserProfileUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final updateUserNickNameUseCaseProvider = Provider(
   (ref) {
-    return UpdateUserNicknameUseCase(
-        ref.read(_userRepositoryProvider));
+    return UpdateUserNicknameUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final updateCharacterNameUseCaseProvider = Provider(
   (ref) {
-    return UpdateCharacterNameUseCase(
-        ref.read(_userRepositoryProvider));
+    return UpdateCharacterNameUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
 final updateCharacterPersonalityUseCaseProvider = Provider(
   (ref) {
-    return UpdateCharacterPersonalityUseCase(
-        ref.read(_userRepositoryProvider));
+    return UpdateCharacterPersonalityUseCase(ref.read(_userRepositoryProvider));
   },
 );
 
@@ -79,9 +78,27 @@ final logOutUseCaseProvider = Provider(
   },
 );
 
+final fetchSleepHygieneTipUseCaseProvider = Provider(
+  (ref) {
+    return FetchSleepHygieneTipUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final fetchActionMissionUseCaseProvider = Provider(
+  (ref) {
+    return FetchActionMissionUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
 final deletAccountUseCaseProvider = Provider(
   (ref) {
-    return DeleteAccountUseCase(
+    return DeleteAccountUseCase(ref.read(_userRepositoryProvider));
+  },
+);
+
+final saveFcmTokenToSupabaseUseCaseProvider = Provider(
+  (ref) {
+    return SaveFcmTokenToSupabaseUseCase(
         ref.read(_userRepositoryProvider));
   },
 );

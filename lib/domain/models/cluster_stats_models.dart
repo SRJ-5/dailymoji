@@ -1,25 +1,5 @@
-/// 클러스터 종류
-enum ClusterType { negHigh, negLow, positive, sleep, adhd }
-
-ClusterType clusterFromString(String s) {
-  switch (s) {
-    case 'neg_high':
-      return ClusterType.negHigh;
-    case 'neg_low':
-      return ClusterType.negLow;
-    case 'positive':
-      return ClusterType.positive;
-    case 'sleep':
-      return ClusterType.sleep;
-    case 'ADHD':
-      return ClusterType.adhd;
-    default:
-      return ClusterType.positive; // fallback or throw
-  }
-}
-
-/// 지표 종류
-enum Metric { avg, min, max }
+import 'package:dailymoji/domain/enums/cluster_type.dart';
+import 'package:dailymoji/domain/enums/metric.dart';
 
 /// 평균/최저/최고 값
 class Stats {

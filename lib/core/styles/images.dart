@@ -3,11 +3,10 @@ class AppImages {
   static const String homeImage = 'assets/images/home_image.png';
   static const String splashImage = 'assets/images/splash_image.png';
   static const String preparingImage = 'assets/images/preparing_image.png';
-  static const String bubbleRightUnder3D =
-      'assets/images/bubble_right_under_3d.png';
-  static const String bubbleUnder3D = 'assets/images/bubble_under_3d.png';
-  static const String bubbleUnder = 'assets/images/bubble_under.png';
-  static const String bubbleLeft = 'assets/images/bubble_left.png';
+  static const String srj5TestStart = 'assets/images/srj5_test_start.png';
+  static const String srj5TestFinish = 'assets/images/srj5_test_finish.png';
+  static const String montlyTutorial = 'assets/images/monthly_tutorial.png';
+  static const String weeklyTutorial = 'assets/images/weekly_tutorial.png';
 
   // images - logo
   static const String dailymojiLogoBlack =
@@ -33,4 +32,57 @@ class AppImages {
   static const String cadoProfile =
       'assets/images/character_cado/cado_profile.png';
   static const String cadoWalk = 'assets/images/character_cado/cado_walk.png';
+  static const String cadoTest = 'assets/images/character_cado/cado_test.png';
+  static const String cadoCalender =
+      'assets/images/character_cado/cado_calender.png';
+  static const String cadoRecord =
+      'assets/images/character_cado/cado_record.png';
+  static const String cadoLookUp =
+      'assets/images/character_cado/cado_look_up.png';
+  static const String cadoSideView =
+      'assets/images/character_cado/cado_side_view.png';
+
+  // images - character_carrot
+  static const String carrotChat =
+      'assets/images/character_carrot/carrot_chat.png';
+  static const String carrotLove =
+      'assets/images/character_carrot/carrot_love.png';
+  static const String carrotProfile =
+      'assets/images/character_carrot/carrot_profile.png';
+  static const String carrotFace =
+      'assets/images/character_carrot/carrot_face.png';
+  static const String carrotWalk =
+      'assets/images/character_carrot/carrot_walk.png';
+  static const String carrotLeftWalk =
+      'assets/images/character_carrot/carrot_left_walk.png';
+  static const String carrotFrontView =
+      'assets/images/character_carrot/carrot_front_view.png';
+  static const String carrotLookUp =
+      'assets/images/character_carrot/carrot_look_up.png';
+
+  // images - characterList
+  static const List<String> characterListProfile = [
+    AppImages.cadoProfile,
+    AppImages.carrotProfile
+  ];
+  static const List<String> characterListLove = [
+    AppImages.cadoLove,
+    AppImages.carrotLove,
+  ];
+  static const List<String> characterListFace = [
+    AppImages.cadoFace,
+    AppImages.carrotFace,
+  ];
+  static const List<String> characterListWalk = [
+    AppImages.cadoWalk,
+    AppImages.carrotWalk,
+  ];
+  static const List<String> characterListonBoarding12 = [
+    AppImages.cadoLookUp,
+    AppImages.carrotLookUp,
+  ];
+  static const List<String> characterListonBoarding13 = [
+    AppImages.cadoSideView,
+    AppImages.carrotFrontView,
+  ];
 }
