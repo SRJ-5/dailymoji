@@ -56,6 +56,8 @@ dependencies:
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
   url_launcher: ^6.3.1
+  video_player: ^2.9.2
+  visibility_detector: ^0.4.0+2
 
 dev_dependencies:
   flutter_test:
@@ -85,10 +87,13 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/images/emojis/
+    - assets/images/back_ground/
     - assets/images/app_icon/
     - assets/images/character_cado/
     - assets/images/character_carrot/
     - assets/images/logo/
+    - assets/images/tutorial/
+    - assets/videos/
     - .env
   
     
