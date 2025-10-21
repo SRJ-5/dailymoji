@@ -1,6 +1,7 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -16,6 +17,7 @@ class InfoWebViewPage extends StatefulWidget {
 class _InfoWebViewPageState extends State<InfoWebViewPage> {
   late final WebViewController _controller;
   late final String url;
+  bool _isLoading = true; // ← 로딩 상태 관리 변수
 
   @override
   void initState() {
@@ -43,9 +45,21 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
   void _webViewControl() {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(
-        Uri.parse(url), // ← 여기에 노션 링크 넣기
-      );
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) {
+            setState(() {
+              _isLoading = true;
+            });
+          },
+          onPageFinished: (url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(url));
   }
 
   @override
@@ -63,7 +77,18 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
           },
         ),
       ),
-      body: WebViewWidget(controller: _controller),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading)
+            const Center(
+              child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator()), // 로딩 스피너
+            ),
+        ],
+      ),
     );
   }
 }
