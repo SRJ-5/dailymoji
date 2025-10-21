@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/guide/guide_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
+import 'package:dailymoji/presentation/pages/network_error/network_error_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,7 @@ class _SplashPageState extends State<SplashPage>
   late Animation<double> _opacity;
   bool isFirstLaunch = false;
   final connectNetwork = Connectivity();
-  late bool hasConnection;
+  late bool hasConnection = true;
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _SplashPageState extends State<SplashPage>
     );
     _opacity =
         Tween<double>(begin: 1.0, end: 0.0).animate(_controller);
+    _checkConnention();
     _startAnimation(); // 애니메이션 시작 함수 호출
   }
 
@@ -46,6 +48,10 @@ class _SplashPageState extends State<SplashPage>
       }
     });
 
+    if (!hasConnection) {
+      return _goToNetworkErrorPage();
+    }
+
     // 앱을 처음 들어오는지 확인
     final prefs = await SharedPreferences.getInstance();
     final firstLaunch = prefs.getBool('isFirstLaunch') ?? true;
@@ -58,7 +64,6 @@ class _SplashPageState extends State<SplashPage>
   Future<void> _checkConnention() async {
     final connectivityResult =
         await connectNetwork.checkConnectivity();
-    _checkConnention();
     hasConnection = connectivityResult.any((r) =>
         r == ConnectivityResult.mobile ||
         r == ConnectivityResult.wifi ||
@@ -80,12 +85,11 @@ class _SplashPageState extends State<SplashPage>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        hasConnection == false ? _goToNetworkErrorPage(); : isFirstLaunch == true
+        isFirstLaunch == true
             ? GuidePage()
             :
             // 뒤에 LoginPage
             LoginPage(),
-        
 
         // 위에 SplashPage 이미지 (페이드아웃)
         AnimatedBuilder(
