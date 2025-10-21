@@ -53,9 +53,16 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
             });
           },
           onPageFinished: (url) {
-            setState(() {
-              _isLoading = false;
-            });
+            Future.delayed(
+              const Duration(seconds: 4),
+              () {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
+              },
+            );
           },
         ),
       )
@@ -81,11 +88,17 @@ class _InfoWebViewPageState extends State<InfoWebViewPage> {
         children: [
           WebViewWidget(controller: _controller),
           if (_isLoading)
-            const Center(
-              child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator()), // 로딩 스피너
+            Center(
+              child: Container(
+                  color: AppColors.white,
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: Center(
+                    child: const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator()),
+                  )), // 로딩 스피너
             ),
         ],
       ),
