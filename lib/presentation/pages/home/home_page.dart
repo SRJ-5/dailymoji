@@ -133,8 +133,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             titleSpacing: 16.w,
             title: SvgPicture.asset(
               AppIcons.dailymojiLogoBlack,
-              height: 23.72,
-              width: 86.73,
+              height: 23.72.h,
+              width: 86.73.w,
             ),
             actions: [
               IconButton(
