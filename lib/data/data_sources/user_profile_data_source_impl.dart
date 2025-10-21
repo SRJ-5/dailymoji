@@ -12,25 +12,38 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-class UserProfileDataSourceImpl implements UserProfileDataSource {
+class UserProfileDataSourceImpl
+    implements UserProfileDataSource {
   final supabase = Supabase.instance.client;
   final auth = Supabase.instance.client.auth;
-  final google =
-      GoogleSignIn(clientId: Platform.isIOS ? dotenv.env['GOOGLE_IOS_CLIENT_ID'] : null, serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
+  final google = GoogleSignIn(
+      clientId: Platform.isIOS
+          ? dotenv.env['GOOGLE_IOS_CLIENT_ID']
+          : null,
+      serverClientId: dotenv.env['GOOGLE_SERVER_CLIENT_ID']);
 
   @override
   Future<String?> appleLogin() async {
     try {
       final apple = await SignInWithApple.getAppleIDCredential(
           webAuthenticationOptions: WebAuthenticationOptions(
-              clientId: 'com.dailymoji.service', redirectUri: Uri.parse('https://dltzahlhemuigebsiafi.supabase.co/auth/v1/callback')),
-          scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName]);
+              clientId: 'com.dailymoji.service',
+              redirectUri: Uri.parse(
+                  'https://dltzahlhemuigebsiafi.supabase.co/auth/v1/callback')),
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName
+          ]);
       final idToken = apple.identityToken;
       final accessToken = apple.authorizationCode;
       if (idToken == null) {
         return null;
       }
-      final result = await Supabase.instance.client.auth.signInWithIdToken(provider: OAuthProvider.apple, idToken: idToken, accessToken: accessToken);
+      final result = await Supabase.instance.client.auth
+          .signInWithIdToken(
+              provider: OAuthProvider.apple,
+              idToken: idToken,
+              accessToken: accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(OAuthProvider.apple,
       //     authScreenLaunchMode: LaunchMode.externalApplication,
@@ -52,7 +65,10 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
         return null;
       }
       final result = await Supabase.instance.client.auth
-          .signInWithIdToken(provider: OAuthProvider.google, idToken: auth!.idToken!, accessToken: auth.accessToken);
+          .signInWithIdToken(
+              provider: OAuthProvider.google,
+              idToken: auth!.idToken!,
+              accessToken: auth.accessToken);
       return result.user?.id;
       // await auth.signInWithOAuth(
       //   OAuthProvider.google,
@@ -70,7 +86,11 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
 
   @override
   Future<UserProfileDto?> getUserProfile(String uuid) async {
-    final result = await supabase.from('user_profiles').select().eq('id', uuid).maybeSingle();
+    final result = await supabase
+        .from('user_profiles')
+        .select()
+        .eq('id', uuid)
+        .maybeSingle();
     if (result != null) {
       return UserProfileDto.fromJson(result);
     } else {
@@ -79,13 +99,18 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   @override
-  Future<void> insertUserProfile(UserProfileDto userProfileDto) async {
+  Future<void> insertUserProfile(
+      UserProfileDto userProfileDto) async {
     print(userProfileDto.id!);
-    await supabase.from('user_profiles').upsert(userProfileDto.toJson()).match({'id': userProfileDto.id!});
+    await supabase
+        .from('user_profiles')
+        .upsert(userProfileDto.toJson())
+        .match({'id': userProfileDto.id!});
   }
 
   @override
-  Future<UserProfileDto> updateUserNickNM({required String userNickNM, required String uuid}) async {
+  Future<UserProfileDto> updateUserNickNM(
+      {required String userNickNM, required String uuid}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({
@@ -98,13 +123,22 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   @override
-  Future<UserProfileDto> updateCharacterNM({required String uuid, required String characterNM}) async {
-    final updated = await supabase.from('user_profiles').update({'character_nm': characterNM}).eq('id', uuid).select().single();
+  Future<UserProfileDto> updateCharacterNM(
+      {required String uuid,
+      required String characterNM}) async {
+    final updated = await supabase
+        .from('user_profiles')
+        .update({'character_nm': characterNM})
+        .eq('id', uuid)
+        .select()
+        .single();
     return UserProfileDto.fromJson(updated);
   }
 
   @override
-  Future<UserProfileDto> updateCharacterPersonality({required String uuid, required String characterPersonality}) async {
+  Future<UserProfileDto> updateCharacterPersonality(
+      {required String uuid,
+      required String characterPersonality}) async {
     final updated = await supabase
         .from('user_profiles')
         .update({
@@ -121,13 +155,16 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   @override
-  Future<String> fetchSleepHygieneTip({String? personality, String? userNickNm}) async {
+  Future<String> fetchSleepHygieneTip(
+      {String? personality, String? userNickNm}) async {
     try {
       final queryParams = {
         if (personality != null) 'personality': personality,
         if (userNickNm != null) 'user_nick_nm': userNickNm,
       };
-      final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/sleep-tip').replace(queryParameters: queryParams);
+      final uri =
+          Uri.parse('${ApiConfig.baseUrl}/dialogue/sleep-tip')
+              .replace(queryParameters: queryParams);
 
       final response = await http.get(uri);
 
@@ -144,13 +181,16 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
   }
 
   @override
-  Future<String> fetchActionMission({String? personality, String? userNickNm}) async {
+  Future<String> fetchActionMission(
+      {String? personality, String? userNickNm}) async {
     try {
       final queryParams = {
         if (personality != null) 'personality': personality,
         if (userNickNm != null) 'user_nick_nm': userNickNm,
       };
-      final uri = Uri.parse('${ApiConfig.baseUrl}/dialogue/action-mission').replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+              '${ApiConfig.baseUrl}/dialogue/action-mission')
+          .replace(queryParameters: queryParams);
 
       final response = await http.get(uri);
 
@@ -172,7 +212,8 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
     await google.signOut();
     // 실제 로그아웃 처리
     await supabase.auth.signOut();
-    final user = Supabase.instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
+    final user = Supabase
+        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
     print("아아아아아아$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
   }
 
@@ -181,21 +222,21 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
     print("확인");
     await google.signOut();
     // 실제 로그아웃 처리
-    await supabase.from('user_profiles').delete().eq('id', userId);
+    await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', userId);
     await supabase.auth.signOut();
-    final user = Supabase.instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
+    final user = Supabase
+        .instance.client.auth.currentUser; // 로그아웃 확인 // 잘됨!
     print("오오오오오오$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
   }
 
   @override
-  Future<void> saveFcmTokenToSupabase(TargetPlatform platform) async {
+  Future<void> saveFcmTokenToSupabase(
+      {required TargetPlatform platform,
+      required String userId}) async {
     try {
-      final user = supabase.auth.currentUser;
-      if (user == null) {
-        print("⚠️ 유저가 로그인되지 않았습니다. FCM 토큰 저장 스킵");
-        return;
-      }
-
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null) {
         print("⚠️ FCM 토큰을 가져올 수 없습니다.");
@@ -203,7 +244,7 @@ class UserProfileDataSourceImpl implements UserProfileDataSource {
       }
 
       await supabase.from('user_tokens').upsert({
-        'user_id': user.id,
+        'user_id': userId,
         'token': token,
         'updated_at': DateTime.now().toIso8601String(),
       }, onConflict: 'user_id');
