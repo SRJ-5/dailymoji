@@ -28,14 +28,12 @@ class _OnboardingPart2PageState
   Future<void> saveOnboarding(
       {required String userId,
       required TargetPlatform platform}) async {
-    await ref
-        .read(userViewModelProvider.notifier)
-        .fetchInsertUser();
+    final vm = ref.read(userViewModelProvider.notifier);
+    await vm.fetchInsertUser();
+    await vm.saveFcmTokenToSupabase(
+        platform: platform, userId: userId);
     await uuidStorage.write(key: 'user_id', value: userId);
-    await ref
-        .read(userViewModelProvider.notifier)
-        .saveFcmTokenToSupabase(
-            platform: platform, userId: userId);
+    print('local uuid 저장 $userId');
   }
 
   @override

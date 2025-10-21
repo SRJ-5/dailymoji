@@ -232,6 +232,7 @@ class UserProfileDataSourceImpl
     print("오오오오오오$user"); // 로그아웃 전: User 객체 / 로그아웃 후: null
   }
 
+  // 자동로그인을 위해 userId를 가져다 쓰는걸로 변경
   @override
   Future<void> saveFcmTokenToSupabase(
       {required TargetPlatform platform,

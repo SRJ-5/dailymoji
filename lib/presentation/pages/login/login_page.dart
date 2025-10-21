@@ -66,7 +66,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<String?> checkLocalUuid() async {
     final localUserId = await uuidStorage.read(key: 'user_id');
-    print('!@#!@# $localUserId');
+    print('local uuid $localUserId');
     return localUserId;
   }
 
@@ -75,6 +75,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       required String? localUserId}) async {
     if (localUserId == null || localUserId != userId) {
       await uuidStorage.write(key: 'user_id', value: userId);
+      print('local uuid 저장완료 $userId');
     }
   }
 
