@@ -279,19 +279,26 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
               opacity: _showCharacter ? 1 : 0,
               duration: const Duration(seconds: 1), // 1초 동안 서서히 사라짐
               curve: Curves.easeOut,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 캐릭터 이미지
-                  Image.asset(
-                    AppImages.characterListWalk[selectedCharacterNum!],
-                    height: 180.h,
-                  ),
-                  // 말풍선
-                  const SolutionBubble(
-                    text: '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!',
-                  ),
-                ],
+              child: SafeArea(
+                left: true,
+                right: false,
+                top: false,
+                bottom: false,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 캐릭터 이미지
+                    Image.asset(
+                      AppImages.characterListWalk[selectedCharacterNum!],
+                      height: 180.h,
+                    ),
+                    SizedBox(width: 10.w),
+                    // 말풍선
+                    const SolutionBubble(
+                      text: '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

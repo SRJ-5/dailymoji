@@ -20,6 +20,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kHomeTutorialSeenKey = 'home_tutorial_seen_v1';
 
+const emotionClusterMap = {
+  "angry": AppTextStrings.negHigh,
+  "crying": AppTextStrings.negLow,
+  "sleeping": AppTextStrings.sleep,
+  "shocked": AppTextStrings.adhd,
+  "smile": AppTextStrings.positive,
+};
+
+const emotionTextMap = {
+  "angry": AppTextStrings.clusterNegHigh,
+  "crying": AppTextStrings.clusterNegLow,
+  "sleeping": AppTextStrings.clusterSleep,
+  "shocked": AppTextStrings.clusterAdhd,
+  "smile": AppTextStrings.clusterPositive,
+};
+
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -162,19 +178,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         SvgPicture.asset(
                           AppIcons.bubbleUnder,
-                          height: 110.h,
-                          width: 200.w,
+                          height: 140.h,
                         ),
                         Transform.translate(
                           offset: Offset(0, -7.h),
                           child: SizedBox(
-                            width: 160.w,
-                            height: 110.h,
+                            width: 180.w,
+                            height: 140.h,
                             child: Center(
                               child: AppText(
-                                displayText.isNotEmpty
-                                    ? displayText
-                                    : AppTextStrings.defaultGreeting,
+                                displayText,
                                 style: AppFontStyles.bodyBold16
                                     .copyWith(color: AppColors.grey900),
                                 textAlign: TextAlign.center,
@@ -187,7 +200,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 30.h),
+                    SizedBox(height: 10.h),
                     Image.asset(
                       AppImages.characterListProfile[selectedCharacterNum!],
                       height: 168.h,
@@ -238,7 +251,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: GestureDetector(
                   onTap: () {
                     final emotion = selectedEmotion; // 백업
-                    context.go('/home/chat', extra: emotion);
+                    context.go('/home/chat', extra: emotionClusterMap[emotion]);
                     ref.invalidate(selectedEmotionProvider);
                   },
                   child: Container(
@@ -302,23 +315,9 @@ class _EmojiItem extends StatelessWidget {
     // 백엔드와 프론트까지에서 클러스터에 대한 전반적인 용어정리가 안됨
     // 백엔드에선  "angry", "crying", "sleeping", "shocked", "smile"데이터를 원하고
     // 프론트랑 프로바이더, 에셋경로, 기타 전반적인 곳은 'neg_high', 'neg_low', 'sleep', 'adhd', 'positive'를 원함
-    const emotionClusterMap = {
-      "angry": AppTextStrings.negHigh,
-      "crying": AppTextStrings.negLow,
-      "sleeping": AppTextStrings.sleep,
-      "shocked": AppTextStrings.adhd,
-      "smile": AppTextStrings.positive,
-    };
 
     final videoPath = EmojiAsset.fromString(emotionClusterMap[emoKey]!).video;
 
-    const emotionTextMap = {
-      "angry": AppTextStrings.clusterNegHigh,
-      "crying": AppTextStrings.clusterNegLow,
-      "sleeping": AppTextStrings.clusterSleep,
-      "shocked": AppTextStrings.clusterAdhd,
-      "smile": AppTextStrings.clusterPositive,
-    };
     final label = emotionTextMap[emoKey] ?? "";
 
     return GestureDetector(
