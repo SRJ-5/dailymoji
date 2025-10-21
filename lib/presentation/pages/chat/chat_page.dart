@@ -1174,11 +1174,12 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
           key: _inputFieldKey,
           margin: EdgeInsets.only(bottom: isKeyboardVisible ? 0 : 34.h),
           padding: EdgeInsets.symmetric(vertical: 12.h),
-          constraints: BoxConstraints(
-            minHeight: 40.h,
-            maxHeight: 166.h,
-          ),
           child: Container(
+            padding: EdgeInsets.only(right: 4.w),
+            constraints: BoxConstraints(
+              minHeight: 40.h,
+              maxHeight: 166.h,
+            ),
             decoration: BoxDecoration(
               // color: isBotTyping ? AppColors.grey100 : Colors.white,
               color: AppColors.white,
@@ -1214,6 +1215,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
                 ),
                 // 봇 입력 중에는 이모지 선택 비활성화
                 Row(
+                  mainAxisSize: MainAxisSize.max,
                   children: [
                     AbsorbPointer(
                       absorbing: isBotTyping,
