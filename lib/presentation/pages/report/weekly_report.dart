@@ -36,6 +36,18 @@ class EmotionData {
   });
 }
 
+// 기록이 있는지 판정하는 함수
+bool _hasData(EmotionData e) {
+  if (e.spots.isEmpty) return false;
+  final ys = e.spots.map((s) => s.y).where((y) => y.isFinite).toList();
+  if (ys.isEmpty) return false;
+  // 점수 0만 잔뜩이면 '기록 없음'으로 보려면 아래처럼 > 0 체크
+  return ys.any((y) => y > 0);
+
+  // 👉 0점도 유효 기록으로 취급하려면 위 줄을 아래로 바꾸세요:
+  // return ys.isNotEmpty;
+}
+
 // ===== 체크박스: 종합 감정 점수는 제외(항상 노출) =====
 final filterProvider = StateProvider<Map<String, bool>>((ref) {
   return {
@@ -399,13 +411,38 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
               width: double.infinity,
               color: AppColors.grey100,
             ),
+
+            // 데이터가 있는지 여부 확인 추가
             Column(
               children: [
+                // 1) 종합 감정 점수 카드
                 if (mergedMap[AppTextStrings.clusterTotalScore] != null)
-                  _buildEmotionCard(AppTextStrings.clusterTotalScore,
-                      mergedMap[AppTextStrings.clusterTotalScore]!),
-                ...selectedEmotions
-                    .map((key) => _buildEmotionCard(key, mergedMap[key]!)),
+                  _hasData(mergedMap[AppTextStrings.clusterTotalScore]!)
+                      ? _buildEmotionCard(
+                          AppTextStrings.clusterTotalScore,
+                          mergedMap[AppTextStrings.clusterTotalScore]!,
+                        )
+                      : _buildEmptyEmotionCard(
+                          AppTextStrings.clusterTotalScore,
+                          color: mergedMap[AppTextStrings.clusterTotalScore]
+                              ?.color,
+                        ),
+
+                // 2) 선택된 감정들 카드
+                ...filters.keys.map((key) {
+                  final data = mergedMap[key];
+                  // 선택 안 했거나 데이터 맵에 없으면 그리지 않음
+                  if (data == null || !(filters[key] ?? false)) {
+                    return const SizedBox.shrink();
+                  }
+                  // ★ 핵심: 데이터 없으면 '빈 카드', 있으면 기존 상세 카드
+                  return _hasData(data)
+                      ? _buildEmotionCard(key, data)
+                      : _buildEmptyEmotionCard(
+                          key,
+                          color: data.color,
+                        );
+                }),
               ],
             ),
 
@@ -485,6 +522,7 @@ class _ScoreBox extends StatelessWidget {
 //   return double.parse(m.toStringAsFixed(1));
 // }
 
+// 데이터 있을 때 요약카드
 Widget _buildEmotionCard(String key, EmotionData data) {
   // final avg14 = _avgFromSpots(data.spots);
   // final max14 = _maxFromSpots(data.spots);
@@ -516,9 +554,9 @@ Widget _buildEmotionCard(String key, EmotionData data) {
         Container(
           padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 16.h),
           decoration: BoxDecoration(
-            color: AppColors.green100,
-            borderRadius: BorderRadius.circular(12),
-          ),
+              color: AppColors.green100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.grey200)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -551,6 +589,51 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                     .copyWith(color: AppColors.grey900),
               ),
             ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// 데이터 없을 때 요약카드
+Widget _buildEmptyEmotionCard(String title, {Color? color}) {
+  return Container(
+    padding: EdgeInsets.only(top: 16.h),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          spacing: 4.r,
+          children: [
+            Container(
+              width: 8.w,
+              height: 16.h,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            AppText(
+              title,
+              style:
+                  AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        Container(
+          height: 118.h,
+          width: double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              color: AppColors.green100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.grey200)),
+          child: AppText(
+            "아직 기록된 데이터가 없어요",
+            style:
+                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
           ),
         ),
       ],
