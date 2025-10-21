@@ -133,25 +133,6 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     _startSequence();
   }
 
-  // MIN : _step별 애니메이션 효과 어떻게 적용할지 duration 만들어주는 함수
-  Duration _getOpacityDuration(int index, int length) {
-    // 기본값 (애니메이션 없음)
-    const noAnim = Duration(milliseconds: 0);
-    const anim = Duration(milliseconds: 300);
-
-    // 인덱스 0 → 출력/사라짐 모두 애니메이션
-    if (index == 0) return anim;
-
-    // 인덱스가 length - 2 → 사라질 때만 애니메이션
-    if (index == length - 2) return anim;
-
-    // 인덱스가 length - 1 → 출력될 때만 애니메이션
-    if (index == length - 1) return anim;
-
-    // 나머지는 애니메이션 없음
-    return noAnim;
-  }
-
   // 마음 관리 팁 컨텍스트를 비동기로 가져와서 _steps를 업데이트
   Future<void> _loadSolutionContext() async {
     try {
@@ -273,51 +254,25 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
             Positioned(
               top: 167.h,
               child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: _step == 0 ||
-                          _step == _steps.length - 2 ||
-                          _step == _steps.length - 1
-                      ? AnimatedOpacity(
-                          opacity: _opacity,
-                          duration: _step == 0 || _step == _steps.length - 2
-                              ? _getOpacityDuration(_step, _steps.length)
-                              : _getOpacityDuration(_step, _steps.length),
-                          // RIN: 문구 수정
-                          child: Column(
-                            children: [
-                              if (_steps[_step]["title"] != null)
-                                AppText(
-                                  _steps[_step]["title"],
-                                  style: AppFontStyles.heading2
-                                      .copyWith(color: AppColors.grey100),
-                                  textAlign: TextAlign.center,
-                                ),
-                              AppText(
-                                _steps[_step]["text"],
-                                style: (_steps[_step]["font"] as TextStyle)
-                                    .copyWith(color: AppColors.grey100),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            if (_steps[_step]["title"] != null)
-                              AppText(
-                                _steps[_step]["title"],
-                                style: AppFontStyles.heading2
-                                    .copyWith(color: AppColors.grey100),
-                                textAlign: TextAlign.center,
-                              ),
-                            AppText(
-                              _steps[_step]["text"],
-                              style: (_steps[_step]["font"] as TextStyle)
-                                  .copyWith(color: AppColors.grey100),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        )),
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
+                  children: [
+                    if (_steps[_step]["title"] != null)
+                      AppText(
+                        _steps[_step]["title"],
+                        style: AppFontStyles.heading2
+                            .copyWith(color: AppColors.grey100),
+                        textAlign: TextAlign.center,
+                      ),
+                    AppText(
+                      _steps[_step]["text"],
+                      style: (_steps[_step]["font"] as TextStyle)
+                          .copyWith(color: AppColors.grey100),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             // 캐릭터
@@ -339,12 +294,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               child: AnimatedBuilder(
                 animation: _timerController,
                 builder: (context, child) {
-                  //----------------------------------------------------------//
                   bool isTimerHidden =
-                      // _step == 0 || _step >= _steps.length - 1;
-                      _step == 0 ||
-                          _step >= _steps.length - 1 ||
-                          _opacity == 0.0;
+                      _step == 0 || _step >= _steps.length - 1; // ||
+                  // _opacity == 0.0;
                   if (isTimerHidden) {
                     return const SizedBox.shrink();
                   }
@@ -388,7 +340,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
             // 깜빡이는 안내 문구
             if (_showFinalHint)
               Positioned(
-                top: 650.h,
+                top: 625.h,
                 child: FadeTransition(
                   opacity: _blinkAnimation,
                   child: AppText(

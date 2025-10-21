@@ -150,6 +150,9 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
       }
     };
 
+    final total = mergedMap[AppTextStrings.clusterTotalScore];
+    final noOverall = (total == null) || !_hasData(total); // ★ 변경(추가)
+
     // return FutureBuilder<gs.GScoreEmotionResult>(
     //   // ★ alias 타입
     //   future: _gFuture,
@@ -445,27 +448,43 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                 }),
               ],
             ),
-
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: GestureDetector(
-                onTap: () {
-                  context.push('/info/${AppTextStrings.srj5Test}');
-                },
-                child: Container(
-                  height: 52.h,
-                  decoration: BoxDecoration(
-                      color: AppColors.green500,
-                      borderRadius: BorderRadius.circular(12.r)),
-                  alignment: Alignment.center,
-                  child: Text(
-                    AppTextStrings.checkEmotions,
-                    style: AppFontStyles.bodyMedium16
-                        .copyWith(color: AppColors.grey50),
-                  ),
-                ),
-              ),
-            )
+            // 종합감정점수가 없다면 && 선택된 클러스터도 없다면
+            noOverall && selectedEmotions.isEmpty
+                ? SizedBox(
+                    height: 240.h,
+                    child: Center(
+                      child: Text(
+                        AppTextStrings.nullEmotions,
+                        style: AppFontStyles.bodyRegular14.copyWith(
+                          color: AppColors.grey700,
+                        ),
+                      ),
+                    ),
+                  )
+                : // 선택된 클러스터가 있다면 && 종합감정점수가 없다면
+                selectedEmotions.isNotEmpty && noOverall
+                    ? const SizedBox.shrink()
+                    // 그 외에는 모두
+                    : Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: GestureDetector(
+                          onTap: () {
+                            context.push('/info/${AppTextStrings.srj5Test}');
+                          },
+                          child: Container(
+                            height: 52.h,
+                            decoration: BoxDecoration(
+                                color: AppColors.green500,
+                                borderRadius: BorderRadius.circular(12.r)),
+                            alignment: Alignment.center,
+                            child: Text(
+                              AppTextStrings.checkEmotions,
+                              style: AppFontStyles.bodyMedium16
+                                  .copyWith(color: AppColors.grey50),
+                            ),
+                          ),
+                        ),
+                      ),
           ],
         ),
       ),
