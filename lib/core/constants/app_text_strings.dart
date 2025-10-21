@@ -24,6 +24,7 @@ class AppTextStrings {
   static const String srj5Test = '나의 감정 알기';
   static const String preparingTitle = '곧 만나요!';
   static const String preparingBody = '준비 중이에요';
+  static const String backgroundSettings = '배경화면 선택';
 
 // Bottom Navigation
   static const String navHome = '홈';
@@ -74,6 +75,15 @@ class AppTextStrings {
   static const String solutionHelpful = '도움됨';
   static const String solutionNotHelpful = '도움 안됨';
   static const String solutionBlock = '이런 종류 그만 보기';
+
+  // Home Page
+  static const String defaultGreeting = '안녕하세요!\n오늘 기분은 어떠신가요?';
+
+  // Background Setting Page
+  static const String backgroundSelect = '선택하기';
+  static const String backgroundSelected = '선택됨';
+  static const String backgroundSetting = '배경 설정';
+  static const String backgroundDone = '배경을 변경했어요';
 
   // Login Page
   static const String loginFailed = '로그인에 실패했습니다. 다시 시도해주세요.';
