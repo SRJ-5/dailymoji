@@ -39,19 +39,29 @@ class _Srj5TestBoxState extends ConsumerState<Srj5TestBox> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 60.h),
+        SizedBox(height: 46.h),
         Container(
             width: double.infinity,
-            height: 100.h,
+            height: 147.h,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: AppText(
-                widget.text,
-                style: AppFontStyles.heading3
-                    .copyWith(color: AppColors.grey900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    '최근 2주를 기준으로 답변해 주세요',
+                    style: AppFontStyles.bodyRegular14
+                        .copyWith(color: AppColors.grey700),
+                  ),
+                  SizedBox(height: 4),
+                  AppText(
+                    widget.text,
+                    style: AppFontStyles.heading3
+                        .copyWith(color: AppColors.grey900),
+                  ),
+                ],
               ),
             )),
-        SizedBox(height: 32.h),
         Column(
           children: List.generate(
             _answerList.length,
