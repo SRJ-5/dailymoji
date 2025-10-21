@@ -10,7 +10,7 @@ class UserProfileDto {
   final String? characterPersonality;
   final int? characterNum;
   final Map<String, dynamic>? onboardingScores;
-  final Map<String, dynamic>? solutionTypeWeights; //RIN: 솔루션 유형 가중치
+  final Map<String, dynamic>? solutionTypeWeights; //RIN: 마음 관리 팁 유형 가중치
   final List<String>? negativeTags; // RIN: 부정적 태그
 
   UserProfileDto({

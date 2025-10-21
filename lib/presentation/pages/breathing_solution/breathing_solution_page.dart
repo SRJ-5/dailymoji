@@ -44,7 +44,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
   late AnimationController _timerController;
   Timer? _secondTimer; // 1초마다 숫자를 업데이트할 Timer 변수 추가
 
-  // 영상 솔루션 페이지와 동일한 로직을 위한 변수 추가
+  // 영상 마음 관리 팁 페이지와 동일한 로직을 위한 변수 추가
   bool _isNavigating = false;
   String? _exitReason;
 
@@ -84,7 +84,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
       },
       {
         "title": "Step 3.",
-        "text": "코로 4초 동안\n부드럽게 내쉬어주세요",
+        "text": "코로 8초 동안\n부드럽게 내쉬어주세요",
         "font": AppFontStyles.heading3,
         "duration": 8,
       },
@@ -133,7 +133,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     _startSequence();
   }
 
-  // 솔루션 컨텍스트를 비동기로 가져와서 _steps를 업데이트
+  // 마음 관리 팁 컨텍스트를 비동기로 가져와서 _steps를 업데이트
   Future<void> _loadSolutionContext() async {
     try {
       final solutionContext = await ref
@@ -195,7 +195,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     }
   }
 
-  // 영상 솔루션 페이지와 동일한 종료 및 네비게이션 로직 함수 추가
+  // 영상 마음 관리 팁 페이지와 동일한 종료 및 네비게이션 로직 함수 추가
   void _startExitSequence() {
     if (_isNavigating) return;
     _isNavigating = true;
@@ -208,7 +208,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
         'reason': reason,
         'solutionId': widget.solutionId,
         'sessionId': widget.sessionId,
-        'solution_type': 'breathing', // 솔루션 타입을 명확히 전달
+        'solution_type': 'breathing', // 마음 관리 팁 타입을 명확히 전달
       };
     } else {
       debugPrint("RIN: This is a review. Skipping follow-up message.");

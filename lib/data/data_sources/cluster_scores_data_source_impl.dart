@@ -25,34 +25,34 @@ class ClusterScoresDataSourceImpl implements ClusterScoresDataSource {
     return (res as List).map((e) => ClusterScoreDto.fromJson(e)).toList();
   }
 
-  // RIN: 기존에는 모든 데이터를 가져왔지만, 이제는 Supabase RPC를 호출합니다.
-  // Supabase 프로젝트에 'get_daily_max_cluster_scores' 함수를 이용한 코드!
-  @override
-  Future<List<ClusterScoreDto>> fetchDailyMaxByUserAndMonth({
-    required String userId,
-    required int year,
-    required int month,
-  }) async {
-    try {
-      final response = await client.rpc(
-        'get_daily_max_cluster_scores',
-        params: {
-          'p_user_id': userId,
-          'p_year': year,
-          'p_month': month,
-        },
-      );
+  // // RIN: 기존에는 모든 데이터를 가져왔지만, 이제는 Supabase RPC를 호출합니다.
+  // // Supabase 프로젝트에 'get_daily_max_cluster_scores' 함수를 이용한 코드!
+  // @override
+  // Future<List<ClusterScoreDto>> fetchDailyMaxByUserAndMonth({
+  //   required String userId,
+  //   required int year,
+  //   required int month,
+  // }) async {
+  //   try {
+  //     final response = await client.rpc(
+  //       'get_daily_max_cluster_scores',
+  //       params: {
+  //         'p_user_id': userId,
+  //         'p_year': year,
+  //         'p_month': month,
+  //       },
+  //     );
 
-      // RPC 결과는 List<dynamic> 타입이므로, DTO로 변환합니다.
-      final data = (response as List)
-          .map((json) => ClusterScoreDto.fromJson(json))
-          .toList();
+  //     // RPC 결과는 List<dynamic> 타입이므로, DTO로 변환합니다.
+  //     final data = (response as List)
+  //         .map((json) => ClusterScoreDto.fromJson(json))
+  //         .toList();
 
-      return data;
-    } catch (e) {
-      throw Exception("fetchDailyMaxByUserAndMonth RPC error: $e");
-    }
-  }
+  //     return data;
+  //   } catch (e) {
+  //     throw Exception("fetchDailyMaxByUserAndMonth RPC error: $e");
+  //   }
+  // }
 }
 
 //   // ───────────────────────────────────────────────────────────────────────────

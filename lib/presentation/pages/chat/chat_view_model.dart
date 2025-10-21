@@ -84,7 +84,7 @@ class ChatViewModel extends Notifier<ChatState> {
   Map<String, dynamic>?
       _adhdContextForNextRequest; // RIN: ADHD 분기 대화의 상태를 관리하기 위한 변수
   String?
-      _lastProposedSolutionCluster; // RIN: 마지막으로 제안된 솔루션의 클러스터 종류를 저장하기 위한 변수
+      _lastProposedSolutionCluster; // RIN: 마지막으로 제안된 마음 관리 팁의 클러스터 종류를 저장하기 위한 변수
 
   @override
   ChatState build() => ChatState();
@@ -155,7 +155,7 @@ class ChatViewModel extends Notifier<ChatState> {
     //     final solutionType = navigationData['solution_type'] as String?;
 
     //     if (solutionId != null && sessionId != null && solutionType != null) {
-    //       // 솔루션이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
+    //       // 마음 관리 팁이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
     //       final newSet = Set<String>.from(state.completedSolutionIds)
     //         ..add(solutionId);
     //       state = state.copyWith(completedSolutionIds: newSet);
@@ -200,7 +200,7 @@ class ChatViewModel extends Notifier<ChatState> {
     state = state.copyWith(clearPendingEmoji: false);
   }
 
-  // --- 솔루션이 끝나고 '돌아왔을 때' 결과 처리를 하는 함수 ---
+  // --- 마음 관리 팁이 끝나고 '돌아왔을 때' 결과 처리를 하는 함수 ---
   Future<void> processSolutionResult(Map<String, dynamic> result) async {
     final reason = result['reason'] as String? ?? 'video_ended';
     final solutionId = result['solutionId'] as String?;
@@ -208,7 +208,7 @@ class ChatViewModel extends Notifier<ChatState> {
     final solutionType = result['solution_type'] as String?;
 
     if (solutionId != null && sessionId != null && solutionType != null) {
-      // 솔루션이 끝나고 돌아오면, 여기서 ID를 '완료 목록'에 추가합니다.
+      // 마음 관리 팁이 끝나고 돌아오면, 여기서 ID를 '완료 목록'에 추가합니다.
       final newSet = Set<String>.from(state.completedSolutionTypes)
         ..add(solutionType);
       state = state.copyWith(completedSolutionTypes: newSet);
@@ -236,7 +236,7 @@ class ChatViewModel extends Notifier<ChatState> {
   //   final solutionType = result['solution_type'] as String?;
 
   //   if (solutionId != null && sessionId != null && solutionType != null) {
-  //    //솔루션이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
+  //    //마음 관리 팁이 끝나고 돌아오면, 해당 ID를 '완료 목록'에 추가
   //     final newSet = Set<String>.from(state.completedSolutionIds)..add(solutionId);
   //     state = state.copyWith(completedSolutionIds: newSet);
 
@@ -422,7 +422,7 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-// 백엔드에 감정 분석 및 솔루션 제안 요청
+// 백엔드에 감정 분석 및 마음 관리 팁 제안 요청
 // RIN ♥ : EmotionalRecord? 타입 반환, updateSessionIdForMessageId 파라미터 추가
   Future<EmotionalRecord?> _analyzeAndRespond({
     required Message userMessage,
@@ -557,12 +557,12 @@ class ChatViewModel extends Notifier<ChatState> {
               await _addMessage(botMessage);
               break; // 여기서 대화 흐름이 한번 끝남
 
-            // 솔루션 제안 모드
+            // 마음 관리 팁 제안 모드
             case PresetId.solutionProposal:
               // ADHD '없어'와 같이, 이미 제안 내용이 완성되어 온 경우
               final proposalText = intervention['proposal_text'] as String?;
               if (proposalText != null) {
-                // 새로운 솔루션 제안을 표시하기 전에 완료 기록을 초기화합니다.
+                // 새로운 마음 관리 팁 제안을 표시하기 전에 완료 기록을 초기화합니다.
                 state = state.copyWith(completedSolutionTypes: {});
 
                 await _addMessage(Message(
@@ -576,7 +576,7 @@ class ChatViewModel extends Notifier<ChatState> {
                   },
                 ));
               } else {
-                // 기존 로직: 분석 후, 솔루션을 새로 제안해야 하는 경우
+                // 기존 로직: 분석 후, 마음 관리 팁을 새로 제안해야 하는 경우
 
                 // 3. intervention 안에서 필요한 모든 텍스트를 찾음
                 final empathyText = intervention['empathy_text'] as String?;
@@ -601,7 +601,7 @@ class ChatViewModel extends Notifier<ChatState> {
                   await Future.delayed(const Duration(milliseconds: 200));
                 }
 
-                // 3. [솔루션 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
+                // 3. [마음 관리 팁 제안]을 위해 /solutions/propose 호출 (모든 조건이 맞을 때만)
                 if (sessionId != null && topCluster != null) {
                   await _proposeSolution(sessionId, topCluster, currentUserId);
                 }
@@ -692,7 +692,7 @@ class ChatViewModel extends Notifier<ChatState> {
     return null;
   }
 
-  /// 솔루션 제안 로직
+  /// 마음 관리 팁 제안 로직
   Future<void> _proposeSolution(
       String sessionId, String topCluster, String currentUserId) async {
     _lastProposedSolutionCluster = topCluster;
@@ -895,15 +895,15 @@ class ChatViewModel extends Notifier<ChatState> {
 // User Action Handlers
 // ---------------------------------------------------------------------------
 
-  /// 솔루션 완료 후 후속 질문 메시지 전송
+  /// 마음 관리 팁 완료 후 후속 질문 메시지 전송
   Future<void> sendFollowUpMessageAfterSolution({
     required String reason,
     required String solutionId,
     required String sessionId,
-    required String solutionType, //RIN: 솔루션 유형 추가
+    required String solutionType, //RIN: 마음 관리 팁 유형 추가
     String? topCluster,
   }) async {
-    /// 솔루션 완료 후 후속 멘트 전송
+    /// 마음 관리 팁 완료 후 후속 멘트 전송
     final currentUserId = _userId;
     if (currentUserId == null) return;
 
@@ -968,7 +968,7 @@ class ChatViewModel extends Notifier<ChatState> {
   //   );
   //   await _addMessage(feedbackMessage);
 
-  //   // RIN: 클러스터별 추가 솔루션 제공 로직
+  //   // RIN: 클러스터별 추가 마음 관리 팁 제공 로직
   //   if (topCluster == 'sleep') {
   //     final userVM = ref.read(userViewModelProvider.notifier);
   //     final tip = await userVM.fetchSleepHygieneTip();
@@ -1063,7 +1063,7 @@ class ChatViewModel extends Notifier<ChatState> {
     }
   }
 
-  /// 솔루션 제안에 대한 사용자 응답 처리
+  /// 마음 관리 팁 제안에 대한 사용자 응답 처리
   Future<void> respondToSolution({
     required String solutionId,
     required String solutionType,
@@ -1082,7 +1082,7 @@ class ChatViewModel extends Notifier<ChatState> {
             .fetchSleepHygieneTip();
       } else {
         // 🥑 그 외 일반 미션은 기존처럼 DB에서 텍스트를 가져옵니다.
-        // 1. 솔루션 데이터를 가져옵니다.
+        // 1. 마음 관리 팁 데이터를 가져옵니다.
         final solution = await ref
             .read(solutionRepositoryProvider)
             .fetchSolutionById(solutionId);
