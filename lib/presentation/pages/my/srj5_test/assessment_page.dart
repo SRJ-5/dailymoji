@@ -68,6 +68,7 @@ class _AssessmentPageState
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: AppColors.yellow50,
         leading: SizedBox.shrink(),
         actions: [
