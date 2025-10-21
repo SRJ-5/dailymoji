@@ -1,5 +1,5 @@
-/// 솔루션 제안 타입
-/// 
+/// 마음 관리 팁 제안 타입
+///
 /// 안전 위기 상황에 사용할 제안 멘트를 관리
 enum SolutionProposal {
   negLow(
@@ -19,7 +19,7 @@ enum SolutionProposal {
   final List<String> scripts;
 
   const SolutionProposal(this.key, this.scripts);
-  
+
   /// 문자열로부터 SolutionProposal을 찾는 헬퍼 메서드
   static SolutionProposal? fromString(String key) {
     try {
@@ -29,4 +29,3 @@ enum SolutionProposal {
     }
   }
 }
-

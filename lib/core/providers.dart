@@ -110,12 +110,12 @@ final updateMessageSessionIdUseCaseProvider =
   return UpdateMessageSessionIdUseCase(ref.watch(messageRepositoryProvider));
 });
 
-// 솔루션 제안
+// 마음 관리 팁 제안
 final proposeSolutionUseCaseProvider = Provider<ProposeSolutionUseCase>((ref) {
   return ProposeSolutionUseCase(ref.watch(solutionRepositoryProvider));
 });
 
-// 솔루션 피드백 처리
+// 마음 관리 팁 피드백 처리
 final submitSolutionFeedbackUseCaseProvider =
     Provider<SubmitSolutionFeedbackUseCase>((ref) {
   return SubmitSolutionFeedbackUseCase(ref.watch(emotionRepositoryProvider));
@@ -125,7 +125,7 @@ final submitSolutionFeedbackUseCaseProvider =
 // Feature-Specific Providers
 // -----------------------------------------------------------------------------
 
-// solutionId를 받아 특정 솔루션 정보 가져옴
+// solutionId를 받아 특정 마음 관리 팁 정보 가져옴
 final solutionProvider =
     FutureProvider.autoDispose.family<Solution, String>((ref, solutionId) {
   final repository = ref.watch(solutionRepositoryProvider);

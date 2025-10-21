@@ -656,6 +656,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
   }
 
   Widget _botMessage(Message message, {required Key key}) {
+    final userNickNm =
+        ref.read(userViewModelProvider).userProfile?.userNickNm ?? "";
+    final formattedMessage =
+        message.content.replaceAll('{user_nick_nm}', userNickNm);
+
     return Padding(
       key: key,
       padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -675,7 +680,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
               ),
             ),
             child: AppText(
-              message.content.replaceAll(r'\n', '\n'),
+              formattedMessage.replaceAll(r'\n', '\n'),
               style: AppFontStyles.bodyRegular14
                   .copyWith(color: AppColors.grey900),
             ),
@@ -823,11 +828,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
   //   );
   // }
 
-  // 새로운 솔루션 제안 카드 UI (세로 버튼 레이아웃)
+  // 새로운 마음 관리 팁 제안 카드 UI (세로 버튼 레이아웃)
   Widget _solutionProposalCardMessage(Message message,
       {required Key key, required bool isLastMessage}) {
     // String msg =
-    //   "[2분 솔루션 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
+    //   "[2분 마음 관리 팁 추천]\n불안과 분노가 치밀어 오를 때는, 창밖 도시 불빛과 떨어지는 빗방울을 바라보며, 호흡을 가다듬는 것이 좋습니다. 호흡 → 영상 → 행동 순으로 진행해보면 기분이 좀 더 나아질거예요.";
     final proposal = message.proposal;
     final chatState = ref.watch(chatViewModelProvider);
 
@@ -847,6 +852,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
         isAdhdChoiceMessage = true;
       }
     }
+
+    final userNickNm =
+        ref.read(userViewModelProvider).userProfile?.userNickNm ?? "";
+    final formattedMessage =
+        message.content.replaceAll('{user_nick_nm}', userNickNm);
 
     return Padding(
       key: key,
@@ -875,7 +885,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     builder: (context) {
                       // 1. 전체 메시지를 줄바꿈 기준으로 나눕니다.
                       final lines =
-                          message.content.replaceAll(r'\n', '\n').split('\n');
+                          formattedMessage.replaceAll(r'\n', '\n').split('\n');
 
                       // 2. 첫 번째 줄을 제목으로 사용합니다.
                       final title = lines.first;
@@ -904,7 +914,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                       );
                     },
                   ),
-                  if (message.content.isNotEmpty) SizedBox(height: 16.h),
+                  if (formattedMessage.isNotEmpty) SizedBox(height: 16.h),
                   // 버튼들 (세로로 쌓기)
                   Column(
                     children: options.map((option) {
@@ -1026,7 +1036,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //           SizedBox(height: 4.h),
           //           GestureDetector(
           //             onTap: () {
-          //               // TODO 영상 솔루션 진행
+          //               // TODO 영상 마음 관리 팁 진행
           //             },
           //             child: Container(
           //               height: 40.h,
@@ -1047,7 +1057,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //           SizedBox(height: 4.h),
           //           GestureDetector(
           //             onTap: () {
-          //               // TODO 미션 솔루션 진행
+          //               // TODO 미션 마음 관리 팁 진행
           //             },
           //             child: Container(
           //               height: 40.h,
@@ -1070,8 +1080,8 @@ class _ChatPageState extends ConsumerState<ChatPage>
           //     ],
           //   ),
           // ),
-          if (message.content.isNotEmpty) SizedBox(width: 4.w),
-          if (message.content.isNotEmpty)
+          if (formattedMessage.isNotEmpty) SizedBox(width: 4.w),
+          if (formattedMessage.isNotEmpty)
             AppText(
               _formattedNow(message.createdAt),
               style: AppFontStyles.bodyRegular14
