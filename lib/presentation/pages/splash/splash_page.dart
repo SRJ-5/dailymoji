@@ -1,7 +1,9 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/guide/guide_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashPage extends StatefulWidget {
@@ -16,6 +18,8 @@ class _SplashPageState extends State<SplashPage>
   late AnimationController _controller;
   late Animation<double> _opacity;
   bool isFirstLaunch = false;
+  final connectNetwork = Connectivity();
+  late bool hasConnection;
 
   @override
   void initState() {
@@ -50,6 +54,21 @@ class _SplashPageState extends State<SplashPage>
     });
   }
 
+  // 네트워크 연결 체크
+  Future<void> _checkConnention() async {
+    final connectivityResult =
+        await connectNetwork.checkConnectivity();
+    _checkConnention();
+    hasConnection = connectivityResult.any((r) =>
+        r == ConnectivityResult.mobile ||
+        r == ConnectivityResult.wifi ||
+        r == ConnectivityResult.ethernet);
+  }
+
+  void _goToNetworkErrorPage() {
+    context.go('/network_error');
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -61,11 +80,12 @@ class _SplashPageState extends State<SplashPage>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        isFirstLaunch == true
+        hasConnection == false ? _goToNetworkErrorPage(); : isFirstLaunch == true
             ? GuidePage()
             :
             // 뒤에 LoginPage
             LoginPage(),
+        
 
         // 위에 SplashPage 이미지 (페이드아웃)
         AnimatedBuilder(

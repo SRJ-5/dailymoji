@@ -36,10 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     observers: [routeObserver],
     routes: [
       GoRoute(
-          path: '/',
-          builder: (context, state) => NetworkErrorPage()
-          // SplashPage()
-          ),
+          path: '/', builder: (context, state) => SplashPage()),
       GoRoute(
           path: '/login',
           builder: (context, state) => LoginPage()),
@@ -214,6 +211,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           return Srj5TestPage();
         },
+      ),
+      GoRoute(
+        path: '/network_error',
+        builder: (context, state) => NetworkErrorPage(),
       )
     ],
   );
