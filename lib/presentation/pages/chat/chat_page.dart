@@ -1036,6 +1036,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 10.w),
         margin: EdgeInsets.symmetric(horizontal: 12.w),
+        height: 131.h,
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12.r),
@@ -1086,71 +1087,74 @@ class _ChatPageState extends ConsumerState<ChatPage> with RouteAware, SingleTick
             SizedBox(height: 8.h),
             // Row(
             // children: List.generate(
-            Container(
-              height: 72.h,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: emojis.length,
-                separatorBuilder: (context, index) => SizedBox(width: 4.w),
-                itemBuilder: (context, index) {
-                  // children: List.generate(emojis.length, (index) {
-                  final emoji = emojis[index];
-                  final start = (baseStart + step * index).clamp(0.0, 1.0);
-                  final end = (start + 0.4).clamp(0.0, 1.0);
+            Expanded(
+              child: Container(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: emojis.length,
+                  separatorBuilder: (context, index) => SizedBox(width: 4.w),
+                  itemBuilder: (context, index) {
+                    // children: List.generate(emojis.length, (index) {
+                    final emoji = emojis[index];
+                    final start = (baseStart + step * index).clamp(0.0, 1.0);
+                    final end = (start + 0.4).clamp(0.0, 1.0);
 
-                  final curved = CurvedAnimation(
-                    parent: _emojiCtrl,
-                    curve: Interval(start, end, curve: Curves.easeOutCubic),
-                  );
+                    final curved = CurvedAnimation(
+                      parent: _emojiCtrl,
+                      curve: Interval(start, end, curve: Curves.easeOutCubic),
+                    );
 
-                  return FadeTransition(
-                    opacity: curved,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: Offset(-0.2, 0),
-                        end: Offset.zero,
-                      ).animate(curved),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (currentSelectedEmojiKey == emoji.label) {
-                              currentSelectedEmojiKey = "default";
-                            } else {
-                              currentSelectedEmojiKey = emoji.label;
-                            }
-                            // showEmojiBar = false;
-                          });
-                          // _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          width: 62.2.w,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10.r),
-                            color: currentSelectedEmojiKey == emoji.label ? AppColors.grey100 : Colors.transparent,
-                          ),
-                          child: Column(
-                            children: [
-                              Image.asset(
-                                emoji.asset,
-                                width: 34.w,
-                                height: 34.h,
-                              ),
-                              SizedBox(height: 4.h),
-                              AppText(
-                                emoji.display,
-                                textAlign: TextAlign.center,
-                                style: AppFontStyles.bodyRegular12.copyWith(
-                                  color: AppColors.grey900,
+                    return FadeTransition(
+                      opacity: curved,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: Offset(-0.2, 0),
+                          end: Offset.zero,
+                        ).animate(curved),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (currentSelectedEmojiKey == emoji.label) {
+                                currentSelectedEmojiKey = "default";
+                              } else {
+                                currentSelectedEmojiKey = emoji.label;
+                              }
+                              // showEmojiBar = false;
+                            });
+                            // _emojiCtrl.reverse(); // 애니메이션 역재생하여 닫기
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            width: 62.2.w,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10.r),
+                              color: currentSelectedEmojiKey == emoji.label ? AppColors.grey100 : Colors.transparent,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  emoji.asset,
+                                  width: 34.w,
+                                  height: 34.h,
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 4.h),
+                                AppText(
+                                  emoji.display,
+                                  textAlign: TextAlign.center,
+                                  style: AppFontStyles.bodyRegular12.copyWith(
+                                    color: AppColors.grey900,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
             // ),
