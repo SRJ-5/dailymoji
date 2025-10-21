@@ -8,6 +8,7 @@ import 'package:dailymoji/presentation/pages/my/delete_account/delete_account_pa
 import 'package:dailymoji/presentation/pages/my/privacy_policy/info_web_view_page.dart';
 import 'package:dailymoji/presentation/pages/my/srj5_test/assessment_page.dart';
 import 'package:dailymoji/presentation/pages/my/srj5_test/widgets/srj5_test_page.dart';
+import 'package:dailymoji/presentation/pages/network_error/network_error_page.dart';
 import 'package:dailymoji/presentation/pages/preparing/preparing_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
 import 'package:dailymoji/presentation/pages/my/my_page.dart';
@@ -34,8 +35,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     navigatorKey: navigatorkey,
     observers: [routeObserver],
     routes: [
-      GoRoute(path: '/', builder: (context, state) => SplashPage()),
-      GoRoute(path: '/login', builder: (context, state) => LoginPage()),
+      GoRoute(
+          path: '/',
+          builder: (context, state) => NetworkErrorPage()
+          // SplashPage()
+          ),
+      GoRoute(
+          path: '/login',
+          builder: (context, state) => LoginPage()),
       GoRoute(
           path: '/onboarding1',
           builder: (context, state) => OnboardingPart1Page()),
@@ -44,7 +51,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => OnboardingPart2Page()),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => const PortraitPage(child: HomePage()),
+        pageBuilder: (context, state) =>
+            const PortraitPage(child: HomePage()),
         routes: [
           GoRoute(
             path: 'chat',
@@ -75,8 +83,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'background_setting',
-            pageBuilder: (context, state) =>
-                const PortraitPage(child: BackgroundSettingPage()),
+            pageBuilder: (context, state) => const PortraitPage(
+                child: BackgroundSettingPage()),
           ),
         ],
       ),
@@ -116,7 +124,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]),
       GoRoute(
         path: '/my',
-        pageBuilder: (context, state) => PortraitPage(child: MyPage()),
+        pageBuilder: (context, state) =>
+            PortraitPage(child: MyPage()),
       ),
       // TODO: 아래에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
       // GoRoute(
@@ -142,7 +151,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               case AppTextStrings.srj5Test:
                 return AssessmentPage();
               default:
-                return PreparingPage(AppTextStrings.pageIsPreparing);
+                return PreparingPage(
+                    AppTextStrings.pageIsPreparing);
             }
             // TODO: 위에 코드로 합쳐서 진행하였음 확인 후 필요없으면 삭제
             // if (title == "공지사항") {
@@ -171,8 +181,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/breathing/:solutionId',
         pageBuilder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
-          final sessionId = state.uri.queryParameters['sessionId'];
-          final isReview = state.uri.queryParameters['isReview'] == 'true';
+          final sessionId =
+              state.uri.queryParameters['sessionId'];
+          final isReview =
+              state.uri.queryParameters['isReview'] == 'true';
 
           return PortraitPage(
               child: BreathingSolutionPage(
@@ -186,11 +198,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/solution/:solutionId',
         builder: (context, state) {
           final solutionId = state.pathParameters['solutionId']!;
-          final sessionId = state.uri.queryParameters['sessionId'];
+          final sessionId =
+              state.uri.queryParameters['sessionId'];
 
-          final isReview = state.uri.queryParameters['isReview'] == 'true';
+          final isReview =
+              state.uri.queryParameters['isReview'] == 'true';
           return SolutionPage(
-              solutionId: solutionId, sessionId: sessionId, isReview: isReview);
+              solutionId: solutionId,
+              sessionId: sessionId,
+              isReview: isReview);
         },
       ),
       GoRoute(
