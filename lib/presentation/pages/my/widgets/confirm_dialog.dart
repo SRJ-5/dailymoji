@@ -17,6 +17,7 @@ import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 void resetAppState(WidgetRef ref) {
@@ -53,12 +54,15 @@ class ConfirmDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userProfileVM = ref.read(userViewModelProvider.notifier);
+    final uuidStorage = FlutterSecureStorage();
+    final userProfileVM =
+        ref.read(userViewModelProvider.notifier);
     // 배경 터치는 닫기, 다이얼로그 영역은 차단
     return GestureDetector(
       onTap: () => context.pop(), // 배경 터치시 다이얼로그 닫기
       child: Material(
-        color: AppColors.black.withValues(alpha: 0.35), // 배경 오버레이
+        color:
+            AppColors.black.withValues(alpha: 0.35), // 배경 오버레이
         child: Center(
           child: GestureDetector(
             // 다이얼로그 컨테이너 터치시 이벤트 차단 (배경 터치 이벤트가 전파되지 않음)
@@ -76,7 +80,9 @@ class ConfirmDialog extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   AppText(
-                    isDeleteAccount ? "정말 탈퇴하시겠어요?" : "로그아웃 하시겠어요?",
+                    isDeleteAccount
+                        ? "정말 탈퇴하시겠어요?"
+                        : "로그아웃 하시겠어요?",
                     style: AppFontStyles.heading3
                         .copyWith(color: AppColors.grey900),
                   ),
@@ -93,15 +99,18 @@ class ConfirmDialog extends ConsumerWidget {
                           height: 48.h,
                           decoration: BoxDecoration(
                             color: AppColors.green50,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border:
-                                Border.all(width: 1, color: AppColors.grey200),
+                            borderRadius:
+                                BorderRadius.circular(12.r),
+                            border: Border.all(
+                                width: 1,
+                                color: AppColors.grey200),
                           ),
                           child: Center(
                             child: AppText(
                               '취소',
                               style: AppFontStyles.bodyMedium16
-                                  .copyWith(color: AppColors.grey900),
+                                  .copyWith(
+                                      color: AppColors.grey900),
                             ),
                           ),
                         ),
@@ -112,9 +121,13 @@ class ConfirmDialog extends ConsumerWidget {
                           if (isDeleteAccount) {
                             // 계정 삭제
                             print('계정 탈퇴!!!!!');
+                            await uuidStorage.delete(
+                                key: 'user_id');
                             await userProfileVM.deleteAccount();
                           } else {
                             print('로그아웃!!!!');
+                            await uuidStorage.delete(
+                                key: 'user_id');
                             await userProfileVM.logOut();
                           }
                           print('상태태태태 초기화');
@@ -129,13 +142,15 @@ class ConfirmDialog extends ConsumerWidget {
                             color: isDeleteAccount
                                 ? AppColors.noti900
                                 : AppColors.green500,
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius:
+                                BorderRadius.circular(12.r),
                           ),
                           child: Center(
                             child: AppText(
                               '확인',
                               style: AppFontStyles.bodyMedium16
-                                  .copyWith(color: AppColors.grey50),
+                                  .copyWith(
+                                      color: AppColors.grey50),
                             ),
                           ),
                         ),
