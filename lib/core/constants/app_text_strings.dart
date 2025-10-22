@@ -202,6 +202,11 @@ class AppTextStrings {
   static const String adhdDescription = '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
   static const String positiveDescription = '마음의 안정감과 회복 탄력도를 확인해요';
 
+  // network_error_page.dart 용
+  static const String networkErrorText1 = '인터넷 연결이 원활하지 않아요';
+  static const String networkErrorText2 = '와이파이나 데이터 연결을 확인한 뒤\n다시 시도해 주세요';
+  static const String tryReconnectingNetwork = '다시 시도하기';
+
   // onboarding 및 srj5 test 응답 용
   static const List<String> testAnswerList = ['전혀 느낀 적 없었어요', '한두 번 그런 기분이 있었어요', '일주일에 3~4일 정도 있었어요', '거의 매일 있었어요'];
 
