@@ -33,8 +33,7 @@ class SolutionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedCharacterNum =
-        ref.read(userViewModelProvider).userProfile!.characterNum;
+    final selectedCharacterNum = ref.read(userViewModelProvider).userProfile!.characterNum;
     final solutionAsync = ref.watch(solutionProvider(solutionId));
 
     return solutionAsync.when(
@@ -45,9 +44,7 @@ class SolutionPage extends ConsumerWidget {
       error: (err, stack) => Scaffold(
         backgroundColor: AppColors.black,
         body: Center(
-          child: AppText(
-              '${AppTextStrings.solutionLoadFailed.split('%s')[0]}$err',
-              style: const TextStyle(color: AppColors.white)),
+          child: AppText('${AppTextStrings.solutionLoadFailed.split('%s')[0]}$err', style: const TextStyle(color: AppColors.white)),
         ),
       ),
       data: (solution) {
@@ -56,8 +53,7 @@ class SolutionPage extends ConsumerWidget {
           return const Scaffold(
             backgroundColor: AppColors.black,
             body: Center(
-              child: AppText("재생할 수 없는 마음 관리 팁 유형입니다.",
-                  style: TextStyle(color: AppColors.white)),
+              child: AppText("재생할 수 없는 마음 관리 팁 유형입니다.", style: TextStyle(color: AppColors.white)),
             ),
           );
         }
@@ -201,8 +197,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     if (mounted) setState(() {}); // 컨트롤 아이콘 갱신 등
 
     // 최초 재생 시작 시, 첫 훅 (3초 표시)
-    if (_controller.value.playerState == PlayerState.playing &&
-        !_characterTimerStarted) {
+    if (_controller.value.playerState == PlayerState.playing && !_characterTimerStarted) {
       _characterTimerStarted = true;
       setState(() {
         _bubbleText = '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!';
@@ -241,7 +236,8 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
     }
 
     // Go back to using `context.go` which is more stable.
-    context.go('/home/chat');
+    // context.go('/home/chat');
+    context.pop();
   }
 
   @override
@@ -261,8 +257,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedCharacterNum =
-        ref.read(userViewModelProvider).userProfile!.characterNum;
+    final selectedCharacterNum = ref.read(userViewModelProvider).userProfile!.characterNum;
     final size = MediaQuery.of(context).size;
     const ar = 16 / 9;
 
@@ -410,9 +405,7 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
                       iconSize: 64.r,
                       color: AppColors.white,
                       icon: Icon(
-                        _controller.value.isPlaying
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_fill,
+                        _controller.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
                       ),
                       onPressed: () {
                         if (_controller.value.isPlaying) {
