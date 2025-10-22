@@ -20,8 +20,7 @@ class LoopVideo extends StatefulWidget {
   State<LoopVideo> createState() => _LoopVideoState();
 }
 
-class _LoopVideoState extends State<LoopVideo>
-    with AutomaticKeepAliveClientMixin {
+class _LoopVideoState extends State<LoopVideo> with AutomaticKeepAliveClientMixin {
   late VideoPlayerController _controller;
   bool _initialized = false;
   bool _visible = false;
@@ -64,7 +63,9 @@ class _LoopVideoState extends State<LoopVideo>
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (_initialized && !_controller.value.hasError) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
@@ -79,8 +80,13 @@ class _LoopVideoState extends State<LoopVideo>
       onVisibilityChanged: (info) {
         final nowVisible = info.visibleFraction > 0.2; // ✅ 보이면 재생, 안 보이면 일시정지
         _visible = nowVisible;
-        if (_initialized) {
-          nowVisible ? _controller.play() : _controller.pause();
+        if (_initialized && mounted && !_controller.value.hasError) {
+          try {
+            nowVisible ? _controller.play() : _controller.pause();
+          } catch (e) {
+            // VideoPlayerController가 dispose된 경우 무시
+            print('VideoPlayer error: $e');
+          }
         }
       },
       child: _initialized && _controller.value.isInitialized
