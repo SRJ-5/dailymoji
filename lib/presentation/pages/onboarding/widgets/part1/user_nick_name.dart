@@ -11,23 +11,17 @@ class UserNickName extends ConsumerStatefulWidget {
   const UserNickName({super.key});
 
   @override
-  ConsumerState<UserNickName> createState() =>
-      _UserNickNameState();
+  ConsumerState<UserNickName> createState() => _UserNickNameState();
 }
 
 class _UserNickNameState extends ConsumerState<UserNickName> {
   bool _isNameCheck = true;
-  TextEditingController _textEditingController =
-      TextEditingController();
+  TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _textEditingController = TextEditingController(
-        text: ref
-            .read(userViewModelProvider)
-            .userProfile
-            ?.userNickNm);
+    _textEditingController = TextEditingController(text: ref.read(userViewModelProvider).userProfile?.userNickNm);
   }
 
   @override
@@ -51,8 +45,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
           Container(
             width: double.infinity,
             height: 88.h,
-            padding: EdgeInsets.symmetric(
-                horizontal: 4.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
             child: Align(
               alignment: Alignment.centerLeft,
               child: AppText(
@@ -75,8 +68,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                 child: TextField(
                   maxLength: 10,
                   controller: _textEditingController,
-                  style: AppFontStyles.bodyRegular16
-                      .copyWith(color: AppColors.grey900),
+                  style: AppFontStyles.bodyRegular16.copyWith(color: AppColors.grey900),
                   onChanged: (value) {
                     final isValid = value.length >= 2;
                     setState(() {
@@ -87,18 +79,13 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                       }
                     });
                     // TODO: ViewModel로 상태 관리 하여 저장
-                    ref
-                        .watch(userViewModelProvider.notifier)
-                        .setUserNickName(
-                            check: isValid, userNickName: value);
+                    ref.watch(userViewModelProvider.notifier).setUserNickName(check: isValid, userNickName: value);
                   },
                   decoration: InputDecoration(
                       counterText: '',
                       hintText: '닉네임을 입력해 주세요',
-                      hintStyle: AppFontStyles.bodyRegular16
-                          .copyWith(color: AppColors.grey400),
-                      suffixIcon: _textEditingController
-                              .text.isEmpty
+                      hintStyle: AppFontStyles.bodyRegular16.copyWith(color: AppColors.grey400),
+                      suffixIcon: _textEditingController.text.isEmpty
                           ? null
                           : IconButton(
                               icon: Icon(
@@ -110,49 +97,26 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
                                 setState(() {
                                   _isNameCheck = true;
                                 });
-                                ref
-                                    .watch(userViewModelProvider
-                                        .notifier)
-                                    .setUserNickName(
-                                        check: false,
-                                        userNickName: '');
+                                ref.watch(userViewModelProvider.notifier).setUserNickName(check: false, userNickName: '');
                               },
                             ),
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.w, vertical: 12.h),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                       filled: true,
                       fillColor: AppColors.green50,
-                      border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                              width: 1,
-                              color: AppColors.grey200),
-                          borderRadius:
-                              BorderRadius.circular(12.r)),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                              width: 1,
-                              color: AppColors.green500),
-                          borderRadius:
-                              BorderRadius.circular(12.r)),
-                      enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                              width: 1,
-                              color: AppColors.grey200),
-                          borderRadius:
-                              BorderRadius.circular(12.r))),
+                      border:
+                          OutlineInputBorder(borderSide: BorderSide(width: 1, color: AppColors.grey200), borderRadius: BorderRadius.circular(12.r)),
+                      focusedBorder:
+                          OutlineInputBorder(borderSide: BorderSide(width: 1, color: AppColors.green500), borderRadius: BorderRadius.circular(12.r)),
+                      enabledBorder:
+                          OutlineInputBorder(borderSide: BorderSide(width: 1, color: AppColors.grey200), borderRadius: BorderRadius.circular(12.r))),
                 ),
               ),
             ),
           ),
-          AppText('• 2~10자만 사용 가능해요',
-              style: AppFontStyles.bodyRegular12.copyWith(
-                  color: _isNameCheck
-                      ? AppColors.grey700
-                      : AppColors.noti900)),
+          AppText('• 2~10자만 사용 가능해요', style: AppFontStyles.bodyRegular12.copyWith(color: _isNameCheck ? AppColors.grey700 : AppColors.noti900)),
           AppText(
             '• 나중에 언제든지 변경할 수 있어요',
-            style: AppFontStyles.bodyRegular12
-                .copyWith(color: AppColors.grey700),
+            style: AppFontStyles.bodyRegular12.copyWith(color: AppColors.grey700),
           ),
           Spacer(),
           Container(
@@ -161,8 +125,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
             child: Align(
                 alignment: Alignment.bottomRight,
                 child: Image.asset(
-                  AppImages
-                      .characterListonBoarding13[characterIndex],
+                  AppImages.characterListonBoarding13[characterIndex],
                   width: 90.w,
                 )),
           ),
