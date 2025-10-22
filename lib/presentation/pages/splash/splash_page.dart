@@ -1,7 +1,10 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/guide/guide_page.dart';
 import 'package:dailymoji/presentation/pages/login/login_page.dart';
+import 'package:dailymoji/presentation/pages/network_error/network_error_page.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashPage extends StatefulWidget {
@@ -16,6 +19,8 @@ class _SplashPageState extends State<SplashPage>
   late AnimationController _controller;
   late Animation<double> _opacity;
   bool isFirstLaunch = false;
+  final connectNetwork = Connectivity();
+  late bool hasConnection = true;
 
   @override
   void initState() {
@@ -27,6 +32,7 @@ class _SplashPageState extends State<SplashPage>
     );
     _opacity =
         Tween<double>(begin: 1.0, end: 0.0).animate(_controller);
+    _checkConnention();
     _startAnimation(); // 애니메이션 시작 함수 호출
   }
 
@@ -42,12 +48,30 @@ class _SplashPageState extends State<SplashPage>
       }
     });
 
+    if (!hasConnection) {
+      return _goToNetworkErrorPage();
+    }
+
     // 앱을 처음 들어오는지 확인
     final prefs = await SharedPreferences.getInstance();
     final firstLaunch = prefs.getBool('isFirstLaunch') ?? true;
     setState(() {
       isFirstLaunch = firstLaunch;
     });
+  }
+
+  // 네트워크 연결 체크
+  Future<void> _checkConnention() async {
+    final connectivityResult =
+        await connectNetwork.checkConnectivity();
+    hasConnection = connectivityResult.any((r) =>
+        r == ConnectivityResult.mobile ||
+        r == ConnectivityResult.wifi ||
+        r == ConnectivityResult.ethernet);
+  }
+
+  void _goToNetworkErrorPage() {
+    context.go('/network_error');
   }
 
   @override
