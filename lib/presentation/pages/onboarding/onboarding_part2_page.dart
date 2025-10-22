@@ -97,6 +97,7 @@ class _OnboardingPart2PageState
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    animationDuration: Duration.zero,
                     minimumSize: Size(double.infinity, 52.h),
                     backgroundColor: isNextEnabled
                         ? AppColors.green500
