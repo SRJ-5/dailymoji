@@ -20,8 +20,7 @@ class LoopVideo extends StatefulWidget {
   State<LoopVideo> createState() => _LoopVideoState();
 }
 
-class _LoopVideoState extends State<LoopVideo>
-    with AutomaticKeepAliveClientMixin {
+class _LoopVideoState extends State<LoopVideo> with AutomaticKeepAliveClientMixin {
   late VideoPlayerController? _controller;
   bool _initialized = false;
   bool _visible = false;
@@ -91,10 +90,7 @@ class _LoopVideoState extends State<LoopVideo>
           if (c.value.isPlaying) c.pause();
         }
       },
-      child: (_controller != null &&
-              _initialized &&
-              !_disposed &&
-              _controller!.value.isInitialized)
+      child: (_controller != null && _initialized && !_disposed && _controller!.value.isInitialized)
           ? SizedBox(
               width: widget.width,
               height: widget.height,

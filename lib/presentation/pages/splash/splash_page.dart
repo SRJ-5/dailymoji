@@ -14,8 +14,7 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _controller;
   late Animation<double> _opacity;
   bool isFirstLaunch = false;
@@ -30,8 +29,7 @@ class _SplashPageState extends State<SplashPage>
       vsync: this,
       duration: Duration(seconds: 1), // 페이드아웃 시간 = 1초
     );
-    _opacity =
-        Tween<double>(begin: 1.0, end: 0.0).animate(_controller);
+    _opacity = Tween<double>(begin: 1.0, end: 0.0).animate(_controller);
     _checkConnention();
     _startAnimation(); // 애니메이션 시작 함수 호출
   }
@@ -49,12 +47,14 @@ class _SplashPageState extends State<SplashPage>
     });
 
     if (!hasConnection) {
+      if (!mounted) return;
       return _goToNetworkErrorPage();
     }
 
     // 앱을 처음 들어오는지 확인
     final prefs = await SharedPreferences.getInstance();
     final firstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+    if (!mounted) return;
     setState(() {
       isFirstLaunch = firstLaunch;
     });
@@ -62,12 +62,8 @@ class _SplashPageState extends State<SplashPage>
 
   // 네트워크 연결 체크
   Future<void> _checkConnention() async {
-    final connectivityResult =
-        await connectNetwork.checkConnectivity();
-    hasConnection = connectivityResult.any((r) =>
-        r == ConnectivityResult.mobile ||
-        r == ConnectivityResult.wifi ||
-        r == ConnectivityResult.ethernet);
+    final connectivityResult = await connectNetwork.checkConnectivity();
+    hasConnection = connectivityResult.any((r) => r == ConnectivityResult.mobile || r == ConnectivityResult.wifi || r == ConnectivityResult.ethernet);
   }
 
   void _goToNetworkErrorPage() {
@@ -77,6 +73,7 @@ class _SplashPageState extends State<SplashPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controller.stop();
     _controller.dispose();
     super.dispose();
   }
