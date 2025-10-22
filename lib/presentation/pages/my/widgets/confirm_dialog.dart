@@ -17,6 +17,7 @@ import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 void resetAppState(WidgetRef ref) {
@@ -53,6 +54,7 @@ class ConfirmDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final uuidStorage = FlutterSecureStorage();
     final userProfileVM =
         ref.read(userViewModelProvider.notifier);
     // 배경 터치는 닫기, 다이얼로그 영역은 차단
@@ -119,9 +121,13 @@ class ConfirmDialog extends ConsumerWidget {
                           if (isDeleteAccount) {
                             // 계정 삭제
                             print('계정 탈퇴!!!!!');
+                            await uuidStorage.delete(
+                                key: 'user_id');
                             await userProfileVM.deleteAccount();
                           } else {
                             print('로그아웃!!!!');
+                            await uuidStorage.delete(
+                                key: 'user_id');
                             await userProfileVM.logOut();
                           }
                           print('상태태태태 초기화');

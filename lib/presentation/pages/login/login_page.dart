@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -15,23 +18,34 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  final uuidStorage = FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    autoLogin();
+  }
+
   // Rin: 가입여부 확인하고 프로필 이미 있으면 넘어가는 함수 따로 뺌
   Future<void> _handleLogin(Future<String?> loginFuture,
       TargetPlatform platform) async {
     try {
       final userId = await loginFuture;
       if (userId != null && mounted) {
-        //MIN: 로그인 성공 후, FCM 토큰 Supabase에 저장
-        await ref
-            .read(userViewModelProvider.notifier)
-            .saveFcmTokenToSupabase(platform);
         // 로그인 성공 후, 프로필이 있는지 확인
-        final isRegistered = await ref
-            .read(userViewModelProvider.notifier)
-            .getUserProfile(userId);
+        final isRegistered = await checkLoginUser(userId);
         if (mounted) {
           // 프로필 유무에 따라 다른 페이지로 이동
           if (isRegistered) {
+            // 내부에 uuid 저장
+            final localUserId = await checkLocalUuid();
+            await savelocalUuid(
+                userId: userId, localUserId: localUserId);
+            //MIN: 로그인 성공 후, FCM 토큰 Supabase에 저장
+            await ref
+                .read(userViewModelProvider.notifier)
+                .saveFcmTokenToSupabase(
+                    platform: platform, userId: userId);
             context.go('/home'); // 이미 가입했으면 홈으로
           } else {
             context.go('/onboarding1'); // 처음이면 온보딩으로
@@ -48,6 +62,47 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: AppText("오류가 발생했습니다: ${e.toString()}")));
+      }
+    }
+  }
+
+  Future<String?> checkLocalUuid() async {
+    final localUserId = await uuidStorage.read(key: 'user_id');
+    print('local uuid $localUserId');
+    return localUserId;
+  }
+
+  Future<void> savelocalUuid(
+      {required String? userId,
+      required String? localUserId}) async {
+    if (localUserId == null || localUserId != userId) {
+      await uuidStorage.write(key: 'user_id', value: userId);
+      print('local uuid 저장완료 $userId');
+    }
+  }
+
+  Future<bool> checkLoginUser(String userId) async {
+    final result = await ref
+        .read(userViewModelProvider.notifier)
+        .getUserProfile(userId);
+    return result;
+  }
+
+  Future<void> autoLogin() async {
+    final localUserId = await checkLocalUuid();
+    if (localUserId != null) {
+      final isRegistered = await checkLoginUser(localUserId);
+      if (mounted) {
+        final platform = Theme.of(context).platform;
+        // 프로필 유무에 따라 다른 페이지로 이동
+        if (isRegistered) {
+          //MIN: 로그인 성공 후, FCM 토큰 Supabase에 저장
+          await ref
+              .read(userViewModelProvider.notifier)
+              .saveFcmTokenToSupabase(
+                  platform: platform, userId: localUserId);
+          context.go('/home'); // 이미 가입했으면 홈으로
+        }
       }
     }
   }
@@ -74,12 +129,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    height: 47.44.h,
-                    child: Image.asset(
-                      AppImages.dailymojiLogoColor,
-                      fit: BoxFit.cover,
-                    ),
+                  SvgPicture.asset(
+                    AppIcons.dailymojiLogoColor,
+                    height: 48.h,
+                    width: 174.w,
                   ),
                   SizedBox(
                     height: 8.h,
