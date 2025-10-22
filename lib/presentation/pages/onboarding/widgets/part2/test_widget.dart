@@ -10,35 +10,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class TestWidget extends ConsumerStatefulWidget {
+class TestWidget extends ConsumerWidget {
   final String text;
   final int questionIndex;
-  const TestWidget(
-      {super.key,
-      required this.text,
-      required this.questionIndex});
 
+  const TestWidget({
+    super.key,
+    required this.text,
+    required this.questionIndex,
+  });
+
+  // 2. _TestWidgetState가 필요 없어지고, build 메서드만 남습니다.
   @override
-  ConsumerState<TestWidget> createState() => _TestWidgetState();
-}
-
-class _TestWidgetState extends ConsumerState<TestWidget> {
-  late int _selectedIndex;
-
-  final List<String> _answerList = AppTextStrings.testAnswerList;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = ref
-        .read(userViewModelProvider)
-        .step2Answers[widget.questionIndex];
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final List<String> _answerList =
+        AppTextStrings.testAnswerList;
     final characterIndex =
         ref.read(userViewModelProvider).characterNum;
+
+    // 3. initState 대신 build 메서드에서 'watch'로 현재 선택된 인덱스를 읽어옵니다.
+    final _selectedIndex = ref
+        .watch(userViewModelProvider)
+        .step2Answers[questionIndex];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +65,7 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                         child: Align(
                             alignment: Alignment.centerLeft,
                             child: AppText(
-                              widget.text,
+                              text,
                               style: AppFontStyles.bodyBold16
                                   .copyWith(
                                       color: AppColors.grey900),
@@ -96,17 +89,16 @@ class _TestWidgetState extends ConsumerState<TestWidget> {
                 children: [
                   GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _selectedIndex =
-                              (_selectedIndex == index)
-                                  ? -1
-                                  : index;
-                        });
+                        final newIndex =
+                            (_selectedIndex == index)
+                                ? -1
+                                : index;
+
                         ref
                             .read(userViewModelProvider.notifier)
                             .setAnswer(
-                              index: widget.questionIndex,
-                              score: _selectedIndex,
+                              index: questionIndex,
+                              score: newIndex, // 계산된 새 인덱스를 전달
                             );
                       },
                       child: SelectBox(

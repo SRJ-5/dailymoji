@@ -11,7 +11,8 @@ abstract class UserProfileDataSource {
   Future<UserProfileDto> updateCharacterNM(
       {required String uuid, required String characterNM});
   Future<UserProfileDto> updateCharacterPersonality(
-      {required String uuid, required String characterPersonality});
+      {required String uuid,
+      required String characterPersonality});
 
   Future<String> fetchSleepHygieneTip({
     String? personality,
@@ -25,5 +26,7 @@ abstract class UserProfileDataSource {
 
   Future<void> logOut();
   Future<void> deleteAccount(String userId);
-  Future<void> saveFcmTokenToSupabase(TargetPlatform platform);
+  Future<void> saveFcmTokenToSupabase(
+      {required TargetPlatform platform,
+      required String userId});
 }
