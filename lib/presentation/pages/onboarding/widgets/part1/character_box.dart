@@ -54,10 +54,10 @@ class CharacterBox extends StatelessWidget {
         children: [
           SizedBox(
             width: 198.w,
-            height: 260.h,
+            height: 250.h,
             child: Image.asset(
               characterImage,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
             ),
           ),
           SizedBox(height: 12.r),

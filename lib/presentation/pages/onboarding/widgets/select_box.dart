@@ -19,8 +19,7 @@ class SelectBox extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 48.h,
-      padding:
-          EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.only(left: 16.w),
       decoration: BoxDecoration(
           color: isSelected
               ? AppColors.green700
