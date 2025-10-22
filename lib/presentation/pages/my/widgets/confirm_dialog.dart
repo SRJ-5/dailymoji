@@ -86,7 +86,7 @@ class ConfirmDialog extends ConsumerWidget {
                     style: AppFontStyles.heading3
                         .copyWith(color: AppColors.grey900),
                   ),
-                  SizedBox(height: 36.h),
+                  Spacer(),
                   Row(
                     children: [
                       GestureDetector(

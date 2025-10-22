@@ -42,9 +42,6 @@ class _GuidePageState extends ConsumerState<GuidePage> {
                 guideIndex: stepIndex,
               ),
             ),
-            SizedBox(height: 40.h),
-            GuideIndicator(
-                totalSteps: totalSteps, stepIndex: stepIndex),
           ],
         ),
       ),
