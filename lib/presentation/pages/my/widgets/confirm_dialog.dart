@@ -34,9 +34,9 @@ void resetAppState(WidgetRef ref) {
   ref.invalidate(get14DayClusterStatsUseCaseProvider);
   ref.invalidate(fourteenDayAggProvider);
   ref.invalidate(getSolutionContextUseCaseProvider);
-  ref.invalidate(getMonthClusterScoresUseCaseProvider);
-  ref.invalidate(dailyMaxByMonthProvider);
-  ref.invalidate(clusterMonthViewModelProvider);
+  // ref.invalidate(getMonthClusterScoresUseCaseProvider);
+  // ref.invalidate(dailyMaxByMonthProvider);
+  // ref.invalidate(clusterMonthViewModelProvider);
   ref.invalidate(clusterScoresViewModelProvider);
   ref.invalidate(chatViewModelProvider);
   ref.invalidate(solutionContextViewModelProvider);

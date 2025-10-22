@@ -38,6 +38,16 @@ class AppImages {
   static const String defaultEmoji =
       'assets/images/emojis/default.png';
 
+  // images - back_ground
+  static const String bgHouse =
+      'assets/images/back_ground/bg_house.png';
+  static const String bgRain =
+      'assets/images/back_ground/bg_rain.png';
+  static const String bgSnow =
+      'assets/images/back_ground/bg_snow.png';
+  static const String bgForest =
+      'assets/images/back_ground/bg_forest.png';
+
   // images - character_cado
   static const String cadoFace =
       'assets/images/character_cado/cado_face.png';
@@ -75,6 +85,14 @@ class AppImages {
       'assets/images/character_carrot/carrot_front_view.png';
   static const String carrotLookUp =
       'assets/images/character_carrot/carrot_look_up.png';
+
+  //tutorial
+  static const String montlyTutorial =
+      'assets/images/tutorial/monthly_tutorial.png';
+  static const String weeklyTutorial =
+      'assets/images/tutorial/weekly_tutorial.png';
+  static const String homeTutorial =
+      'assets/images/tutorial/home_tutorial.png';
 
   // images - characterList
   static const List<String> characterListProfile = [
