@@ -18,19 +18,13 @@ class BreathingSolutionPage extends ConsumerStatefulWidget {
   final String? sessionId;
   final bool isReview;
 
-  const BreathingSolutionPage(
-      {super.key,
-      required this.solutionId,
-      this.sessionId,
-      this.isReview = false});
+  const BreathingSolutionPage({super.key, required this.solutionId, this.sessionId, this.isReview = false});
 
   @override
-  ConsumerState<BreathingSolutionPage> createState() =>
-      _BreathingSolutionPageState();
+  ConsumerState<BreathingSolutionPage> createState() => _BreathingSolutionPageState();
 }
 
-class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
-    with TickerProviderStateMixin {
+class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage> with TickerProviderStateMixin {
   double _opacity = 0.0;
   int _step = 0;
   int _timerSeconds = 0;
@@ -136,9 +130,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
   // 마음 관리 팁 컨텍스트를 비동기로 가져와서 _steps를 업데이트
   Future<void> _loadSolutionContext() async {
     try {
-      final solutionContext = await ref
-          .read(solutionContextViewModelProvider.notifier)
-          .getSolutionContext(widget.solutionId);
+      final solutionContext = await ref.read(solutionContextViewModelProvider.notifier).getSolutionContext(widget.solutionId);
 
       if (mounted) {
         setState(() {
@@ -213,7 +205,8 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
     } else {
       debugPrint("RIN: This is a review. Skipping follow-up message.");
     }
-    context.go('/home/chat');
+    // context.go('/home/chat');
+    context.pop();
   }
 
   @override
@@ -233,8 +226,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
 
   @override
   Widget build(BuildContext context) {
-    final selectedCharacterNum =
-        ref.read(userViewModelProvider).userProfile!.characterNum;
+    final selectedCharacterNum = ref.read(userViewModelProvider).userProfile!.characterNum;
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 빈 공간도 터치 감지
       onTap: () {
@@ -260,14 +252,12 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                     if (_steps[_step]["title"] != null)
                       AppText(
                         _steps[_step]["title"],
-                        style: AppFontStyles.heading2
-                            .copyWith(color: AppColors.grey100),
+                        style: AppFontStyles.heading2.copyWith(color: AppColors.grey100),
                         textAlign: TextAlign.center,
                       ),
                     AppText(
                       _steps[_step]["text"],
-                      style: (_steps[_step]["font"] as TextStyle)
-                          .copyWith(color: AppColors.grey100),
+                      style: (_steps[_step]["font"] as TextStyle).copyWith(color: AppColors.grey100),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -282,8 +272,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                 width: 240.w,
                 height: 360.h,
                 child: Image(
-                  image: AssetImage(
-                      AppImages.characterListProfile[selectedCharacterNum!]),
+                  image: AssetImage(AppImages.characterListProfile[selectedCharacterNum!]),
                 ),
               ),
             ),
@@ -294,8 +283,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               child: AnimatedBuilder(
                 animation: _timerController,
                 builder: (context, child) {
-                  bool isTimerHidden =
-                      _step == 0 || _step >= _steps.length - 1; // ||
+                  bool isTimerHidden = _step == 0 || _step >= _steps.length - 1; // ||
                   // _opacity == 0.0;
                   if (isTimerHidden) {
                     return const SizedBox.shrink();
@@ -345,8 +333,7 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
                   opacity: _blinkAnimation,
                   child: AppText(
                     "화면을 탭해서 종료해주세요",
-                    style: AppFontStyles.bodyMedium18
-                        .copyWith(color: AppColors.grey400),
+                    style: AppFontStyles.bodyMedium18.copyWith(color: AppColors.grey400),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -402,9 +389,7 @@ class TimerPainter extends CustomPainter {
     // 가운데 숫자 (heading2, white)
     if (seconds > 0) {
       final textPainter = TextPainter(
-        text: TextSpan(
-            text: '$seconds',
-            style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
+        text: TextSpan(text: '$seconds', style: AppFontStyles.heading2.copyWith(color: AppColors.white)),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();

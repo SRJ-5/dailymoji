@@ -7,8 +7,8 @@ BACKFILL_ENDPOINT = f"{API_BASE_URL}/jobs/backfill"
 
 # 시뮬레이션으로 데이터를 생성한 날짜 범위
 payload = {
-    "start_date": "2025-10-03",
-    "end_date": "2025-10-17"
+    "start_date": "2025-10-01",
+    "end_date": "2025-10-21"
 }
 
 print(f"🚀 {BACKFILL_ENDPOINT} 에 백필 작업을 요청합니다...")
