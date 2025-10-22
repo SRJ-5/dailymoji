@@ -11,8 +11,10 @@ class AppImages {
   //     'assets/images/logo/dailymoji_logo_black.png';
   // static const String dailymojiLogoColor =
   //     'assets/images/logo/dailymoji_logo_color.png';
-  static const String appleLoginLogo = 'assets/images/logo/apple_login_logo.png';
-  static const String googleLoginLogo = 'assets/images/logo/google_login_logo.png';
+  static const String appleLoginLogo =
+      'assets/images/logo/apple_login_logo.png';
+  static const String googleLoginLogo =
+      'assets/images/logo/google_login_logo.png';
 
   // images - emojis
   static const String angryEmoji = 'assets/images/emojis/angry.png';
@@ -31,31 +33,49 @@ class AppImages {
   // images - character_cado
   static const String cadoFace = 'assets/images/character_cado/cado_face.png';
   static const String cadoLove = 'assets/images/character_cado/cado_love.png';
-  static const String cadoProfile = 'assets/images/character_cado/cado_profile.png';
+  static const String cadoProfile =
+      'assets/images/character_cado/cado_profile.png';
   static const String cadoWalk = 'assets/images/character_cado/cado_walk.png';
   static const String cadoTest = 'assets/images/character_cado/cado_test.png';
-  static const String cadoCalender = 'assets/images/character_cado/cado_calender.png';
-  static const String cadoRecord = 'assets/images/character_cado/cado_record.png';
-  static const String cadoLookUp = 'assets/images/character_cado/cado_look_up.png';
-  static const String cadoSideView = 'assets/images/character_cado/cado_side_view.png';
+  static const String cadoCalender =
+      'assets/images/character_cado/cado_calender.png';
+  static const String cadoRecord =
+      'assets/images/character_cado/cado_record.png';
+  static const String cadoLookUp =
+      'assets/images/character_cado/cado_look_up.png';
+  static const String cadoSideView =
+      'assets/images/character_cado/cado_side_view.png';
 
   // images - character_carrot
-  static const String carrotChat = 'assets/images/character_carrot/carrot_chat.png';
-  static const String carrotLove = 'assets/images/character_carrot/carrot_love.png';
-  static const String carrotProfile = 'assets/images/character_carrot/carrot_profile.png';
-  static const String carrotFace = 'assets/images/character_carrot/carrot_face.png';
-  static const String carrotWalk = 'assets/images/character_carrot/carrot_walk.png';
-  static const String carrotLeftWalk = 'assets/images/character_carrot/carrot_left_walk.png';
-  static const String carrotFrontView = 'assets/images/character_carrot/carrot_front_view.png';
-  static const String carrotLookUp = 'assets/images/character_carrot/carrot_look_up.png';
+  static const String carrotChat =
+      'assets/images/character_carrot/carrot_chat.png';
+  static const String carrotLove =
+      'assets/images/character_carrot/carrot_love.png';
+  static const String carrotProfile =
+      'assets/images/character_carrot/carrot_profile.png';
+  static const String carrotFace =
+      'assets/images/character_carrot/carrot_face.png';
+  static const String carrotWalk =
+      'assets/images/character_carrot/carrot_walk.png';
+  static const String carrotLeftWalk =
+      'assets/images/character_carrot/carrot_left_walk.png';
+  static const String carrotFrontView =
+      'assets/images/character_carrot/carrot_front_view.png';
+  static const String carrotLookUp =
+      'assets/images/character_carrot/carrot_look_up.png';
 
   //tutorial
-  static const String montlyTutorial = 'assets/images/tutorial/monthly_tutorial.png';
-  static const String weeklyTutorial = 'assets/images/tutorial/weekly_tutorial.png';
+  static const String montlyTutorial =
+      'assets/images/tutorial/monthly_tutorial.png';
+  static const String weeklyTutorial =
+      'assets/images/tutorial/weekly_tutorial.png';
   static const String homeTutorial = 'assets/images/tutorial/home_tutorial.png';
 
   // images - characterList
-  static const List<String> characterListProfile = [AppImages.cadoProfile, AppImages.carrotProfile];
+  static const List<String> characterListProfile = [
+    AppImages.cadoProfile,
+    AppImages.carrotProfile
+  ];
   static const List<String> characterListLove = [
     AppImages.cadoLove,
     AppImages.carrotLove,

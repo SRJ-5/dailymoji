@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/presentation/pages/home/nudge/nudge_view_model.dart';
 import 'package:dailymoji/presentation/pages/home/widget/emoji_video.dart';
 import 'package:dailymoji/presentation/pages/home/widget/home_tutorial.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
@@ -10,6 +11,7 @@ import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
+import 'package:dailymoji/presentation/pages/home/nudge/nudge_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,6 +21,24 @@ import 'package:dailymoji/presentation/providers/background_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _kHomeTutorialSeenKey = 'home_tutorial_seen_v1';
+
+// bool _nudgeHandled = false; // 앱 실행당 1회만 체크/표시
+
+const emotionClusterMap = {
+  "angry": AppTextStrings.negHigh,
+  "crying": AppTextStrings.negLow,
+  "sleeping": AppTextStrings.sleep,
+  "shocked": AppTextStrings.adhd,
+  "smile": AppTextStrings.positive,
+};
+
+const emotionTextMap = {
+  "angry": AppTextStrings.clusterNegHigh,
+  "crying": AppTextStrings.clusterNegLow,
+  "sleeping": AppTextStrings.clusterSleep,
+  "shocked": AppTextStrings.clusterAdhd,
+  "smile": AppTextStrings.clusterPositive,
+};
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -31,6 +51,29 @@ class _HomePageState extends ConsumerState<HomePage> {
   String displayText = "";
   String? currentDialogue;
 
+  // Future<void> _checkAndShowNudge({required String userId}) async {
+  //   try {
+  //     // 튜토리얼이 켜져 있으면 닫힌 뒤에 진행
+  //     if (_showTutorial) {
+  //       // 사용자가 닫을 때 _handleHomeTutorialClose에서 한번 더 시도하므로 여기선 리턴만
+  //       return;
+  //     }
+
+  //     final vm = ref.read(nudgeViewModelProvider(userId).notifier);
+  //     final state = await ref.read(nudgeViewModelProvider(userId).future);
+
+  //     if (!mounted || !state.shouldShow) return;
+
+  //     await NudgeModal.show(
+  //       context,
+  //       onGo: () => context.push('/emotion/check'),
+  //       onSnooze7d: () => vm.snooze7Days(),
+  //     );
+  //   } catch (_) {
+  //     // 네트워크/취소 등은 조용히 무시
+  //   }
+  // }
+
   void _startTyping(String newText) {
     setState(() {
       displayText = newText.replaceAll(r'\n', '\n');
@@ -38,13 +81,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void onEmojiTap(String emotionKey) {
-    final selectedNotifier =
-        ref.read(selectedEmotionProvider.notifier);
+    final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
     // ✅ 변경: 단순 토글만 유지(확대/축소/색상 변경 로직 제거)
     selectedNotifier.state =
-        (selectedNotifier.state == emotionKey)
-            ? null
-            : emotionKey;
+        (selectedNotifier.state == emotionKey) ? null : emotionKey;
   }
 
   bool _showTutorial = false;
@@ -54,10 +94,29 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
       ref.invalidate(homeDialogueProvider);
       ref.invalidate(selectedEmotionProvider);
     });
+
+    // ref.listenManual(userViewModelProvider, (prev, next) {
+    //   final userId = next.userProfile?.id;
+    //   if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
+    //     _nudgeHandled = true;
+    //     _checkAndShowNudge(userId: userId);
+    //   }
+    // });
+
+    // // ✅ 바로 실행 (userViewModelProvider가 이미 로드된 경우 대비)
+    // final userId = ref.read(userViewModelProvider).userProfile?.id;
+    // if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
+    //   _nudgeHandled = true;
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _checkAndShowNudge(userId: userId);
+    //   });
+    // }
+
     _initHomeTutorialPrefs();
   }
 
@@ -76,20 +135,29 @@ class _HomePageState extends ConsumerState<HomePage> {
   Future<void> _handleHomeTutorialClose() async {
     if (!mounted) return;
     setState(() => _showTutorial = false);
-    // 누른 순간에만 '봤다' 저장
     final prefs = await SharedPreferences.getInstance();
     if (!_homeSeen) {
       _homeSeen = true;
       await prefs.setBool(_kHomeTutorialSeenKey, true);
     }
+
+    // // ✅ 튜토리얼 때문에 못 띄웠다면, 여기서 한 번 더 시도
+    // final userId = ref.read(userViewModelProvider).userProfile?.id;
+    // if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
+    //   _nudgeHandled = true;
+    //   _checkAndShowNudge(userId: userId);
+    // }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedCharacterNum = ref
-        .read(userViewModelProvider)
-        .userProfile!
-        .characterNum;
+    final selectedCharacterNum =
+        ref.read(userViewModelProvider).userProfile!.characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
 
     // Provider에서 현재 배경 경로 가져오기
@@ -112,8 +180,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             width: double.infinity,
             color: AppColors.yellow50,
             child: Center(
-              child: CircularProgressIndicator(
-                  color: AppColors.green400),
+              child: CircularProgressIndicator(color: AppColors.green400),
             ),
           ),
         ),
@@ -172,24 +239,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         SvgPicture.asset(
                           AppIcons.bubbleUnder,
-                          height: 110.h,
-                          width: 200.w,
+                          height: 140.h,
                         ),
                         Transform.translate(
                           offset: Offset(0, -7.h),
                           child: SizedBox(
-                            width: 160.w,
-                            height: 110.h,
+                            width: 180.w,
+                            height: 140.h,
                             child: Center(
                               child: AppText(
-                                displayText.isNotEmpty
-                                    ? displayText
-                                    : AppTextStrings
-                                        .defaultGreeting,
+                                displayText,
                                 style: AppFontStyles.bodyBold16
-                                    .copyWith(
-                                        color:
-                                            AppColors.grey900),
+                                    .copyWith(color: AppColors.grey900),
                                 textAlign: TextAlign.center,
                                 maxLines: 4,
                                 overflow: TextOverflow.ellipsis,
@@ -200,10 +261,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 30.h),
+                    SizedBox(height: 10.h),
                     Image.asset(
-                      AppImages.characterListProfile[
-                          selectedCharacterNum!],
+                      AppImages.characterListProfile[selectedCharacterNum!],
                       height: 168.h,
                       width: 168.w,
                     ),
@@ -219,8 +279,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: SizedBox(
                   height: 122.h,
                   child: ListView.separated(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 16.w),
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (_, idx) {
                       // 원하는 노출 순서 정의
@@ -238,8 +297,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         onTap: () => onEmojiTap(key),
                       );
                     },
-                    separatorBuilder: (_, __) =>
-                        SizedBox(width: 12.w),
+                    separatorBuilder: (_, __) => SizedBox(width: 12.w),
                     itemCount: 5,
                   ),
                 ),
@@ -254,22 +312,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: GestureDetector(
                   onTap: () {
                     final emotion = selectedEmotion; // 백업
-                    context.go('/home/chat', extra: emotion);
+                    context.go('/home/chat', extra: emotionClusterMap[emotion]);
                     ref.invalidate(selectedEmotionProvider);
                   },
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
                     child: Container(
                       height: 40.h,
                       padding: EdgeInsets.symmetric(
                           horizontal: 16.w, vertical: 10.h),
                       decoration: BoxDecoration(
                         color: AppColors.white,
-                        borderRadius:
-                            BorderRadius.circular(12.r),
-                        border:
-                            Border.all(color: AppColors.grey200),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.grey200),
                       ),
                       child: Row(
                         children: [
@@ -277,14 +332,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                             child: AppText(
                               "무엇이든 입력하세요",
                               style: AppFontStyles.bodyRegular14
-                                  .copyWith(
-                                      color: AppColors.grey600),
+                                  .copyWith(color: AppColors.grey600),
                             ),
                           ),
                           selectedEmotion == null
                               ? SvgPicture.asset(AppIcons.send)
-                              : SvgPicture.asset(
-                                  AppIcons.sendOrange),
+                              : SvgPicture.asset(AppIcons.sendOrange),
                         ],
                       ),
                     ),
@@ -323,24 +376,9 @@ class _EmojiItem extends StatelessWidget {
     // 백엔드와 프론트까지에서 클러스터에 대한 전반적인 용어정리가 안됨
     // 백엔드에선  "angry", "crying", "sleeping", "shocked", "smile"데이터를 원하고
     // 프론트랑 프로바이더, 에셋경로, 기타 전반적인 곳은 'neg_high', 'neg_low', 'sleep', 'adhd', 'positive'를 원함
-    const emotionClusterMap = {
-      "angry": AppTextStrings.negHigh,
-      "crying": AppTextStrings.negLow,
-      "sleeping": AppTextStrings.sleep,
-      "shocked": AppTextStrings.adhd,
-      "smile": AppTextStrings.positive,
-    };
 
-    final videoPath =
-        EmojiAsset.fromString(emotionClusterMap[emoKey]!).video;
+    final videoPath = EmojiAsset.fromString(emotionClusterMap[emoKey]!).video;
 
-    const emotionTextMap = {
-      "angry": AppTextStrings.clusterNegHigh,
-      "crying": AppTextStrings.clusterNegLow,
-      "sleeping": AppTextStrings.clusterSleep,
-      "shocked": AppTextStrings.clusterAdhd,
-      "smile": AppTextStrings.clusterPositive,
-    };
     final label = emotionTextMap[emoKey] ?? "";
 
     return GestureDetector(
@@ -349,17 +387,14 @@ class _EmojiItem extends StatelessWidget {
         children: [
           // 아이콘 타일
           Container(
-            padding: EdgeInsets.symmetric(
-                horizontal: 20.w, vertical: 16.h),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             width: 100.w,
             height: 122.h,
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: isSelected
-                    ? AppColors.orange300
-                    : AppColors.grey200,
+                color: isSelected ? AppColors.orange300 : AppColors.grey200,
                 width: isSelected ? 2.r : 1.r,
               ),
               boxShadow: [
@@ -373,10 +408,7 @@ class _EmojiItem extends StatelessWidget {
             alignment: Alignment.center,
             child: Column(
               children: [
-                LoopVideo(
-                    assetPath: videoPath,
-                    width: 60.w,
-                    height: 60.h),
+                LoopVideo(assetPath: videoPath, width: 60.w, height: 60.h),
                 SizedBox(height: 8.h),
                 // 라벨
                 SizedBox(
