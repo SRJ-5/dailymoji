@@ -58,6 +58,11 @@ dependencies:
   url_launcher: ^6.3.1
   flutter_localizations:
     sdk: flutter
+  video_player: ^2.9.2
+  visibility_detector: ^0.4.0+2
+  connectivity_plus: ^7.0.0
+  app_settings: ^6.1.1
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:
@@ -88,10 +93,13 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/images/emojis/
+    - assets/images/back_ground/
     - assets/images/app_icon/
     - assets/images/character_cado/
     - assets/images/character_carrot/
     - assets/images/logo/
+    - assets/images/tutorial/
+    - assets/videos/
     - .env
   
     
