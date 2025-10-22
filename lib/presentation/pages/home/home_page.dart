@@ -198,7 +198,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             titleSpacing: 16.w,
-            title: Image.asset(AppImages.dailymojiLogoBlack, height: 30),
+            title: SvgPicture.asset(
+              AppIcons.dailymojiLogoBlack,
+              height: 23.72.h,
+              width: 86.73.w,
+            ),
             actions: [
               IconButton(
                 onPressed: () {
