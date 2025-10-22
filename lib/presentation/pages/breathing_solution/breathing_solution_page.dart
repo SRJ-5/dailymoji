@@ -255,27 +255,22 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               top: 167.h,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: AnimatedOpacity(
-                  opacity: _opacity,
-                  duration: const Duration(milliseconds: 300),
-                  // RIN: 문구 수정
-                  child: Column(
-                    children: [
-                      if (_steps[_step]["title"] != null)
-                        AppText(
-                          _steps[_step]["title"],
-                          style: AppFontStyles.heading2
-                              .copyWith(color: AppColors.grey100),
-                          textAlign: TextAlign.center,
-                        ),
+                child: Column(
+                  children: [
+                    if (_steps[_step]["title"] != null)
                       AppText(
-                        _steps[_step]["text"],
-                        style: (_steps[_step]["font"] as TextStyle)
+                        _steps[_step]["title"],
+                        style: AppFontStyles.heading2
                             .copyWith(color: AppColors.grey100),
                         textAlign: TextAlign.center,
                       ),
-                    ],
-                  ),
+                    AppText(
+                      _steps[_step]["text"],
+                      style: (_steps[_step]["font"] as TextStyle)
+                          .copyWith(color: AppColors.grey100),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -299,9 +294,9 @@ class _BreathingSolutionPageState extends ConsumerState<BreathingSolutionPage>
               child: AnimatedBuilder(
                 animation: _timerController,
                 builder: (context, child) {
-                  bool isTimerHidden = _step == 0 ||
-                      _step >= _steps.length - 1 ||
-                      _opacity == 0.0;
+                  bool isTimerHidden =
+                      _step == 0 || _step >= _steps.length - 1; // ||
+                  // _opacity == 0.0;
                   if (isTimerHidden) {
                     return const SizedBox.shrink();
                   }
