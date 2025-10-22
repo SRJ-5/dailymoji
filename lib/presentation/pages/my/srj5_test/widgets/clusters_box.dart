@@ -19,7 +19,7 @@ class ClustersBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 71.h,
+      constraints: BoxConstraints(minHeight: 71.h),
       padding:
           EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       decoration: BoxDecoration(
@@ -37,7 +37,6 @@ class ClustersBox extends StatelessWidget {
               child: Image.asset(cluster.icon!)),
           SizedBox(width: 12.w),
           Container(
-            height: double.infinity,
             padding: EdgeInsets.only(left: 12.w),
             decoration: BoxDecoration(
                 border: Border(
