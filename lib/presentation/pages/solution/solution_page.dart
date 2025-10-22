@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:dailymoji/core/constants/app_text_strings.dart';
@@ -94,48 +95,89 @@ class _PlayerView extends ConsumerStatefulWidget {
 
 class _PlayerViewState extends ConsumerState<_PlayerView> {
   late final YoutubePlayerController _controller;
+
   bool _showControls = false;
   bool _isMuted = true;
   bool _isNavigating = false;
+
+  // 캐릭터/말풍선 제어
   bool _showCharacter = false;
-  bool _characterTimerStarted = false;
+  bool _characterTimerStarted = false; // 최초 훅 3초용
+  bool _secondPromptShown = false; // 2분 후 트리거는 1회만
+  String _bubbleText = '제가 옆에서 함께할게요.\n2분 동안 영상에 집중해 봐요!\n원하시면 언제든 나갈 수 있어요.';
+
+  // 누적 재생시간 측정용
+  Duration _accumulatedPlay = Duration.zero;
+  Duration? _lastPosition;
+  Timer? _playTimer;
 
   String? _exitReason;
 
   @override
   void initState() {
     super.initState();
-    // 가로 고정 + 몰입형 UI
+    // 가로 고정 + 몰입형 UI 유지
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    // Provider로부터 받은 solution 데이터로 컨트롤러 초기화
     _controller = YoutubePlayerController(
       initialVideoId: widget.solution.videoId!,
-      flags: YoutubePlayerFlags(
-        autoPlay: true, // 페이지 진입 시 자동 재생
-        hideControls: true, // 기본 컨트롤 숨김
-        disableDragSeek: true, // 드래그 시킹 비활성화(원하면 false)
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        hideControls: true,
+        disableDragSeek: true,
         enableCaption: false,
-        mute: true, // 자동재생 정책 회피하려면 true로 시작 후 첫 탭에서 unMute()
-        startAt: widget.solution.startAt ?? 0,
-        endAt: widget.solution.endAt,
+        mute: true,
       ),
-    );
-    // _isMuted = true; // ← 플래그와 맞추기
-    _controller.addListener(_playerListener);
+    )..addListener(_playerListener);
 
-// RIN: 0.1초 후에 음소거를 해제로직 추가
+    // 자동 재생 정책 회피 후 곧바로 unmute
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _controller.unMute();
-        setState(() {
-          _isMuted = false;
-        });
+      if (!mounted) return;
+      _controller.unMute();
+      setState(() => _isMuted = false);
+    });
+
+    // ✅ 누적 재생 타이머 (실제 재생된 시간만 합산)
+    _playTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      if (!mounted) return;
+      final value = _controller.value;
+
+      // playing 상태일 때만 측정 (버퍼/일시정지는 제외)
+      if (value.playerState == PlayerState.playing) {
+        final current = value.position;
+        if (_lastPosition != null && current > _lastPosition!) {
+          _accumulatedPlay += current - _lastPosition!;
+        }
+        _lastPosition = current;
+
+        // 2분(=120초) 경과 시 1회만 말풍선 재등장
+        if (!_secondPromptShown && _accumulatedPlay.inSeconds >= 120) {
+          _secondPromptShown = true;
+          _triggerSecondPrompt();
+        }
+      } else {
+        // playing이 아니면 포지션만 갱신 (seek 대비)
+        _lastPosition = value.position;
       }
+    });
+  }
+
+// “2분 후 말풍선” 트리거 함수
+  void _triggerSecondPrompt() {
+    if (!mounted) return;
+    setState(() {
+      _bubbleText = '2분이 지났어요!\n괜찮다면 깊게 호흡하며\n영상에 조금 더 머물러보세요.';
+      _showCharacter = true;
+    });
+
+    // 4~5초 후 자동 숨김
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      setState(() => _showCharacter = false);
     });
   }
 
@@ -156,25 +198,23 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
 //   }
 
   void _playerListener() {
-    // 플레이어 컨트롤 개선: 컨트롤러 값(재생/일시정지 상태 등)이 변경될 때마다 UI를 갱신
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {}); // 컨트롤 아이콘 갱신 등
 
-    // 영상이 실제 재생될 때 캐릭터 타이머 시작
+    // 최초 재생 시작 시, 첫 훅 (3초 표시)
     if (_controller.value.playerState == PlayerState.playing &&
         !_characterTimerStarted) {
       _characterTimerStarted = true;
-      setState(() => _showCharacter = true);
+      setState(() {
+        _bubbleText = '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!';
+        _showCharacter = true;
+      });
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) setState(() => _showCharacter = false);
       });
     }
 
     if (_controller.value.playerState == PlayerState.ended) {
-      // "나가는 이유"를 'video_ended'로 확정하고
       _exitReason = 'video_ended';
-      // 네비게이션 시작을 요청합니다.
       _startExitSequence();
     }
   }
@@ -208,7 +248,9 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
   void dispose() {
     _controller.removeListener(_playerListener);
     _controller.dispose();
-    // 돌려놓은 화면 UI 다시 원상복구
+    _playTimer?.cancel(); // ✅ 타이머 해제
+
+    // 세로 원복
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -277,21 +319,24 @@ class _PlayerViewState extends ConsumerState<_PlayerView> {
             bottom: 19.h,
             child: AnimatedOpacity(
               opacity: _showCharacter ? 1 : 0,
-              duration: const Duration(seconds: 1), // 1초 동안 서서히 사라짐
+              duration: const Duration(seconds: 1),
               curve: Curves.easeOut,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 캐릭터 이미지
-                  Image.asset(
-                    AppImages.characterListWalk[selectedCharacterNum!],
-                    height: 180.h,
-                  ),
-                  // 말풍선
-                  const SolutionBubble(
-                    text: '제가 옆에서 함께할게요.\n영상을 보면서 호흡법을 유지해보세요!',
-                  ),
-                ],
+              child: SafeArea(
+                left: true,
+                right: false,
+                top: false,
+                bottom: false,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      AppImages.characterListWalk[selectedCharacterNum!],
+                      height: 180.h,
+                    ),
+                    SizedBox(width: 10.w),
+                    SolutionBubble(text: _bubbleText), // ✅ 대사 바인딩
+                  ],
+                ),
               ),
             ),
           ),

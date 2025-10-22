@@ -3,6 +3,8 @@ import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+// 커스텀 말풍선 + 텍스트까지
+
 class SolutionBubble extends StatelessWidget {
   final String text;
 
@@ -13,10 +15,10 @@ class SolutionBubble extends StatelessWidget {
     return CustomPaint(
       painter: BubblePainter(),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 16.h),
         margin: EdgeInsets.only(left: 8.w),
         child: Text(text,
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.start,
             style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900)),
       ),
     );
