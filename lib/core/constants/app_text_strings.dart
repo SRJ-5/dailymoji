@@ -12,7 +12,8 @@ class AppTextStrings {
   static const String enterAnything = '무엇이든 입력하세요';
   static const String nextButton = '다음';
   static const String loading = '로딩 중...';
-  static const String errorOccurred = '오류가 발생했습니다: %s'; // %s for error
+  static const String errorOccurred =
+      '오류가 발생했습니다: %s'; // %s for error
 
   // Router
   static const String languageSettings = '언어 설정';
@@ -48,7 +49,8 @@ class AppTextStrings {
   // Chat Page
   static const String botIsTyping =
       '%s이(가) 입력하고 있어요...'; // %s for character name
-  static const String viewSolutionAgainDefault = '마음 관리 팁 다시 볼래!';
+  static const String viewSolutionAgainDefault =
+      '마음 관리 팁 다시 볼래!';
 
   // 유형별 다시보기 텍스트
   static const String viewBreathingAgain = '다시 호흡하러 가기';
@@ -63,15 +65,20 @@ class AppTextStrings {
 
   static const String currentMyEmotion = '현재 나의 감정';
   static const String chatDateFormat = 'yyyy년 MM월 dd일';
-  static const String feedbackThanks = '피드백을 주셔서 고마워요! 다음 마음 관리 팁에 꼭 참고할게요. 😊';
+  static const String feedbackThanks =
+      '피드백을 주셔서 고마워요! 다음 마음 관리 팁에 꼭 참고할게요. 😊';
 
   // Chat ViewModel Fallbacks & Messages
-  static const String fallbackEmojiQuestion = '어떤 일 때문에 그렇게 느끼셨나요?';
-  static const String fallbackAnalysisError = '죄송해요, 응답을 이해할 수 없었어요.';
-  static const String fallbackSolutionError = '마음 관리 팁을 제안하는 중에 문제가 발생했어요.';
+  static const String fallbackEmojiQuestion =
+      '어떤 일 때문에 그렇게 느끼셨나요?';
+  static const String fallbackAnalysisError =
+      '죄송해요, 응답을 이해할 수 없었어요.';
+  static const String fallbackSolutionError =
+      '마음 관리 팁을 제안하는 중에 문제가 발생했어요.';
   static const String askVideoFeedback = '이번 영상은 어떠셨나요?';
   static const String loginRequiredError = '로그인 정보가 없습니다.';
-  static const String loadMoreFailedError = '추가 메시지를 불러오는데 실패했어요.';
+  static const String loadMoreFailedError =
+      '추가 메시지를 불러오는데 실패했어요.';
 
   // 피드백 기능 관련 문자열 추가
   static const String solutionFeedbackQuestion = '이번 활동은 어땠나요?';
@@ -118,9 +125,12 @@ class AppTextStrings {
   // Onboarding
   static const String onboarding1TitleUser = '나의 닉네임 설정';
   static const String onboarding1TitleAI = '도우미 설정';
-  static const String onboarding1Finish = '좋아요!\n이제 다음 단계로 가볼까요?';
-  static const String onboarding2Title = '현재 %s의 감정 기록'; // %s for user name
-  static const String onboarding2Finish = '모든 준비 완료!\n함께 시작해 볼까요?';
+  static const String onboarding1Finish =
+      '좋아요!\n이제 다음 단계로 가볼까요?';
+  static const String onboarding2Title =
+      '현재 %s의 감정 기록'; // %s for user name
+  static const String onboarding2Finish =
+      '모든 준비 완료!\n함께 시작해 볼까요?';
   static const List<String> onboardingQuestions = [
     '지난 2주 동안, 기분이\n가라앉거나, 우울했거나,\n절망적이었나요?',
     '지난 2주 동안, 일에 흥미를 잃거나 즐거움을 느끼지 못했나요?',
@@ -137,9 +147,12 @@ class AppTextStrings {
   static const String reportTitle = '리포트';
   static const String mojiCalendar = '모지 달력';
   static const String mojiChart = '모지 차트';
-  static const String monthlyReportDefaultSummary = '날짜를 선택하면 감정 요약을 볼 수 있어요.';
-  static const String monthlyReportLoadingSummary = '감정 기록을 요약하고 있어요...';
-  static const String monthlyReportFailedSummary = '요약을 불러오는 데 실패했어요.';
+  static const String monthlyReportDefaultSummary =
+      '날짜를 선택하면 감정 요약을 볼 수 있어요.';
+  static const String monthlyReportLoadingSummary =
+      '감정 기록을 요약하고 있어요...';
+  static const String monthlyReportFailedSummary =
+      '요약을 불러오는 데 실패했어요.';
   static const String monthlyReportErrorSummary =
       '오류가 발생했어요: %s'; // %s for error
   static const String monthlyReportNoRecord = '이 날은 기록이 없는 하루예요';
@@ -160,7 +173,8 @@ class AppTextStrings {
   // Solution Page
   static const String solutionLoadFailed =
       '마음 관리 팁을 불러오는 데 실패했습니다: %s'; // %s for error
-  static const String unplayableSolution = '재생할 수 없는 마음 관리 팁 유형입니다.';
+  static const String unplayableSolution =
+      '재생할 수 없는 마음 관리 팁 유형입니다.';
 
   // Cluster Names
   static const String clusterNegHigh = '불안/분노';
@@ -198,17 +212,36 @@ class AppTextStrings {
   static const String checkEmotions = "나의 감정 알기";
 
   // monthly_report.dart 용
-  static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  static const List<String> weekdays = [
+    '일',
+    '월',
+    '화',
+    '수',
+    '목',
+    '금',
+    '토'
+  ];
   static const String monthlyReportLoadFailed = '로드 실패: ';
   static const String monthlyReportDateFormat = 'yyyy년 MM월';
-  static const String monthlyReportDayFormat = 'M월 d일 EEEE'; // 예: 10월 7일 월요일
+  static const String monthlyReportDayFormat =
+      'M월 d일 EEEE'; // 예: 10월 7일 월요일
 
   // select_srj5_test_page.dart 용
-  static const String negHighDescription = '최근 긴장감과 짜증, 분노 빈도를 살펴봐요';
-  static const String negLowDescription = '기분 저하와 의욕, 흥미 감소를 확인해요';
+  static const String negHighDescription =
+      '최근 긴장감과 짜증, 분노 빈도를 살펴봐요';
+  static const String negLowDescription =
+      '기분 저하와 의욕, 흥미 감소를 확인해요';
   static const String sleepDescription = '산만함과 미루기 패턴을 점검해요';
-  static const String adhdDescription = '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
-  static const String positiveDescription = '마음의 안정감과 회복 탄력도를 확인해요';
+  static const String adhdDescription =
+      '잠들기, 유지의 어려움과 수면의 질을 살펴봐요';
+  static const String positiveDescription =
+      '마음의 안정감과 회복 탄력도를 확인해요';
+
+  // network_error_page.dart 용
+  static const String networkErrorText1 = '인터넷 연결이 원활하지 않아요';
+  static const String networkErrorText2 =
+      '와이파이나 데이터 연결을 확인한 뒤\n다시 시도해 주세요';
+  static const String tryReconnectingNetwork = '다시 시도하기';
 
   // onboarding 및 srj5 test 응답 용
   static const List<String> testAnswerList = [
