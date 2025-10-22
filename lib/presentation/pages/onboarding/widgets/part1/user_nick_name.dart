@@ -56,7 +56,7 @@ class _UserNickNameState extends ConsumerState<UserNickName> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: AppText(
-                '${state.userProfile!.characterNm}이(가)\n뭐라고 부르면 될까요?',
+                '${state.userProfile!.characterNm}(이)가\n뭐라고 부르면 될까요?',
                 style: AppFontStyles.heading2,
               ),
             ),
