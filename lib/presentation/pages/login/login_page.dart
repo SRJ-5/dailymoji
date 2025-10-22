@@ -1,5 +1,6 @@
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -74,12 +76,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    height: 47.44.h,
-                    child: Image.asset(
-                      AppImages.dailymojiLogoColor,
-                      fit: BoxFit.cover,
-                    ),
+                  SvgPicture.asset(
+                    AppIcons.dailymojiLogoColor,
+                    height: 48.h,
+                    width: 174.w,
                   ),
                   SizedBox(
                     height: 8.h,
