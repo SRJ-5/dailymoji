@@ -9,6 +9,7 @@ import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.da
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 class OnboardingPart2Page extends ConsumerStatefulWidget {
@@ -20,11 +21,24 @@ class OnboardingPart2Page extends ConsumerStatefulWidget {
 class _OnboardingPart2PageState
     extends ConsumerState<OnboardingPart2Page> {
   final onBoardingQuestion = AppTextStrings.onboardingQuestions;
-
   int stepIndex = 0;
   late int totalSteps = onBoardingQuestion.length;
+  final uuidStorage = FlutterSecureStorage();
+
+  Future<void> saveOnboarding(
+      {required String userId,
+      required TargetPlatform platform}) async {
+    final vm = ref.read(userViewModelProvider.notifier);
+    await vm.fetchInsertUser();
+    await vm.saveFcmTokenToSupabase(
+        platform: platform, userId: userId);
+    await uuidStorage.write(key: 'user_id', value: userId);
+    print('local uuid 저장 $userId');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final platform = Theme.of(context).platform;
     final state = ref.watch(userViewModelProvider);
     final isNextEnabled =
         state.step2Answers[stepIndex] == -1 ? false : true;
@@ -101,12 +115,13 @@ class _OnboardingPart2PageState
                             });
                           } else if (stepIndex == totalSteps) {
                             // ViewModel의 state를 직접 넘기지 않고, ViewModel 내부 함수를 호출
-                            await ref
-                                .read(userViewModelProvider
-                                    .notifier)
-                                .fetchInsertUser();
-                            if (!mounted) return;
-                            context.go('/home');
+                            if (mounted) {
+                              saveOnboarding(
+                                  platform: platform,
+                                  userId:
+                                      state.userProfile!.id!);
+                              context.go('/home');
+                            }
                           }
                         }
                       : null,
