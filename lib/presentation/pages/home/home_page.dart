@@ -1,4 +1,5 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
+import 'package:dailymoji/presentation/pages/home/nudge/nudge_view_model.dart';
 import 'package:dailymoji/presentation/pages/home/widget/emoji_video.dart';
 import 'package:dailymoji/presentation/pages/home/widget/home_tutorial.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
@@ -10,6 +11,7 @@ import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
 import 'package:dailymoji/presentation/widgets/bottom_bar.dart';
+import 'package:dailymoji/presentation/pages/home/nudge/nudge_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,6 +21,8 @@ import 'package:dailymoji/presentation/providers/background_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _kHomeTutorialSeenKey = 'home_tutorial_seen_v1';
+
+// bool _nudgeHandled = false; // 앱 실행당 1회만 체크/표시
 
 const emotionClusterMap = {
   "angry": AppTextStrings.negHigh,
@@ -47,6 +51,29 @@ class _HomePageState extends ConsumerState<HomePage> {
   String displayText = "";
   String? currentDialogue;
 
+  // Future<void> _checkAndShowNudge({required String userId}) async {
+  //   try {
+  //     // 튜토리얼이 켜져 있으면 닫힌 뒤에 진행
+  //     if (_showTutorial) {
+  //       // 사용자가 닫을 때 _handleHomeTutorialClose에서 한번 더 시도하므로 여기선 리턴만
+  //       return;
+  //     }
+
+  //     final vm = ref.read(nudgeViewModelProvider(userId).notifier);
+  //     final state = await ref.read(nudgeViewModelProvider(userId).future);
+
+  //     if (!mounted || !state.shouldShow) return;
+
+  //     await NudgeModal.show(
+  //       context,
+  //       onGo: () => context.push('/emotion/check'),
+  //       onSnooze7d: () => vm.snooze7Days(),
+  //     );
+  //   } catch (_) {
+  //     // 네트워크/취소 등은 조용히 무시
+  //   }
+  // }
+
   void _startTyping(String newText) {
     setState(() {
       displayText = newText.replaceAll(r'\n', '\n');
@@ -67,10 +94,29 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
       ref.invalidate(homeDialogueProvider);
       ref.invalidate(selectedEmotionProvider);
     });
+
+    // ref.listenManual(userViewModelProvider, (prev, next) {
+    //   final userId = next.userProfile?.id;
+    //   if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
+    //     _nudgeHandled = true;
+    //     _checkAndShowNudge(userId: userId);
+    //   }
+    // });
+
+    // // ✅ 바로 실행 (userViewModelProvider가 이미 로드된 경우 대비)
+    // final userId = ref.read(userViewModelProvider).userProfile?.id;
+    // if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
+    //   _nudgeHandled = true;
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _checkAndShowNudge(userId: userId);
+    //   });
+    // }
+
     _initHomeTutorialPrefs();
   }
 
@@ -89,12 +135,23 @@ class _HomePageState extends ConsumerState<HomePage> {
   Future<void> _handleHomeTutorialClose() async {
     if (!mounted) return;
     setState(() => _showTutorial = false);
-    // 누른 순간에만 '봤다' 저장
     final prefs = await SharedPreferences.getInstance();
     if (!_homeSeen) {
       _homeSeen = true;
       await prefs.setBool(_kHomeTutorialSeenKey, true);
     }
+
+    // // ✅ 튜토리얼 때문에 못 띄웠다면, 여기서 한 번 더 시도
+    // final userId = ref.read(userViewModelProvider).userProfile?.id;
+    // if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
+    //   _nudgeHandled = true;
+    //   _checkAndShowNudge(userId: userId);
+    // }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
