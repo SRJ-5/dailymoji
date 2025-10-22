@@ -273,7 +273,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 left: 0,
                 right: 0,
                 child: SizedBox(
-                  height: 122.h,
+                  height: 127.h,
                   child: ListView.separated(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     scrollDirection: Axis.horizontal,
@@ -381,7 +381,7 @@ class _EmojiItem extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             width: 100.w,
-            height: 122.h,
+            height: 125.h,
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
