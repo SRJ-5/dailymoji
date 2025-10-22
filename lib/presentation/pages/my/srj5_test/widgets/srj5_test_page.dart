@@ -56,18 +56,20 @@ class _Srj5TestPageState extends ConsumerState<Srj5TestPage> {
                     .copyWith(color: AppColors.grey900),
               ),
         centerTitle: true,
-        actions: [
-          GestureDetector(
-              onTap: () {
-                context.pop();
-                context.pop();
-              },
-              child: Icon(
-                Icons.clear,
-                size: 24.r,
-              )),
-          SizedBox(width: 12.h)
-        ],
+        actions: stepIndex == totalSteps
+            ? null
+            : [
+                GestureDetector(
+                    onTap: () {
+                      context.pop();
+                      context.pop();
+                    },
+                    child: Icon(
+                      Icons.clear,
+                      size: 24.r,
+                    )),
+                SizedBox(width: 12.h)
+              ],
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 12.w),

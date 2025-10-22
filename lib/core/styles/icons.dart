@@ -19,4 +19,8 @@ class AppIcons {
   static const String toastCheck = 'assets/icons/toast_check.svg';
   static const String toastClose = 'assets/icons/toast_close.svg';
   static const String setting = 'assets/icons/setting.svg';
+  static const String dailymojiLogoBlack =
+      'assets/icons/dailymoji_logo_black.svg';
+  static const String dailymojiLogoColor =
+      'assets/icons/dailymoji_logo_color.svg';
 }

@@ -9,22 +9,39 @@ import 'package:dailymoji/presentation/pages/onboarding/widgets/top_indicator.da
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 class OnboardingPart2Page extends ConsumerStatefulWidget {
   @override
-  ConsumerState<OnboardingPart2Page> createState() => _OnboardingPart2PageState();
+  ConsumerState<OnboardingPart2Page> createState() =>
+      _OnboardingPart2PageState();
 }
 
-class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
+class _OnboardingPart2PageState
+    extends ConsumerState<OnboardingPart2Page> {
   final onBoardingQuestion = AppTextStrings.onboardingQuestions;
-
   int stepIndex = 0;
   late int totalSteps = onBoardingQuestion.length;
+  final uuidStorage = FlutterSecureStorage();
+
+  Future<void> saveOnboarding(
+      {required String userId,
+      required TargetPlatform platform}) async {
+    final vm = ref.read(userViewModelProvider.notifier);
+    await vm.fetchInsertUser();
+    await vm.saveFcmTokenToSupabase(
+        platform: platform, userId: userId);
+    await uuidStorage.write(key: 'user_id', value: userId);
+    print('local uuid 저장 $userId');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final platform = Theme.of(context).platform;
     final state = ref.watch(userViewModelProvider);
-    final isNextEnabled = state.step2Answers[stepIndex] == -1 ? false : true;
+    final isNextEnabled =
+        state.step2Answers[stepIndex] == -1 ? false : true;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.yellow50,
@@ -41,7 +58,8 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
             ? null
             : AppText(
                 '현재 ${state.userProfile!.userNickNm}의 감정 기록',
-                style: AppFontStyles.bodyBold18.copyWith(color: AppColors.grey900),
+                style: AppFontStyles.bodyBold18
+                    .copyWith(color: AppColors.grey900),
               ),
         centerTitle: true,
       ),
@@ -49,7 +67,12 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: Column(
           children: [
-            stepIndex == totalSteps ? SizedBox.shrink() : TopIndicator(width: 28, totalSteps: totalSteps - 1, stepIndex: stepIndex), // indicator 맨 위
+            stepIndex == totalSteps
+                ? SizedBox.shrink()
+                : TopIndicator(
+                    width: 28,
+                    totalSteps: totalSteps - 1,
+                    stepIndex: stepIndex), // indicator 맨 위
             Expanded(
                 child: stepIndex == totalSteps
                     ? FinishWidget(
@@ -74,8 +97,11 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    animationDuration: Duration.zero,
                     minimumSize: Size(double.infinity, 52.h),
-                    backgroundColor: isNextEnabled ? AppColors.green500 : AppColors.grey200,
+                    backgroundColor: isNextEnabled
+                        ? AppColors.green500
+                        : AppColors.grey200,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -89,15 +115,22 @@ class _OnboardingPart2PageState extends ConsumerState<OnboardingPart2Page> {
                             });
                           } else if (stepIndex == totalSteps) {
                             // ViewModel의 state를 직접 넘기지 않고, ViewModel 내부 함수를 호출
-                            await ref.read(userViewModelProvider.notifier).fetchInsertUser();
-                            if (!mounted) return;
-                            context.go('/home');
+                            if (mounted) {
+                              saveOnboarding(
+                                  platform: platform,
+                                  userId:
+                                      state.userProfile!.id!);
+                              context.go('/home');
+                            }
                           }
                         }
                       : null,
-                  child: AppText(stepIndex == totalSteps ? '시작하기' : '계속하기',
+                  child: AppText(
+                      stepIndex == totalSteps ? '시작하기' : '계속하기',
                       style: AppFontStyles.bodyMedium16.copyWith(
-                        color: isNextEnabled ? AppColors.grey50 : AppColors.grey500,
+                        color: isNextEnabled
+                            ? AppColors.grey50
+                            : AppColors.grey500,
                       )),
                 )
               ],

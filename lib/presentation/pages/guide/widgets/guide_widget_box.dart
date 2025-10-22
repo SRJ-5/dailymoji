@@ -40,7 +40,7 @@ class GuideWidgetBox extends StatelessWidget {
                       text: AppTextStrings
                           .endGuideText[guideIndex])
                 ])),
-        SizedBox(height: 46.h),
+        SizedBox(height: 54.h),
         SizedBox(
           width: 280.w,
           height: 300.h,
