@@ -188,6 +188,7 @@ class AppTextStrings {
   static const String highestEmotionalScore = "최고 감정 점수";
   static const String lowestEmotionalScore = "최저 감정 점수";
   static const String checkEmotions = "나의 감정 알기";
+  static const String nullEmotions = "채팅을 시작하면 감정 기록이 쌓여요";
 
   // monthly_report.dart 용
   static const List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
