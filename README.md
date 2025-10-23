@@ -163,9 +163,9 @@ OpenAI + Kiwi를 통한 하이브리드 감정 분석 엔진 개선
 |---------|------|---------|
 | [임기환](https://github.com/Kihwan-dev/) (팀장) | 앱 구조 총괄 / 전체 아키텍처 설계 / 채팅페이지 & 마이페이지 UI 및 기능 개발 / Supabase 데이터베이스 설계 / 서버 배포 및 운영 관리 / 푸시 알림 / Supabase Cron Job / GitHub 환경 구축 / 다국어 대응 시스템 설계 | rlrkf2420@gmail.com |
 | [김현수](https://github.com/hyun471) (부팀장) | Google/Apple 소셜 로그인 UI 구성 및 기능 개발 / 로그아웃, 회원 탈퇴 UI 및 기능 개발 / 온보딩 화면 UI 구성 및 기능 개발 / 가이드 화면 UI 구성 및 기능 개발 / 마음 알기 화면 UI 구성 및 기능 개발, 이용약관 화면 UI 구성 / 알림 설정(FCM 및 Supabase Cron Job) / Font/Image 스타일화 / 클린 아키텍처 설계 | khs101ttl@gmail.com |
-| [정소린](https://github.com/So2ln) (팀원) | 백엔드 개발 및 연결 / LLM 연결 / SRJ-5(감정분석) 시스템 개발 | kristyso2ln@gmail.com |
+| [정소린](https://github.com/So2ln) (팀원) | 앱 기획 / 아키텍처 설계 / 백엔드 개발·운영 / 감정 분석 로직(SRJ-5 프로토콜) 설계 / 뇌인지과학 자문 기반 구조 설계 / Supabase(PostgreSQL) 스키마·API 아키텍처 설계 / 다국어·다중 페르소나 시스템 기획 / 하이브리드 감정 스코어링 엔진 개발 / 안전 필터링·모더레이션 시스템 구현 / 실시간 감정 분기·위기 개입 로직 구축 / 개인화 프롬프트 엔지니어링 / 비동기 데이터 파이프라인 설계 / 감정 트렌드 통계 로직 개발  / Flutter 연동 최적화 JSON 구조 설계 / App Store 리젝 대응 및 FE-BE 통합 관리 | kristyso2ln@gmail.com |
 | [조민우](https://github.com/wackyturtle) (팀원) | 클린 아키텍처 기반 데이터 관리 / 홈 페이지 UI구현 / 리포트 페이지 UI구현 / 솔루션 페이지 UI구현 / fl_chart, table_calendar를 통한 시각적 데이터 표현 / Firebase Messaging(FCM)구현 / supabase CronJob을 통한 스케줄링 | wcytutl01@gmail.com |
-| 이빛나 (디자이너) | 콘텐츠 기획 / 리포트 구성 및 UX 플로우 | lbn9019@naver.com |
+| 이빛나 (디자이너) | UX/UI 디자인 총괄 / 디자인 시스템·컬러·타이포그래피 설계 / 인터랙션·사용자 흐름 구조화 / 개발팀 협업 통한 일관된 사용자 경험 구축 / 사용자 피드백 기반 프로토타이핑·개선 / 감정 분석 기능과 UI의 정서적 연결성 강화 | lbn9019@naver.com |
 
 ---
 
