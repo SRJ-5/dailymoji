@@ -121,22 +121,6 @@ Provider보다 구조적이고 테스트에 용이한 상태관리 방식.
 
 ---
 
-## 💡 트러블슈팅 사례
-
-| 문제 | 원인 | 해결 |
-|------|------|------|
-| **AI 후속 응답이 오지 않음** | `GoRouter` 이동 시 ViewModel 상태 초기화 | `extra` 데이터를 통해 이전 상태 전달 로직 추가 |
-| **Apple 로그인 실패 (Supabase)** | Bundle ID / Service ID 혼동 | Apple Developer Console 설정 정리 및 JWT 직접 생성 |
-| **Supabase 쿼리 속도 저하** | `user_id`, `created_at` 인덱스 미적용 | 인덱스 추가로 조회 성능 3배 향상 |
-| **pip 명령어 인식 불가 (Windows)** | PATH 미등록 문제 | `python -m pip install` 명령으로 대체 설치 |
-| **iOS 인증서 연동 오류** | Team ID / Key ID 혼동 | Apple Developer Portal에서 명확히 구분 후 재등록 |
-
-> 💬 개발 과정에서 가장 크게 배운 점  
-> "개발은 코드를 짜는 일이 아니라, 시스템 전체를 이해하고  
-> 끈기 있게 원인을 추적하는 과정"임을 실감했습니다.
-
----
-
 ## 🚀 향후 계획
 
 ### 🧭 대화 시작 돕기 (Suggested Prompts)
@@ -160,12 +144,12 @@ OpenAI + Kiwi를 통한 하이브리드 감정 분석 엔진 개선
 ## 👥 팀 구성
 
 | 이름 | 역할 | Contact |
-|---------|------|---------|
+|-----------------|------|---------|
 | [임기환](https://github.com/Kihwan-dev/) (팀장) | 앱 구조 총괄 / 전체 아키텍처 설계 / 채팅페이지 & 마이페이지 UI 및 기능 개발 / Supabase 데이터베이스 설계 / 서버 배포 및 운영 관리 / 푸시 알림 / Supabase Cron Job / GitHub 환경 구축 / 다국어 대응 시스템 설계 | rlrkf2420@gmail.com |
 | [김현수](https://github.com/hyun471) (부팀장) | Google/Apple 소셜 로그인 UI 구성 및 기능 개발 / 로그아웃, 회원 탈퇴 UI 및 기능 개발 / 온보딩 화면 UI 구성 및 기능 개발 / 가이드 화면 UI 구성 및 기능 개발 / 마음 알기 화면 UI 구성 및 기능 개발, 이용약관 화면 UI 구성 / 알림 설정(FCM 및 Supabase Cron Job) / Font/Image 스타일화 / 클린 아키텍처 설계 | khs101ttl@gmail.com |
 | [정소린](https://github.com/So2ln) (팀원) | 백엔드 개발 및 연결 / LLM 연결 / SRJ-5(감정분석) 시스템 개발 | kristyso2ln@gmail.com |
 | [조민우](https://github.com/wackyturtle) (팀원) | 클린 아키텍처 기반 데이터 관리 / 홈 페이지 UI구현 / 리포트 페이지 UI구현 / 솔루션 페이지 UI구현 / fl_chart, table_calendar를 통한 시각적 데이터 표현 / Firebase Messaging(FCM)구현 / supabase CronJob을 통한 스케줄링 | wcytutl01@gmail.com |
-| 이빛나 (디자이너) | 콘텐츠 기획 / 리포트 구성 및 UX 플로우 | lbn9019@naver.com |
+| 이빛나 (디자이너) | 앱 전체 디자인 담당 / UX/UI 디자인 전반 담당 개발팀과 협업해 일관된 사용자 경험 설계 | lbn9019@naver.com |
 
 ---
 
