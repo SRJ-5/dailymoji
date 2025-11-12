@@ -179,6 +179,7 @@ class ClusterScoresViewModel extends StateNotifier<ClusterScoresState> {
           emotionMap: emap,
           // RIN: 상태 업뎃할때 이것도 저장해야할거같은디?
           weeklySummary: summary);
+          print("ssadasdsadasda${agg.days}");
     } catch (e, st) {
       // ignore: avoid_print
       print('[load14DayChart] error=$e\n$st');

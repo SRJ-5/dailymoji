@@ -327,6 +327,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                 // 마지막 인덱스(오늘 날짜)는 무조건 표시
                                 if (index == baseDays.length - 1) {
                                   final d = baseDays[index];
+                                  print("베이스데이의 길이는 : ${baseDays.length}, 흠 이건 뭘까요 : ${d}");
                                   return AppText(
                                     "${d.month}.${d.day}",
                                     style: AppFontStyles.bodyRegular12
@@ -383,7 +384,7 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
+                  
                   // ===== 범례: 줄바꿈 지원 =====
                   SizedBox(
                     width: 300.w, // 원하는 최대 폭 (없애면 가로 전체)
