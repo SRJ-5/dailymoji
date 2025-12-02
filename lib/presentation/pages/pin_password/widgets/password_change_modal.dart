@@ -6,7 +6,7 @@ import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:http/http.dart';
+import 'package:go_router/go_router.dart';
 
 class PasswordChangeModal extends ConsumerStatefulWidget {
   final bool isChangePassword;
@@ -23,7 +23,8 @@ class _PasswordChangeModalState
     final pinVM =
         ref.read(pinPasswordViewModelProvider.notifier);
     isCheckPassword = await pinVM.selectedPinNum(
-        password: password, isChangePin: false);
+        password: password,
+        isChangePin: widget.isChangePassword);
     print(isCheckPassword);
     if (isCheckPassword == false) {
       Future.delayed(
@@ -32,8 +33,13 @@ class _PasswordChangeModalState
           pinVM.clearAllPinNum();
         },
       );
-    } else if (isCheckPassword == true) {
-      // 페이지 이동
+    } else if (isCheckPassword == true &&
+        isCheckPassword == false) {
+      context.go('/home');
+      pinVM.clearAllPinNum();
+    } else if (isCheckPassword == true &&
+        isCheckPassword == true) {
+      context.pop();
       pinVM.clearAllPinNum();
     }
   }

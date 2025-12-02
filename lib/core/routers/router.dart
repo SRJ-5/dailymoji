@@ -39,10 +39,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     observers: [routeObserver],
     routes: [
       GoRoute(
-          path: '/',
-          builder: (context, state) => PinPasswordPage()
-          // SplashPage()
-          ),
+          path: '/', builder: (context, state) => SplashPage()),
       GoRoute(
           path: '/login',
           builder: (context, state) => LoginPage()),
@@ -52,6 +49,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/onboarding2',
           builder: (context, state) => OnboardingPart2Page()),
+      GoRoute(
+          path: '/pin_password',
+          builder: (context, state) => PinPasswordPage()),
       GoRoute(
         path: '/home',
         pageBuilder: (context, state) =>

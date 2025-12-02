@@ -3,11 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PinPasswordState {
   String pinNum;
+  bool isPasswordEnabled;
 
-  PinPasswordState({required this.pinNum});
+  PinPasswordState(
+      {required this.pinNum, required this.isPasswordEnabled});
 
-  PinPasswordState copyWith({String? pinNum}) {
-    return PinPasswordState(pinNum: pinNum ?? this.pinNum);
+  PinPasswordState copyWith(
+      {String? pinNum, bool? isPasswordEnabled}) {
+    return PinPasswordState(
+        pinNum: pinNum ?? this.pinNum,
+        isPasswordEnabled:
+            isPasswordEnabled ?? this.isPasswordEnabled);
   }
 }
 
@@ -16,7 +22,17 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
 
   @override
   PinPasswordState build() {
-    return PinPasswordState(pinNum: '');
+    hasPin();
+    return PinPasswordState(
+        pinNum: '', isPasswordEnabled: false);
+  }
+
+  Future<void> hasPin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isPinSet = prefs.getString('pinPassWord');
+    final result = isPinSet == null ? false : true;
+    state = state.copyWith(isPasswordEnabled: result);
+    print(state.isPasswordEnabled);
   }
 
   Future<bool?> selectedPinNum(
@@ -26,6 +42,7 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
       passwordList += password;
       state = state.copyWith(pinNum: passwordList);
       print(state.pinNum);
+      print(isChangePin);
       if (state.pinNum.length == 4) {
         return isChangePin ? savePinNum() : checkPinNum();
       }
@@ -52,9 +69,11 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
 
   // 암호 사용 안함
   Future<bool> deletePinNum() async {
+    print(state.pinNum);
     final prefs = await SharedPreferences.getInstance();
     final bool isDeletePassword =
         await prefs.remove('pinPassWord');
+    print(state.pinNum);
     return isDeletePassword;
   }
 

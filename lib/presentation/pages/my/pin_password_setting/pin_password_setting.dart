@@ -1,22 +1,24 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
-import 'package:dailymoji/presentation/pages/my/pin_password_setting/widgets/password_change_modal.dart';
+import 'package:dailymoji/presentation/pages/pin_password/widgets/password_change_modal.dart';
 import 'package:dailymoji/presentation/pages/my/widgets/build_section.dart';
+import 'package:dailymoji/presentation/pages/pin_password/pin_password_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class PinPasswordSetting extends StatefulWidget {
+class PinPasswordSetting extends ConsumerStatefulWidget {
   @override
-  State<PinPasswordSetting> createState() =>
+  ConsumerState<PinPasswordSetting> createState() =>
       _PinPasswordSettingState();
 }
 
 class _PinPasswordSettingState
-    extends State<PinPasswordSetting> {
-  bool _isPasswordEnabled = false;
-
+    extends ConsumerState<PinPasswordSetting> {
   void _showPasswordChangeModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -33,9 +35,13 @@ class _PinPasswordSettingState
 
   @override
   Widget build(BuildContext context) {
+    final pinState = ref.watch(pinPasswordViewModelProvider);
+    final pinVM =
+        ref.read(pinPasswordViewModelProvider.notifier);
+    bool isPasswordEnabled = pinState.isPasswordEnabled;
     final Map<String, VoidCallback> passwordsetting = {
       AppTextStrings.pinPassword: () {},
-      AppTextStrings.pinPasswordChange: _isPasswordEnabled
+      AppTextStrings.pinPasswordChange: isPasswordEnabled
           ? () {
               _showPasswordChangeModal(context);
             }
@@ -65,10 +71,16 @@ class _PinPasswordSettingState
               onTapList: passwordsetting.values.toList(),
               widgets: [
                 Toggle(
-                  initialValue: _isPasswordEnabled,
+                  initialValue: isPasswordEnabled,
                   onChanged: (value) {
+                    if (value == false) {
+                      ref
+                          .read(pinPasswordViewModelProvider
+                              .notifier)
+                          .deletePinNum();
+                    }
                     setState(() {
-                      _isPasswordEnabled = value;
+                      pinVM.hasPin();
                     });
                   },
                 ),
@@ -76,7 +88,7 @@ class _PinPasswordSettingState
               ],
               textColors: [
                 null, // 암호 설정은 기본 색상
-                _isPasswordEnabled
+                isPasswordEnabled
                     ? AppColors.grey700
                     : AppColors.grey300, // 암호 변경은 토글 상태에 따라
               ],
