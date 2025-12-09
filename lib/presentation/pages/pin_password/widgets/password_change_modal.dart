@@ -26,7 +26,7 @@ class _PasswordChangeModalState
     isCheckPassword = await pinVM.selectedPinNum(
         password: password,
         isChangePin: widget.isChangePassword);
-    print('2222 $isCheckPassword');
+    print('암호 확인 체크 : $isCheckPassword');
     if (isCheckPassword == false) {
       Future.delayed(
         Duration(milliseconds: 200),
