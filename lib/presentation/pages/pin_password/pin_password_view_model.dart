@@ -22,7 +22,6 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
 
   @override
   PinPasswordState build() {
-    hasPin();
     return PinPasswordState(
         pinNum: '', isPasswordEnabled: false);
   }
@@ -46,8 +45,8 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
       if (state.pinNum.length == 4) {
         return isChangePin ? savePinNum() : checkPinNum();
       }
+      return null;
     }
-    return null;
   }
 
   // pin 암호가 맞는지 확인
@@ -56,25 +55,32 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
     final savedPassword = prefs.getString('pinPassWord');
     bool isMatch =
         savedPassword != null && savedPassword == state.pinNum;
+    print('암호 확인: $isMatch');
     return isMatch;
   }
 
   // pin 암호 내부에 저장하기
   Future<bool> savePinNum() async {
     final prefs = await SharedPreferences.getInstance();
-    final bool isSavedPassword =
+    final bool isSaved =
         await prefs.setString('pinPassWord', state.pinNum);
-    return isSavedPassword;
+    if (isSaved) {
+      state = state.copyWith(isPasswordEnabled: true);
+    }
+
+    return isSaved;
   }
 
   // 암호 사용 안함
   Future<bool> deletePinNum() async {
     print(state.pinNum);
     final prefs = await SharedPreferences.getInstance();
-    final bool isDeletePassword =
-        await prefs.remove('pinPassWord');
-    print(state.pinNum);
-    return isDeletePassword;
+    final bool isDeleted = await prefs.remove('pinPassWord');
+    if (isDeleted) {
+      state = state.copyWith(isPasswordEnabled: false);
+    }
+
+    return isDeleted;
   }
 
   // 입력된 pin 암호 전부 지우기

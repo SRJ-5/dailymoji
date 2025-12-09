@@ -29,12 +29,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _checkPinExist() async {
+    await ref
+        .read(pinPasswordViewModelProvider.notifier)
+        .hasPin();
     final isPinSet =
         ref.read(pinPasswordViewModelProvider).isPasswordEnabled;
     if (isPinSet) {
       context.go('/pin_password');
+    } else {
+      context.go('/home');
     }
-    context.go('/home');
   }
 
   // Rin: 가입여부 확인하고 프로필 이미 있으면 넘어가는 함수 따로 뺌

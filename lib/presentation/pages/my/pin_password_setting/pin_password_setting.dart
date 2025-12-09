@@ -72,16 +72,14 @@ class _PinPasswordSettingState
               widgets: [
                 Toggle(
                   initialValue: isPasswordEnabled,
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     if (value == false) {
-                      ref
-                          .read(pinPasswordViewModelProvider
-                              .notifier)
-                          .deletePinNum();
+                      await pinVM.deletePinNum();
+                    } else {
+                      _showPasswordChangeModal(context);
                     }
-                    setState(() {
-                      pinVM.hasPin();
-                    });
+
+                    await pinVM.hasPin(); // state 업데이트
                   },
                 ),
                 null, // 암호 변경은 기본 아이콘 사용

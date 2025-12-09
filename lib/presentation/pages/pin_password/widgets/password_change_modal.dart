@@ -19,13 +19,14 @@ class PasswordChangeModal extends ConsumerStatefulWidget {
 class _PasswordChangeModalState
     extends ConsumerState<PasswordChangeModal> {
   bool? isCheckPassword;
-  void _selectPassword(String password) async {
+
+  Future<void> _selectPassword(String password) async {
     final pinVM =
         ref.read(pinPasswordViewModelProvider.notifier);
     isCheckPassword = await pinVM.selectedPinNum(
         password: password,
         isChangePin: widget.isChangePassword);
-    print(isCheckPassword);
+    print('2222 $isCheckPassword');
     if (isCheckPassword == false) {
       Future.delayed(
         Duration(milliseconds: 200),
@@ -34,11 +35,11 @@ class _PasswordChangeModalState
         },
       );
     } else if (isCheckPassword == true &&
-        isCheckPassword == false) {
+        widget.isChangePassword == false) {
       context.go('/home');
       pinVM.clearAllPinNum();
     } else if (isCheckPassword == true &&
-        isCheckPassword == true) {
+        widget.isChangePassword == true) {
       context.pop();
       pinVM.clearAllPinNum();
     }
