@@ -23,7 +23,9 @@ class _OnboardingPart2PageState
   final onBoardingQuestion = AppTextStrings.onboardingQuestions;
   int stepIndex = 0;
   late int totalSteps = onBoardingQuestion.length;
-  final uuidStorage = FlutterSecureStorage();
+  final uuidStorage = FlutterSecureStorage(
+      iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock));
 
   Future<void> saveOnboarding(
       {required String userId,

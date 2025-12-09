@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PinPasswordState {
@@ -19,6 +20,9 @@ class PinPasswordState {
 
 class PinPasswordViewModel extends Notifier<PinPasswordState> {
   String passwordList = '';
+  final secureStorage = const FlutterSecureStorage(
+      iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock));
 
   @override
   PinPasswordState build() {
@@ -26,22 +30,31 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
         pinNum: '', isPasswordEnabled: false);
   }
 
+  // pin암호 설정을 했는지 안했는지 확인
   Future<void> hasPin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isPinSet = prefs.getString('pinPassWord');
-    final result = isPinSet == null ? false : true;
-    state = state.copyWith(isPasswordEnabled: result);
-    print(state.isPasswordEnabled);
+    try {
+      final savedPin =
+          await secureStorage.read(key: 'pinPassWord');
+      final result = savedPin != null; // 있으면 true, 없으면 false
+
+      state = state.copyWith(isPasswordEnabled: result);
+      print("🔐 PIN 존재 여부: $result");
+    } catch (e) {
+      print("hasPin error: $e");
+    }
   }
 
-  Future<bool?> selectedPinNum(
-      {required String password,
-      required bool isChangePin}) async {
+  // pin 암호 입력시 처리
+  Future<bool?> selectedPinNum({
+    required String password,
+    required bool isChangePin,
+  }) async {
     if (passwordList.length < 4) {
       passwordList += password;
       state = state.copyWith(pinNum: passwordList);
-      print(state.pinNum);
-      print(isChangePin);
+
+      print("입력 PIN: ${state.pinNum}");
+
       if (state.pinNum.length == 4) {
         return isChangePin ? savePinNum() : checkPinNum();
       }
@@ -51,36 +64,51 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
 
   // pin 암호가 맞는지 확인
   Future<bool> checkPinNum() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedPassword = prefs.getString('pinPassWord');
-    bool isMatch =
-        savedPassword != null && savedPassword == state.pinNum;
-    print('암호 확인: $isMatch');
-    return isMatch;
+    try {
+      final savedPassword =
+          await secureStorage.read(key: 'pinPassWord');
+
+      final isMatch =
+          savedPassword != null && savedPassword == state.pinNum;
+
+      print("🔍 PIN 확인 결과: $isMatch");
+      return isMatch;
+    } catch (e) {
+      print("checkPinNum error: $e");
+      return false;
+    }
   }
 
   // pin 암호 내부에 저장하기
   Future<bool> savePinNum() async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool isSaved =
-        await prefs.setString('pinPassWord', state.pinNum);
-    if (isSaved) {
-      state = state.copyWith(isPasswordEnabled: true);
-    }
+    try {
+      await secureStorage.write(
+        key: 'pinPassWord',
+        value: state.pinNum,
+      );
 
-    return isSaved;
+      // 저장 성공했으면 상태 업데이트
+      state = state.copyWith(isPasswordEnabled: true);
+      return true;
+    } catch (e) {
+      print('SecureStorage save error: $e');
+      return false;
+    }
   }
 
   // 암호 사용 안함
   Future<bool> deletePinNum() async {
-    print(state.pinNum);
-    final prefs = await SharedPreferences.getInstance();
-    final bool isDeleted = await prefs.remove('pinPassWord');
-    if (isDeleted) {
-      state = state.copyWith(isPasswordEnabled: false);
-    }
+    try {
+      await secureStorage.delete(key: 'pinPassWord');
 
-    return isDeleted;
+      state = state.copyWith(isPasswordEnabled: false);
+
+      print("PIN 삭제됨");
+      return true;
+    } catch (e) {
+      print("deletePinNum error: $e");
+      return false;
+    }
   }
 
   // 입력된 pin 암호 전부 지우기

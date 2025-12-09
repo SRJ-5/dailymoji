@@ -20,7 +20,9 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  final uuidStorage = FlutterSecureStorage();
+  final uuidStorage = FlutterSecureStorage(
+      iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock));
 
   @override
   void initState() {
