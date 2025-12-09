@@ -19,7 +19,23 @@ class PinPasswordSetting extends ConsumerStatefulWidget {
 
 class _PinPasswordSettingState
     extends ConsumerState<PinPasswordSetting> {
-  void _showPasswordChangeModal(BuildContext context) {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showPasswordChangeModal(
+        context: context,
+        isChangePassword: false,
+        isAuthenticated: true,
+      );
+    });
+  }
+
+  void _showPasswordChangeModal(
+      {required BuildContext context,
+      required bool isChangePassword,
+      required bool isAuthenticated}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -28,7 +44,8 @@ class _PinPasswordSettingState
       isDismissible: true,
       enableDrag: false,
       builder: (context) => PasswordChangeModal(
-        isChangePassword: true,
+        isChangePassword: isChangePassword,
+        isAuthenticated: isAuthenticated,
       ),
     );
   }
@@ -43,7 +60,10 @@ class _PinPasswordSettingState
       AppTextStrings.pinPassword: () {},
       AppTextStrings.pinPasswordChange: isPasswordEnabled
           ? () {
-              _showPasswordChangeModal(context);
+              _showPasswordChangeModal(
+                  context: context,
+                  isChangePassword: true,
+                  isAuthenticated: true);
             }
           : () {}, // 토글이 꺼져있으면 아무것도 안 함
     };
@@ -76,7 +96,10 @@ class _PinPasswordSettingState
                     if (value == false) {
                       await pinVM.deletePinNum();
                     } else {
-                      _showPasswordChangeModal(context);
+                      _showPasswordChangeModal(
+                          context: context,
+                          isChangePassword: true,
+                          isAuthenticated: true);
                     }
 
                     await pinVM.hasPin(); // state 업데이트

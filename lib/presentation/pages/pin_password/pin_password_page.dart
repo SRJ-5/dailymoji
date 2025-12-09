@@ -7,6 +7,7 @@ class PinPasswordPage extends StatelessWidget {
     return Scaffold(
       body: PasswordChangeModal(
         isChangePassword: false,
+        isAuthenticated: false,
       ),
     );
   }

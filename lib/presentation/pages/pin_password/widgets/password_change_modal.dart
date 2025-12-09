@@ -10,7 +10,10 @@ import 'package:go_router/go_router.dart';
 
 class PasswordChangeModal extends ConsumerStatefulWidget {
   final bool isChangePassword;
-  PasswordChangeModal({required this.isChangePassword});
+  final bool isAuthenticated;
+  PasswordChangeModal(
+      {required this.isChangePassword,
+      required this.isAuthenticated});
   @override
   ConsumerState<PasswordChangeModal> createState() =>
       _PasswordChangeModalState();
@@ -35,11 +38,18 @@ class _PasswordChangeModalState
         },
       );
     } else if (isCheckPassword == true &&
-        widget.isChangePassword == false) {
+        widget.isChangePassword == false &&
+        widget.isAuthenticated == false) {
       context.go('/home');
       pinVM.clearAllPinNum();
     } else if (isCheckPassword == true &&
-        widget.isChangePassword == true) {
+        widget.isChangePassword == true &&
+        widget.isAuthenticated == true) {
+      context.pop();
+      pinVM.clearAllPinNum();
+    } else if (isCheckPassword == true &&
+        widget.isChangePassword == false &&
+        widget.isAuthenticated == true) {
       context.pop();
       pinVM.clearAllPinNum();
     }
@@ -80,8 +90,7 @@ class _PasswordChangeModalState
     ];
 
     return Container(
-      height:
-          widget.isChangePassword ? bodyHeight : screenHeight,
+      height: widget.isAuthenticated ? bodyHeight : screenHeight,
       width: double.infinity,
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
