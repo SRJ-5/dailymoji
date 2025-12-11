@@ -85,8 +85,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   void onEmojiTap(String emotionKey) {
     final selectedNotifier = ref.read(selectedEmotionProvider.notifier);
     // ✅ 변경: 단순 토글만 유지(확대/축소/색상 변경 로직 제거)
-    selectedNotifier.state =
-        (selectedNotifier.state == emotionKey) ? null : emotionKey;
+    selectedNotifier.state = (selectedNotifier.state == emotionKey) ? null : emotionKey;
   }
 
   bool _showTutorial = false;
@@ -226,8 +225,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedCharacterNum =
-        ref.read(userViewModelProvider).userProfile!.characterNum;
+    final selectedCharacterNum = ref.read(userViewModelProvider).userProfile!.characterNum;
     final selectedEmotion = ref.watch(selectedEmotionProvider);
 
     // Provider에서 현재 배경 경로 가져오기
@@ -278,8 +276,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 onPressed: () {
                   context.go("/home/background_setting");
                 },
-                icon: SvgPicture.asset(AppIcons.setting,
-                    width: 19.w, height: 19.h),
+                icon: SvgPicture.asset(AppIcons.setting, width: 19.w, height: 19.h),
               ),
               SizedBox(width: 12.w),
             ],
@@ -319,8 +316,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             child: Center(
                               child: AppText(
                                 displayText,
-                                style: AppFontStyles.bodyBold16
-                                    .copyWith(color: AppColors.grey900),
+                                style: AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
                                 textAlign: TextAlign.center,
                                 maxLines: 4,
                                 overflow: TextOverflow.ellipsis,
@@ -389,8 +385,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
                     child: Container(
                       height: 40.h,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 16.w, vertical: 10.h),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         borderRadius: BorderRadius.circular(12.r),
@@ -401,13 +396,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                           Expanded(
                             child: AppText(
                               "무엇이든 입력하세요",
-                              style: AppFontStyles.bodyRegular14
-                                  .copyWith(color: AppColors.grey600),
+                              style: AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey600),
                             ),
                           ),
-                          selectedEmotion == null
-                              ? SvgPicture.asset(AppIcons.send)
-                              : SvgPicture.asset(AppIcons.sendOrange),
+                          selectedEmotion == null ? SvgPicture.asset(AppIcons.send) : SvgPicture.asset(AppIcons.sendOrange),
                         ],
                       ),
                     ),
@@ -482,7 +474,6 @@ class _EmojiItem extends StatelessWidget {
                 SizedBox(height: 8.h),
                 // 라벨
                 SizedBox(
-                  width: 72.w,
                   child: Text(
                     label,
                     textAlign: TextAlign.center,

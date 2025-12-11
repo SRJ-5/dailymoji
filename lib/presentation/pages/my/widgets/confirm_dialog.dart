@@ -54,7 +54,9 @@ class ConfirmDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uuidStorage = FlutterSecureStorage();
+    final uuidStorage = FlutterSecureStorage(
+        iOptions: IOSOptions(
+            accessibility: KeychainAccessibility.first_unlock));
     final userProfileVM =
         ref.read(userViewModelProvider.notifier);
     // 배경 터치는 닫기, 다이얼로그 영역은 차단

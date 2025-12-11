@@ -18,6 +18,7 @@ class AppTextStrings {
   // Router
   static const String languageSettings = '언어 설정';
   static const String notice = '공지사항';
+  static const String pinPassword = '암호 설정';
   static const String termsOfService = '이용 약관';
   static const String privacyPolicy = '개인정보 처리방침';
   static const String counselingCenter = '전문 상담 연결';
@@ -26,6 +27,7 @@ class AppTextStrings {
   static const String preparingTitle = '곧 만나요!';
   static const String preparingBody = '준비 중이에요';
   static const String backgroundSettings = '배경화면 선택';
+  static const String pinPasswordChange = '암호 변경';
 
 // Bottom Navigation
   static const String navHome = '홈';
@@ -246,6 +248,26 @@ class AppTextStrings {
     '을 찾아보세요',
     '를 통해\n변화를 한눈에 확인하세요'
   ];
+
+  // password 입력
+  static const String insertPassword = '암호 입력';
+  static const String passwordErrorMessage = '비밀번호가 일치하지 않습니다.';
+
+  // 앱 탈퇴
+  static const String deleteReasons1 = '더 이상 앱을 사용하지 않아요';
+  static const String deleteReasons2 = '원하는 기능이 없어요';
+  static const String deleteReasons3 = '사용이 불편했어요';
+  static const String deleteReasons4 = '직접 입력';
+  static const String deleteUser = '회원 탈퇴';
+  static const String deleteText1 = '떠나신다니 아쉬워요 🥲';
+  static const String deleteText2 =
+      '저희 서비스가 아직 부족했나 봐요. 만족을 드리지 못해 죄송합니다. 더 좋은 경험을 드릴 수 있도록 노력하겠습니다.';
+  static const String deleteText3 = '탈퇴 전, 꼭 확인해 주세요';
+  static const String deleteText4 =
+      ' ∙ 지금까지 저장된 대화 내역과 데이터는 모두 삭제돼요.\n ∙ 다시 가입하셔도 예전 기록은 복구되지 않아요.';
+  static const String deleteReasonTitle = '무엇이 불편하셨나요?';
+  static const String deleteReasons5 = '의견을 적어주세요';
+  static const String deleteUserButtonText = '탈퇴하기';
 }
 
 // 클러스터 DB 값과 표시용 이름을 매핑하는 유틸리티 클래스 추가

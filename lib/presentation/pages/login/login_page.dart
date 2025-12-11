@@ -3,6 +3,7 @@ import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/core/styles/images.dart';
 import 'package:dailymoji/presentation/pages/onboarding/view_model/user_view_model.dart';
+import 'package:dailymoji/presentation/pages/pin_password/pin_password_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   @override
@@ -18,12 +20,27 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  final uuidStorage = FlutterSecureStorage();
+  final uuidStorage = FlutterSecureStorage(
+      iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock));
 
   @override
   void initState() {
     super.initState();
     autoLogin();
+  }
+
+  Future<void> _checkPinExist() async {
+    await ref
+        .read(pinPasswordViewModelProvider.notifier)
+        .hasPin();
+    final isPinSet =
+        ref.read(pinPasswordViewModelProvider).isPasswordEnabled;
+    if (isPinSet) {
+      context.go('/pin_password');
+    } else {
+      context.go('/home');
+    }
   }
 
   // Rin: 가입여부 확인하고 프로필 이미 있으면 넘어가는 함수 따로 뺌
@@ -46,7 +63,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 .read(userViewModelProvider.notifier)
                 .saveFcmTokenToSupabase(
                     platform: platform, userId: userId);
-            context.go('/home'); // 이미 가입했으면 홈으로
+            _checkPinExist(); // 이미 가입했으면 홈으로
           } else {
             context.go('/onboarding1'); // 처음이면 온보딩으로
           }
@@ -101,7 +118,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               .read(userViewModelProvider.notifier)
               .saveFcmTokenToSupabase(
                   platform: platform, userId: localUserId);
-          context.go('/home'); // 이미 가입했으면 홈으로
+          _checkPinExist(); // 이미 가입했으면 홈으로
         }
       }
     }
