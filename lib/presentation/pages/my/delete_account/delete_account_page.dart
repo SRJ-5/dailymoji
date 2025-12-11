@@ -1,3 +1,4 @@
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
@@ -19,10 +20,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   bool _deleteCheck = false;
 
   final reasons = [
-    '더 이상 앱을 사용하지 않아요',
-    '원하는 기능이 없어요',
-    '사용이 불편했어요',
-    '직접 입력'
+    AppTextStrings.deleteReasons1,
+    AppTextStrings.deleteReasons2,
+    AppTextStrings.deleteReasons3,
+    AppTextStrings.deleteReasons4
   ];
 
   void onSelectReason(int index) {
@@ -58,7 +59,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           scrolledUnderElevation: 0,
           backgroundColor: AppColors.yellow50,
           title: AppText(
-            '회원 탈퇴',
+            AppTextStrings.deleteUser,
             style: AppFontStyles.bodyBold18
                 .copyWith(color: AppColors.grey900),
           ),
@@ -78,25 +79,25 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                         height: 16.h,
                       ),
                       AppText(
-                        '떠나신다니 아쉬워요 🥲',
+                        AppTextStrings.deleteText1,
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
                       ),
                       SizedBox(height: 12.h),
                       AppText(
-                        '저희 서비스가 아직 부족했나 봐요. 만족을 드리지 못해 죄송합니다. 더 좋은 경험을 드릴 수 있도록 노력하겠습니다.',
+                        AppTextStrings.deleteText2,
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey900),
                       ),
                       SizedBox(height: 16.h),
                       AppText(
-                        '탈퇴 전, 꼭 확인해 주세요',
+                        AppTextStrings.deleteText3,
                         style: AppFontStyles.bodyBold16.copyWith(
                             color: AppColors.orange700),
                       ),
                       SizedBox(height: 12.h),
                       AppText(
-                        ' ∙ 지금까지 저장된 대화 내역과 데이터는 모두 삭제돼요.\n ∙ 다시 가입하셔도 예전 기록은 복구되지 않아요.\n ∙ 회원 탈퇴 후 3개월간 재가입이 불가능해요.',
+                        AppTextStrings.deleteText4,
                         style: AppFontStyles.bodyRegular14
                             .copyWith(color: AppColors.grey900),
                       ),
@@ -118,7 +119,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     children: [
                       SizedBox(height: 16.h),
                       AppText(
-                        '무엇이 불편하셨나요?',
+                        AppTextStrings.deleteReasonTitle,
                         style: AppFontStyles.bodyBold16
                             .copyWith(color: AppColors.grey900),
                       ),
@@ -164,7 +165,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                               });
                             },
                             decoration: InputDecoration(
-                              hintText: '의견을 적어주세요',
+                              hintText:
+                                  AppTextStrings.deleteReasons5,
                               hintStyle: AppFontStyles
                                   .bodyRegular16
                                   .copyWith(
@@ -259,7 +261,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                   }
                 : null,
             child: AppText(
-              '탈퇴하기',
+              AppTextStrings.deleteUserButtonText,
               style: AppFontStyles.bodyMedium16.copyWith(
                   color: _deleteCheck
                       ? AppColors.grey50
