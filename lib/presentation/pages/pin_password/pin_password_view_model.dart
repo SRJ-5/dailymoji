@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class PinPasswordState {
   String pinNum;
@@ -36,9 +35,8 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
       final savedPin =
           await secureStorage.read(key: 'pinPassWord');
       final result = savedPin != null; // 있으면 true, 없으면 false
-
       state = state.copyWith(isPasswordEnabled: result);
-      print("🔐 PIN 존재 여부: $result");
+      print("PIN 존재 여부: $result");
     } catch (e) {
       print("hasPin error: $e");
     }
@@ -71,7 +69,7 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
       final isMatch =
           savedPassword != null && savedPassword == state.pinNum;
 
-      print("🔍 PIN 확인 결과: $isMatch");
+      print("PIN 확인 결과: $isMatch");
       return isMatch;
     } catch (e) {
       print("checkPinNum error: $e");
