@@ -1,5 +1,6 @@
 // lib/presentation/nudge/nudge_modal.dart
 
+import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
 import 'package:dailymoji/core/styles/images.dart';
@@ -51,7 +52,7 @@ class NudgeModal extends StatelessWidget {
               height: 108.h,
             ),
             SizedBox(height: 28.h),
-            Text('요즘 마음이 어떤지,\n내 감정 상태를 알아보세요!',
+            Text(AppTextStrings.checkYourEmotion,
                 textAlign: TextAlign.center,
                 style:
                     AppFontStyles.heading3.copyWith(color: AppColors.grey900)),
@@ -70,7 +71,7 @@ class NudgeModal extends StatelessWidget {
                     color: AppColors.green500),
                 child: Center(
                   child: Text(
-                    '나의 감정 알아보러 가기',
+                    AppTextStrings.findMyEmotion,
                     style: AppFontStyles.bodyMedium16
                         .copyWith(color: AppColors.grey50),
                   ),
@@ -85,7 +86,7 @@ class NudgeModal extends StatelessWidget {
                     onSnooze7d(); // 내부에서 스누즈 저장
                     Navigator.of(context).pop();
                   },
-                  child: Text('7일간 보지 않기',
+                  child: Text(AppTextStrings.snooze7Day,
                       style: AppFontStyles.bodyMedium16
                           .copyWith(color: AppColors.grey400)),
                 ),
@@ -93,7 +94,7 @@ class NudgeModal extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
-                    '닫기',
+                    AppTextStrings.closeButton,
                     style: AppFontStyles.bodyMedium16
                         .copyWith(color: AppColors.grey900),
                   ),
