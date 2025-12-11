@@ -22,13 +22,17 @@ class _PinPasswordSettingState
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showPasswordChangeModal(
-        context: context,
-        isChangePassword: false,
-        isAuthenticated: true,
-      );
+      final isPinSet = ref
+          .read(pinPasswordViewModelProvider)
+          .isPasswordEnabled;
+      if (isPinSet) {
+        _showPasswordChangeModal(
+          context: context,
+          isChangePassword: false,
+          isAuthenticated: true,
+        );
+      }
     });
   }
 

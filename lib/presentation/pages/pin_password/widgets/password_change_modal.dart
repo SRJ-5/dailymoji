@@ -55,8 +55,8 @@ class _PasswordChangeModalState
     }
   }
 
-  void _delectPassword() {
-    print('delect');
+  void _deletePassword() {
+    print('delete');
     ref
         .read(pinPasswordViewModelProvider.notifier)
         .clearPinNum();
@@ -109,6 +109,17 @@ class _PasswordChangeModalState
             child: AppBar(
               scrolledUnderElevation: 0,
               backgroundColor: AppColors.yellow100,
+              leading: BackButton(
+                onPressed: () {
+                  if (widget.isAuthenticated == true &&
+                      widget.isChangePassword == false) {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  } else {
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
             ),
           ),
           SizedBox(height: 32.h),
@@ -196,7 +207,7 @@ class _PasswordChangeModalState
                                   ? null
                                   : () {
                                       index == 11
-                                          ? _delectPassword()
+                                          ? _deletePassword()
                                           : _selectPassword(
                                               keyPad[index]);
                                     },
