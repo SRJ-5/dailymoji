@@ -39,7 +39,8 @@ class EmotionData {
 // 기록이 있는지 판정하는 함수
 bool _hasData(EmotionData e) {
   if (e.spots.isEmpty) return false;
-  final ys = e.spots.map((s) => s.y).where((y) => y.isFinite).toList();
+  final ys =
+      e.spots.map((s) => s.y).where((y) => y.isFinite).toList();
   if (ys.isEmpty) return false;
   // 점수 0만 잔뜩이면 '기록 없음'으로 보려면 아래처럼 > 0 체크
   return ys.any((y) => y > 0);
@@ -64,7 +65,8 @@ class WeeklyReport extends ConsumerStatefulWidget {
   const WeeklyReport({super.key, required this.userId});
 
   @override
-  ConsumerState<WeeklyReport> createState() => _WeeklyReportState();
+  ConsumerState<WeeklyReport> createState() =>
+      _WeeklyReportState();
 }
 
 class _WeeklyReportState extends ConsumerState<WeeklyReport> {
@@ -91,10 +93,12 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
   @override
   Widget build(BuildContext context) {
     // 5가지 클러스터(프론트엔드 계산)와 g-score(백엔드 계산) 데이터를 각각 watch
-    final clusterState = ref.watch(clusterScoresViewModelProvider);
+    final clusterState =
+        ref.watch(clusterScoresViewModelProvider);
 
     // 로딩 확인
-    final gScoreAsync = ref.watch(gScore14DayChartProvider(widget.userId));
+    final gScoreAsync =
+        ref.watch(gScore14DayChartProvider(widget.userId));
 
     // 두 데이터 중 하나라도 로딩 중이면 로딩 인디케이터 표시
     if (clusterState.isLoading || gScoreAsync.isLoading) {
@@ -113,7 +117,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
     // 에러 확인
     // 두 데이터 중 하나라도 에러가 있으면 에러 메시지 표시
     if (clusterState.error != null || gScoreAsync.hasError) {
-      final error = clusterState.error ?? gScoreAsync.error.toString();
+      final error =
+          clusterState.error ?? gScoreAsync.error.toString();
       return Container(
         height: double.infinity,
         width: double.infinity,
@@ -130,7 +135,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
     final baseMap = clusterState.emotionMap;
     final gScoreData = gScoreAsync.value;
     final weeklySummary = clusterState.weeklySummary;
-    final String? overallSummaryText = weeklySummary?.overallSummary;
+    final String? overallSummaryText =
+        weeklySummary?.overallSummary;
 
     // 두 종류의 데이터를 하나의 맵으로 병합
     final Map<String, EmotionData> mergedMap = {
@@ -139,10 +145,10 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
         AppTextStrings.clusterTotalScore: EmotionData(
           color: gScoreData.color,
           spots: gScoreData.spots,
-          description:
-              (overallSummaryText != null && overallSummaryText.isNotEmpty)
-                  ? overallSummaryText
-                  : AppTextStrings.weeklyReportGScoreDescription,
+          description: (overallSummaryText != null &&
+                  overallSummaryText.isNotEmpty)
+              ? overallSummaryText
+              : AppTextStrings.weeklyReportGScoreDescription,
           avg: gScoreData.avg,
           max: gScoreData.max,
           min: gScoreData.min,
@@ -151,7 +157,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
     };
 
     final total = mergedMap[AppTextStrings.clusterTotalScore];
-    final noOverall = (total == null) || !_hasData(total); // ★ 변경(추가)
+    final noOverall =
+        (total == null) || !_hasData(total); // ★ 변경(추가)
 
     // return FutureBuilder<gs.GScoreEmotionResult>(
     //   // ★ alias 타입
@@ -216,7 +223,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     child: PopupMenuButton<String>(
                       color: AppColors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius:
+                            BorderRadius.circular(12.r),
                       ),
                       icon: SvgPicture.asset(
                         AppIcons.stroke,
@@ -228,42 +236,58 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                           PopupMenuItem<String>(
                             child: Consumer(
                               builder: (context, ref, _) {
-                                final filters = ref.watch(filterProvider);
+                                final filters =
+                                    ref.watch(filterProvider);
                                 return Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: filters.keys.map((key) {
+                                  children:
+                                      filters.keys.map((key) {
                                     return InkWell(
                                       onTap: () {
                                         ref
-                                            .read(filterProvider.notifier)
+                                            .read(filterProvider
+                                                .notifier)
                                             .state = {
                                           ...filters,
-                                          key: !(filters[key] ?? false),
+                                          key: !(filters[key] ??
+                                              false),
                                         };
                                       },
                                       child: Row(
                                         children: [
                                           Checkbox(
-                                            value: filters[key] ?? false,
-                                            activeColor: AppColors.green400,
-                                            checkColor: AppColors.white,
+                                            value:
+                                                filters[key] ??
+                                                    false,
+                                            activeColor:
+                                                AppColors
+                                                    .green400,
+                                            checkColor:
+                                                AppColors.white,
                                             onChanged: (value) {
                                               ref
-                                                  .read(filterProvider.notifier)
+                                                  .read(filterProvider
+                                                      .notifier)
                                                   .state = {
                                                 ...filters,
-                                                key: value ?? false,
+                                                key: value ??
+                                                    false,
                                               };
                                             },
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(
+                                              width: 8),
                                           AppText(
                                             key,
                                             style: TextStyle(
                                               fontSize: 14,
-                                              fontWeight: filters[key] == true
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
+                                              fontWeight: filters[
+                                                          key] ==
+                                                      true
+                                                  ? FontWeight
+                                                      .bold
+                                                  : FontWeight
+                                                      .normal,
                                             ),
                                           ),
                                         ],
@@ -285,52 +309,71 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
 
             // ===== 차트 =====
             Container(
-              padding: EdgeInsets.all(22.r),
+              padding: EdgeInsets.symmetric(vertical: 22.h)
+                  .copyWith(right: 22.w),
               child: Column(
                 children: [
                   SizedBox(
+                    width: double.infinity,
                     height: 200.h,
                     child: LineChart(
                       LineChartData(
-                        lineTouchData: LineTouchData(enabled: false),
+                        lineTouchData:
+                            LineTouchData(enabled: false),
                         gridData: FlGridData(show: true),
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               interval: 20,
+                              reservedSize: 34.w,
                               getTitlesWidget: (value, meta) {
                                 if (value.toInt() == 0) {
                                   return const SizedBox.shrink();
                                 }
-                                return AppText(
-                                  value.toInt().toString(),
-                                  style: AppFontStyles.bodyRegular12
-                                      .copyWith(color: AppColors.grey600),
+                                return Container(
+                                  margin:
+                                      EdgeInsets.only(right: 5),
+                                  child: AppText(
+                                    textAlign: TextAlign.center,
+                                    value.toInt().toString(),
+                                    style: AppFontStyles
+                                        .bodyRegular12
+                                        .copyWith(
+                                            color: AppColors
+                                                .grey600),
+                                  ),
                                 );
                               },
                             ),
                           ),
                           rightTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                              sideTitles:
+                                  SideTitles(showTitles: false)),
                           topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                              sideTitles:
+                                  SideTitles(showTitles: false)),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               interval: 2,
                               getTitlesWidget: (value, meta) {
                                 final index = value.toInt();
-                                if (index < 0 || index >= baseDays.length) {
+                                if (index < 0 ||
+                                    index >= baseDays.length) {
                                   return const SizedBox.shrink();
                                 }
                                 // 마지막 인덱스(오늘 날짜)는 무조건 표시
-                                if (index == baseDays.length - 1) {
+                                if (index ==
+                                    baseDays.length - 1) {
                                   final d = baseDays[index];
                                   return AppText(
-                                    "${d.month}.${d.day}",
-                                    style: AppFontStyles.bodyRegular12
-                                        .copyWith(color: AppColors.grey900),
+                                    "${d.month}.${d.day + 1}",
+                                    style: AppFontStyles
+                                        .bodyRegular12
+                                        .copyWith(
+                                            color: AppColors
+                                                .grey600),
                                   );
                                 }
                                 // 나머지는 2일 간격으로만 표시
@@ -338,8 +381,11 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                                   final d = baseDays[index];
                                   return AppText(
                                     "${d.month}.${d.day}",
-                                    style: AppFontStyles.bodyRegular12
-                                        .copyWith(color: AppColors.grey600),
+                                    style: AppFontStyles
+                                        .bodyRegular12
+                                        .copyWith(
+                                            color: AppColors
+                                                .grey600),
                                   );
                                 } else {
                                   return const SizedBox.shrink();
@@ -348,24 +394,32 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                             ),
                           ),
                         ),
-                        borderData: FlBorderData(show: false),
+                        borderData: FlBorderData(
+                            show: true,
+                            border: const Border(
+                                left: BorderSide(
+                                    color: AppColors.grey700),
+                                bottom: BorderSide(
+                                    color: AppColors.grey700))),
                         minX: 0,
                         maxX: (baseDays.length - 0.5).toDouble(),
                         minY: 0,
                         maxY: 100,
                         lineBarsData: [
                           // ★ 항상 그릴 “종합 감정 점수” 라인 (있을 때)
-                          if (mergedMap[AppTextStrings.clusterTotalScore] !=
+                          if (mergedMap[AppTextStrings
+                                  .clusterTotalScore] !=
                               null)
                             LineChartBarData(
-                              color:
-                                  mergedMap[AppTextStrings.clusterTotalScore]!
-                                      .color,
+                              color: mergedMap[AppTextStrings
+                                      .clusterTotalScore]!
+                                  .color,
                               barWidth: 2,
-                              dotData: FlDotData(show: false), // 보기 쉽게 점 보이기
-                              spots:
-                                  mergedMap[AppTextStrings.clusterTotalScore]!
-                                      .spots,
+                              dotData: FlDotData(
+                                  show: false), // 보기 쉽게 점 보이기
+                              spots: mergedMap[AppTextStrings
+                                      .clusterTotalScore]!
+                                  .spots,
                             ),
 
                           // 선택된 감정들 오버레이
@@ -392,13 +446,17 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                       spacing: 8.r, // 칩 간 가로 간격
                       runSpacing: 6.r, // 줄바꿈 시 세로 간격
                       children: [
-                        if (mergedMap[AppTextStrings.clusterTotalScore] != null)
+                        if (mergedMap[AppTextStrings
+                                .clusterTotalScore] !=
+                            null)
                           _legendChip(
                               AppTextStrings.clusterTotalScore,
-                              mergedMap[AppTextStrings.clusterTotalScore]!
+                              mergedMap[AppTextStrings
+                                      .clusterTotalScore]!
                                   .color),
                         ...selectedEmotions.map(
-                          (key) => _legendChip(key, mergedMap[key]!.color),
+                          (key) => _legendChip(
+                              key, mergedMap[key]!.color),
                         ),
                       ],
                     ),
@@ -419,15 +477,20 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
             Column(
               children: [
                 // 1) 종합 감정 점수 카드
-                if (mergedMap[AppTextStrings.clusterTotalScore] != null)
-                  _hasData(mergedMap[AppTextStrings.clusterTotalScore]!)
+                if (mergedMap[
+                        AppTextStrings.clusterTotalScore] !=
+                    null)
+                  _hasData(mergedMap[
+                          AppTextStrings.clusterTotalScore]!)
                       ? _buildEmotionCard(
                           AppTextStrings.clusterTotalScore,
-                          mergedMap[AppTextStrings.clusterTotalScore]!,
+                          mergedMap[
+                              AppTextStrings.clusterTotalScore]!,
                         )
                       : _buildEmptyEmotionCard(
                           AppTextStrings.clusterTotalScore,
-                          color: mergedMap[AppTextStrings.clusterTotalScore]
+                          color: mergedMap[AppTextStrings
+                                  .clusterTotalScore]
                               ?.color,
                         ),
 
@@ -455,7 +518,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     child: Center(
                       child: Text(
                         AppTextStrings.nullEmotions,
-                        style: AppFontStyles.bodyRegular14.copyWith(
+                        style:
+                            AppFontStyles.bodyRegular14.copyWith(
                           color: AppColors.grey700,
                         ),
                       ),
@@ -466,21 +530,25 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
                     ? const SizedBox.shrink()
                     // 그 외에는 모두
                     : Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8.h),
                         child: GestureDetector(
                           onTap: () {
-                            context.push('/info/${AppTextStrings.srj5Test}');
+                            context.push(
+                                '/info/${AppTextStrings.srj5Test}');
                           },
                           child: Container(
                             height: 52.h,
                             decoration: BoxDecoration(
                                 color: AppColors.green500,
-                                borderRadius: BorderRadius.circular(12.r)),
+                                borderRadius:
+                                    BorderRadius.circular(12.r)),
                             alignment: Alignment.center,
                             child: Text(
                               AppTextStrings.checkEmotions,
                               style: AppFontStyles.bodyMedium16
-                                  .copyWith(color: AppColors.grey50),
+                                  .copyWith(
+                                      color: AppColors.grey50),
                             ),
                           ),
                         ),
@@ -494,7 +562,8 @@ class _WeeklyReportState extends ConsumerState<WeeklyReport> {
 
 // ===== 카드 유틸 =====
 Widget separator() {
-  return Container(width: 1, height: 35, color: AppColors.grey200);
+  return Container(
+      width: 1, height: 35, color: AppColors.grey200);
 }
 
 class _ScoreBox extends StatelessWidget {
@@ -502,16 +571,20 @@ class _ScoreBox extends StatelessWidget {
   final String value;
   final Color color;
   const _ScoreBox(
-      {required this.label, required this.value, required this.color});
+      {required this.label,
+      required this.value,
+      required this.color});
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        AppText(label, style: AppFontStyles.bodyBold14.copyWith(color: color)),
+        AppText(label,
+            style:
+                AppFontStyles.bodyBold14.copyWith(color: color)),
         SizedBox(height: 2.h),
         AppText(value,
-            style:
-                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900)),
+            style: AppFontStyles.bodyRegular14
+                .copyWith(color: AppColors.grey900)),
       ],
     );
   }
@@ -564,8 +637,8 @@ Widget _buildEmotionCard(String key, EmotionData data) {
             ),
             AppText(
               key,
-              style:
-                  AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.bodyBold16
+                  .copyWith(color: AppColors.grey900),
             ),
           ],
         ),
@@ -585,19 +658,22 @@ Widget _buildEmotionCard(String key, EmotionData data) {
                   _ScoreBox(
                       label: AppTextStrings.avgEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.avg.toStringAsFixed(0)),
+                          .replaceFirst(
+                              '%s', data.avg.toStringAsFixed(0)),
                       color: AppColors.green700),
                   separator(),
                   _ScoreBox(
                       label: AppTextStrings.maxEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.max.toStringAsFixed(0)),
+                          .replaceFirst(
+                              '%s', data.max.toStringAsFixed(0)),
                       color: AppColors.noti100),
                   separator(),
                   _ScoreBox(
                       label: AppTextStrings.minEmotionScore,
                       value: AppTextStrings.scoreUnit
-                          .replaceFirst('%s', data.min.toStringAsFixed(0)),
+                          .replaceFirst(
+                              '%s', data.min.toStringAsFixed(0)),
                       color: AppColors.noti200),
                 ],
               ),
@@ -635,8 +711,8 @@ Widget _buildEmptyEmotionCard(String title, {Color? color}) {
             ),
             AppText(
               title,
-              style:
-                  AppFontStyles.bodyBold16.copyWith(color: AppColors.grey900),
+              style: AppFontStyles.bodyBold16
+                  .copyWith(color: AppColors.grey900),
             ),
           ],
         ),
@@ -651,8 +727,8 @@ Widget _buildEmptyEmotionCard(String title, {Color? color}) {
               border: Border.all(color: AppColors.grey200)),
           child: AppText(
             "아직 기록된 데이터가 없어요",
-            style:
-                AppFontStyles.bodyRegular14.copyWith(color: AppColors.grey900),
+            style: AppFontStyles.bodyRegular14
+                .copyWith(color: AppColors.grey900),
           ),
         ),
       ],
@@ -669,7 +745,8 @@ Widget _legendChip(String label, Color color) {
         height: 4,
         decoration: ShapeDecoration(
           color: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(2)),
         ),
       ),
       const SizedBox(width: 4),
