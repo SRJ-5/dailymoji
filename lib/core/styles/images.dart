@@ -5,6 +5,7 @@ class AppImages {
   static const String preparingImage = 'assets/images/preparing_image.png';
   static const String srj5TestStart = 'assets/images/srj5_test_start.png';
   static const String srj5TestFinish = 'assets/images/srj5_test_finish.png';
+  static const String glasses = 'assets/images/glasses.png';
 
   // images - logo
   // static const String dailymojiLogoBlack =
