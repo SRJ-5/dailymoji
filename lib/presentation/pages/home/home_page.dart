@@ -22,7 +22,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kHomeTutorialSeenKey = 'home_tutorial_seen_v1';
 
-// bool _nudgeHandled = false; // 앱 실행당 1회만 체크/표시
+/// 앱 실행 중에는 넛지를 한 번만 띄우기 위한 플래그
+/// (홈 화면을 다시 왔다 갔다 해도 1회만)
+bool _nudgeHandled = false; // 앱 실행당 1회만 체크/표시
 
 const emotionClusterMap = {
   "angry": AppTextStrings.negHigh,
@@ -90,6 +92,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   bool _homeSeen = false;
   bool _loaded = false;
 
+  // // ✅ 이 페이지 인스턴스가 살아있는 동안 넛지를 한 번만 띄우기 위한 플래그
+  // bool _nudgeShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -116,9 +121,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     //   });
     // }
 
+    // 🔹 userViewModelProvider가 로딩 완료되었을 때를 감지해서 넛지 시도
+    ref.listenManual(userViewModelProvider, (prev, next) {
+      _maybeShowNudge();
+    });
+
+    // 튜토리얼(최초 진입 여부) Prefs 로드
     _initHomeTutorialPrefs();
   }
 
+  /// 홈 튜토리얼 표시 여부 로딩
   Future<void> _initHomeTutorialPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _homeSeen = prefs.getBool(_kHomeTutorialSeenKey) ?? false;
@@ -129,8 +141,12 @@ class _HomePageState extends ConsumerState<HomePage> {
       // 첫 진입 시: 아직 안 봤다면 보여주기
       if (!_homeSeen) _showTutorial = true;
     });
+
+    // ▸ 튜토리얼을 이미 본 유저라면, 튜토리얼 없이 넛지를 바로 시도
+    _maybeShowNudge();
   }
 
+  /// 홈 튜토리얼 닫기 핸들러
   Future<void> _handleHomeTutorialClose() async {
     if (!mounted) return;
     setState(() => _showTutorial = false);
@@ -140,12 +156,66 @@ class _HomePageState extends ConsumerState<HomePage> {
       await prefs.setBool(_kHomeTutorialSeenKey, true);
     }
 
+    // ▸ 튜토리얼 때문에 넛지를 못 띄웠다면, 여기서 한 번 시도
+    _maybeShowNudge();
+
     // // ✅ 튜토리얼 때문에 못 띄웠다면, 여기서 한 번 더 시도
     // final userId = ref.read(userViewModelProvider).userProfile?.id;
     // if (!_nudgeHandled && userId != null && userId.isNotEmpty) {
     //   _nudgeHandled = true;
     //   _checkAndShowNudge(userId: userId);
     // }
+  }
+
+  /// 넛지를 띄울 수 있는 모든 조건(튜토리얼, 유저, 앱 1회 등)을 검사하는 헬퍼
+  void _maybeShowNudge() {
+    // 1) 이미 한 번 띄웠으면 끝
+    if (_nudgeHandled) return;
+
+    // 2) 튜토리얼 prefs 로딩이 안 끝났으면 보류
+    if (!_loaded) return;
+
+    // 3) 튜토리얼 오버레이가 떠 있는 동안에는 넛지 띄우지 않음
+    if (_showTutorial) return;
+
+    // 4) 유저 정보(userId)가 준비되지 않았으면 보류
+    final userState = ref.read(userViewModelProvider);
+    final userId = userState.userProfile?.id;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+    // 5) 여기까지 왔으면 “넛지를 한 번 체크해도 된다”는 뜻
+    _nudgeHandled = true; // ✅ 앱 실행 동안 다시는 안 시도하게
+
+    // 빌드 끝난 뒤에 모달 띄우도록 post-frame에서 실행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowNudge(userId: userId);
+    });
+  }
+
+  /// NudgeViewModel을 통해 넛지 표시 조건을 평가하고,
+  /// 필요 시 모달을 한 번 띄운다.
+  Future<void> _checkAndShowNudge({required String userId}) async {
+    try {
+      // ViewModel 상태 한 번 가져오기 (snooze / last survey / 7일 경과 로직 포함)
+      final state = await ref.read(nudgeViewModelProvider(userId).future);
+
+      if (!mounted || !state.shouldShow) return;
+
+      await NudgeModal.show(
+        context,
+        onGo: () {
+          // 감정 체크 페이지로 이동
+          context.push('/info/${AppTextStrings.srj5Test}');
+        },
+        onSnooze7d: () {
+          // 스누즈(7일간 보지 않기) 저장
+          ref.read(nudgeViewModelProvider(userId).notifier).snooze7Days();
+        },
+      );
+    } catch (_) {
+      // 네트워크 에러, 취소 등은 조용히 무시
+    }
   }
 
   @override
