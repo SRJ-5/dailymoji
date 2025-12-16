@@ -10,11 +10,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> navigatorKey =
+    GlobalKey<NavigatorState>();
 
 // 앱이 백그라운드일 때 도착한 알림을 처리하는 함수
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> _firebaseMessagingBackgroundHandler(
+    RemoteMessage message) async {
   await Firebase.initializeApp();
   print("📩 백그라운드 알림 수신: ${message.notification?.title}");
 }
@@ -49,7 +51,8 @@ void main() async {
   );
 
   // 백그라운드 알림 핸들러 등록
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(
+      _firebaseMessagingBackgroundHandler);
 
   // 포그라운드 알림 수신 (앱 켜져 있을 때)
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -59,7 +62,8 @@ void main() async {
   });
 
   // 앱이 종료된 상태에서 클릭으로 열릴 때
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  FirebaseMessaging.onMessageOpenedApp
+      .listen((RemoteMessage message) {
     print("🪄 사용자가 알림을 클릭하여 앱 열었음!");
   });
 
@@ -103,7 +107,8 @@ class MyApp extends ConsumerWidget {
       // 나머지 text, text.rich 등은 AppText으로 변경이 완료된 상태
       builder: (context, child) {
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          data: MediaQuery.of(context)
+              .copyWith(boldText: false, textScaleFactor: 1.0),
           child: child!,
         );
       },
