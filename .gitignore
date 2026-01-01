@@ -143,3 +143,4 @@ windows/flutter/generated_plugins.cmake
 # key.properties
 android/key.properties
 *.keystore
+upload_certificate.pem

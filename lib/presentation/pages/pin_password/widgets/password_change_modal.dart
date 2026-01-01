@@ -1,11 +1,13 @@
 import 'package:dailymoji/core/constants/app_text_strings.dart';
 import 'package:dailymoji/core/styles/colors.dart';
 import 'package:dailymoji/core/styles/fonts.dart';
+import 'package:dailymoji/core/styles/icons.dart';
 import 'package:dailymoji/presentation/pages/pin_password/pin_password_view_model.dart';
 import 'package:dailymoji/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
 class PasswordChangeModal extends ConsumerStatefulWidget {
@@ -22,6 +24,7 @@ class PasswordChangeModal extends ConsumerStatefulWidget {
 class _PasswordChangeModalState
     extends ConsumerState<PasswordChangeModal> {
   bool? isCheckPassword;
+  bool isCorrectPassword = true;
 
   Future<void> _selectPassword(String password) async {
     final pinVM =
@@ -34,24 +37,44 @@ class _PasswordChangeModalState
       Future.delayed(
         Duration(milliseconds: 200),
         () {
-          pinVM.clearAllPinNum();
+          isCorrectPassword = isCheckPassword!;
+          pinVM.reStartPinNum();
+          return;
         },
       );
     } else if (isCheckPassword == true &&
         widget.isChangePassword == false &&
         widget.isAuthenticated == false) {
-      context.go('/home');
-      pinVM.clearAllPinNum();
+      Future.delayed(
+        Duration(milliseconds: 200),
+        () {
+          context.go('/home');
+          pinVM.clearAllPinNum();
+          return;
+        },
+      );
     } else if (isCheckPassword == true &&
         widget.isChangePassword == true &&
         widget.isAuthenticated == true) {
-      context.pop();
-      pinVM.clearAllPinNum();
+      Future.delayed(
+        Duration(milliseconds: 200),
+        () {
+          context.pop();
+          pinVM.clearAllPinNum();
+          return;
+        },
+      );
     } else if (isCheckPassword == true &&
         widget.isChangePassword == false &&
         widget.isAuthenticated == true) {
-      context.pop();
-      pinVM.clearAllPinNum();
+      Future.delayed(
+        Duration(milliseconds: 200),
+        () {
+          context.pop();
+          pinVM.clearAllPinNum();
+          return;
+        },
+      );
     }
   }
 
@@ -73,6 +96,10 @@ class _PasswordChangeModalState
 
     final password =
         ref.watch(pinPasswordViewModelProvider).pinNum;
+    final reWritePassword = ref
+        .watch(pinPasswordViewModelProvider)
+        .reCheckSavePinNum
+        .isNotEmpty;
     final List<int> password1 = [1, 2, 3, 4];
     final List<String> keyPad = [
       '1',
@@ -96,7 +123,7 @@ class _PasswordChangeModalState
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: BoxDecoration(
-        color: AppColors.yellow100,
+        color: AppColors.yellow50,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
@@ -108,21 +135,28 @@ class _PasswordChangeModalState
             preferredSize: Size.fromHeight(appBarHeight),
             child: AppBar(
               scrolledUnderElevation: 0,
-              backgroundColor: AppColors.yellow100,
-              leading: BackButton(
-                onPressed: () {
-                  if (widget.isAuthenticated == true &&
-                      widget.isChangePassword == false) {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
-                  } else {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
+              backgroundColor: AppColors.yellow50,
+              leading: widget.isAuthenticated == false &&
+                      widget.isChangePassword == false
+                  ? null
+                  : BackButton(
+                      onPressed: () {
+                        ref
+                            .read(pinPasswordViewModelProvider
+                                .notifier)
+                            .clearAllPinNum();
+                        if (widget.isAuthenticated == true &&
+                            widget.isChangePassword == false) {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        } else {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                    ),
             ),
           ),
-          SizedBox(height: 32.h),
+          SizedBox(height: 48.h),
           Column(
             children: [
               AppText(AppTextStrings.insertPassword,
@@ -130,16 +164,23 @@ class _PasswordChangeModalState
                       .copyWith(color: AppColors.grey900)),
               SizedBox(height: 5),
               AppText(
-                  isCheckPassword == false
-                      ? AppTextStrings.passwordErrorMessage
-                      : '',
-                  style: AppFontStyles.bodySemiBold16.copyWith(
-                      color: isCheckPassword == false
+                  widget.isChangePassword == true
+                      ? isCorrectPassword == false
+                          ? AppTextStrings.passwordErrorMessage
+                          : reWritePassword
+                              ? AppTextStrings
+                                  .reCheckNewPasswordGuid
+                              : AppTextStrings.newPasswordGuide
+                      : isCorrectPassword == false
+                          ? AppTextStrings.passwordErrorMessage
+                          : AppTextStrings.passwordGuide,
+                  style: AppFontStyles.bodyRegular16.copyWith(
+                      color: isCorrectPassword == false
                           ? AppColors.noti100
-                          : Colors.transparent)),
+                          : AppColors.grey900)),
               SizedBox(height: 25.h),
               SizedBox(
-                height: 35.r,
+                height: 24.r,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -161,28 +202,12 @@ class _PasswordChangeModalState
                   ),
                 ),
               ),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Row(
-                    children: [
-                      Container(
-                        height: 5,
-                        width: 40.w,
-                        color: AppColors.grey200,
-                      ),
-                      if (index != 3) SizedBox(width: 25.w),
-                    ],
-                  );
-                }),
-              ),
-              SizedBox(height: 50.h),
+              SizedBox(height: 40.h),
               Column(
                 children: [
                   Container(
                     padding:
-                        EdgeInsets.symmetric(horizontal: 43.5.w),
+                        EdgeInsets.symmetric(horizontal: 34.w),
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics:
@@ -213,20 +238,15 @@ class _PasswordChangeModalState
                                     },
                               child: Center(
                                 child: index == 11
-                                    ? Icon(
-                                        Icons
-                                            .keyboard_backspace_rounded,
-                                        size: 40.r,
-                                        color:
-                                            AppColors.green500,
-                                      )
+                                    ? SvgPicture.asset(AppIcons
+                                        .passwordBackSpace)
                                     : AppText(
                                         keyPad[index],
                                         style: AppFontStyles
                                             .heading1
                                             .copyWith(
                                                 color: AppColors
-                                                    .green500),
+                                                    .grey900),
                                       ),
                               ),
                             ),
@@ -249,11 +269,13 @@ class _PasswordChangeModalState
     return Column(
       children: [
         Container(
-          height: 35.r,
-          width: 35.r,
+          height: 24.r,
+          width: 24.r,
           decoration: BoxDecoration(
+              border: Border.all(
+                  color: AppColors.green500, width: 2),
               color: index < passwordLength
-                  ? AppColors.green300
+                  ? AppColors.green500
                   : null,
               shape: BoxShape.circle),
         ),
