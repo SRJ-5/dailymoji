@@ -149,6 +149,21 @@ class _ToggleState extends State<Toggle> {
   }
 
   @override
+  void didUpdateWidget(covariant Toggle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 수정 전: if (oldWidget.initialValue != widget.initialValue)
+    // 🚨 수정 후: 부모가 주는 값(widget.initialValue)이 현재 내 상태(_isOn)와 다르면 동기화
+    if (widget.initialValue != _isOn) {
+      setState(() {
+        _isOn = widget.initialValue;
+        // 이렇게 하면 _isOn이 true -> false로 바뀌면서
+        // AnimatedPositioned가 작동해 스르륵 돌아갑니다.
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 위아래 중앙 위치: (전체 높이 - 원의 높이) / 2
     final double centerVertical = (30.h - 24.r) / 2;
@@ -169,15 +184,9 @@ class _ToggleState extends State<Toggle> {
         height: 30.h,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(50.r),
-          color: AppColors.grey100,
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 1,
-              blurStyle: BlurStyle.inner,
-              color: Color.fromRGBO(0, 0, 0, 25),
-              offset: Offset(0, -0.5),
-            )
-          ],
+          color: _isOn ? AppColors.green500 : AppColors.grey100,
+          border: Border.all(
+              color: AppColors.grey200, strokeAlign: 1),
         ),
         child: Stack(
           children: [
@@ -192,9 +201,7 @@ class _ToggleState extends State<Toggle> {
                 width: 24.r,
                 height: 24.r,
                 decoration: BoxDecoration(
-                  color: _isOn
-                      ? AppColors.green400
-                      : AppColors.grey600,
+                  color: AppColors.white,
                   shape: BoxShape.circle,
                 ),
               ),

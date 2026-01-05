@@ -3,15 +3,21 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class PinPasswordState {
   String pinNum;
+  String reCheckSavePinNum;
   bool isPasswordEnabled;
-
   PinPasswordState(
-      {required this.pinNum, required this.isPasswordEnabled});
+      {required this.pinNum,
+      required this.reCheckSavePinNum,
+      required this.isPasswordEnabled});
 
   PinPasswordState copyWith(
-      {String? pinNum, bool? isPasswordEnabled}) {
+      {String? pinNum,
+      String? reCheckSavePinNum,
+      bool? isPasswordEnabled}) {
     return PinPasswordState(
         pinNum: pinNum ?? this.pinNum,
+        reCheckSavePinNum:
+            reCheckSavePinNum ?? this.reCheckSavePinNum,
         isPasswordEnabled:
             isPasswordEnabled ?? this.isPasswordEnabled);
   }
@@ -26,7 +32,9 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
   @override
   PinPasswordState build() {
     return PinPasswordState(
-        pinNum: '', isPasswordEnabled: false);
+        pinNum: '',
+        reCheckSavePinNum: '',
+        isPasswordEnabled: false);
   }
 
   // pin암호 설정을 했는지 안했는지 확인
@@ -53,8 +61,27 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
 
       print("입력 PIN: ${state.pinNum}");
 
-      if (state.pinNum.length == 4) {
-        return isChangePin ? savePinNum() : checkPinNum();
+      if (passwordList.length == 4) {
+        if (isChangePin) {
+          if (state.reCheckSavePinNum.isEmpty) {
+            Future.delayed(
+              Duration(milliseconds: 200),
+              () {
+                state = state.copyWith(
+                    reCheckSavePinNum: passwordList, pinNum: '');
+                passwordList = '';
+              },
+            );
+          } else {
+            if (state.reCheckSavePinNum == state.pinNum) {
+              return savePinNum();
+            } else {
+              return false;
+            }
+          }
+        } else {
+          return checkPinNum();
+        }
       }
       return null;
     }
@@ -112,7 +139,8 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
   // 입력된 pin 암호 전부 지우기
   void clearAllPinNum() {
     passwordList = '';
-    state = state.copyWith(pinNum: passwordList);
+    state = state.copyWith(
+        pinNum: passwordList, reCheckSavePinNum: '');
   }
 
   // 입력된 pin 암호 마지막 하나 지우기
@@ -123,6 +151,12 @@ class PinPasswordViewModel extends Notifier<PinPasswordState> {
       state = state.copyWith(pinNum: passwordList);
       print(state.pinNum);
     }
+  }
+
+  // 암호가 틀릴 시 pin num 지우기
+  void reStartPinNum() {
+    passwordList = '';
+    state = state.copyWith(pinNum: passwordList);
   }
 }
 

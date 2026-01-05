@@ -40,7 +40,7 @@ class _PinPasswordSettingState
       {required BuildContext context,
       required bool isChangePassword,
       required bool isAuthenticated}) {
-    showModalBottomSheet(
+    showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -99,13 +99,18 @@ class _PinPasswordSettingState
                   onChanged: (value) async {
                     if (value == false) {
                       await pinVM.deletePinNum();
+                      await pinVM.hasPin();
                     } else {
                       _showPasswordChangeModal(
                           context: context,
                           isChangePassword: true,
                           isAuthenticated: true);
-                    }
 
+                      // if (isSuccess != true) {
+                      //   setState(() {});
+                      //   return;
+                      // }
+                    }
                     await pinVM.hasPin(); // state 업데이트
                   },
                 ),
